@@ -92,7 +92,8 @@ structure PairQueue where
   /-- Stable indices eligible for future pairs. Retired polynomials and existing
   obligations remain in their original basis and queue positions. -/
   active : Array Nat := #[]
-  /-- First basis index not yet considered for eligibility. -/
+  /-- First basis index not yet considered for GM eligibility. This remains
+  unchanged during Buchberger installation; a later GM call fills the gap. -/
   frontier : Nat := 0
 
 namespace PairQueue
@@ -165,6 +166,9 @@ This is a dependency contract for the outstanding producer proof.
 This is UPDATE’s removal from its eligible basis set G; the polynomial arena
 retains the removed entries for reduction and derivations.
 
+In either mode, for i < j, (i,j) was considered at j's installation unless j
+was installed under GM after i was removed from eligibility. Buchberger
+installation never removes an index or changes an existing replacement chain.
 The drivers install indices in increasing order. `active` is ascending and lies
 below `frontier`; every earlier index has been installed. A gap before `new`
 consists of indices already installed by the Buchberger route. The helper also

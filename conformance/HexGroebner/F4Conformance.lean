@@ -416,11 +416,20 @@ private def retirementPairs : Bool := Id.run do
 
 #guard Id.run do
   let context := { context with order := TermOrder.lex }
+  -- Descending leading terms retain this divisibility chain after input
+  -- elimination; the earlier x³ fixture is deliberately kept for queue tests.
+  let generators := retirementInput.set! 3 #[⟨#[0,3],1⟩,⟨#[0,0],1⟩]
   for scheduling in [Scheduling.degree,.sugar] do
-    match computeWith context { scheduling } retirementInput,
-        computeWith context { scheduling,gebauerMoller := false } retirementInput with
-    | .candidate actual _, .candidate reference _ =>
-      if actual.polynomials != reference.polynomials then return false
+    match (F4.step context { scheduling } generators {}).run ⟨{ arity := 2 }, {}⟩ with
+    | (.ok initial, workspace) =>
+      if initial.basis.map (fun g => g.polynomial.toRaw context.field workspace.table) != generators ||
+          initial.queue.active != #[2,3] || initial.queue.frontier != 4 ||
+          workspace.statistics.pairs != 3 || workspace.statistics.gmPairs != 0 then return false
+    | _ => return false
+    match computeWith context { scheduling } generators,
+        computeWith context { scheduling,gebauerMoller := false } generators with
+    | .candidate actual statistics, .candidate reference referenceStats =>
+      if actual.polynomials != reference.polynomials || statistics.pairs ≥ referenceStats.pairs then return false
     | _, _ => return false
   return true
 
@@ -446,6 +455,7 @@ private def strategyResume : Bool := Id.run do
   let expected := result context input
   let mut gapCheckpoint := false
   let mut retiredCheckpoint := false
+  let mut retiredState : Option ResumeState := none
   for (strategy, batchInterreduce) in [(false, false), (false, true), (true, false), (true, true)] do
     let total := match computeWith context { gebauerMoller := strategy, batchInterreduce } input with
       | .candidate _ statistics => statistics.work
@@ -457,6 +467,8 @@ private def strategyResume : Bool := Id.run do
       | .exhausted .work state =>
         let queue := state.checkpoint.queue
         retiredCheckpoint := retiredCheckpoint || (strategy && queue.active.size < queue.frontier)
+        if strategy && queue.active.size < queue.frontier && retiredState.isNone then
+          retiredState := some state
         gapCheckpoint := gapCheckpoint || (!strategy && queue.frontier < state.checkpoint.basis.size)
         match resumeWith { gebauerMoller := !strategy, batchInterreduce := !batchInterreduce } state with
         | .candidate candidate statistics =>
@@ -464,7 +476,25 @@ private def strategyResume : Bool := Id.run do
               statistics.work < state.workspace.statistics.work then return false
         | _ => return false
       | _ => return false
-  return retiredCheckpoint && gapCheckpoint
+  let some initial := retiredState | return false
+  let mut doubleSwitch := false
+  let bound := initial.workspace.statistics.work + 4*(match computeWith context {} input with
+    | .candidate _ statistics => statistics.work
+    | _ => 0)
+  for work in [initial.workspace.statistics.work:bound] do
+    match resumeWith { work,gebauerMoller := false } initial with
+    | .exhausted .work state =>
+      let queue := state.checkpoint.queue
+      if queue.active.size < queue.frontier && queue.frontier < state.checkpoint.basis.size then
+        match resumeWith { gebauerMoller := true } state with
+        | .candidate candidate _ =>
+          if .ok candidate.polynomials != expected || candidate.randomState != 37 then return false
+          doubleSwitch := true
+          break
+        | _ => return false
+    | .candidate _ _ => break
+    | _ => return false
+  return retiredCheckpoint && gapCheckpoint && doubleSwitch
 
 #guard strategyResume
 
