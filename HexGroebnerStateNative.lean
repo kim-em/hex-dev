@@ -6,5 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.MatrixState
+public import HexGroebner.SamplingStep
 
 /-! Native carrier for bounded untraced matrix continuations. -/
