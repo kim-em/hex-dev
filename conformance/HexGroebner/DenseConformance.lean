@@ -133,6 +133,34 @@ def scanChecks (seed : Nat) : Bool := Id.run do
       if !same output reference then return false
   return true
 
+/-- The largest admitted update spans 8191 coefficients. Full and resumed
+quanta check its end, zero gaps and the first invalid active coefficient. -/
+def largeChecks (seed : Nat) : Bool := Id.run do
+  for step in [1,2] do
+    let source := source 4096 0 step
+    let row := (Native.Dense.prepare modulus 8195 source 100000 100000).row
+    if row.dense.isEmpty then return false
+    let slots := Native.Dense.zeros (8195*4)
+    let mut buffer := Native.Dense.zeros (8195*4)
+    for i in [:8195] do buffer := Native.write buffer 4 (4*i) ((i+seed)%2147483647)
+    for bad in [0,7,8,4095,4096,8190,8191,8194,8195] do
+      let dense := if bad == 8195 then buffer else Native.write buffer 4 (4*bad) 2147483647
+      for entry in [0,4095,4096] do
+        let initial : Native.Scan.State := {
+          dense := dense
+          column := 0
+          last := 8194
+          chargedUntil := 8195
+          pending := 1
+          entry := entry
+          factor := (seed%2147483646+1).toUInt64 }
+        for quantum in [0,1,4095,4096,4097] do
+          let actual := Native.Dense.transition modulus 8195 slots #[row] initial quantum 100000 0 false
+          let model := Native.Dense.portable modulus 8195 slots #[row] initial quantum 100000 0 false
+          if !same actual model then return false
+  return true
+
+#guard largeChecks 0
 #guard boundaryChecks 0
 #guard checks
 #guard scanChecks 0

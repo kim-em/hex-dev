@@ -98,6 +98,10 @@ structure Limits where
   scheduling : Scheduling := .degree
   /-- Use bounded native row translation and elimination; false selects Lean models. -/
   nativeRows : Bool := true
+  /-- Prepare checked dense M31 pivots in deterministic untraced matrices,
+  within the parent work/memory bounds. Certificate and sampled routes retain
+  their existing sparse pivots. -/
+  densePivots : Bool := false
   /-- Use bounded packed monomial preparation and exact collision comparison. -/
   nativeMonomials : Bool := true
   /-- Enable minimal-LCM installation and proper-LCM chain pruning. -/

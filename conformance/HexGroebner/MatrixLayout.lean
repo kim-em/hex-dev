@@ -90,13 +90,6 @@ run_meta do
     ("traceNodes","o4"),("status","s1@0")]
   checkLayout ``Hex.Groebner.Native.Gather.Result 4 1 #[
     ("state","o0"),("entries","o1"),("bytes","o2"),("work","o3"),("status","s1@0")]
-  checkLayout ``Hex.Groebner.MatrixState.State 20 18 #[
-    ("field","s8@0"),("limits","o0"),("columns","o1"),("reducers","o2"),
-    ("targets","o3"),("sugars","o4"),("independent","s1@16"),("phase","s1@17"),
-    ("validation","o5"),("input","o6"),("dense","o7"),("slots","o8"),
-    ("pivots","o9"),("nativePivots","o10"),("remainders","o11"),("rank","o12"),
-    ("scan","o13"),("gather","o14"),("leading","o15"),("sugar","o16"),
-    ("inverse","s8@8"),("stats","o17"),("result","o18"),("quanta","o19")]
   checkLayout ``Hex.Groebner.Pivot 3 9 #[
     ("row","o0"),("fromTarget","s1@8"),("derivation","o1"),
     ("multiplier","s8@0"),("sugar","o2")]
@@ -107,12 +100,25 @@ run_meta do
     ("columns","o0"),("coefficients","o1"),("sugar","o2")]
   checkLayout ``Hex.Groebner.Native.Gather.State 4 0 #[
     ("dense","o0"),("columns","o1"),("coefficients","o2"),("cursor","o3")]
+  checkLayout ``Hex.Groebner.MatrixState.State 21 18 #[
+    ("field","s8@0"),("limits","o0"),("columns","o1"),("reducers","o2"),
+    ("targets","o3"),("sugars","o4"),("independent","s1@16"),("phase","s1@17"),
+    ("validation","o5"),("input","o6"),("dense","o7"),("slots","o8"),
+    ("pivots","o9"),("nativePivots","o10"),("remainders","o11"),("rank","o12"),
+    ("scan","o13"),("gather","o14"),("leading","o15"),("sugar","o16"),
+    ("inverse","s8@8"),("stats","o17"),("result","o18"),("quanta","o19"),
+    ("densePivots","o20")]
+  checkLayout ``Hex.Groebner.Native.Dense.Row 2 8 #[
+    ("source","o0"),("dense","o1"),("first","s4@0"),("size","s4@4"),("lawful","erased")]
+  checkLayout ``Hex.Groebner.Native.Dense.Result 3 0 #[
+    ("row","o0"),("work","o1"),("packedBytes","o2"),("source_eq","erased"),
+    ("work_le","erased"),("bytes_le","erased")]
   checkLayout ``Hex.Groebner.MatrixStats 8 0 #[
     ("work","o0"),("inputEntries","o1"),("outputEntries","o2"),("packedBytes","o3"),
     ("traceNodes","o4"),("processedRows","o5"),("reductions","o6"),("zeroRows","o7")]
-  checkLayout ``Hex.Groebner.MatrixLimits 7 0 #[
+  checkLayout ``Hex.Groebner.MatrixLimits 7 1 #[
     ("columns","o0"),("rows","o1"),("inputEntries","o2"),("outputEntries","o3"),
-    ("packedBytes","o4"),("work","o5"),("traceNodes","o6")]
+    ("packedBytes","o4"),("work","o5"),("traceNodes","o6"),("densePivots","s1@0")]
 
 -- A same-kind field permutation must be rejected by name, even when the
 -- total object count and every scalar offset remain unchanged.

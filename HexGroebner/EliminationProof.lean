@@ -262,7 +262,12 @@ private theorem eliminate_spec (field : PrimeField) (limits : MatrixLimits) (col
                                     simp_all [installedInput,install_run,MatrixState.State.identity,
                                       MatrixState.State.geometry,MatrixState.isTarget,MatrixState.start]
                                   all_goals simp_all [Nat.not_le.mpr hquick.1]
-                                  all_goals rfl
+                                  all_goals simp_all +zetaDelta [Matrix.cacheStats]
+                                  all_goals
+                                    have hcur := cursor.1
+                                    subst columns
+                                    subst cur
+                                    constructor <;> rfl
                         case vc4.mk.ok.unit.isFalse.isFalse =>
                           rename_i hnonzero hscan
                           subst field
@@ -451,7 +456,8 @@ private theorem eliminate_spec (field : PrimeField) (limits : MatrixLimits) (col
                                                       current,scanState,scanning,preparedScan,
                                                       MatrixState.State.identity,MatrixState.State.geometry,
                                                       MatrixState.isTarget,MatrixState.start]
-                                                  all_goals grind
+                                                  all_goals simp_all +zetaDelta [Matrix.cacheStats]
+                                                  all_goals first | rfl | grind
 
 namespace Elimination
 

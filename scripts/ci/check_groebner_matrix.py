@@ -391,7 +391,7 @@ static uint64_t cont_declined_mask=0,cont_edge_mask=0,cont_allocated_mask=0;
 #define HEX_GROEBNER_CONT_ALLOCATE(w) (cont_allocated_mask|=UINT64_C(1)<<(w))
 
 static uint64_t cont_count=0,cont_factor=0,cont_ticks=0,cont_max_ticks=0,cont_max_units=0,cont_violations=0;
-#define HEX_GROEBNER_CONT_BEGIN(c,r,n) do {cont_count=(n);cont_factor=8*(c)+2*(r)+4224;cont_ticks=0;} while(0)
+#define HEX_GROEBNER_CONT_BEGIN(c,r,n,o) do {cont_count=(n);cont_factor=8*(c)+((o)==65536?3:2)*(r)+(o);cont_ticks=0;} while(0)
 #define HEX_GROEBNER_CONT_TICK() (++cont_ticks)
 #define HEX_GROEBNER_CONT_END() do { \
  uint64_t units=cont_ticks*cont_factor; \
@@ -736,6 +736,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 import HexGroebner.SampledConformance
 import HexGroebner.DenseConformance
+import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
 @[extern "hex_test_copy_bytes"] opaque copyBytes (input : @& ByteArray) : IO ByteArray
@@ -796,7 +797,9 @@ def main : IO Unit := do
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
   let beforeDense ← denseCounts
-  if !Hex.Groebner.DenseConformance.boundaryChecks primitiveSeed ||
+  if !Hex.Groebner.DenseMatrixConformance.checks primitiveSeed ||
+      !Hex.Groebner.DenseConformance.largeChecks primitiveSeed ||
+      !Hex.Groebner.DenseConformance.boundaryChecks primitiveSeed ||
       !Hex.Groebner.DenseConformance.scanChecks primitiveSeed then
     throw (IO.userError "dense pivot scan prefix mismatch")
   let mut denseColumns : ByteArray := {}
@@ -827,6 +830,14 @@ def main : IO Unit := do
       afterDense.2.2 ≤ beforeDense.2.2 then
     throw (IO.userError "dense pivot native materialization/update was not exercised")
   IO.println s!"dense pivot calls: {afterDense}"
+  let beforeDenseF4 ← denseCounts
+  if !Hex.Groebner.DenseMatrixConformance.fullChecks primitiveSeed then
+    throw (IO.userError "complete dense/sparse F4 basis differs")
+  let afterDenseF4 ← denseCounts
+  if afterDenseF4.2.2 ≤ beforeDenseF4.2.2 then
+    throw (IO.userError "complete F4 did not exercise dense pivot updates")
+  IO.println s!"dense full-F4 updates: {afterDenseF4.2.2-beforeDenseF4.2.2}"
+
 
   let beforePortableScan ← counts
   let beforePortableWhole ← wholeCounts

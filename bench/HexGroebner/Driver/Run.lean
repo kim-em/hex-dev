@@ -14,7 +14,7 @@ open Lean
 
 namespace Hex.Groebner.Driver
 
-private def usage := "hexgroebner_compute [--scheduling degree|sugar] [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] [--basis N] [--variables N] input.json"
+private def usage := "hexgroebner_compute [--scheduling degree|sugar] [--dense-pivots true|false] [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] [--basis N] [--variables N] input.json"
 
 private def options : List String → Limits → Except String (String × Limits)
   | [filename], limits =>
@@ -25,6 +25,12 @@ private def options : List String → Limits → Except String (String × Limits
       | "sugar" => pure Scheduling.sugar
       | _ => throw s!"unknown scheduling strategy {value}; {usage}"
     options rest { limits with scheduling }
+  | "--dense-pivots"::value::rest, limits => do
+    let enabled ← match value with
+      | "true" => pure true
+      | "false" => pure false
+      | _ => throw "--dense-pivots expects true or false"
+    options rest { limits with densePivots := enabled }
   | key::value::rest, limits => do
     if !key.startsWith "--" then throw s!"options must precede the input filename; {usage}"
     let some amount := value.toNat? | throw s!"{key}: expected a natural number"

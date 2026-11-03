@@ -154,6 +154,9 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           | some n => record limits provenance trace (.scale n inv)
           | none => pure (trace, none)
         trace := nextTrace
+        let stats ← get
+        let prepared := Matrix.preparePivot field limits columns ⟨output.columns,output.coefficients,sugar⟩ stats
+        modify fun s => Matrix.cacheStats s prepared.work prepared.packedBytes
         slots := Packed.set .u32 slots first (pivots.size + 1).toUInt64
         pivots := pivots.push ⟨output, false, nextNode, inv, sugar⟩
         if native then nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
@@ -236,6 +239,9 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           if independent && fromTarget then
             remainders := remainders.push ⟨output, nextNode, sugar⟩
           else
+            let stats ← get
+            let prepared := Matrix.preparePivot field limits columns ⟨output.columns,output.coefficients,sugar⟩ stats
+            modify fun s => Matrix.cacheStats s prepared.work prepared.packedBytes
             slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
             pivots := pivots.push ⟨output, fromTarget, nextNode, inv, sugar⟩
             if native then nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
@@ -308,7 +314,7 @@ inputs and reference failures retain the ordinary matrix boundary. -/
 def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
     Option Result :=
-  if !(fits field limits columns reducers targets sugars) then none else
+  if limits.densePivots || !(fits field limits columns reducers targets sugars) then none else
     let result := reference field limits columns reducers targets sugars independent
     if result.result.isOk && result.stats.work ≤ 2^20 then some result else none
 

@@ -33,6 +33,8 @@ def main():
     parser.add_argument("--block-rows", type=int, default=32)
     parser.add_argument("--zero-tests", type=int, default=3)
     parser.add_argument("--hex-scheduling", choices=["degree", "sugar"])
+    parser.add_argument("--hex-dense-pivots", choices=["true", "false"])
+    parser.add_argument("--baseline-dense-pivots", choices=["true", "false"])
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--baseline-sampled", action="store_true")
@@ -58,6 +60,10 @@ def main():
         parser.error("--baseline and --baseline-manifest are required together")
     if args.baseline_scheduling and not args.baseline:
         parser.error("--baseline-scheduling requires --baseline")
+    if args.baseline_dense_pivots is not None and not args.baseline:
+        parser.error("--baseline-dense-pivots requires --baseline")
+    if args.sampled and (args.hex_dense_pivots is not None or args.baseline_dense_pivots is not None):
+        parser.error("dense pivot controls require the deterministic driver")
     if args.msolve and not args.msolve_source:
         parser.error("--msolve requires --msolve-source for provenance")
     if not args.time:
@@ -171,6 +177,10 @@ def main():
         else args.hex_scheduling,
         "B": None if mode else args.hex_scheduling,
     }
+    dense_pivots = {
+        "A": args.hex_dense_pivots if mode or not args.baseline else args.baseline_dense_pivots,
+        "B": None if mode else args.hex_dense_pivots,
+    }
     if mode:
         library_path = str(args.msolve_source.resolve() / "src/neogb/.libs")
         inherited = environments["B"].get("LD_LIBRARY_PATH", "")
@@ -182,6 +192,7 @@ def main():
         "cpu": cpu,
         "threads": 1,
         "requested_scheduling": scheduling,
+        "requested_dense_pivots": dense_pivots,
         "host": os.uname().nodename,
         "load_start": os.getloadavg(),
         "suite_sha256": sha(args.suite),
@@ -249,7 +260,7 @@ def main():
     }
     if args.baseline:
         m["contract"] = (
-            "Full unchecked reduced candidates from two separately frozen source snapshots; algorithm statistics and explicit degree/sugar scheduling may differ, but complete reduced bases and all other field/order/batch/random-state metadata must agree. Requested and returned scheduling are retained for each arm; older baselines without that field use their archived source's default. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
+            "Full unchecked reduced candidates with recorded frozen source manifests and explicit controls; algorithm statistics, dense-pivot admission and degree/sugar scheduling may differ, but complete reduced bases and all other field/order/batch/random-state metadata must agree. Requested dense-pivot controls and requested/returned scheduling are retained for each arm; older baselines without that field use their archived source's default. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
         )
     if args.sampled:
         m["contract"] = ("Full unchecked reduced candidates, with explicit sampled F4 using SplitMix64 full-field rejection draws and total-zero stopping, without a probability bound. The --baseline arm uses the recorded deterministic or sampled producer; --reference compares two initializers of the same sampled driver; an msolve arm retains its recorded mode. Random-state and sampling metadata are checked against each producer's controls. Complete mathematical bases and common field/order/batch metadata must agree outside timing. Candidate timing includes canonicalization, F4 and interreduction. Process timing also includes initialization, parsing, full output and identical GNU-time wrappers. Certificate generation, independent certification and kernel checking are excluded; no checked-computation speedup is claimed. One algorithm thread, matched resource caps, adjacent AB then BA, all completed samples retained.")
@@ -323,6 +334,7 @@ def main():
                                 if scheduling[arm]
                                 else []
                             ),
+                            *(["--dense-pivots",dense_pivots[arm]] if dense_pivots[arm] is not None else []),
                             str(root / (case["name"] + ".json")),
                         ]
                     )

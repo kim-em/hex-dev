@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Packed
-public import HexGroebner.Native
+public import HexGroebner.NativeDense
 
 @[expose] public section
 
@@ -47,7 +47,8 @@ inductive MatrixError where
 
 /-- Bounds for one matrix call. All sizes use `Nat` arithmetic, so size products
 are checked before narrowing or allocation. There is no unbounded fallback.
-Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`. -/
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`:
+seven object fields followed by the densePivots Bool. -/
 structure MatrixLimits where
   columns : Nat := 1000000
   rows : Nat := 100000
@@ -56,6 +57,8 @@ structure MatrixLimits where
   packedBytes : Nat := 256 * 1024 * 1024
   work : Nat := 100000000
   traceNodes : Nat := 1000000
+  /-- Optional checked M31 dense pivot buffers, charged to these same bounds. -/
+  densePivots : Bool := false
   deriving Inhabited
 
 /-- Charged work is retained on failure as well as success.
@@ -166,6 +169,25 @@ def work (limits : MatrixLimits) (amount : Nat) : Work Unit :=
 def packedBytes (limits : MatrixLimits) (amount : Nat) : Work Unit :=
   charge .packedBytes amount limits.packedBytes (·.packedBytes)
     fun s n => { s with packedBytes := n }
+
+/-- Optional pivot materialization reserves all of its preparation and payload
+within the caller's remaining bounds. Refusal leaves sparse execution available. -/
+@[inline] def preparePivot (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (source : Native.Scan.Pivot) (stats : MatrixStats) :
+    Native.Dense.Result field.modulus columns source
+      (limits.work-stats.work) (limits.packedBytes-stats.packedBytes) :=
+  let raw := Native.Dense.Row.raw field.modulus columns source
+  if !limits.densePivots then ⟨raw,0,0,rfl,Nat.zero_le _,Nat.zero_le _⟩ else
+    let n := source.columns.size/4
+    let span := Native.read source.columns 4 (4*(n-1))-Native.read source.columns 4 0+1
+    if columns ≤ 65536 && n < span && 3*span ≤ 4*n then
+      Native.Dense.prepare field.modulus columns source
+        (limits.work-stats.work) (limits.packedBytes-stats.packedBytes)
+    else ⟨raw,0,0,rfl,Nat.zero_le _,Nat.zero_le _⟩
+
+/-- Shared exact preparation counters for the reference and continuation. -/
+@[inline] def cacheStats (stats : MatrixStats) (work bytes : Nat) : MatrixStats :=
+  { stats with work := stats.work+work,packedBytes := stats.packedBytes+bytes }
 
 def validate (field : PrimeField) (limits : MatrixLimits)
     (columns index : Nat) (row : SparseRow) : Work Unit := do
