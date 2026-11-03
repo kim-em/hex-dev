@@ -311,7 +311,9 @@ available and exact word remainder otherwise. One- and two-byte residues use a
 On x86 with runtime AVX2 support, odd moduli use eight exact products at a time.
 Sixteen-lane dispatch is opt-in: run
 `lake -R -KhexGroebnerAVX512=true build` to enable it, and `lake -R build`
-to restore the default. With that option, AVX-512F/DQ/BW/VL and the corresponding
+to restore the default. Lake retains these settings for later plain builds;
+reconfiguration resets other `-K` settings too, so supply any you need again.
+With that option, AVX-512F/DQ/BW/VL and the corresponding
 OS register state available, the ordinary sparse scan first attempts sixteen exact products. Refused packets
 continue through the eight-lane and scalar paths in order. The optional dense
 pivot cache retains its existing AVX2 path.
@@ -342,7 +344,7 @@ unevaluated; the default remains AVX2 or scalar.
 
 `scripts/ci/check_groebner_rows.sh` runs the standalone native tests and the
 compiled matrix harness. `scripts/ci/check_groebner_matrix.py` compares all six
-automatic/forced-AVX2/scalar and Barrett/remainder build combinations with the portable model,
+opt-in/forced-AVX2/scalar and Barrett/remainder build combinations with the portable model,
 including valid strided vectors and even moduli. Native call counters ensure
 that the linked test implementations actually run; successful contiguous and
 strided SIMD calls are counted separately at each of the three coefficient

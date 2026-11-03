@@ -5,6 +5,7 @@ import hashlib
 import math
 from pathlib import Path
 import sys
+import signal
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -87,7 +88,7 @@ def guards(capsule, measured, current):
             blob=capsule.read(prefix+'-sources/'+path)
             require(hashlib.sha1(b'blob '+str(len(blob)).encode()+b'\0'+blob).hexdigest()==oid, 'guard source differs')
     a,b=listing(measured['source_manifest']),listing(capsule.text('runtime.manifest'))
-    require(set(a)==set(b) and {p for p in a if a[p]!=b[p]} in [set(),{'HexGroebner/ffi/matrix_avx512_selftest.c'}], 'measured production sources changed')
+    require(set(a)==set(b) and {p for p in a if a[p]!=b[p]}==set(), 'measured production sources changed')
     native,full=capsule.json('native-status.json'),capsule.json('full-status.json')
     require(len(native)==2 and len(full)==9 and {n['name'] for n in native}=={'clang','gcc'}, 'guard coverage differs')
     for row in native+full:
@@ -96,35 +97,42 @@ def guards(capsule, measured, current):
     require(all(set(row['variants'])==expected and set(row['sanitize'])=={'address','undefined'} for row in native), 'native variants differ')
 
 
-def usage(capsule, prototype, metadata):
-    records=capsule.json(prototype+'/usage/metadata.json')
+def usage(capsule, prototype, metadata, audit=None):
     cases=sorted({sample['case'] for sample in metadata['samples']})
-    compilers=['clang','gcc'] if 'compiler' in records[0] else ['']
-    require(sorted((record['case'],record.get('compiler','')) for record in records)==
-            [(case,cc) for case in cases for cc in compilers], 'usage coverage differs')
     counts=[];indexed={}
-    for record in records:
-        case=record['case'];cc=record.get('compiler','')
-        prefix=prototype+'/usage/'+(cc+'/' if cc else '')+case
-        require(record['exit_code']==0, 'usage run failed')
-        require(record['input_sha256']==metadata['input_sha256'][case+'.json'], 'usage input differs')
-        actual=capsule.json(prefix+'.stdout');expected=capsule.json(prototype+'/f4/'+case+'-b0-B.stdout')
-        actual.pop('candidateNanos');expected.pop('candidateNanos')
-        require(actual==expected, 'untimed usage output differs')
-        counters=capsule.json(prefix+'.stderr')
-        require(counters==record['counters'], 'usage counters differ')
-        count=int(counters['avx512Packets']);require(count>0, 'F4 input missed AVX-512')
-        counts.append(count);indexed[case,cc]=counters
-    if len(compilers)==2:
-        require(all(indexed[case,'clang']==indexed[case,'gcc'] for case in cases),'compiler packet counts differ')
+    if audit is None:
+        records=capsule.json(prototype+'/usage/metadata.json')
+        require([row['case'] for row in records]==cases,'historical usage coverage differs')
+        for row in records:
+            prefix=prototype+'/usage/'+row['case']
+            output=capsule.json(prefix+'.stdout');expected=capsule.json(prototype+'/f4/'+row['case']+'-b0-B.stdout')
+            output.pop('candidateNanos');expected.pop('candidateNanos')
+            require(row['exit_code']==0 and output==expected,'historical usage output differs')
+            counters=capsule.json(prefix+'.stderr');require(counters==row['counters'],'historical counters differ')
+            counts.append(int(counters['avx512Packets']))
+    else:
+        for case in cases:
+            require(hashlib.sha256(audit.read('usage-inputs/'+case+'.json')).hexdigest()==metadata['input_sha256'][case+'.json'],'raw usage input differs')
+            for cc in ['clang','gcc']:
+                prefix=f'probes/{cc}/usage-results/{case}-false'
+                command=capsule.json(prefix+'.command.json')
+                require(command[command.index('--dense-pivots')+1]=='false' and
+                        command[command.index('--scheduling')+1]=='degree' and Path(command[-1]).name==case+'.json','usage controls differ')
+                actual=capsule.json(prefix+'.stdout');expected=capsule.json(prototype+'/f4/'+case+'-b0-B.stdout')
+                actual.pop('candidateNanos');expected.pop('candidateNanos')
+                require(actual==expected,'raw generated usage output differs')
+                counters=capsule.json(prefix+'.stderr');indexed[case,cc]=counters
+                counts.append(int(counters['avx512Packets']))
+        require(all(indexed[case,'clang']==indexed[case,'gcc'] for case in cases),'compiler counters differ')
+    require(all(value>0 for value in counts),'usage missed AVX-512')
     return min(counts),max(counts)
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    for key in ['archive','review','report']:p.add_argument('--'+key,type=Path,required=True)
+    for key in ['archive','review','audit','report']:p.add_argument('--'+key,type=Path,required=True)
     p.add_argument('--current',action='store_true');p.add_argument('--check',action='store_true')
-    args=p.parse_args();initial,review=Capsule(args.archive),Capsule(args.review)
+    args=p.parse_args();initial,review,audit=Capsule(args.archive),Capsule(args.review),Capsule(args.audit)
     shapes=[('u16-dense','cauchy16',[64,128,256,512]),('u16-strided','cauchy16Strided',[64,128,256,512]),
             ('m31-dense','cauchy31',[64,128,256,512]),('m31-strided','cauchy31Strided',[64,128,256,512])]
     data=[]
@@ -148,14 +156,25 @@ def main():
         log=review.text(compiler+'.log')
         require(log.count('available=true; width/layout bits=63')==2 and
                 log.count('available=false; width/layout bits=0')==4,'dispatch coverage differs')
-    mutations=review.json('mutations/status.json')
-    require(len(mutations)==6 and all(row['exit_code']!=0 for row in mutations),'boundary mutation escaped')
+    records=audit.json('mutations/status.json')
+    require(len(records)==7 and records[0]['name']=='control' and records[0]['compile_exit_code']==records[0]['run_exit_code']==0,'mutation control failed')
+    mutations=records[1:]
+    require(all(row['compile_exit_code']==0 and row['run_exit_code']==-signal.SIGABRT for row in mutations),'mutation did not reach expected assertion')
     header=review.text('runtime-sources/HexGroebner/ffi/matrix_avx512.h')
     test=review.read('runtime-sources/HexGroebner/ffi/matrix_avx512_selftest.c')
     for row in mutations:
         require(row['source_header_sha256']==hashlib.sha256(header.encode()).hexdigest() and
                 row['test_sha256']==hashlib.sha256(test).hexdigest(),'mutation source differs')
-        require(review.text('mutations/'+row['name']+'/matrix_avx512.h')==header.replace(row['old'],row['new']), 'mutant transformation differs')
+        require(header.count(row['old'])==1 and row['new']!=row['old'],'mutation is not one exact change')
+        require(audit.text('mutations/'+row['name']+'/matrix_avx512.h')==header.replace(row['old'],row['new']), 'mutant transformation differs')
+        error=audit.text('mutations/'+row['name']+'/stderr')
+        require(all(part in error for part in ['Assertion','hex_scan16_mode',row['expected_assertion'],'failed']),'expected assertion text missing')
+    if args.current:audit.bind(ROOT/'scripts/bench/groebner_avx512_mutants.py','mutations/collector.py')
+    effective=audit.json('effective-build-config.json')
+    require(effective['options']=={} and effective['binary_sha256']==default['binary_sha256'],'full gates did not use default configuration')
+    sanitizers=audit.json('sanitizer-compilers.json')
+    for row in review.json('native-status.json'):
+        require(sanitizers[row['name']]['command']==row['compiler'],'sanitizer compiler differs')
     cache=review.json('cache-status.json')
     require([row['label'] for row in cache]==['unchanged','header-change','restored'] and
             cache[0]['mtime_before']==cache[0]['mtime_after'] and
@@ -170,6 +189,12 @@ def main():
     for label,record in review.json('avx512-optin/historical-binary-compilers.json').items():
         require(record['binary_sha256']==source(initial,label)['binary_sha256']['compute'] and
                 'clang version 21.1.8' in record['comments'] and 'clang version 23.1.0' in record['comments'],'historical ELF compiler record differs')
+    old_identity=initial.json('identity.json')
+    guards(initial,{'source_manifest':initial.text('runtime.manifest')},old_identity)
+    old_a,old_b=listing(source(initial,'avx512-prototype')['source_manifest']),listing(initial.text('runtime.manifest'))
+    require(set(old_a)==set(old_b) and {p for p in old_a if old_a[p]!=old_b[p]}=={'HexGroebner/ffi/matrix_avx512_selftest.c'},'historical source bridge differs')
+    require(initial.json('diagnostics/initial-harness/avx512-prototype-native-status.json')[0]['exit_code']!=0 and
+            'maximum recursion depth' in initial.text('diagnostics/initial-harness/avx512-prototype-clang.log'),'historical diagnostic differs')
     cpu=next(line.split(':',1)[1].strip() for line in review.text('avx512-optin/hardware.txt').splitlines() if line.startswith('Model name:'))
     versions={kind:value['version'].splitlines()[0] for kind,value in enabled['compilers'].items()}
     lines=['# Exact AVX-512 F4 row packets','',
@@ -180,7 +205,7 @@ def main():
            'The optional dense-pivot cache retains its AVX2 path.','',
            f"Host `{data[-1][4]['host']}` ({cpu}); one algorithm thread, automatically leased CPUs recorded per campaign. "
            f"Toolchain `{enabled['toolchain']}`. Native C: {versions['native']}; Lean-generated C: {versions['lean']}. "
-           'Sanitizer checks separately use Clang 23.1.3 and GCC 16.2.0. The original ELF compiler records also contain native Clang 21.1.8 and SDK Clang 23.1.0; '
+           f"Sanitizer compilers: {sanitizers['clang']['version'].splitlines()[0]}; {sanitizers['gcc']['version'].splitlines()[0]}. The original ELF compiler records also contain native Clang 21.1.8 and SDK Clang 23.1.0; "
            'the sanitizer compiler version must not be treated as the production compiler.','',
            '## Retained kernel measurements','',
            'Preparation is excluded; validation, allocation, elimination, decoding and complete-output hashing are included. '
@@ -213,19 +238,20 @@ def main():
               'Clang and GCC each pass ASan/UBSan for opt-in AVX-512, forced AVX2 and scalar dispatch, with and without wide-integer reduction: twelve variants. '
               'The nine project gates cover the executable/theory build, independent oracles, drivers, benchmark verification, dependency/phase/manifest checks and source checks. '
               'The expanded standalone test exhausts one-byte arithmetic and checks deterministic factors, random odd moduli, all sixteen invalid lanes, exact gather-padding boundaries, out-of-range columns, cross-packet ordering and mode admission. '
-              'Six deliberately broken guards each fail that test. The compiled harness checks all six sixteen-lane width/layout paths and full F4 execution. '
+              'Six deliberately broken guards each compile successfully and abort at the expected test assertion. The compiled harness checks all six sixteen-lane width/layout paths and full F4 execution. '
               '`HEX_GROEBNER_REQUIRE_AVX512=1` requires hardware coverage in manual runs; hosted CI does not promise that ISA.','']
     for title,c,a,b,_,_,runs in data:
-        lo,hi=usage(c,b,runs[0][1]);lines.append(f"{title}: baseline `{source(c,a)['source_fingerprint']}`, candidate `{source(c,b)['source_fingerprint']}`; instrumented sweep replays record {lo}–{hi} sixteen-lane packets per input and equal non-time output.")
+        lo,hi=usage(c,b,runs[0][1],audit if c is review else None);lines.append(f"{title}: baseline `{source(c,a)['source_fingerprint']}`, candidate `{source(c,b)['source_fingerprint']}`; instrumented sweep replays record {lo}–{hi} sixteen-lane packets per input and equal non-time output.")
         lines.append('')
     lines += [f"Verified runtime `{current['source_fingerprint']}`, checks `{current['checks_fingerprint']}`. "
-              'The revised packet-count driver is generated by committed code and replayed under both compilers. '
+              'The report reads the committed harness’s raw `usage-results/*-false` outputs directly, with the dense setting and exact input hashes checked. Both compiler replays agree. '
               'Both the production object and retained probe objects track the new header; an unchanged probe is cached, a header edit rebuilds it, and restoring the header rebuilds the identical original object. '
               'Capsules include exact source blobs, native build options, external compiler inputs, raw samples, RSS and verification logs. '
-              'The original capsule retains the failed recursion-depth build under diagnostics; its test driver was split into a smaller helper.','',
+              'Measurement, cache and other collection scripts are retained inside the capsules with recorded host paths; replay requires adapting those paths. The mutation collector is also committed in `scripts/bench/groebner_avx512_mutants.py`. The original capsule retains the failed recursion-depth build under diagnostics.','',
               f'Original capsule: `{args.archive.name}`, SHA-256 `{initial.sha256}`.',
-              f'Revised capsule: `{args.review.name}`, SHA-256 `{review.sha256}`.','',
-              f'Regenerate with `python3 scripts/bench/groebner_avx512_report.py --archive {args.archive} --review {args.review} --report {args.report} --check --current`.', '']
+              f'Revised capsule: `{args.review.name}`, SHA-256 `{review.sha256}`.',
+              f'Audit capsule: `{args.audit.name}`, SHA-256 `{audit.sha256}`.','',
+              f'Regenerate with `python3 scripts/bench/groebner_avx512_report.py --archive {args.archive} --review {args.review} --audit {args.audit} --report {args.report} --check --current`.', '']
     text='\n'.join(lines)
     if args.check:require(args.report.read_text()==text,'report is stale')
     else:args.report.write_text(text)
