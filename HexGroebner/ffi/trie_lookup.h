@@ -18,9 +18,9 @@ static inline uint64_t trie_read(const uint8_t *p,unsigned width) {
 static uint8_t trie_valid(uint64_t arity,const uint8_t *nodes,size_t node_bytes,
         const uint8_t *edges,size_t edge_bytes,uint64_t max_leading) {
     uint64_t n=node_bytes/24,e=edge_bytes/8;
-    if(arity>4096 || node_bytes%24 || !n || n>2048 || edge_bytes%8 || e+1!=n ||
+    if(arity>4096 || node_bytes%24 || !n || n>16384 || edge_bytes%8 || e+1!=n ||
        max_leading>UINT32_MAX || trie_read(nodes,4)!=0) return 0;
-    uint8_t parents[2048]={0};
+    uint8_t parents[16384]={0};
     uint64_t cursor=0;
     for(uint64_t i=0;i<n;++i) {
         const uint8_t *record=nodes+i*24;
@@ -52,7 +52,8 @@ struct trie_result {uint32_t key;uint64_t work;uint8_t status;};
 static inline struct trie_result trie_decline(void) {return (struct trie_result){0,0,3};}
 
 /* A View carries the portable tree-validation proof. Each nonroot has one
-   parent, depths increase, and there are at most 2048 nodes and 2047 edges.
+   parent, depths increase, and there are at most 16384 nodes and 16383 edges. Validation is bounded separately
+   from the 4096-unit query quantum.
    The fixed stack and work/edge guards additionally bound malformed raw probes.
    No storage is modified and no pointer outlives the call. */
 static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsigned w,
@@ -61,10 +62,10 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
         const uint8_t *nodes,size_t node_bytes,const uint8_t *edges,size_t edge_bytes,
         uint64_t remaining) {
     uint64_t n=node_bytes/24;
-    if(arity>4096 || (w!=1 && w!=2 && w!=4) || !n || n>2048 || node_bytes%24 ||
+    if(arity>4096 || (w!=1 && w!=2 && w!=4) || !n || n>16384 || node_bytes%24 ||
        edge_bytes!=(n-1)*8 || count>UINT32_MAX || query>=count || max_leading>=count ||
        arena_bytes!=count*arity*w || metadata_bytes!=count*24) return trie_decline();
-    uint32_t pending[2048],sp=1;
+    uint32_t pending[4096],sp=1;
     pending[0]=0;
     uint32_t best=0,best_priority=0;
     uint64_t work=0,query_degree=trie_read(metadata+query*24,8);
@@ -74,8 +75,8 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
         if(node>=n) return trie_decline();
         const uint8_t *record=nodes+(size_t)node*24;
         uint32_t depth=(uint32_t)trie_read(record,4);
-        if(work+1>remaining) return (struct trie_result){best,work,2};
         if(work>=4096) return trie_decline();
+        if(work+1>remaining) return (struct trie_result){best,work,2};
         ++work;
         uint32_t bound=(uint32_t)trie_read(record+16,4);
         if(best && bound && bound>=best_priority) continue;
@@ -95,15 +96,15 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
         } else {
             uint32_t start=(uint32_t)trie_read(record+4,4),size=(uint32_t)trie_read(record+8,4);
             if(depth>arity || (uint64_t)start+size>edge_bytes/8) return trie_decline();
-            if(work+size>remaining) return (struct trie_result){best,work,2};
             if(size>4096-work) return trie_decline();
+            if(work+size>remaining) return (struct trie_result){best,work,2};
             work+=size;
             uint64_t exponent=trie_read(arena+(query*arity+depth)*w,w);
             for(uint32_t k=0;k<size;++k) {
                 const uint8_t *edge=edges+((uint64_t)start+k)*8;
                 if(trie_read(edge,4)<=exponent) {
                     uint32_t child=(uint32_t)trie_read(edge+4,4);
-                    if(child>=n || sp>=2048) return trie_decline();
+                    if(child>=n || sp>=4096) return trie_decline();
                     pending[sp++]=child;
                 }
             }

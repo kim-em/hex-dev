@@ -24,7 +24,7 @@ one parent; depths increase along edges. -/
 def validPortable (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Bool := Id.run do
   let n := nodes.size/24
   let e := edges.size/8
-  if arity > 4096 || nodes.size%24 != 0 || n == 0 || n > 2048 ||
+  if arity > 4096 || nodes.size%24 != 0 || n == 0 || n > 16384 ||
       edges.size%8 != 0 || e+1 != n || maxLeading.toNat > 4294967295 || word nodes 0 != 0 then return false
   let mut parents := Array.replicate n 0
   let mut cursor := 0
@@ -78,7 +78,9 @@ def check (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Option
 end View
 
 /-- Status 1 is complete, 2 exhausts work, and 3 declines an unsupported query.
-All work is charged before the corresponding visit or edge scan. -/
+All work is charged before the corresponding visit or edge scan. A query that
+would exceed 4096 native work units declines with zero reported work, so the
+caller can execute the portable traversal under its actual parent allowance. -/
 structure Result where
   reducer : Option Nat := none
   work : Nat := 0
@@ -108,6 +110,7 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     if pending.isEmpty then break
     let node := pending.back!
     pending := pending.pop
+    if out.work ≥ 4096 then return { status := 3 }
     if out.work+1 > remaining.toNat then return { out with status := 2 }
     out := { out with work := out.work+1 }
     let bound := word view.nodes (6*node+4)
@@ -125,6 +128,7 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     else
       let start := word view.nodes (6*node+1)
       let count := word view.nodes (6*node+2)
+      if out.work+count > 4096 then return { status := 3 }
       if out.work+count > remaining.toNat then return { out with status := 2 }
       out := { out with work := out.work+count }
       let exponent := Native.read arena w ((query*view.arity+depth)*w)
@@ -134,7 +138,9 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
   return out
 
 /-- Native lookup consumes only the validated tree witness and borrowed arenas.
-Its node/edge visits fit the fixed 4096-unit bound. `arena` has exactly
+The validated tree admits at most 16384 nodes and 16383 edges; validation
+therefore inspects at most 32767 records. Each lookup has a separate fixed
+4096-unit node/edge bound and declines if it needs further work. `arena` has exactly
 `count*arity*width` little-endian exponent bytes; metadata has `count` records of
 24 bytes (u64 degree, support mask and hash). Status 3 declines an unsupported
 query without charging work. Tree leaves and leading identifiers must belong

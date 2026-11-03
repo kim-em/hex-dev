@@ -52,7 +52,7 @@ static void release(struct buffer b) {
     free(b.mapping);
 #endif
 }
-/* A maximum-size root with 2047 leaf children reaches the largest stack and
+/* A 2048-node root with 2047 leaf children reaches the lookup work limit and
    every last byte of all borrowed inputs. The independent answer is the last
    leaf, with the unique least priority. Both edge placements catch
    overreads and underreads; read protection catches writes to borrowed data. */
@@ -104,6 +104,37 @@ static void bush(unsigned width,unsigned end) {
     require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size-1,n-1),"short edge record");
     release(nodes);release(edges);release(arena);release(metadata);
 }
+/* The validator admits larger trees independently of the query quantum.
+   Filtering can finish a large tree; reaching the quantum must decline and
+   report zero work rather than falsely exhaust the caller's larger budget. */
+static void large(unsigned end) {
+    const unsigned n=3001;
+    struct buffer nodes=buffer_new(n*24,end),edges=buffer_new((n-1)*8,end);
+    struct buffer arena=buffer_new(n*4,end),metadata=buffer_new(n*24,end);
+    put(nodes.data+8,4,n-1);
+    for(unsigned i=1;i<n;++i) {
+        uint8_t *record=nodes.data+i*24;
+        put(record,4,1);put(record+4,4,n-1);put(record+12,4,i+1);
+        put(record+16,4,n-i);put(record+20,4,i);
+        put(edges.data+(i-1)*8,4,i-1);put(edges.data+(i-1)*8+4,4,i);
+    }
+    put(arena.data+(n-1)*4,4,n);
+    require(trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,n-1),"large validated view");
+    readonly(&nodes);readonly(&edges);readonly(&arena);readonly(&metadata);
+    for(unsigned i=0;i<2;++i) {
+        uint64_t remaining=i?UINT64_MAX:4096;
+        struct trie_result r=trie_lookup(1,n-1,4,n,n-1,arena.data,arena.size,
+            metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,remaining);
+        require(r.status==3 && !r.key && !r.work,"query quantum declines without exhaustion");
+    }
+    struct trie_result r=trie_lookup(1,n-1,4,n,n-1,arena.data,arena.size,
+        metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,4095);
+    require(r.status==2 && r.work==4095,"large query parent exhaustion");
+    r=trie_lookup(1,n-1,4,n,0,arena.data,arena.size,
+        metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,UINT64_MAX);
+    require(r.status==1 && r.key==2 && r.work==n+1,"filtered large tree completes");
+    release(nodes);release(edges);release(arena);release(metadata);
+}
 static void constant(unsigned end) {
     struct buffer nodes=buffer_new(24,end),edges=buffer_new(0,end);
     struct buffer arena=buffer_new(0,end),metadata=buffer_new(24,end);
@@ -118,7 +149,7 @@ static void constant(unsigned end) {
 /* Removing the node-limit guard from the validator makes the final child
    overrun its fixed parents array; ASan must catch that mutation. */
 static void oversized(unsigned end) {
-    const unsigned n=2049;
+    const unsigned n=16385;
     struct buffer nodes=buffer_new(n*24,end),edges=buffer_new((n-1)*8,end);
     put(nodes.data+8,4,n-1);
     for(unsigned i=1;i<n;++i) {
@@ -128,7 +159,7 @@ static void oversized(unsigned end) {
         put(edges.data+(i-1)*8+4,4,i);
     }
     readonly(&nodes);readonly(&edges);
-    require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,0),"2049-node tree rejected");
+    require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,0),"16385-node tree rejected");
     release(nodes);release(edges);
 }
 /* Two depth-two branches: the first visited leaf has priority one. A
@@ -169,6 +200,7 @@ int main(void) {
     bounded_priority();
     for(unsigned end=0;end<2;++end) {
         constant(end);
+        large(end);
         oversized(end);
         for(unsigned width=1;width<=4;width*=2) bush(width,end);
     }

@@ -31,8 +31,8 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
           let p ← Polynomial.normalize context limits k #[⟨exponents,1⟩]
           basis := basis.push ⟨p,0⟩
         let index ← ReducerIndex.build context limits basis
-        if n ≤ 513 && index.packed.isNone then return false
-        if n > 513 && index.packed.isSome then return false
+        if n ≤ 2047 && index.packed.isNone then return false
+        if n > 4096 && index.packed.isSome then return false
         for k in [:5] do
           let values := (Array.range n).map fun i => (base+(k+2*i+seed)%4).toUInt64
           let monomial ← intern limits values
@@ -53,14 +53,14 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
                 monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 4096).toUInt64
               let b := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64
                 monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 4096).toUInt64
-              if a.status == 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
+              if a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
         return true
       match trial.run ⟨{arity := n},{}⟩ with
       | (.ok true,_) => pure ()
       | _ => return false
   return true
 
-/-- Maximum admitted tree, reaching 4095 charged visits and edge tests. -/
+/-- Largest chain completing within one native query, reaching 4095 work units. -/
 def boundaryChecks : Bool := Id.run do
   let context : Context := ⟨field,2047,.grevlex⟩
   let trial : Computation Bool := do
@@ -111,6 +111,44 @@ def boundaryChecks : Bool := Id.run do
   | (.ok true,_) => return true
   | _ => return false
 
+/-- Large views can finish after exponent filtering or decline their native
+quantum. Declining must preserve exact parent-budget fallback, including a
+parent allowance equal to the native quantum. -/
+def largeChecks : Bool := Id.run do
+  let context : Context := ⟨field,1,.grevlex⟩
+  let trial : Computation Bool := do
+    let mut basis : Array BasisElement := #[]
+    for k in [:2100] do
+      let p ← Polynomial.normalize context limits k #[⟨#[k],1⟩]
+      basis := basis.push ⟨p,0⟩
+    let index ← ReducerIndex.build context limits basis
+    let some view := index.packed | return false
+    if index.nodes.size != 2101 then return false
+    if Native.Trie.valid view.arity view.nodes view.edges view.maxLeading !=
+        Native.Trie.validPortable view.arity view.nodes view.edges view.maxLeading then return false
+    let state ← get
+    for query in [0,2099] do
+      let monomial := basis[query]!.polynomial.monomial 0
+      for allowance in [0,1,2099,2100,2101,2102,4095,4096,4200,4201,100000,2^90] do
+        let raw := Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
+          state.table.exponents state.table.metadata (min allowance 4096).toUInt64
+        let model := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
+          state.table.exponents state.table.metadata (min allowance 4096).toUInt64
+        if raw.reducer != model.reducer || raw.work != model.work || raw.status != model.status then return false
+        if query == 2099 && allowance ≥ 4096 &&
+            (raw.status != 3 || raw.work != 0 || raw.reducer.isSome) then return false
+        if query == 0 && allowance ≥ 2102 &&
+            (raw.status != 1 || raw.work != 2102 || raw.reducer != some 0) then return false
+        let budget := { limits with work := state.statistics.work+allowance }
+        let (expected, work) := ReducerIndex.findPortable context index basis state.table monomial
+          state.statistics.work budget.work
+        let (actual, next) := (index.find context budget basis monomial).run state
+        if !equal actual expected || next.statistics.work != work then return false
+    return true
+  match trial.run ⟨{arity := 1},{}⟩ with
+  | (.ok true,_) => return true
+  | _ => return false
+
 /-- Independent preference cases force a later visited leaf to win by sparsity
 or degree, and distinguish LIFO ties from basis-index order. -/
 def policyChecks : Bool := Id.run do
@@ -147,6 +185,8 @@ def policyChecks : Bool := Id.run do
     | (.ok true,_) => pure ()
     | _ => return false
   return true
+
+#guard largeChecks
 
 #guard policyChecks
 

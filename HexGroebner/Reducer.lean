@@ -70,7 +70,7 @@ private def priorities (table : MonomialTable) (basis : Array BasisElement)
 indices and insufficient preparation allowances retain the ordinary traversal. -/
 private def encode (context : Context) (limits : Limits) (nodes : Array DivisorNode)
     (basis : Array BasisElement) : Computation (Option Native.Trie.View) := do
-  if context.variables > 4096 || nodes.isEmpty || nodes.size > 2048 then return none
+  if context.variables > 4096 || nodes.isEmpty || nodes.size > 16384 then return none
   let edges := nodes.foldl (fun n node => n+node.edges.size/8) 0
   if edges+1 != nodes.size then return none
   let bytes := nodes.size*24+edges*8
