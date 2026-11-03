@@ -116,12 +116,12 @@ def main():
         _, path = rest.split('\t')
         blob = guards.read('checks-sources/'+path)
         require(hashlib.sha1(b'blob '+str(len(blob)).encode()+b'\0'+blob).hexdigest() == oid, 'test source blob mismatch')
-    dirty = subprocess.check_output(['git', 'diff', '--name-only'], cwd=ROOT, text=True).splitlines()
-    dirty += subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], cwd=ROOT, text=True).splitlines()
-    current = (not any(FAMILY.matches(path) or CHECKS.matches(path) for path in dirty) and
-               index_listing(FAMILY) == tree_listing(FAMILY, 'HEAD') == final_listing and
-               index_listing(CHECKS) == tree_listing(CHECKS, 'HEAD') == checks_listing)
     if args.current:
+        dirty = subprocess.check_output(['git', 'diff', '--name-only'], cwd=ROOT, text=True).splitlines()
+        dirty += subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], cwd=ROOT, text=True).splitlines()
+        current = (not any(FAMILY.matches(path) or CHECKS.matches(path) for path in dirty) and
+                   index_listing(FAMILY) == tree_listing(FAMILY, 'HEAD') == final_listing and
+                   index_listing(CHECKS) == tree_listing(CHECKS, 'HEAD') == checks_listing)
         require(current, 'current runtime or test sources differ from the measured/verified snapshot')
     require(latest.json('sampled-final/manifest.json')['source_manifest'] == final_listing, 'measured runtime differs')
     require(all(x['variants'] == ['Native', 'Scalar', 'Remainder', 'ScalarRemainder'] for x in native), 'missing native variant')
@@ -167,7 +167,7 @@ def main():
         key = 'sample' if metadata['sampled'] else 'compute'
         require(metadata['binary_sha256']['B'] == manifests[metadata['source_fingerprint']]['binary_sha256'][key], 'candidate binary is unbound')
     require(results[5][0]['baseline_manifest'] == data.json('sampled-install/manifest.json'), 'install baseline is unexplained')
-    processes = sum(result[1]['samples'] for result in results)
+    processes = sum(len(result[0]['samples']) for result in results)
     pairs = sum(result[1]['complete_bases_equal'] for result in results)
     text = f'''# Sampled F4 and owned phase transitions
 
@@ -210,6 +210,7 @@ repeat; no campaigns are pooled or selected as best runs.
         text += f"| `{name}` | `{metadata['baseline_source_fingerprint']}` → `{metadata['source_fingerprint']}` | {metadata['cpu']} | {analysis['geomean']:.4f} | {candidate:.4f} | {analysis['minimum']:.3f}–{analysis['maximum']:.3f} | {rss['A']}/{rss['B']} |\n"
     text += '\n`3476217e65f8` identifies `sampled-install`, the isolated reducer-install helper and registered-kernel baseline before owned ABI controls. The seven earlier campaigns retain their original sources. The intermediate campaigns use bounded scan ranges, atomic inverse admission, shared F4 stages and retained candidate provenance. The final snapshot also shares inversion execution/counting and strengthens IO ownership observations. Each `deterministic` campaign compares sampler B with deterministic A from the same snapshot. Each `refactor` campaign compares deterministic B with its recorded earlier deterministic A. These are descriptive finite observations, without a statistical-significance threshold or selected best run. CPU values are recorded collection context, not per-process placement attestations.\n'
     final = results[-2][1]
+    require(final['geomean'] > 1, 'sampler regression wording contradicts the observations')
     text += '\nThe final sampler remains slower overall than deterministic F4. Its per-family process ratios are:\n\n'
     text += '| Family | Ratio |\n| --- | ---: |\n'
     for family, ratio in final['per_family'].items():
@@ -240,17 +241,19 @@ The table uses all three completed samples at every size, including samples
 marked below the signal floor. Lean-bench's own summary and verdict exclude
 those marked samples; its verdict is reported separately.
 
-| Known reducers | Historical borrowed ABI (ms) | Historical owned ABI (ms) | Current owned ABI (ms) |
-| ---: | ---: | ---: | ---: |
+| Known reducers | Historical borrowed ABI (ms) | Historical owned ABI (ms) | Intermediate snapshot owned ABI (ms) | Final snapshot owned ABI (ms) |
+| ---: | ---: | ---: | ---: | ---: |
 '''
+    kernel_intermediate = reviewed.json('sampled-reviewed/kernels/result.json')['results'][0]
     kernel_latest = latest.json('sampled-final/kernels/result.json')['results'][0]
     for n in ladder:
         medians = [statistics.median(p['per_call_nanos'] for p in k['points'] if p['param'] == n)/1e6
-                   for k in [before, after, kernel_latest]]
-        text += f"| {n} | {medians[0]:.4f} | {medians[1]:.4f} | {medians[2]:.4f} |\n"
+                   for k in [before, after, kernel_intermediate, kernel_latest]]
+        text += f"| {n} | {medians[0]:.4f} | {medians[1]:.4f} | {medians[2]:.4f} | {medians[3]:.4f} |\n"
     text += f"\nLean-bench reports `{before['verdict']}` before and `{after['verdict']}` after. The normalized log slopes are {before['slope']:.6f} and {after['slope']:.6f}.\n"
     flagged = sum(p['below_signal_floor'] for p in kernel_latest['points'])
     text += f"\nThe final snapshot kernel reports `{kernel_latest['verdict']}` with normalized slope {kernel_latest['slope']:.6f}; {flagged} of its 21 completed samples are marked below the signal floor and excluded by that engine verdict. All 21 remain in the table medians and raw evidence.\n"
+    text += '\nThe install phase source is unchanged between the intermediate and final snapshots. Their roughly 20% timing difference is an observation across separate shared-host collections, not an isolated code-change effect; no causal attribution follows from these runs.\n'
     old = data.json('owners/results.json')['rows']
     new = data.json('owners/owned-results.json')
     require(len(old) == len(new) == 6 and [v['n'] for v in old] == [128, 512, 1024, 2048, 4096, 8192], 'incomplete ownership diagnostic')
@@ -282,7 +285,8 @@ composition checks. Fresh known-reducer and generated-target pivot arrays copy
 zero existing elements; these counters do not measure every ByteArray copy.
 Effectful byte copies observe retained combine, scan, inverse and gather buffers
 before and after transitions whose quantum depends on a later IO read. Fresh
-complete F4 production also copies zero existing pivot-array elements. Parent-budget tests
+complete F4 calls expose zero existing shared elements during counted pivot pushes.
+The interposer does not count array updates or pushes to the separate row array. Parent-budget tests
 cover every resource plus ten interruptions in matrix and atomic F4 stages.
 Both driver initializers agree on the corpus and continue cooperative suspensions. The full project
 checks cover independent oracles, kernel replay/axiom audit, bench verification,
@@ -293,18 +297,21 @@ source blobs and recorded check fingerprints. Optional `--current` also requires
 HEAD and working runtime/test sources to match those snapshots. Plain `--check`
 regenerates historical evidence after later implementation changes. Branch source
 commits need not remain ancestors after squash merges; archived blobs are the
-authoritative binding.
+authoritative binding. Verification collection is manual: the verification
+archive includes `full-checks.py`, `native-checks.py` and its packing script, with
+the exact commands and source-identity checks. Their host paths require adaptation
+on another machine. The committed `source_identity` helper is used by those archived collectors.
 '''
     text += f"\nRaw evidence: `{args.archive.name}`, SHA-256 `{data.sha256}`, {data.count} payloads plus manifest. Intermediate measurements: `{args.reviewed.name}`, SHA-256 `{reviewed.sha256}`, {reviewed.count} payloads plus manifest. Final measurements: `{args.latest.name}`, SHA-256 `{latest.sha256}`, {latest.count} payloads plus manifest. Deterministic baseline: `{args.baseline_archive.name}`, SHA-256 `{baseline.sha256}`. Verification: `{args.guards.name}`, SHA-256 `{guards.sha256}`, {guards.count} payloads plus manifest.\n"
     text += f"\nRegenerate with `python3 scripts/bench/groebner_sampling_report.py --archive {args.archive.as_posix()} --baseline-archive {args.baseline_archive.as_posix()} --reviewed {args.reviewed.as_posix()} --latest {args.latest.as_posix()} --guards {args.guards.as_posix()} --report {args.report.as_posix()} --check`. Every consumed payload is verified against its capsule manifest; ratios, complete outputs and runtime source blobs are independently recomputed or checked. For strict identity with the checked-out runtime and tests, add `--current`.\n"
-    text += '\nThe earlier verification-only capsule [f4-sampling-checks-1fbc86e53a.tar.xz](raw/f4-sampling-checks-1fbc86e53a.tar.xz) is retained separately from the final checks.\n'
+    text += '\nThe earlier verification-only capsules [f4-sampling-checks-1fbc86e53a.tar.xz](raw/f4-sampling-checks-1fbc86e53a.tar.xz) and [f4-sampling-checks-ad855e8a2e.tar.xz](raw/f4-sampling-checks-ad855e8a2e.tar.xz) are retained separately from the final checks.\n'
     if args.check:
         require(args.report.read_text() == text, 'report differs from verified evidence')
     else:
         args.report.write_text(text)
     print('sampled F4 report verified' if args.check else 'sampled F4 report generated')
-    if not current:
-        print('Historical snapshot verified; HEAD runtime or tests differ. Use --current to require identity.')
+    if not args.current:
+        print('Historical snapshot verified; current-source identity was not requested.')
 
 
 if __name__ == '__main__':

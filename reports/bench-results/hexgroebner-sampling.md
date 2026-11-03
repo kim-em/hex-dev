@@ -68,19 +68,21 @@ The table uses all three completed samples at every size, including samples
 marked below the signal floor. Lean-bench's own summary and verdict exclude
 those marked samples; its verdict is reported separately.
 
-| Known reducers | Historical borrowed ABI (ms) | Historical owned ABI (ms) | Current owned ABI (ms) |
-| ---: | ---: | ---: | ---: |
-| 128 | 0.0542 | 0.0354 | 0.0440 |
-| 256 | 0.1248 | 0.0664 | 0.0808 |
-| 512 | 0.3089 | 0.1289 | 0.1640 |
-| 1024 | 0.9301 | 0.2562 | 0.3302 |
-| 2048 | 3.1435 | 0.5056 | 0.6212 |
-| 4096 | 11.1071 | 1.0304 | 1.2494 |
-| 8192 | 39.7895 | 2.0745 | 2.5238 |
+| Known reducers | Historical borrowed ABI (ms) | Historical owned ABI (ms) | Intermediate snapshot owned ABI (ms) | Final snapshot owned ABI (ms) |
+| ---: | ---: | ---: | ---: | ---: |
+| 128 | 0.0542 | 0.0354 | 0.0366 | 0.0440 |
+| 256 | 0.1248 | 0.0664 | 0.0688 | 0.0808 |
+| 512 | 0.3089 | 0.1289 | 0.1320 | 0.1640 |
+| 1024 | 0.9301 | 0.2562 | 0.2633 | 0.3302 |
+| 2048 | 3.1435 | 0.5056 | 0.5194 | 0.6212 |
+| 4096 | 11.1071 | 1.0304 | 1.0397 | 1.2494 |
+| 8192 | 39.7895 | 2.0745 | 2.0825 | 2.5238 |
 
 Lean-bench reports `inconclusive` before and `consistent_with_declared_complexity` after. The normalized log slopes are 0.681312 and -0.005587.
 
 The final snapshot kernel reports `consistent_with_declared_complexity` with normalized slope -0.007312; 8 of its 21 completed samples are marked below the signal floor and excluded by that engine verdict. All 21 remain in the table medians and raw evidence.
+
+The install phase source is unchanged between the intermediate and final snapshots. Their roughly 20% timing difference is an observation across separate shared-host collections, not an isolated code-change effect; no causal attribution follows from these runs.
 
 The untimed array-push diagnostic counts exactly n(n−1)/2 existing pivot-array
 elements exposed to shared pushes before the ABI control, and zero afterward,
@@ -104,7 +106,8 @@ composition checks. Fresh known-reducer and generated-target pivot arrays copy
 zero existing elements; these counters do not measure every ByteArray copy.
 Effectful byte copies observe retained combine, scan, inverse and gather buffers
 before and after transitions whose quantum depends on a later IO read. Fresh
-complete F4 production also copies zero existing pivot-array elements. Parent-budget tests
+complete F4 calls expose zero existing shared elements during counted pivot pushes.
+The interposer does not count array updates or pushes to the separate row array. Parent-budget tests
 cover every resource plus ten interruptions in matrix and atomic F4 stages.
 Both driver initializers agree on the corpus and continue cooperative suspensions. The full project
 checks cover independent oracles, kernel replay/axiom audit, bench verification,
@@ -115,10 +118,13 @@ source blobs and recorded check fingerprints. Optional `--current` also requires
 HEAD and working runtime/test sources to match those snapshots. Plain `--check`
 regenerates historical evidence after later implementation changes. Branch source
 commits need not remain ancestors after squash merges; archived blobs are the
-authoritative binding.
+authoritative binding. Verification collection is manual: the verification
+archive includes `full-checks.py`, `native-checks.py` and its packing script, with
+the exact commands and source-identity checks. Their host paths require adaptation
+on another machine. The committed `source_identity` helper is used by those archived collectors.
 
 Raw evidence: `f4-sampling-b865a5399fec.tar.xz`, SHA-256 `d964d4fc22f1c0f62f1fe98f9548803bb70518f23bfe6518f021928a68e64068`, 2621 payloads plus manifest. Intermediate measurements: `f4-sampling-58952f05cd8c.tar.xz`, SHA-256 `ded8064872e6191962b8c973d5b2d0299dd294297d00ff77a021e359de5f0148`, 601 payloads plus manifest. Final measurements: `f4-sampling-a1eb7697c27d.tar.xz`, SHA-256 `99a522cf1785f60cf2541b438c1d0f2758b8a70dab0b30de81163488236784b1`, 601 payloads plus manifest. Deterministic baseline: `f4-matrix-counts-b6822c6a5f65.tar.gz`, SHA-256 `d10192c5af478079b4222a7781e1c50fc6826d918ca6800c20c1a5d6776dd346`. Verification: `f4-sampling-checks-0b5c579aa3eb.tar.xz`, SHA-256 `1792e2117dcf389ac3feffc21bb52beec4dbfe31a334b7717345b62f143044f5`, 145 payloads plus manifest.
 
 Regenerate with `python3 scripts/bench/groebner_sampling_report.py --archive reports/bench-results/raw/f4-sampling-b865a5399fec.tar.xz --baseline-archive reports/bench-results/raw/f4-matrix-counts-b6822c6a5f65.tar.gz --reviewed reports/bench-results/raw/f4-sampling-58952f05cd8c.tar.xz --latest reports/bench-results/raw/f4-sampling-a1eb7697c27d.tar.xz --guards reports/bench-results/raw/f4-sampling-checks-0b5c579aa3eb.tar.xz --report reports/bench-results/hexgroebner-sampling.md --check`. Every consumed payload is verified against its capsule manifest; ratios, complete outputs and runtime source blobs are independently recomputed or checked. For strict identity with the checked-out runtime and tests, add `--current`.
 
-The earlier verification-only capsule [f4-sampling-checks-1fbc86e53a.tar.xz](raw/f4-sampling-checks-1fbc86e53a.tar.xz) is retained separately from the final checks.
+The earlier verification-only capsules [f4-sampling-checks-1fbc86e53a.tar.xz](raw/f4-sampling-checks-1fbc86e53a.tar.xz) and [f4-sampling-checks-ad855e8a2e.tar.xz](raw/f4-sampling-checks-ad855e8a2e.tar.xz) are retained separately from the final checks.
