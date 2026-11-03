@@ -135,13 +135,35 @@ def verify_random(guards,manifest):
         require(value['basis']==expected[case],'fresh-system independent basis differs')
 
 
+def verify_rebase(capsule,before,review_identity):
+    after=source(capsule,'current');a,b=listing(before['source_manifest']),listing(after['source_manifest'])
+    require(set(a)==set(b) and {p for p in a if a[p]!=b[p]}=={'lakefile.lean','scripts/bench/groebner_freeze.py'},'rebased runtime change differs')
+    require(after['binary_sha256']==before['binary_sha256'],'rebased executables differ')
+    require(all(after['compilers'][k]==v for k,v in before['compilers'].items()) and
+            after['compilers']['other_native']==after['compilers']['native'],'rebased compiler differs')
+    require(after['native_options']=={'hexGroebnerAVX512':False,'hexGroebnerCC':None},'rebased defaults differ')
+    identity=capsule.json('identity.json')
+    require(identity['source_fingerprint']==after['source_fingerprint'] and
+            identity['source_manifest_sha256']==hashlib.sha256(after['source_manifest'].encode()).hexdigest() and
+            identity['checks_manifest_sha256']==review_identity['checks_manifest_sha256'],'rebased identity differs')
+    rows=capsule.json('full-status.json')
+    require(len(rows)==9 and all(r['exit_code']==0 and all(r[k]==v for k,v in identity.items())for r in rows),'rebased project checks failed')
+    header=capsule.json('header-deps-status.json')
+    require([r['label']for r in header]==['initial','changed','restored'] and all(r['exit_code']==0 for r in header),'header dependency probe failed')
+    require(all(r['mtime_before']!=r['mtime_after']for r in header[1:]) and
+            len({r['object_sha256']for r in header})==1 and
+            capsule.json('object-control.json')['monomial_hit.o']==header[0]['object_sha256'],'header rebuild/object control differs')
+    return identity,after
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    for key in ['tree','array','guards','report']:p.add_argument('--'+key,type=Path,required=True)
+    for key in ['tree','array','guards','rebased','report']:p.add_argument('--'+key,type=Path,required=True)
     p.add_argument('--check',action='store_true');p.add_argument('--current',action='store_true');args=p.parse_args()
     tree,array,guards=[Capsule(path)for path in [args.tree,args.array,args.guards]]
     runs=[(label,name,campaign(capsule,label,name))for capsule,label in [(tree,'active-pairs'),(array,'active-list')]for name in ['f4','f4-repeat']]
     identity,reviewed,review_identity=verify_guards(guards,array)
+    rebased=Capsule(args.rebased);current_identity,current_manifest=verify_rebase(rebased,reviewed,review_identity)
     comparison,comparison_meta=msolve(guards,"reviewed")
     engine=guards.json("msolve-engine.json")
     require(engine["engine_sha256"]==comparison_meta["msolve_engine_sha256"] and "clang version 23.1.3" in engine["engine_comment"],"comparator compiler identity differs")
@@ -149,7 +171,7 @@ def main():
     compiled=source(array,'active-list');versions={k:v['version'].splitlines()[0]for k,v in compiled['compilers'].items()}
     host=array.json('active-list/f4/metadata.json')['host']
     if args.current:
-        current=source_identity();require(all(current[k]==v for k,v in review_identity.items()if k!='source_commit'),'current source/check identities differ')
+        current=source_identity();require(all(current[k]==v for k,v in current_identity.items()if k!='source_commit'),'current source/check identities differ')
     lines=['# Critical-pair retirement','',
            'A basis entry whose leading monomial is divisible by a newer leading monomial retires from future pair generation. '
            'Its polynomial remains a reducer, its stable index and derivations remain valid, and existing queued obligations remain. '
@@ -186,13 +208,16 @@ def main():
             f"The reviewed runtime `{reviewed['source_fingerprint']}` changes only pair-module documentation after measurement, reproducing both measured executable hashes. "
             'Additional Lean guards check a nonzero omitted S-polynomial, connecting obligations, the required ordinary-F2 term `xz²`, and both retired and Buchberger-to-GM frontier-gap resumptions. '
             'All nine project checks also pass with the final guard sources. Their source and logs are retained separately from the earlier verification snapshot.','',
+            f"Current runtime `{current_manifest['source_fingerprint']}` incorporates the default-preserving compiler-selection setting, compiler-command provenance changes and the monomial target’s missing trie-header dependency. "
+            'Only Lake/freeze metadata differs from the reviewed runtime; all three executables remain byte-identical. '
+            'All nine checks pass again after rebasing. Editing and restoring the included header rebuilds the monomial object and preserves its original hash.','',
             'The reversed-divisibility mutation preserves the tested fresh bases: losing retirement can merely lose pruning. '
             'The targeted queue-obligation guard separately checks the retirement direction. A second mutation retiring unrelated entries produces a wrong basis, independently rejected by SymPy. '
             'Its minimized ordinary-F2 system `yz, xy+xz, y²` misses `xz²`; direct regressions cover both schedules. Mutation attempts and failures are retained.','']
     at=lines.index('## Verification')
     lines[at:at]=['| Comparator family | Hex/msolve process |','|---|---:|',*[f'| {family} | {ratio:.6f} |'for family,ratio in comparison['per_family'].items()],'']
-    for path,c in [(args.tree,tree),(args.array,array),(args.guards,guards)]:lines.append(f'`{path.name}`: SHA-256 `{c.sha256}`.')
-    lines+=['',f'Regenerate with `python3 scripts/bench/groebner_retirement_report.py --tree {args.tree} --array {args.array} --guards {args.guards} --report {args.report} --check --current`.','']
+    for path,c in [(args.tree,tree),(args.array,array),(args.guards,guards),(args.rebased,rebased)]:lines.append(f'`{path.name}`: SHA-256 `{c.sha256}`.')
+    lines+=['',f'Regenerate with `python3 scripts/bench/groebner_retirement_report.py --tree {args.tree} --array {args.array} --guards {args.guards} --rebased {args.rebased} --report {args.report} --check --current`.','']
     text='\n'.join(lines)
     if args.check:require(args.report.read_text()==text,'report is stale')
     else:args.report.write_text(text)

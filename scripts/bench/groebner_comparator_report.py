@@ -5,7 +5,7 @@ from scripts.bench.groebner_trie_report import source,require,mean
 from scripts.oracle.groebner_singular import polynomial,canonical
 
 
-def msolve(capsule,source_label="native-compiler23"):
+def msolve(capsule,source_label):
     label=source_label+'/msolve';meta=capsule.json(label+'/metadata.json');recorded=capsule.json(label+'/analysis.json')
     manifest=source(capsule,source_label)
     require(meta['source_fingerprint']==manifest['source_fingerprint'] and

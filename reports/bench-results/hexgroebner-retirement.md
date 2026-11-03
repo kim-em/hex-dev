@@ -49,10 +49,13 @@ All twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project chec
 
 The reviewed runtime `b08fe700881e` changes only pair-module documentation after measurement, reproducing both measured executable hashes. Additional Lean guards check a nonzero omitted S-polynomial, connecting obligations, the required ordinary-F2 term `xz²`, and both retired and Buchberger-to-GM frontier-gap resumptions. All nine project checks also pass with the final guard sources. Their source and logs are retained separately from the earlier verification snapshot.
 
+Current runtime `0ee4d62001af` incorporates the default-preserving compiler-selection setting, compiler-command provenance changes and the monomial target’s missing trie-header dependency. Only Lake/freeze metadata differs from the reviewed runtime; all three executables remain byte-identical. All nine checks pass again after rebasing. Editing and restoring the included header rebuilds the monomial object and preserves its original hash.
+
 The reversed-divisibility mutation preserves the tested fresh bases: losing retirement can merely lose pruning. The targeted queue-obligation guard separately checks the retirement direction. A second mutation retiring unrelated entries produces a wrong basis, independently rejected by SymPy. Its minimized ordinary-F2 system `yz, xy+xz, y²` misses `xz²`; direct regressions cover both schedules. Mutation attempts and failures are retained.
 
 `f4-active-pairs-1385ee01d770.tar.xz`: SHA-256 `34a3670c842187e046babd246a2559f476802a12acc3ca24c4df8554b6e7a9c4`.
 `f4-active-list-4976b3eed62c.tar.xz`: SHA-256 `85a22519ea587b34624d92d094bbf52b9bf94866aa267baafebff297190b4695`.
 `f4-active-list-checks-0a4bc08b663d.tar.xz`: SHA-256 `56c833c4258dc42d4492294117bc703ae0c93ab86d1fbaa83c5a915c140cb3b0`.
+`f4-retirement-rebased-0ee4d62001af.tar.xz`: SHA-256 `59fc24aeb47db5f3c0be69a2fdd67a3239609ab32ef544192f08356d68bb23b1`.
 
-Regenerate with `python3 scripts/bench/groebner_retirement_report.py --tree reports/bench-results/raw/f4-active-pairs-1385ee01d770.tar.xz --array reports/bench-results/raw/f4-active-list-4976b3eed62c.tar.xz --guards reports/bench-results/raw/f4-active-list-checks-0a4bc08b663d.tar.xz --report reports/bench-results/hexgroebner-retirement.md --check --current`.
+Regenerate with `python3 scripts/bench/groebner_retirement_report.py --tree reports/bench-results/raw/f4-active-pairs-1385ee01d770.tar.xz --array reports/bench-results/raw/f4-active-list-4976b3eed62c.tar.xz --guards reports/bench-results/raw/f4-active-list-checks-0a4bc08b663d.tar.xz --rebased reports/bench-results/raw/f4-retirement-rebased-0ee4d62001af.tar.xz --report reports/bench-results/hexgroebner-retirement.md --check --current`.
