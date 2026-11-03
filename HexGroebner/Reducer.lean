@@ -168,7 +168,6 @@ def findPortable (context : Context) (index : ReducerIndex)
   let lower := if prune then index.packed.map (fun view => Native.Trie.word view.nodes 4) |>.getD 0 else 0
   -- Each trie node has one parent, so at most nodes.size nodes can be visited.
   for _ in [:index.nodes.size] do
-    if result.isSome && lower != 0 && bestPriority == lower then break
     if pending.isEmpty then break
     let node := pending.back!
     pending := pending.pop
@@ -193,6 +192,7 @@ def findPortable (context : Context) (index : ReducerIndex)
           else
             result := some candidate
             bestPriority := bound
+          if lower != 0 && bestPriority == lower then return (.ok result, work)
     else
       let exponent := table.exponent monomial coordinate
       let charge := n.edges.size / 8
