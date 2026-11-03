@@ -120,6 +120,8 @@ def main():
             'scalar shortcut differs')
     require(before['compilers']==after['compilers'] and before['native_options']==after['native_options'],
             'production compiler/options differ')
+    require(after['native_options']['hexGroebnerAVX512'] is False,'production AVX-512 differs')
+    versions={k:v['version'].splitlines()[0].split(' (')[0]for k,v in after['compilers'].items()}
     identity=verify_checks(cap,after)
     if args.current:
         current=source_identity()
@@ -131,7 +133,37 @@ def main():
         observations.append((label,sweep(cap,'xor/'+label,before,after,flags,count)))
     require(observations[1][1]['metadata']['input_sha256']==observations[2][1]['metadata']['input_sha256'],
             'unchanged control inputs differ')
-    comparison,meta=msolve(cap,'xor',10)
+    family_counts={family:(6 if family=='mq'else 2)for family in observations[0][1]['families']}
+    import random
+    plan=cap.json('xor/f2-false/inputs/suite.json')
+    prime_meta=observations[1][1]['metadata'];mq_variables=[]
+    for row in plan['cases']:
+        value=cap.json('xor/f2-false/inputs/'+row['name']+'.json')
+        if row['family']=='mq':
+            n=value['variables'];mq_variables.append(n);rng=random.Random(1098727+n)
+            require(row['provenance']['seed']==1098727+n,'MQ seed differs')
+            supports=[]
+            for i in range(n):
+                e=[0]*n;e[i]=1;supports.append(e)
+            for i in range(n):
+                for j in range(i,n):
+                    e=[0]*n;e[i]+=1;e[j]+=1;supports.append(e)
+            expected=[[[e,1]for e in supports if rng.getrandbits(1)]for _ in range(n)]
+            require(value['generators']==expected,'seeded quadratic system differs')
+        else:
+            names={r['case']for r in prime_meta['samples']if r['family']==row['family']and r['p']==32003}
+            require(len(names)==1,'signed-lift prime source differs')
+            prime=cap.json('xor/prime-control/inputs/'+next(iter(names))+'.json')
+            for g in prime['generators']:
+                for term in g:term[1]=(term[1]if 2*term[1]<=32003 else term[1]-32003)%2
+            prime['p']=2
+            require(prime==value,'centered signed lift differs')
+    require(sorted(mq_variables)==[8,9,10]and len(plan['cases'])==10,'F2 suite shapes differ')
+    for name in ['f2-xor-only-native-checks.py','f2-xor-only-full-checks.py','make-binary-dense-suite.py',
+                 'make-binary-canonical-suite.py','measure-f2-xor-only-f2.py','measure-f2-xor-only-prime.py',
+                 'measure-f2-xor-only-prime-repeat.py','measure-f2-xor-only-msolve.py','pack-f2-xor-only.py']:
+        require(bool(cap.read('collectors/'+name)),'collector missing')
+    comparison,meta=msolve(cap,'xor',expected_families=family_counts,moduli={2})
     require(meta['requested_scheduling']=={'A':'degree','B':None} and
             meta['requested_dense_pivots']=={'A':'false','B':None},'comparator controls differ')
     from scripts.oracle.groebner_singular import expression
@@ -156,13 +188,13 @@ def main():
             require(cap.json(f'xor/msolve/{case}-b{block}-A.stdout')['basis']==
                     cap.json(f'xor/f2-false/{case}-b{block}-B.stdout')['basis'],'comparator basis differs')
     lines=['# Scalar characteristic-two subtraction','',
-           'The scalar sparse-row update keeps its existing validation and failure prefix. For modulus two, validation gives source coefficient one and target/factor values in {0,1}; subtraction then uses exact XOR. The runtime change adds only this shortcut. Ordinary polynomial powers, including squares, retain their usual meaning.','',
-           'These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses Clang 21.1.8 and Lean-generated C uses SDK Clang 23.1.0. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.','',
+           'The scalar sparse-row update keeps its existing validation and failure prefix. For modulus two, validation gives source coefficient one and target/factor values in {0,1}; subtraction then uses exact XOR. The runtime change adds only this shortcut. This operates in the ordinary polynomial ring over F2; it does not impose x² = x.','',
+           f'These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses {versions["native"]} and Lean-generated C uses {versions["lean"]}. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.','',
            '| Comparison | Process B/A | Candidate B/A | Equal-family B/A | Process pair range |',
            '|---|---:|---:|---:|---:|']
     for label,row in observations:
         lines.append(f"| {label} | {row['process']:.6f} | {row['candidate']:.6f} | {row['balanced']:.6f} | {row['minimum']:.6f}–{row['maximum']:.6f} |")
-    lines+=['','All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The F2 development suite improves; the prime controls do not establish a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.','',
+    lines+=['','All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The seeded MQ systems improve; other F2 families are mixed on two pairs each. The prime controls use AVX2 dispatch on this host, with scalar tails and refused packets. They do not measure scalar-only odd-prime performance or establish a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.','',
             '| Family | F2 | Prime first | Prime repeat |','|---|---:|---:|---:|']
     for family in observations[0][1]['families']:
         values=[f"{r['families'][family]:.6f}"if family in r['families']else'—'for _,r in observations]

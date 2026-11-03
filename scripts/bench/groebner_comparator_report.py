@@ -6,7 +6,8 @@ from scripts.bench.groebner_trie_report import source,require,mean
 from scripts.oracle.groebner_singular import polynomial,canonical
 
 
-def msolve(capsule,source_label,case_count=14):
+def msolve(capsule,source_label,*,expected_families=None,moduli=None):
+    case_count=sum(expected_families.values())//2 if expected_families is not None else 14
     label=source_label+'/msolve';meta=capsule.json(label+'/metadata.json');recorded=capsule.json(label+'/analysis.json')
     manifest=source(capsule,source_label)
     require(meta['source_fingerprint']==manifest['source_fingerprint'] and
@@ -42,9 +43,9 @@ def msolve(capsule,source_label,case_count=14):
             require(output['kind']=='unchecked_candidate'and canonical(output['basis'])==basis,'complete comparator bases differ')
             families.setdefault(a['family'],[]).append(a['wall_nanos']/b['wall_nanos'])
     ratio=mean([mean(v)for v in families.values()])
-    coverage=(len(families)==7 and all(len(v)==4 for v in families.values()))if case_count==14 else (
-        case_count==10 and set(families)=={'cyclic','kat','eco','noon','reimer','minrank','dense-quadratic','mq'} and
-        all(len(v)==(6 if family=='mq'else 2)for family,v in families.items()) and all(s['p']==2 for s in samples))
+    coverage=(len(families)==7 and all(len(v)==4 for v in families.values()))if expected_families is None else (
+        {family:len(values)for family,values in families.items()}==expected_families)
+    require(moduli is None or {s['p']for s in samples}==set(moduli),'comparator moduli differ')
     require(coverage and recorded['samples']==4*case_count and recorded['complete_bases_equal']==2*case_count and
             recorded['failed_processes']==recorded['timeouts']==0 and
             recorded['ratio_direction']=='Hex/msolve process'and math.isclose(ratio,recorded['family_balanced_geomean'],rel_tol=1e-12),'comparator ratio differs')

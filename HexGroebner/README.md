@@ -319,10 +319,13 @@ names. It records compiler identities and any `--compiler-input` files supplied.
 Groebner-only and broader compiler changes separate, with no overall speed claim.
 
 The native scan dispatches once per bounded call to specialized one-, two- or
-four-byte scalar loops. Scalar products use uint128 Barrett reduction when
+four-byte scalar loops. In characteristic two, validated subtraction uses exact
+XOR. Other scalar products use uint128 Barrett reduction when
 available and exact word remainder otherwise. One- and two-byte residues use a
 32-bit reciprocal; four-byte residues use a 64-bit reciprocal. Products fit below
 `p² < 2^62`; subtraction uses an unsigned wrap mask.
+[Scalar F2 observations](../reports/bench-results/hexgroebner-xor.md) retain
+matched development comparisons and the remaining msolve gap.
 On x86 with runtime AVX2 support, odd moduli use eight exact products at a time.
 Sixteen-lane dispatch is opt-in: run
 `lake -R -KhexGroebnerAVX512=true build` to enable it, and `lake -R build`

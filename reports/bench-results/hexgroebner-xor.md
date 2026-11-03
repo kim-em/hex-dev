@@ -1,8 +1,8 @@
 # Scalar characteristic-two subtraction
 
-The scalar sparse-row update keeps its existing validation and failure prefix. For modulus two, validation gives source coefficient one and target/factor values in {0,1}; subtraction then uses exact XOR. The runtime change adds only this shortcut. Ordinary polynomial powers, including squares, retain their usual meaning.
+The scalar sparse-row update keeps its existing validation and failure prefix. For modulus two, validation gives source coefficient one and target/factor values in {0,1}; subtraction then uses exact XOR. The runtime change adds only this shortcut. This operates in the ordinary polynomial ring over F2; it does not impose x² = x.
 
-These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses Clang 21.1.8 and Lean-generated C uses SDK Clang 23.1.0. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.
+These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses clang version 21.1.8 and Lean-generated C uses clang version 23.1.0. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.
 
 | Comparison | Process B/A | Candidate B/A | Equal-family B/A | Process pair range |
 |---|---:|---:|---:|---:|
@@ -10,7 +10,7 @@ These manual shared-host measurements use one algorithm thread, automatically le
 | prime-control | 1.004511 | 1.002884 | 1.004511 | 0.832635–1.215639 |
 | prime-control-repeat | 1.005832 | 0.998731 | 1.005832 | 0.860519–1.220921 |
 
-All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The F2 development suite improves; the prime controls do not establish a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.
+All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The seeded MQ systems improve; other F2 families are mixed on two pairs each. The prime controls use AVX2 dispatch on this host, with scalar tails and refused packets. They do not measure scalar-only odd-prime performance or establish a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.
 
 | Family | F2 | Prime first | Prime repeat |
 |---|---:|---:|---:|
