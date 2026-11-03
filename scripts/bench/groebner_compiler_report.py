@@ -99,14 +99,46 @@ def msolve(capsule):
     return recorded,meta
 
 
+def verify_audit(audit,guards,science):
+    latest=source(audit,'alias')
+    before=listing(guards.text('runtime.manifest'));after=listing(latest['source_manifest'])
+    require(set(before)==set(after) and {p for p in before if before[p]!=after[p]}=={'scripts/bench/groebner_freeze.py'},'audit changed production algorithms')
+    require(latest['binary_sha256']==source(science,'native-cc-option')['binary_sha256'],'alias changed measured executables')
+    status=audit.json('targeted-status.json');compiler=latest['compilers']['native']
+    require(compiler['command']==status['alias_command'] and compiler['resolved']==status['alias_target'] and
+            compiler['command']!=compiler['resolved'] and status['alias_negative_exit']==47,'compiler invocation name was not exercised')
+    require(status['alias_version']==compiler['version'],'alias compiler version differs')
+    require(set(status['gcc_object_comments'])=={'row_update.o','monomial_hit.o','matrix_state.o','matrix_eliminate.o','matrix_scan.o'} and
+            all('16.2.0' in text for text in status['gcc_object_comments'].values()),'GCC objects differ')
+    cases={row['case']for row in status['gcc']}
+    require(len(status['gcc'])==len(cases)==14,'GCC replay coverage differs')
+    require(cases=={row['case']for row in science.json('native-cc-option/f4/metadata.json')['samples']},'GCC replay cases differ')
+    for row in status['gcc']:
+        require(row['exit_code']==0 and row['complete_non_time_equal'],'GCC replay failed')
+        data=audit.read(row['case']+'.stdout')
+        require(hashlib.sha256(data).hexdigest()==row['output_sha256'],'GCC output digest differs')
+        output=audit.json(row['case']+'.stdout');expected=science.json('native-cc-option/f4/'+row['case']+'-b0-B.stdout')
+        for value in [output,expected]:value.pop('candidateNanos',None)
+        require(output==expected,'GCC complete output differs')
+    require(status['default_binary_sha256']==source(science,'avx512-default')['binary_sha256'],'default restoration differs')
+    require('Build completed successfully' in audit.text('gcc-build.log') and
+            'Build completed successfully' in audit.text('default-build.log'),'targeted build failed')
+    identity=audit.json('identity.json')
+    require(identity['source_fingerprint']==latest['source_fingerprint'] and
+            identity['source_manifest_sha256']==hashlib.sha256(latest['source_manifest'].encode()).hexdigest() and
+            identity['checks_fingerprint']==guards.json('identity.json')['checks_fingerprint'],'audit identity differs')
+    return identity
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    for key in ['science','guards','global-compiler','report']:p.add_argument('--'+key,type=Path,required=True)
+    for key in ['science','guards','global-compiler','audit','report']:p.add_argument('--'+key,type=Path,required=True)
     p.add_argument('--current',action='store_true');p.add_argument('--check',action='store_true');args=p.parse_args()
     science,guards,global_data=map(Capsule,[args.science,args.guards,args.global_compiler])
     meta,ratios=kernels(science,'avx512-default','native-cc-option',SHAPES)
     runs=sweeps(science,'avx512-default','native-cc-option')
     identity,latest=verify_guards(guards,science)
+    audit=Capsule(args.audit);identity=verify_audit(audit,guards,science)
     a,b=[source(science,label)for label in ['avx512-default','native-cc-option']]
     require(a['compilers']['native']==b['compilers']['other_native'] and
             a['compilers']['lean']==b['compilers']['lean'],'override affected other compilers')
@@ -167,13 +199,15 @@ def main():
               'The cache test switches default Clang 21 → Clang 23 → unchanged Clang 23 → GCC 16 → default Clang 21. '
               'Each changed selection rebuilds all five objects with matching ELF compiler records; the unchanged selection reuses them; restoring the default reproduces the original hashes.','',
               'Fresh final-source builds reproduce all measured executable hashes. The default executables match the earlier default baseline byte for byte. '
-              'The post-measurement source difference only resolves compiler commands before detached builds; production algorithms and native C sources are unchanged. '
+              'The post-measurement source difference only resolves compiler commands before detached builds while preserving symlink invocation names; production algorithms and native C sources are unchanged. '
+              'A compiler wrapper that rejects its resolved filename passes a fresh detached build when invoked by its alias, reproducing every measured override executable hash. '
+              'A GCC 16 override builds and links the library and driver through Lake; fourteen untimed driver replays reproduce every complete basis and non-time counter. Restoring defaults reproduces all three default executable hashes. '
               'No additional timing samples were collected for that tool fix. Failed SDK-header and concurrent Git-index-lock setup attempts are retained as diagnostics and contribute no timing samples.','',
               f"Measured override runtime `{b['source_fingerprint']}`; verified runtime `{identity['source_fingerprint']}`, checks `{identity['checks_fingerprint']}`. "
               'The capsules retain exact source blobs, source manifests, compiler/wrapper inputs, raw samples, outputs, memory, host activity and verification logs. '
               'Collection scripts retain their recorded host paths; rerunning them elsewhere requires adapting those paths.','']
-    for path,capsule in [(args.science,science),(args.guards,guards),(args.global_compiler,global_data)]:lines.append(f'`{path.name}`: SHA-256 `{capsule.sha256}`.')
-    lines+=['',f'Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science {args.science} --guards {args.guards} --global-compiler {args.global_compiler} --report {args.report} --check --current`.','']
+    for path,capsule in [(args.science,science),(args.guards,guards),(args.global_compiler,global_data),(args.audit,audit)]:lines.append(f'`{path.name}`: SHA-256 `{capsule.sha256}`.')
+    lines+=['',f'Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science {args.science} --guards {args.guards} --global-compiler {args.global_compiler} --audit {args.audit} --report {args.report} --check --current`.','']
     text='\n'.join(lines)
     if args.check:require(args.report.read_text()==text,'report is stale')
     else:args.report.write_text(text)
