@@ -57,7 +57,7 @@ private def matrixCounts (native : Bool) : Bool := Id.run do
   let (result, failed) := (countMatrix capped).run ⟨{ arity := 2 },{}⟩
   return match result with
     | .error (.exhausted .work) => counts failed.statistics &&
-        failed.statistics.work < workspace.statistics.work
+        failed.statistics.work == workspace.statistics.work-3
     | _ => false
 
 #guard matrixCounts false

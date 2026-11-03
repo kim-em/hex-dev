@@ -50,6 +50,8 @@ def check(binary: Path) -> list[dict]:
                             [*selection, "--batch-size", "1"])
             assert value["scheduling"] == serial["scheduling"] == scheduling, record["case"]
             assert serial["basis"] == expected["basis"], record["case"]
+            for response in [value, serial]:
+                assert response["statistics"]["matrixZeroRows"] <= response["statistics"]["matrixTargets"], record["case"]
             for key, fixture in [("work", "serialWork"), ("rounds", "serialRounds"),
                                  ("chainPairs", "serialChainPairs"), ("matrixTargets", "serialMatrixTargets"),
                                  ("matrixReductions", "serialMatrixReductions"), ("matrixZeroRows", "serialMatrixZeroRows")]:

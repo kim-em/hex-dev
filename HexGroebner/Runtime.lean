@@ -115,12 +115,13 @@ structure Statistics where
   matrixEntries : Nat := 0
   matrixRows : Nat := 0
   matrixCalls : Nat := 0
-  /-- Submitted targets in attempted matrix calls, including retried stages. -/
+  /-- Targets in calls that reach the elimination kernel, including retried stages. -/
   matrixTargets : Nat := 0
   /-- Completed pivot applications, including charged prefixes of failed calls. -/
   matrixReductions : Nat := 0
-  /-- Rows found zero by elimination, including failed-call prefixes. This
-  counts all matrix rows; canonical F4 reducer rows are nonzero. -/
+  /-- Rows found zero, including empty inputs and failed-call prefixes.
+  F4 symbolic reducers have distinct leading columns, so successful F4
+  computations count zero rows only among targets. -/
   matrixZeroRows : Nat := 0
   /-- Largest number of reducer and target rows supplied to one matrix call. -/
   peakMatrixRows : Nat := 0

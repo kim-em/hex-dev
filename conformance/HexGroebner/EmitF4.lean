@@ -31,8 +31,9 @@ private def canonical (p : Nat) (raw : RawPolynomial) : Certificate.Polynomial :
   raw.foldl (fun f term => if term.coefficient == 0 then f else
     Hex.MvPoly.Kernel.addMod p f [(term.exponents.toList,term.coefficient.toNat)]) []
 
-private def matrixCounts (s : Statistics) : Nat × Nat × Nat :=
-  (s.matrixTargets,s.matrixReductions,s.matrixZeroRows)
+private def matrixCounts (s : Statistics) : Array Nat :=
+  #[s.matrixCalls,s.matrixRows,s.matrixEntries,s.matrixTargets,s.matrixReductions,
+    s.matrixZeroRows,s.peakMatrixRows,s.peakMatrixEntries]
 
 private def emit : IO Unit := do
   for field in Fixtures.fields do
@@ -73,6 +74,8 @@ private def emit : IO Unit := do
             | .representation e _ => throw (IO.userError s!"{c.name}: scalar representation {reprStr e}")
           if candidate.polynomials != scalar.polynomials || stats != scalarStats then
             throw (IO.userError s!"{c.name}: native/scalar candidate or counter mismatch")
+          if stats.matrixZeroRows > stats.matrixTargets || serialStats.matrixZeroRows > serialStats.matrixTargets then
+            throw (IO.userError s!"{c.name}: zero rows exceed F4 targets")
           let (reference, referenceStats) ← match computeWith context { limits with gebauerMoller := false } c.generators with
             | .candidate candidate stats => pure (candidate, stats)
             | .internal e _ => throw (IO.userError s!"{c.name}: reference internal {reprStr e}")

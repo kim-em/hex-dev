@@ -119,13 +119,16 @@ separate bounds.
 Batch size has a minimum of one. Nested hashing, widening, sorting, polynomial
 arithmetic and matrix work share the remaining parent allowance. These are
 operational counters, not predictions of elapsed time. `Statistics.matrixTargets`
-counts target rows submitted to attempted matrix calls; `matrixReductions` counts
+counts target rows in calls that reach the elimination kernel; `matrixReductions` counts
 completed pivot applications, and `matrixZeroRows` counts rows found zero. These
 include failed-call prefixes and repeated work after an atomic-stage retry.
-Zero rows include all matrix inputs; canonical F4 reducer rows are nonzero.
-The traced producer and unchecked producer retain the same matrix counters
-for the same F4 strategy. These counts describe performed algebraic work rather
-than elapsed time or the probability of a sampling miss.
+Zero rows include inputs that were already empty. F4 symbolic reducers have
+distinct leading columns, so successful F4 calls count zero rows only among
+targets. The conformance corpus checks matrix-counter agreement between
+successful uninterrupted traced and unchecked computations with the same
+strategy. Exhaustion and resumption can produce different prefixes and repeated
+work. These counts describe algebraic work rather than elapsed time or the
+probability of a sampling miss.
 
 The packed-payload allowance is not a process-memory limit: it excludes
 hash tables, tree nodes, object headers and allocator capacity. Structural

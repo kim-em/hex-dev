@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """Regenerate the report for the restored F4 vector/inline experiments."""
 import argparse
-import hashlib
-import tarfile
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.groebner_performance_audit import campaign
+from scripts.bench.groebner_capsule import Capsule
 
 
 def main():
@@ -19,11 +18,15 @@ def main():
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     source = args.state
-    with args.archive.open("rb") as stream:
-        digest = hashlib.file_digest(stream, "sha256").hexdigest()
-    with tarfile.open(args.archive) as packed:
-        archive = dict(path=str(args.archive), sha256=digest, payloads=len(packed.getmembers()))
-    text = '''# Restored matrix row-update experiments
+    packed = Capsule(args.archive)
+    archive = dict(path=str(args.archive), sha256=packed.sha256, payloads=packed.count)
+    vector_manifest = packed.json("avx512-production/manifest.json")
+    native = packed.json("reproduction/avx512-native-status.json")
+    if len(native) != 2 or {x["name"] for x in native} != {"clang", "gcc"} or any(x["exit_code"] != 0 or len(x["variants"]) != 4 or set(x["variants"]) != {"Native", "Scalar", "Remainder", "ScalarRemainder"} or
+                              x["source_fingerprint"] != vector_manifest["source_fingerprint"] for x in native):
+        raise ValueError("incomplete vector native checks")
+    baseline = packed.json("avx512-production/before-after/metadata.json")["baseline_source_fingerprint"]
+    text = f'''# Restored matrix row-update experiments
 
 Neither a sixteen-lane AVX-512 update nor forced geometry inlining establishes
 an improvement on the matched medium development suite. Both variants are
@@ -31,16 +34,16 @@ restored; neither is part of the production row kernel. The canonical row
 representation, bounded native calls, malformed-input checks and output
 contracts remain unchanged.
 
-The AVX-512 variant has source fingerprint `00dfa6f38a1c`. It uses sixteen
+The AVX-512 variant has source fingerprint `{vector_manifest['source_fingerprint']}`. It uses sixteen
 four-byte coefficients per vector, exact Montgomery/Mersenne products,
 contiguous stores or scatter, runtime CPU/OS feature detection and the existing
-eight-lane/scalar tails. All eight source-identified Clang/GCC sanitizer
+eight-lane/scalar tails. All {sum(len(x['variants']) for x in native)} source-identified Clang/GCC sanitizer
 variants pass, including guarded buffers, malformed lanes, aliasing, resumed
 prefixes and instrumented complete F4 calls on both vector layouts. The separate
 one-line `always_inline` variant changes only geometry helper compilation;
 its fresh CLI build and complete before/after output comparisons pass.
 
-All campaigns compare against frozen source `8f56f7677ce6`, with adjacent
+All campaigns compare against frozen source `{baseline}`, with adjacent
 AB pairs followed by BA pairs, one automatically leased CPU and identical
 resource/output contracts. The AVX-512 repeat is the one unchanged repeat after
 an inconclusive first observation. The inlining source has one campaign.
@@ -53,6 +56,15 @@ host context. Sources are never pooled across campaigns.
     for label, directory in [("AVX-512 first", source / "avx512-production/before-after"),
                              ("AVX-512 repeat", source / "avx512-production/before-after-repeat"),
                              ("Forced inline", source / "geometry-inline-production/before-after")]:
+        relative = str(directory.relative_to(source))
+        for name in ["metadata.json", "analysis.json", "candidate-analysis.json"]:
+            packed.bind(directory / name, relative + "/" + name)
+        metadata = packed.json(relative + "/metadata.json")
+        if metadata["baseline_source_fingerprint"] != baseline:
+            raise ValueError("vector baseline mismatch")
+        for sample in metadata["samples"]:
+            filename = f"{sample['case']}-b{sample['block']}-{sample['arm']}.stdout"
+            packed.bind(directory / filename, relative + "/" + filename)
         result = campaign(directory)
         text += (f"| {label} | {result['family_balanced_geomean']:.4f} | {result['candidate_geomean']:.4f} | "
                  f"{result['median']:.4f} | {result['minimum']:.4f}–{result['maximum']:.4f} | {result['cpu']} | "
@@ -74,7 +86,8 @@ pursuing less repeated algebraic work. They establish no language limitation.
 
 The [report generator](../../scripts/bench/groebner_vector_report.py) reruns the
 complete JSON comparisons and recomputes all displayed figures from raw sample
-metadata. Fixed schedules and all completed observations remain available;
+metadata. It verifies every payload digest and binds all unpacked analysis
+inputs to the corresponding capsule members before consuming them. Fixed schedules and all completed observations remain available;
 there is no retry-until-faster selection. Issue #10987 remains open.
 
 [Raw restored-experiment capsule](raw/{Path(archive['path']).name}): SHA-256
