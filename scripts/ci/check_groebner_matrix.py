@@ -973,7 +973,7 @@ def main : IO Unit := do
     throw (IO.userError "AVX2 coverage required but unavailable")
   resetPivotOwners
   let ownerSeed ← Hex.Groebner.NativeChecks.readSeed
-  let ownerRows := 256+(ownerSeed%2).toNat
+  let ownerRows := 256+ownerSeed%2
   if !Hex.Groebner.SamplingChecks.grow ownerRows then
     throw (IO.userError "fresh sampling pivot growth failed")
   let (pushes,shared,entries) ← pivotOwners
