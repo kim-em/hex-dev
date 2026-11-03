@@ -160,8 +160,9 @@ phases. The optional matrix quantum is clamped to 1–64 phases. Library callers
 continue `.suspended` states when they want completion; the CLI does this
 automatically. Native combination, scan and gather calls inspect at most 4096 entries.
 Combination bounds omit untouched columns and extend when reducers introduce a
-later column. Inversion reserves its complete multiplication and gather cost
+later column. Inversion reserves its multiplication cost and the gather column-sweep charge
 before charging work, so phase resumption does not repeat an inverse prefix.
+Gather normalization is charged incrementally as output entries are appended.
 
 Sampling charges random words, combination updates, validation, initialization,
 elimination, output and subsequent F4 work to the parent allowances. The row

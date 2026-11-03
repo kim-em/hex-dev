@@ -68,7 +68,9 @@ structure State where
   row : Nat := 0
   offset : Nat := 0
   multiplier : UInt64 := 0
+  /-- Least column touched by the current combination, or `columns` when empty. -/
   first : Nat := 0
+  /-- Greatest column touched by the current combination; the scan may extend it. -/
   last : Nat := 0
   sugar : Nat := 0
   scan : Native.Scan.State := { dense := {},column := 0,last := 0,chargedUntil := 0 }

@@ -111,6 +111,12 @@ LEAN_EXPORT lean_obj_res hex_test_pivot_owners(lean_obj_arg world) {
  lean_ctor_set(outer,0,lean_box_uint64(pivot_pushes));lean_ctor_set(outer,1,inner);
  return lean_io_result_mk_ok(outer);
 }
+LEAN_EXPORT lean_obj_res hex_test_copy_bytes(b_lean_obj_arg input,lean_obj_arg world) {
+ (void)world;size_t n=lean_sarray_size(input);
+ lean_object *copy=lean_alloc_sarray(1,n,n);
+ for(size_t i=0;i<n;++i) lean_sarray_cptr(copy)[i]=lean_sarray_cptr(input)[i];
+ return lean_io_result_mk_ok(copy);
+}
 static uint64_t subtract_calls=0;
 __typeof__(hex_test_unused_subtract) __wrap_lean_hex_groebner_subtract_row;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_subtract_row(
@@ -705,6 +711,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 import HexGroebner.SampledConformance
 @[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
+@[extern "hex_test_copy_bytes"] opaque copyBytes (input : @& ByteArray) : IO ByteArray
 @[extern "hex_test_reset_pivot_owners"] opaque resetPivotOwners : IO Unit
 @[extern "hex_test_pivot_owners"] opaque pivotOwners : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_deferrals"] opaque batchDeferrals : IO (UInt64 × UInt64 × UInt64)
@@ -987,6 +994,30 @@ def main : IO Unit := do
   if pushes != ownerRows.toUInt64 || entries != 0 then
     throw (IO.userError s!"sampling copied shared target pivot metadata: {pushes}/{shared}/{entries}")
   IO.println s!"sampling target pivot pushes={pushes}, shared={shared}, existing shared entries={entries}"
+  resetPivotOwners
+  let freshSeed ← Hex.Groebner.NativeChecks.readSeed
+  let some digest := Hex.Groebner.SampledConformance.fresh freshSeed |
+    throw (IO.userError "fresh sampled F4 failed")
+  IO.println s!"fresh sampled F4 digest={digest}"
+  let (pushes,shared,entries) ← pivotOwners
+  if pushes == 0 || entries != 0 then
+    throw (IO.userError s!"sampled F4 copied shared pivot metadata: {pushes}/{shared}/{entries}")
+  IO.println s!"sampled F4 pivot pushes={pushes}, shared={shared}, existing shared entries={entries}"
+  for kind in [:4] do
+    let some (ready,held) := Hex.Groebner.SamplingChecks.snapshot kind |
+      throw (IO.userError s!"missing sampling snapshot {kind}")
+    let before ← copyBytes held
+    -- Read after the first observation: the pure transition depends on this IO
+    -- value and cannot move ahead of the first byte copy. Stay below its cap.
+    let snapshotSeed ← Hex.Groebner.NativeChecks.readSeed
+    let completed := Hex.Groebner.Sampling.advance
+      { work := 10000000,packedBytes := 10000000 } (63-snapshotSeed%2) ready
+    if completed.failure.isSome || completed.phase != .done then
+      throw (IO.userError s!"sampling snapshot {kind} did not complete")
+    let after ← copyBytes held
+    if before.data != after.data then
+      throw (IO.userError s!"sampling snapshot {kind} was mutated")
+  IO.println "sampling snapshots: 4 IO byte comparisons"
   let beforeSubtract ← subtractCount
   let (beforeScan,beforeGather) ← counts
   Hex.Groebner.SampledConformance.run

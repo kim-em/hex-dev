@@ -60,17 +60,6 @@ private def takeGather : Work Native.Gather.State := do
     gather := ⟨{},{},{},0⟩ }
   return gather
 
-private def inverseWork (field : PrimeField) (value : UInt64) : Nat := Id.run do
-  if value == 1 then return 0
-  let mut exponent := field.modulus.toNat-2
-  let mut work := 0
-  for _ in [:field.modulus.toNat.log2+1] do
-    if exponent == 0 then break
-    if exponent%2 == 1 then work := work+1
-    exponent := exponent/2
-    if exponent > 0 then work := work+1
-  return work
-
 @[export lean_hex_sampling_install_reducer]
 private def installReducer (limits : MatrixLimits) : Work Unit := do
   let field := (← get).field
@@ -239,7 +228,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
     let value := Packed.read s.field.width s.scan.dense leading
     -- Inversion and its following gather reservation commit as one phase.
     -- Admission precedes every multiply, so a retry cannot charge a prefix twice.
-    if s.statistics.matrix.work+inverseWork s.field value+(s.scan.last+1-leading) > limits.work then
+    if s.statistics.matrix.work+Matrix.inverseCost s.field value+(s.scan.last+1-leading) > limits.work then
       throw (.exhausted .work)
     let factor ← liftWork (Matrix.inverse s.field s.field.barrett limits
       value)

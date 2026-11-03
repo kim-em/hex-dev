@@ -71,12 +71,11 @@ finishes that row without redrawing or charging its first entry again. -/
 def resumeGather (native : Bool) : Bool := Id.run do
   let initial := Sampling.start field 2 #[] #[row] (Hex.Rand.ofSeed 2) {} #[] native
   let ready := seek .gather initial
-  let snapshot := ready.gather.dense.data
   let exhausted := Sampling.next { limits with outputEntries := 1 } ready
   let completed := run exhausted
   return exhausted.failure == some (.exhausted .outputEntries) && exhausted.phase == .gather &&
     exhausted.random.state == ready.random.state && exhausted.gather.columns.size == 4 &&
-    same completed (run initial) && ready.gather.dense.data == snapshot
+    same completed (run initial)
 
 /-- Every insufficient inverse/gather allowance leaves the phase uncharged.
 The full resumed result includes exactly the uninterrupted statistics. -/
@@ -89,13 +88,23 @@ def resumeInverse (native : Bool) : Bool := Id.run do
   let after := Sampling.next limits ready
   let charge := after.statistics.matrix.work-ready.statistics.matrix.work
   if charge < 4 then return false
-  let snapshot := ready.scan.dense.data
   for extra in [:charge] do
     let stopped := Sampling.next { limits with work := ready.statistics.matrix.work+extra } ready
     if stopped.failure != some (.exhausted .work) || stopped.phase != .inverse ||
         stopped.statistics != ready.statistics || stopped.random != ready.random ||
         !same (run stopped) (run initial) then return false
-  return ready.scan.dense.data == snapshot
+  return true
+
+/-- The counting and executing schedules agree across all fixture fields and
+the unit/nonunit coefficient cases, independently of sampled row selection. -/
+def inverseCounts : Bool := Id.run do
+  for field in Fixtures.fields do
+    for value in #[1,2,field.modulus-1] do
+      if value == 0 || value ≥ field.modulus then continue
+      let (result,stats) := (Matrix.inverse field field.barrett limits value).run {}
+      let .ok _ := result | return false
+      if stats.work != Matrix.inverseCost field value then return false
+  return true
 
 /-- A short target's reduction may reach far beyond its own last column.
 The scan extends its bound when applying that pivot, and gather keeps the tail. -/
@@ -111,7 +120,7 @@ def extendRange (native : Bool) : Bool := Id.run do
     completed.rows[0]!.row.entries field == #[(4096,1)]
 
 /-- Split a 4097-entry combination across calls, exhaust before the final
-entry, and preserve an externally retained snapshot while completing it. -/
+entry, then reproduce its complete resumed result and statistics. -/
 def resumeSlice (native : Bool) : Bool := Id.run do
   let some row := SparseRow.ofEntries field 4097 ((Array.range 4097).map fun i => (i,1)) |
     return false
@@ -119,12 +128,10 @@ def resumeSlice (native : Bool) : Bool := Id.run do
   let ready := seek .combine initial
   let pending := Sampling.next limits ready
   if pending.offset != 4096 || pending.phase != .combine then return false
-  let snapshot := pending.dense.data
   let exhausted := Sampling.next { limits with work := pending.statistics.matrix.work } pending
   let resumed := run exhausted
   return exhausted.failure == some (.exhausted .work) &&
-    exhausted.random.state == pending.random.state && same resumed (run initial) &&
-    pending.dense.data == snapshot
+    exhausted.random.state == pending.random.state && same resumed (run initial)
 
 /-- A pivot application can be interrupted after its full work was prepaid.
 Resumption finishes the pending entries without charging the pivot twice. -/
@@ -138,12 +145,10 @@ def resumeScan (native : Bool) : Bool := Id.run do
     pending := Sampling.next limits pending
   pending := Sampling.next limits pending
   if pending.scan.pending == 0 || pending.scan.entry == 0 then return false
-  let snapshot := pending.scan.dense.data
   let exhausted := Sampling.next { limits with work := pending.statistics.matrix.work } pending
   let completed := run exhausted
   return exhausted.failure == some (.exhausted .work) &&
-    exhausted.random.state == pending.random.state && same completed (run initial) &&
-    pending.scan.dense.data == snapshot
+    exhausted.random.state == pending.random.state && same completed (run initial)
 
 /-- Seeded native/scalar comparisons span all coefficient widths. Every output
 is independently reduced against the full original matrix row space. A rank
@@ -228,11 +233,42 @@ def growTargets (n : Nat) : Bool := Id.run do
     ((state.pivots.zipIdx).all fun (row,i) =>
       (SparseRow.mk row.columns row.coefficients).entries field == #[(i,1)])
 
+/-- Retained native buffers for the compiled IO observer. Reading these through
+an effectful byte-copy operation prevents pure common-subexpression folding. -/
+def snapshot (kind : Nat) : Option (Sampling.State × ByteArray) := Id.run do
+  if kind == 2 then
+    let ready := seek .gather (Sampling.start field 2 #[] #[row] (Hex.Rand.ofSeed 2))
+    if ready.phase != .gather then return none
+    return some (ready,ready.gather.dense)
+  if kind == 3 then
+    let some field := Fixtures.fields[6]? | return none
+    let some row := SparseRow.ofEntries field 5 #[(1,3),(4,1)] | return none
+    let ready := seek .inverse (Sampling.start field 5 #[] #[row] (Hex.Rand.ofSeed 0))
+    if ready.phase != .inverse then return none
+    return some (ready,ready.scan.dense)
+  let some row := SparseRow.ofEntries field 4097 ((Array.range 4097).map fun i => (i,1)) |
+    return none
+  let initial := Sampling.start field 4097 #[] #[row] (Hex.Rand.ofSeed 0)
+  if kind == 0 then
+    let ready := Sampling.next limits (seek .combine initial)
+    if ready.phase != .combine || ready.offset != 4096 then return none
+    return some (ready,ready.dense)
+  if kind == 1 then
+    let mut ready := initial
+    for _ in [:1000] do
+      if ready.phase == .scan && ready.statistics.combinations == 3 then break
+      ready := Sampling.next limits ready
+    ready := Sampling.next limits ready
+    if ready.scan.pending == 0 || ready.scan.entry == 0 then return none
+    return some (ready,ready.scan.dense)
+  return none
+
 #guard miss false && miss true
 #guard totalZeros false && totalZeros true
 #guard resumeCombine false && resumeCombine true
 #guard resumeGather false && resumeGather true
 #guard resumeInverse false && resumeInverse true
+#guard inverseCounts
 #guard extendRange false && extendRange true
 #guard resumeSlice false && resumeSlice true
 #guard resumeScan false && resumeScan true

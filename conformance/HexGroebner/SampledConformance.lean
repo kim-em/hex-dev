@@ -43,7 +43,7 @@ private def exhaustion : Bool := Id.run do
   let limits : Limits := {}
   let complete := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 0)
   let mut result := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 0) {} 1
-  for _ in [:1000] do
+  for _ in [:scheduleBound limits] do
     match result with
     | .suspended state =>
       if state.statistics.randomWords > 0 then
@@ -107,7 +107,7 @@ private def warmBudgets (native : Bool) : Bool := Id.run do
   let expected := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 0)
   let mut result := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 0) {} 0
   let mut tested : Array Nat := #[]
-  for _ in [:10000] do
+  for _ in [:scheduleBound limits] do
     let .suspended state := result | break
     let stats := state.workspace.statistics
     let mut cases : Array (Nat × F4Resource × Limits × Bool) := #[]
@@ -136,7 +136,7 @@ private def warmBudgets (native : Bool) : Bool := Id.run do
     for (key,resource,cap,exact) in cases do
       if tested.contains key then continue
       let mut stopped := Sampled.resumeWith cap state 1 1
-      for _ in [:1000] do
+      for _ in [:scheduleBound limits] do
         match stopped with
         | .suspended next => stopped := Sampled.resumeWith cap next 1 1
         | _ => break
@@ -207,6 +207,17 @@ private def corpus : IO Unit := do
           profiles := profiles+1
   IO.println s!"Sampled F4: {profiles} native/scalar/direct/resumed comparisons, {accepted} certified bases, {rejected} independently rejected misses"
 
+/-- A fresh complete F4 call for native ownership instrumentation. The digest
+observes every output coefficient/exponent before the harness reads counters. -/
+def fresh (seed : Nat) : Option UInt64 := do
+  let field ← Fixtures.fields[6]?
+  let c ← (F4Fixtures.cases field)[4]?
+  let .candidate value stats samples := Sampled.computeWith
+      ⟨field,c.variables,.grevlex⟩ {} c.generators (Hex.Rand.ofSeed seed) | none
+  if samples.calls == 0 || samples.randomWords == 0 then none else
+    some (hash (value.polynomials.map (fun p => p.map (fun t => (t.exponents,t.coefficient))),
+      stats.work,samples.randomWords,value.randomState))
+
 def run : IO Unit := do
   let some field := Fixtures.fields[6]? | throw (IO.userError "missing field")
   let some c := (F4Fixtures.cases field)[4]? | throw (IO.userError "missing system")
@@ -224,10 +235,12 @@ def run : IO Unit := do
         SamplingChecks.resumeValidation native && SamplingChecks.resumeRows native) then
       throw (IO.userError "sampled matrix prefix/snapshot checks failed")
   if !SamplingChecks.corpus then throw (IO.userError "sampled row-space checks failed")
+  if !SamplingChecks.inverseCounts then throw (IO.userError "inverse cost schedule disagrees")
   if !exhaustion then throw (IO.userError "advanced-state F4 exhaustion/resumption failed")
   for native in #[false,true] do
     if !(coldBudgets native && warmBudgets native) then
       throw (IO.userError "sampled parent budget translation/resumption failed")
+  IO.println "sampled parent budgets: 9 initial resources, 10 partial cuts, native+scalar"
   if !forcedMiss then throw (IO.userError "forced rank miss was not independently rejected")
   IO.println "Sampled F4: forced rank miss rejected; exhausted advanced state resumes"
   corpus
