@@ -156,10 +156,14 @@ Omitted pairs are never marked resolved: their justification can still depend
 on retained pairs. Coverage uses LCM, then maximum basis index, then a final
 level: zero for a retained representative, one for another equal-LCM group
 member, and one plus the prior retirement-chain depth for an ungenerated pair.
-Depth is measured at installation of the larger index. Replacement along that
+At installation of the larger index, active indices have depth zero; a removed
+index has depth one plus the depth of its replacement. Replacement along that
 chain decreases depth; connecting obligations have smaller maximum index.
 Proper-LCM chains decrease the first component, even with retired reducers.
 This is a dependency contract for the outstanding producer proof.
+
+This is UPDATE’s removal from its eligible basis set G; the polynomial arena
+retains the removed entries for reduction and derivations.
 
 The drivers install indices in increasing order. `active` is ascending and lies
 below `frontier`; every earlier index has been installed. A gap before `new`
@@ -238,7 +242,7 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
     else
       minimal := minimal.push lcm
       if !product then queue ← queue.push limits pair
-  -- The checkpoint may share the array: charge its possible copy before push.
+  -- Conservatively charge a complete copy, even if retained is already unique.
   spend limits (active.size + 1)
   return { queue with active := (if retired then retained else active).push new, frontier := new + 1 }
 

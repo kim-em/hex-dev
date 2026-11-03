@@ -373,15 +373,17 @@ private def pairCriteria (scheduling : Scheduling) : Bool := Id.run do
 #guard pairCriteria .degree
 #guard pairCriteria .sugar
 
+private def retirementInput : Array RawPolynomial := #[
+  #[⟨#[3,1],1⟩, ⟨#[0,0],1⟩], #[⟨#[2,1],1⟩, ⟨#[1,0],1⟩],
+  #[⟨#[1,1],1⟩, ⟨#[0,1],1⟩], #[⟨#[3,0],1⟩, ⟨#[0,2],1⟩]]
+
 /-- Equal-LCM replacement chains must retain the connecting obligations even
 when the omitted S-polynomial is nonzero and irreducible by these leading terms. -/
 private def retirementPairs : Bool := Id.run do
   let context := { context with order := TermOrder.lex }
   let limits : Limits := {}
   let trial : Computation Bool := do
-    let raw : Array RawPolynomial := #[
-      #[⟨#[3,1],1⟩, ⟨#[0,0],1⟩], #[⟨#[2,1],1⟩, ⟨#[1,0],1⟩],
-      #[⟨#[1,1],1⟩, ⟨#[0,1],1⟩], #[⟨#[3,0],1⟩, ⟨#[0,2],1⟩]]
+    let raw := retirementInput
     let mut basis := #[]
     for i in [:raw.size] do
       let p ← Polynomial.normalize context limits i raw[i]!
@@ -389,6 +391,9 @@ private def retirementPairs : Bool := Id.run do
     let mut queue : PairQueue := {}
     for i in [:basis.size] do queue ← queue.install context limits basis i
     if queue.active != #[2,3] || queue.frontier != 4 || queue.heap.size != 3 then return false
+    let repeated ← queue.install context limits basis 1
+    if repeated.active != queue.active || repeated.frontier != queue.frontier ||
+        repeated.heap.size != 4 then return false
     let s ← Polynomial.sPolynomial context limits basis[0]!.polynomial basis[3]!.polynomial
     if s.size != 2 then return false
     let table := (← get).table
@@ -408,6 +413,16 @@ private def retirementPairs : Bool := Id.run do
   | _ => false
 
 #guard retirementPairs
+
+#guard Id.run do
+  let context := { context with order := TermOrder.lex }
+  for scheduling in [Scheduling.degree,.sugar] do
+    match computeWith context { scheduling } retirementInput,
+        computeWith context { scheduling,gebauerMoller := false } retirementInput with
+    | .candidate actual _, .candidate reference _ =>
+      if actual.polynomials != reference.polynomials then return false
+    | _, _ => return false
+  return true
 
 /-- Retiring unrelated leading monomials loses the S-pair producing `xz²`.
 This is in the ordinary characteristic-two polynomial ring. -/
