@@ -88,6 +88,8 @@ setup_benchmark trieLookup n => n
     maxSecondsPerCall := 8.0
   }
 
+-- O(n): the portable traversal scans n root edges and the first preferred
+-- branch, edge and leaf, then returns at the root bound: n+4 charged work.
 setup_benchmark trieLookupPortable n => n
   with prep := prepareTrie
   where {
