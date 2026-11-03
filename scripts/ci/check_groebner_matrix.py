@@ -837,7 +837,7 @@ def main : IO Unit := do
   for independent in [false,true] do
     let checkpoint := Hex.Groebner.DenseMatrixConformance.snapshotState primitiveSeed independent
     let some cache := checkpoint.densePivots | throw (IO.userError "missing dense checkpoint")
-    let held := cache.rows[0]!
+    let some held := cache.rows[0]? | throw (IO.userError "empty dense checkpoint")
     let heldBytes ← copyBytes held.dense
     let heldSource ← copyBytes held.source.coefficients
     let scheduleSeed ← Hex.Groebner.NativeChecks.readSeed
@@ -860,7 +860,7 @@ def main : IO Unit := do
     ⟨2147483647,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let tiny := Hex.Groebner.eliminateWith tinyField { densePivots := true }
     (2+primitiveSeed%127) #[tinyRow] #[tinyRow]
-  if tiny.result.isError then throw (IO.userError "small cached-option matrix failed")
+  if !tiny.result.isOk then throw (IO.userError "small cached-option matrix failed")
   let afterTiny ← wholeCounts
   if afterTiny.1 != beforeTiny.1+1 || afterTiny.2 != beforeTiny.2 then
     throw (IO.userError "small cached-option matrix lost its bulk frame")
