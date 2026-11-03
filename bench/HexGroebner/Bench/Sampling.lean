@@ -67,6 +67,8 @@ setup_benchmark samplingKnown n => n
     maxSecondsPerCall := 8.0
   }
 
+-- Scalar primitives visit the same two entries per reducer, 2*n workspace
+-- columns, three fixed target trials and all n decoded pivots: linear in n.
 setup_benchmark samplingKnownPortable n => n
   with prep := prepareSampling
   where {
