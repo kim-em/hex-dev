@@ -9,7 +9,7 @@ contracts remain unchanged.
 The AVX-512 variant has source fingerprint `00dfa6f38a1c`. It uses sixteen
 four-byte coefficients per vector, exact Montgomery/Mersenne products,
 contiguous stores or scatter, runtime CPU/OS feature detection and the existing
-eight-lane/scalar tails. All eight source-identified Clang/GCC sanitizer
+eight-lane/scalar tails. All 8 source-identified Clang/GCC sanitizer
 variants pass, including guarded buffers, malformed lanes, aliasing, resumed
 prefixes and instrumented complete F4 calls on both vector layouts. The separate
 one-line `always_inline` variant changes only geometry helper compilation;
@@ -44,7 +44,8 @@ pursuing less repeated algebraic work. They establish no language limitation.
 
 The [report generator](../../scripts/bench/groebner_vector_report.py) reruns the
 complete JSON comparisons and recomputes all displayed figures from raw sample
-metadata. Fixed schedules and all completed observations remain available;
+metadata. It verifies every payload digest and binds all unpacked analysis
+inputs to the corresponding capsule members before consuming them. Fixed schedules and all completed observations remain available;
 there is no retry-until-faster selection. Issue #10987 remains open.
 
 [Raw restored-experiment capsule](raw/f4-rejected-vectors-00dfa6f38a1c.tar.gz): SHA-256

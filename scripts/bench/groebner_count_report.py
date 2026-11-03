@@ -43,6 +43,9 @@ def main():
     guard = guard_packed.json("record.json")
     require(guard["exit_code"] == 0, "guard command failed")
     require("Build completed successfully" in guard_packed.text(guard["log"]), "guard build is incomplete")
+    identity = guard_packed.json("binary-identity.json")
+    require(identity["byte_identical"] and identity["old_binaries"] == identity["new_binaries"] == manifest["binary_sha256"], "reviewed binary mismatch")
+    require(identity["review_commit"] == guard["source_commit"], "guard identity mismatch")
     archive = dict(path=str(args.archive), sha256=packed.sha256, payloads=packed.count)
     expected_checks = {"build", "oracles", "driver", "bench", "dag", "phase4", "manifest", "headers", "lines"}
     require({x["name"] for x in full} == expected_checks and len(full) == len(expected_checks), "incomplete project checks")
@@ -135,6 +138,10 @@ The hand-checkable matrix with reducer `x` and targets `1,x` has two targets,
 one pivot application and one zero row. Its additional work-exhaustion guard
 retains that completed reduction/zero prefix at conformance commit
 `{guard['source_commit']}`, command `{guard['command']}` (exit {guard['exit_code']}).
+Four additional traced guards retain consumed reduction/zero prefixes when trace
+capacity is exhausted, across joint/independent and native/portable calls. A fresh
+build at reviewed runtime fingerprint `{identity['reviewed_source']}` produces
+both driver executables byte-identically to the frozen diagnostic drivers.
 
 The [count-report generator](../../scripts/bench/groebner_count_report.py)
 rechecks the old output fields, raw diagnostic counts, stage sums and complete
