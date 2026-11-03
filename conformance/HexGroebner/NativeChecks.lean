@@ -51,6 +51,12 @@ def runProductMiss : IO Unit := do
   if !ProductBatchConformance.lastMiss seed then
     throw (IO.userError "last-term product miss mismatch")
 
+/-- Isolated wide workspaces for the zero-provider admission-counter window. -/
+def runWideWorkspaces : IO Unit := do
+  let seed ← readSeed
+  if !MatrixStateConformance.wideWorkspaces seed then
+    throw (IO.userError "wide native matrix workspace boundaries mismatch")
+
 /-- Compiled checks for every native build variant. The harness verifies that
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do

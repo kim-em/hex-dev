@@ -38,15 +38,14 @@ private theorem complete_done (state : State) (hgeometry : state.geometry)
 private theorem complete_phase (state : State) (native : Bool) (hgeometry : state.geometry) :
     complete (advancePhase state native) (phase_geometry state native hgeometry) =
       complete state hgeometry := by
-  cases native
-  all_goals
-    change complete (advancePhase state false) (phase_geometry state false hgeometry) =
-      complete state hgeometry
-    by_cases hdone : state.phase == .done
-    · simp [advancePhase,hdone]
-    · symm
-      rw [complete]
-      simp [hdone]
+  simp only [advancePhase,step_spec]
+  change complete (advancePhase state false) (phase_geometry state false hgeometry) =
+    complete state hgeometry
+  by_cases hdone : state.phase == .done
+  · simp [advancePhase,hdone]
+  · symm
+    rw [complete]
+    simp [hdone]
 
 set_option maxHeartbeats 1000000 in
 set_option linter.deprecated.syntax false in

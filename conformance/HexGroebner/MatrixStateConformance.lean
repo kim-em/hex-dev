@@ -217,6 +217,32 @@ def workspaceChecks : Bool := Id.run do
 
 #guard workspaceChecks
 
+/-- Exercise the Lean workspace phase after the native scheduler declines.
+All three coefficient widths cover the one-MiB zero-provider cap or fallback;
+the six shapes admit six buffers and decline six. Saved buffers stay empty.
+The runtime seed prevents evaluation before the provider-counter window. -/
+def wideWorkspaces (seed : Nat := 0) : Bool := Id.run do
+  let narrow : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let medium : PrimeField := ⟨257,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let wide : PrimeField := ⟨65537,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let narrow := if seed % 2 == 0 then narrow else
+    (⟨11,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩ : PrimeField)
+  for (field,columns) in [(narrow,65537),(narrow,262145),
+      (medium,524288),(medium,524289),(wide,262144),(wide,262145)] do
+    let initial := MatrixState.start field {} columns #[] #[] #[] false
+    let prepared := MatrixState.advancePortable (MatrixState.advancePortable initial 1) 1
+    if prepared.phase != .workspace then return false
+    let expected := MatrixState.advancePortable prepared 1
+    let actual := MatrixState.advanceKernels prepared 1
+    if expected.phase != .input || actual.phase != expected.phase ||
+        expected.result.isSome || actual.result.isSome || expected.stats != actual.stats ||
+        expected.dense.size != columns*field.width.bytes || expected.slots.size != 4*columns ||
+        actual.dense.data != expected.dense.data || actual.slots.data != expected.slots.data then
+      return false
+    if !actual.dense.data.all (· == 0) || !actual.slots.data.all (· == 0) ||
+        !prepared.dense.isEmpty || !prepared.slots.isEmpty then return false
+  return true
+
 #guard validationChecks
 
 #guard boundaries

@@ -774,6 +774,13 @@ def main : IO Unit := do
   if afterMiss.1 ≤ beforeMiss.1 || afterMiss.2.1 ≤ beforeMiss.2.1 then
     throw (IO.userError "last-term miss did not exercise discarded-visit diagnostic")
   IO.println s!"last-term-miss deferred calls/reservations: {afterMiss.1-beforeMiss.1}/{afterMiss.2.1-beforeMiss.2.1}"
+  let beforeWideZeros ← primitiveAdmissions
+  Hex.Groebner.NativeChecks.runWideWorkspaces
+  let afterWideZeros ← primitiveAdmissions
+  if afterWideZeros.2.1-beforeWideZeros.2.1 != 6 ||
+      afterWideZeros.2.2-beforeWideZeros.2.2 != 6 then
+    throw (IO.userError s!"wide workspace zero-provider admission mismatch: before={beforeWideZeros.2}, after={afterWideZeros.2}")
+  IO.println "wide workspace zeros: all widths, six admitted and six declined"
   Hex.Groebner.NativeChecks.run
   let batches ← batchCounts
   if batches.1 == 0 || batches.2 == 0 then throw (IO.userError "monomial product batch unused")
