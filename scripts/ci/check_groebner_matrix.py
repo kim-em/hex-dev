@@ -91,6 +91,42 @@ def run() -> None:
 #undef lean_hex_groebner_search_monomial
 #undef lean_hex_groebner_equal_bytes
 #undef lean_hex_groebner_equal_products
+static uint64_t pivot_pushes=0,pivot_shared=0,pivot_shared_entries=0;
+lean_obj_res __real_lean_array_push(lean_obj_arg,lean_obj_arg);
+LEAN_EXPORT lean_obj_res __wrap_lean_array_push(lean_obj_arg a,lean_obj_arg value) {
+ if(!lean_is_scalar(value) && lean_obj_tag(value)==0 && lean_ctor_num_objs(value)==3 &&
+    !lean_is_scalar(lean_ctor_get(value,0)) && !lean_is_scalar(lean_ctor_get(value,1)) &&
+    lean_is_sarray(lean_ctor_get(value,0)) && lean_is_sarray(lean_ctor_get(value,1))) {
+  ++pivot_pushes;if(!lean_is_exclusive(a)) {++pivot_shared; pivot_shared_entries+=lean_array_size(a);}
+ }
+ return __real_lean_array_push(a,value);
+}
+LEAN_EXPORT lean_obj_res hex_test_reset_pivot_owners(lean_obj_arg world) {
+ (void)world;pivot_pushes=pivot_shared=pivot_shared_entries=0;
+ return lean_io_result_mk_ok(lean_box(0));
+}
+LEAN_EXPORT lean_obj_res hex_test_pivot_owners(lean_obj_arg world) {
+ (void)world;lean_object *inner=lean_alloc_ctor(0,2,0),*outer=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(inner,0,lean_box_uint64(pivot_shared));lean_ctor_set(inner,1,lean_box_uint64(pivot_shared_entries));
+ lean_ctor_set(outer,0,lean_box_uint64(pivot_pushes));lean_ctor_set(outer,1,inner);
+ return lean_io_result_mk_ok(outer);
+}
+LEAN_EXPORT lean_obj_res hex_test_copy_bytes(b_lean_obj_arg input,lean_obj_arg world) {
+ (void)world;size_t n=lean_sarray_size(input);
+ lean_object *copy=lean_alloc_sarray(1,n,n);
+ for(size_t i=0;i<n;++i) lean_sarray_cptr(copy)[i]=lean_sarray_cptr(input)[i];
+ return lean_io_result_mk_ok(copy);
+}
+static uint64_t subtract_calls=0;
+__typeof__(hex_test_unused_subtract) __wrap_lean_hex_groebner_subtract_row;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_subtract_row(
+ uint64_t modulus,lean_obj_arg dense,b_lean_obj_arg columns,b_lean_obj_arg coefficients,
+ b_lean_obj_arg start,b_lean_obj_arg count,uint64_t factor) {
+ ++subtract_calls;return hex_test_unused_subtract(modulus,dense,columns,coefficients,start,count,factor);
+}
+LEAN_EXPORT lean_obj_res hex_test_subtract_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(subtract_calls));
+}
 static uint64_t remap_calls=0;
 __typeof__(hex_test_remap) __wrap_lean_hex_groebner_remap_columns;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_remap_columns(
@@ -660,7 +696,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -673,6 +709,11 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+import HexGroebner.SampledConformance
+@[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
+@[extern "hex_test_copy_bytes"] opaque copyBytes (input : @& ByteArray) : IO ByteArray
+@[extern "hex_test_reset_pivot_owners"] opaque resetPivotOwners : IO Unit
+@[extern "hex_test_pivot_owners"] opaque pivotOwners : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_deferrals"] opaque batchDeferrals : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
@@ -937,6 +978,54 @@ def main : IO Unit := do
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then
     throw (IO.userError "AVX2 coverage required but unavailable")
+  resetPivotOwners
+  let ownerSeed ← Hex.Groebner.NativeChecks.readSeed
+  let ownerRows := 256+ownerSeed%2
+  if !Hex.Groebner.SamplingChecks.grow ownerRows then
+    throw (IO.userError "fresh sampling pivot growth failed")
+  let (pushes,shared,entries) ← pivotOwners
+  if pushes != ownerRows.toUInt64 || entries != 0 then
+    throw (IO.userError s!"sampling copied shared pivot metadata: {pushes}/{shared}/{entries}")
+  IO.println s!"sampling pivot pushes={pushes}, shared={shared}, existing shared entries={entries}"
+  resetPivotOwners
+  if !Hex.Groebner.SamplingChecks.growTargets ownerRows then
+    throw (IO.userError "fresh sampled target pivot growth failed")
+  let (pushes,shared,entries) ← pivotOwners
+  if pushes != ownerRows.toUInt64 || entries != 0 then
+    throw (IO.userError s!"sampling copied shared target pivot metadata: {pushes}/{shared}/{entries}")
+  IO.println s!"sampling target pivot pushes={pushes}, shared={shared}, existing shared entries={entries}"
+  resetPivotOwners
+  let freshSeed ← Hex.Groebner.NativeChecks.readSeed
+  let some digest := Hex.Groebner.SampledConformance.fresh freshSeed |
+    throw (IO.userError "fresh sampled F4 failed")
+  IO.println s!"fresh sampled F4 digest={digest}"
+  let (pushes,shared,entries) ← pivotOwners
+  if pushes == 0 || entries != 0 then
+    throw (IO.userError s!"sampled F4 copied shared pivot metadata: {pushes}/{shared}/{entries}")
+  IO.println s!"sampled F4 pivot pushes={pushes}, shared={shared}, existing shared entries={entries}"
+  for kind in [:4] do
+    let some (ready,held) := Hex.Groebner.SamplingChecks.snapshot kind |
+      throw (IO.userError s!"missing sampling snapshot {kind}")
+    let before ← copyBytes held
+    -- Read after the first observation: the pure transition depends on this IO
+    -- value and cannot move ahead of the first byte copy. Stay below its cap.
+    let snapshotSeed ← Hex.Groebner.NativeChecks.readSeed
+    let completed := Hex.Groebner.Sampling.advance
+      { work := 10000000,packedBytes := 10000000 } (63-snapshotSeed%2) ready
+    if completed.failure.isSome || completed.phase != .done then
+      throw (IO.userError s!"sampling snapshot {kind} did not complete")
+    let after ← copyBytes held
+    if before.data != after.data then
+      throw (IO.userError s!"sampling snapshot {kind} was mutated")
+  IO.println "sampling snapshots: 4 IO byte comparisons"
+  let beforeSubtract ← subtractCount
+  let (beforeScan,beforeGather) ← counts
+  Hex.Groebner.SampledConformance.run
+  let afterSubtract ← subtractCount
+  let (afterScan,afterGather) ← counts
+  if afterSubtract ≤ beforeSubtract || afterScan ≤ beforeScan || afterGather ≤ beforeGather then
+    throw (IO.userError "sampled F4 did not exercise instrumented combination/scan/gather")
+  IO.println s!"sampled native calls: subtract={afterSubtract-beforeSubtract}, scan={afterScan-beforeScan}, gather={afterGather-beforeGather}"
 '''.replace("VECTOR", "true" if variant in ("Native", "Remainder") else "false"))
             config += f'''\ntarget probe{variant} pkg : FilePath := probeO pkg "{variant}" #{json.dumps(flags + extra)}
 lean_exe {target} where

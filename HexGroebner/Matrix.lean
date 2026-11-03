@@ -250,25 +250,35 @@ def zerosWith (size : Nat) : ByteArray :=
   simp only [zerosWith, attemptZeros]
   split <;> split at * <;> simp_all
 
+/-- Shared Fermat-exponent schedule over an explicit multiplication operation. -/
+@[inline] def inverseWith {m : Type → Type} [Monad m] (modulus : UInt64)
+    (a : UInt64) (multiply : UInt64 → UInt64 → m UInt64) : m UInt64 := do
+  if a == 1 then return 1
+  let mut exponent := modulus.toNat-2
+  let mut a := a
+  let mut value : UInt64 := 1
+  for _ in [:modulus.toNat.log2+1] do
+    if exponent == 0 then break
+    if exponent%2 == 1 then value ← multiply value a
+    exponent := exponent/2
+    if exponent > 0 then a ← multiply a a
+  return value
+
+/-- Multiplication count of `inverse`, using its identical control loop with a
+counting multiplication. Field values cannot affect the exponent schedule. -/
+def inverseCost (field : PrimeField) (a : UInt64) : Nat :=
+  ((inverseWith field.modulus a (fun _ _ => do
+    modify (·+1)
+    return 0) : StateM Nat UInt64).run 0).2
+
 /-- Square-and-multiply, with each multiply charged to the parent allowance.
 The modulus bit length bounds the loop; `PrimeField.bound` makes it at most
 31 bits. Fermat inversion also covers characteristic two. -/
 def inverse (field : PrimeField) (ctx : BarrettCtx field.modulus)
-    (limits : MatrixLimits) (a : UInt64) : Work UInt64 := do
-  if a == 1 then return 1
-  let mut exponent := field.modulus.toNat - 2
-  let mut a := a
-  let mut value : UInt64 := 1
-  for _ in [:field.modulus.toNat.log2 + 1] do
-    if exponent == 0 then break
-    if exponent % 2 == 1 then
-      work limits 1
-      value := ctx.mulMod value a
-    exponent := exponent / 2
-    if exponent > 0 then
-      work limits 1
-      a := ctx.mulMod a a
-  return value
+    (limits : MatrixLimits) (a : UInt64) : Work UInt64 :=
+  inverseWith field.modulus a fun x y => do
+    work limits 1
+    return ctx.mulMod x y
 
 /-- Install a known sparse reducer without scattering or scanning empty columns.
 Its free leading column guarantees independence of the preceding pivots; its

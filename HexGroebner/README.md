@@ -130,6 +130,49 @@ strategy. Exhaustion and resumption can produce different prefixes and repeated
 work. These counts describe algebraic work rather than elapsed time or the
 probability of a sampling miss.
 
+`Sampled.computeWith context limits generators random config` selects seeded
+candidate production with random combinations in pair rounds. Input normalization
+and final interreduction retain deterministic F4. `Sampling.Config` fixes block
+size (1–4096) and a positive total-zero stopping count; the count does not reset
+after a new pivot. Full-field coefficients use `Hex.Rand` rejection draws. No
+uniformity, independence or rank-preservation probability is asserted for this
+pseudorandom generator. Block sugar labels bound all contributing rows.
+
+`Sampled.Result.candidate` carries an unchecked `Sampled.Candidate`, ordinary work
+statistics and separate sampling counts. The candidate retains the initial random
+state, sampling controls and monomial-arena counts alongside the advanced state.
+Independent complete-basis certification
+remains necessary. The current route exposes candidate production and separate
+`certifyWith` validation; a checked retry/fallback driver remains to be implemented.
+The conformance corpus includes deliberate rank misses that certification rejects.
+The [sampling measurements](../reports/bench-results/hexgroebner-sampling.md)
+retain the negative and inconclusive development campaigns. Sampling remains
+slower overall than deterministic F4 on that suite and is explicitly opt-in.
+
+A sealed `Sampled.State` fixes context, inputs, scheduling and sampling controls.
+It preserves the selected pair batch, column map, advanced random state, accepted
+coefficient and partial combination/scan/gather on exhaustion. Resumption charges
+only new matrix work; atomic output decoding or basis-update retries charge their
+repeated work. `Sampled.resumeWith` also accepts a scheduling quantum: its
+`suspended` result retains unfinished work without claiming budget exhaustion.
+Each call performs at most one million outer slices, each with at most 64 matrix
+phases. The optional matrix quantum is clamped to 1–64 phases. Library callers
+continue `.suspended` states when they want completion; the CLI does this
+automatically. Native combination, scan and gather calls inspect at most 4096 entries.
+Combination bounds omit untouched columns and extend when reducers introduce a
+later column. Inversion reserves its multiplication cost and the gather column-sweep charge
+before charging work, so phase resumption does not repeat an inverse prefix.
+Gather normalization is charged incrementally as output entries are appended.
+
+Sampling charges random words, combination updates, validation, initialization,
+elimination, output and subsequent F4 work to the parent allowances. The row
+allowance and matrix row/target counters include original inputs and generated
+combinations. `Sampled.Statistics.inputTargets` and `combinations` separate these
+classes. A generated row is counted when submitted to elimination; a pending
+combination retains its consumed words if the row allowance is exhausted.
+`Sampling.next_spec` and `advance_spec` prove agreement with scalar phases;
+compiled native/scalar and sanitizer checks cover actual foreign execution.
+
 The packed-payload allowance is not a process-memory limit: it excludes
 hash tables, tree nodes, object headers and allocator capacity. Structural
 monomial, pair-attempt, basis and variable bounds also limit metadata growth.

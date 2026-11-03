@@ -96,11 +96,18 @@ def sources() -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--sampled", action="store_true", help="also freeze both sampled driver initializers")
+    parser.add_argument("--bench", action="store_true", help="also freeze the registered kernel benchmark executable")
     args = parser.parse_args()
     listing = sources()
     output = args.output.resolve()
     output.mkdir(exist_ok=False)
-    command = ["lake", "build", "hexgroebner_compute", "hexgroebner_compute_full"]
+    executables = [("compute", "hexgroebner_compute"), ("compute-reference", "hexgroebner_compute_full")]
+    if args.sampled:
+        executables += [("sample", "hexgroebner_sample"), ("sample-reference", "hexgroebner_sample_full")]
+    if args.bench:
+        executables += [("bench", "hexgroebner_bench")]
+    command = ["lake", "build", *[target for _, target in executables]]
     tree = subprocess.check_output(["git", "write-tree"], cwd=ROOT, text=True).strip()
     parent = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
@@ -141,10 +148,7 @@ def main() -> None:
                     stderr=subprocess.STDOUT,
                     check=True,
                 )
-            for name, target in [
-                ("compute", "hexgroebner_compute"),
-                ("compute-reference", "hexgroebner_compute_full"),
-            ]:
+            for name, target in executables:
                 original = checkout / ".lake/build/bin" / target
                 shutil.copy2(original, binaries / name)
                 if sha(original) != sha(binaries / name):
@@ -171,6 +175,12 @@ def main() -> None:
             text=True,
         )
     )
+    sampled_initialization = None
+    if args.sampled:
+        sampled_initialization = json.loads(subprocess.check_output([
+            sys.executable,"scripts/ci/check_groebner_initialization.py",
+            "--default",str(binaries / "sample"),"--reference",str(binaries / "sample-reference")],
+            cwd=ROOT,text=True))
     manifest = {
         "source_fingerprint": fingerprint(listing),
         "source_manifest": listing,
@@ -188,6 +198,7 @@ def main() -> None:
         "build_log_sha256": sha(output / "build.log"),
         "freeze_script_sha256": sha(Path(__file__)),
         "initialization": initialization,
+        "sampled_initialization": sampled_initialization,
         "toolchain": (ROOT / "lean-toolchain").read_text().strip(),
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")

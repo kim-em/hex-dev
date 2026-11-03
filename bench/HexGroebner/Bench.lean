@@ -11,6 +11,7 @@ import HexGroebner.Bench.Primitives
 import HexGroebner.Bench.Continuation
 import HexGroebner.Bench.Columns
 import HexGroebner.Bench.Mersenne
+import HexGroebner.Bench.Sampling
 import HexArith.Montgomery.Context
 import LeanBench
 
