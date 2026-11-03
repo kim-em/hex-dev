@@ -309,6 +309,10 @@ available and exact word remainder otherwise. One- and two-byte residues use a
 32-bit reciprocal; four-byte residues use a 64-bit reciprocal. Products fit below
 `p² < 2^62`; subtraction uses an unsigned wrap mask.
 On x86 with runtime AVX2 support, odd moduli use eight exact products at a time.
+When AVX-512F/DQ/BW/VL and the corresponding OS register state are available,
+the ordinary sparse scan first attempts sixteen exact products. Refused packets
+continue through the eight-lane and scalar paths in order. The optional dense
+pivot cache retains its existing AVX2 path.
 One- and two-byte coefficients use a 32-bit Barrett reciprocal: the product is
 below `2^32`, so the approximate quotient is low by at most one. Four-byte
 coefficients use Montgomery products. The factor alone is temporarily converted
@@ -316,8 +320,8 @@ to Montgomery form; stored coefficients remain canonical residues. For
 `R = 2^32`, the unreduced numerator is below `p² + R*p < 3*2^62`, so unsigned
 64-bit lanes cannot overflow and one correction suffices.
 
-For `p = 2^31 - 1`, a separate dispatch uses exact Mersenne folding on contiguous
-vectors and Montgomery products on scattered vectors. The folded product is below
+For `p = 2^31 - 1`, a separate dispatch uses exact Mersenne folding on both contiguous
+and scattered vectors. The folded product is below
 `2*p`, so one subtraction gives the canonical residue. The native harness counts
 these folds inside complete F4 calls and checks both vector layouts separately. Contiguous columns
 use vector loads/stores; other supports use gathers and scalar stores. Narrow
@@ -326,17 +330,21 @@ entire read lies within the logical buffer. Boundary vectors use scalar updates.
 A vector is validated before mutation; a malformed vector falls back to scalar handling
 so the exact failure prefix is preserved. Other architectures and CPUs use the
 scalar implementation. No floating-point arithmetic or global ISA flag is
-required. CPU detection checks CPUID and the OS-enabled YMM state, caches the
+required. CPU detection checks CPUID and the OS-enabled YMM/ZMM state, caches the
 result atomically and needs no compiler-runtime CPU model symbols.
+`HEX_GROEBNER_NO_AVX512` retains AVX2 dispatch; `HEX_GROEBNER_NO_AVX2` disables
+both vector providers. [Matched observations](../reports/bench-results/hexgroebner-avx512.md)
+show kernel improvements on the measured host without an overall F4 speed claim.
 
 `scripts/ci/check_groebner_rows.sh` runs the standalone native tests and the
-compiled matrix harness. `scripts/ci/check_groebner_matrix.py` compares all four
-SIMD/scalar and Barrett/remainder build combinations with the portable model,
+compiled matrix harness. `scripts/ci/check_groebner_matrix.py` compares all six
+automatic/forced-AVX2/scalar and Barrett/remainder build combinations with the portable model,
 including valid strided vectors and even moduli. Native call counters ensure
 that the linked test implementations actually run; successful contiguous and
 strided SIMD calls are counted separately at each of the three coefficient
 widths. `HEX_GROEBNER_REQUIRE_AVX2=1` requires
-hardware SIMD coverage. Set `HEX_GROEBNER_SANITIZE=1` for UBSan and ASan on
+hardware SIMD coverage. `HEX_GROEBNER_REQUIRE_AVX512=1` requires actual
+sixteen-lane execution in the automatic variants. Set `HEX_GROEBNER_SANITIZE=1` for UBSan and ASan on
 C-owned memory (the kernel buffers themselves are Lean sarrays), and
 `HEX_GROEBNER_NATIVE_LOG_DIR` to retain its generated Lake project. The compiled
 variant harness uses ELF linker wrapping on Linux; ordinary Lean conformance
