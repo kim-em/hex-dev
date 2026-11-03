@@ -97,6 +97,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--sampled", action="store_true", help="also freeze both sampled driver initializers")
+    parser.add_argument("--bench", action="store_true", help="also freeze the registered kernel benchmark executable")
     args = parser.parse_args()
     listing = sources()
     output = args.output.resolve()
@@ -104,6 +105,8 @@ def main() -> None:
     executables = [("compute", "hexgroebner_compute"), ("compute-reference", "hexgroebner_compute_full")]
     if args.sampled:
         executables += [("sample", "hexgroebner_sample"), ("sample-reference", "hexgroebner_sample_full")]
+    if args.bench:
+        executables += [("bench", "hexgroebner_bench")]
     command = ["lake", "build", *[target for _, target in executables]]
     tree = subprocess.check_output(["git", "write-tree"], cwd=ROOT, text=True).strip()
     parent = subprocess.check_output(

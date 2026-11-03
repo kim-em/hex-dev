@@ -55,10 +55,35 @@ private def takeGather : Work Native.Gather.State := do
     gather := ⟨{},{},{},0⟩ }
   return gather
 
+private def installReducer (limits : MatrixLimits) : Work Unit := do
+  let field := (← get).field
+  let index := (← get).installed
+  let reducers := (← get).reducers
+  if index == reducers.size then
+    modify fun s => { s with phase := .block }
+  else
+    let row := reducers[index]!
+    if row.size == 0 || Packed.read field.width row.coefficients 0 != 1 then
+      throw (.coefficient index 0)
+    let leading := (Packed.read .u32 row.columns 0).toNat
+    let occupied := Packed.read .u32 (← get).slots leading
+    if occupied != 0 then throw (.column index 0)
+    let sugar := (← get).sugars[index]?.getD 0
+    spend limits 1
+    let pivots ← takePivots
+    let slots ← takeSlots
+    let id := pivots.size+1
+    let pivots := pivots.push ⟨row.columns,row.coefficients,sugar⟩
+    let slots := Packed.set .u32 slots leading id.toUInt64
+    modify fun s => { s with
+      slots,pivots,installed := index+1
+      statistics.matrix.processedRows := s.statistics.matrix.processedRows+1 }
+
 private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
-  let s ← get
-  match s.phase with
+  let phase := (← get).phase
+  match phase with
   | .check =>
+    let s ← get
     if s.config.blockRows == 0 || s.config.blockRows > 4096 || s.config.zeroTests == 0 then
       throw .dimensions
     if s.columns > 4294967295 || s.reducers.size+s.targets.size > 4294967295 then throw .dimensions
@@ -68,6 +93,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
     modify fun s => { s with
       phase := .validate }
   | .validate =>
+    let s ← get
     if s.validation == s.reducers.size+s.targets.size then
       modify fun s => { s with
         phase := .workspace }
@@ -85,6 +111,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       modify fun s => { s with
         validation := s.validation+1 }
   | .workspace =>
+    let s ← get
     let bytes := s.columns*(s.field.width.bytes+4)
     if bytes ≥ USize.size then throw .dimensions
     -- Check both reservations before either cumulative charge, so an exhausted
@@ -97,27 +124,9 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
         else Matrix.zeros (s.columns*s.field.width.bytes)
       slots := if native then Matrix.zerosWith (s.columns*4) else Matrix.zeros (s.columns*4)
       phase := .install }
-  | .install =>
-    if s.installed == s.reducers.size then
-      modify fun s => { s with
-        phase := .block }
-    else
-      let row := s.reducers[s.installed]!
-      if row.size == 0 || Packed.read s.field.width row.coefficients 0 != 1 then
-        throw (.coefficient s.installed 0)
-      let leading := (Packed.read .u32 row.columns 0).toNat
-      if Packed.read .u32 s.slots leading != 0 then throw (.column s.installed 0)
-      let sugar := s.sugars[s.installed]?.getD 0
-      spend limits 1
-      let pivots ← takePivots
-      let slots ← takeSlots
-      let id := pivots.size+1
-      let pivots := pivots.push ⟨row.columns,row.coefficients,sugar⟩
-      let slots := Packed.set .u32 slots leading id.toUInt64
-      modify fun s => { s with
-        slots,pivots,installed := s.installed+1
-        statistics.matrix.processedRows := s.statistics.matrix.processedRows+1 }
+  | .install => installReducer limits
   | .block =>
+    let s ← get
     if s.start == s.targets.size then modify fun s => { s with phase := .done }
     else
       let stop := min s.targets.size (s.start+s.config.blockRows)
@@ -127,6 +136,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       modify fun s => { s with
         stop,row := s.start,zeros := 0,trials := 0,sugar,phase := .draw }
   | .draw =>
+    let s ← get
     if s.row == s.stop then
       if s.reducers.size+s.targets.size+s.statistics.combinations+1 > limits.rows then
         throw (.exhausted .rows)
@@ -149,6 +159,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
           random,statistics.randomWords := s.statistics.randomWords+1 }
       | .error .zeroBound => throw .dimensions
   | .combine =>
+    let s ← get
     let row := s.targets[s.row]!
     let count := min 4096 (row.size-s.offset)
     spend limits count
@@ -166,6 +177,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       phase := if offset+count == row.size then .draw else .combine,
       statistics.combinationEntries := s.statistics.combinationEntries+count }
   | .scan =>
+    let s ← get
     let field := s.field
     let slots := s.slots
     let pivots := s.pivots
@@ -199,6 +211,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
             row := s.start,phase := .draw }
       else modify fun s => { s with phase := .inverse }
   | .inverse =>
+    let s ← get
     let leading := s.scan.leading-1
     let factor ← liftWork (Matrix.inverse s.field s.field.barrett limits
       (Packed.read s.field.width s.scan.dense leading))
@@ -207,6 +220,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       inverse := factor,phase := .gather,
       gather := ⟨s.scan.dense,{},{},leading⟩,scan := { s.scan with dense := {} } }
   | .gather =>
+    let s ← get
     -- Limit entries first: Gather tests this before charging an append.
     -- Matching byte/product capacities prevent later partially charged
     -- append failures and allow exact continuation inside a sparse output row.
