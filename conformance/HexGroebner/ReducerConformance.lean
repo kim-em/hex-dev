@@ -13,7 +13,8 @@ private def field : PrimeField := ⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide)
 private def context : Context := ⟨field, 2, .grevlex⟩
 
 /-- The three branches have explicit visit/edge costs. Test every allowance
-around the root's indivisible three-edge charge and all subsequent visits. -/
+around the root's indivisible three-edge charge and subsequent visits,
+including the nodes whose checked priority bounds skip their subtrees. -/
 def budgetChecks : Bool := Id.run do
   let prepare : Computation (ReducerIndex × Array BasisElement × Nat × Nat) := do
     let p ← Polynomial.normalize context {} 0 #[⟨#[2,0],1⟩, ⟨#[0,1],1⟩]
@@ -31,19 +32,19 @@ def budgetChecks : Bool := Id.run do
   for allowance in [:17] do
     let limits : Limits := { work := 17 + allowance }
     let (result, final) := (index.find context limits basis all).run initial
-    let charged := if allowance < 4 then min allowance 1 else min allowance 13
+    let charged := if allowance < 4 then min allowance 1 else min allowance 9
     if final.statistics != { statistics with work := 17 + charged } then return false
     if final.table.work != initial.table.work || final.table.count != initial.table.count ||
         final.table.exponents != initial.table.exponents || final.table.metadata != initial.table.metadata then
       return false
     match result with
-    | .ok selected => if allowance < 13 || selected != some 2 then return false
-    | .error (.exhausted .work) => if allowance ≥ 13 then return false
+    | .ok selected => if allowance < 9 || selected != some 2 then return false
+    | .error (.exhausted .work) => if allowance ≥ 9 then return false
     | _ => return false
   -- Equal support size and degree retain the first leaf in the traversal.
-  let (result, final) := (index.find context { work := 29 } basis tie).run initial
+  let (result, final) := (index.find context { work := 27 } basis tie).run initial
   match result with
-  | .ok (some 1) => return final.statistics.work == 29
+  | .ok (some 1) => return final.statistics.work == 27
   | _ => return false
 
 #guard budgetChecks
