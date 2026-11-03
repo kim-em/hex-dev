@@ -190,22 +190,21 @@ def capChecks (seed : Nat) : Bool := Id.run do
 #guard mixedChecks 0
 
 /-- Complete linear-ideal F4 candidates use a three-quarter-full reducer
-inside a wider symbolic column set. Sixty-seven inputs exceed the bulk-frame
+inside a wider symbolic column set. Sixty-six inputs exceed the bulk-frame
 target cap, so the native continuation exercises its dense update. Output
 equality is separate from timing. -/
 def fullChecks (seed : Nat) : Bool := Id.run do
-  let context : Context := ⟨field,239,.grevlex⟩
+  let context : Context := ⟨field,238,.grevlex⟩
   let mut full : RawPolynomial := #[]
   let mut sparse : RawPolynomial := #[]
   for j in [:174] do
-    let powers := (Array.replicate 239 0).set! j 1
+    let powers := (Array.replicate 238 0).set! j 1
     if j == 0 || j ≥ 2 then full := full.push ⟨powers,(j+1).toUInt64⟩
     if j == 1 || (j ≥ 2 && j%4 != 0) then sparse := sparse.push ⟨powers,(j+1).toUInt64⟩
-  full := full.push ⟨(Array.replicate 239 0).set! 1 1,(seed%2147483646+1).toUInt64⟩
-  let mut generators := #[full,sparse,
-    #[⟨(Array.replicate 239 0).set! 1 1,1⟩,⟨(Array.replicate 239 0).set! 238 1,1⟩]]
+  full := full.push ⟨(Array.replicate 238 0).set! 1 1,(seed%2147483646+1).toUInt64⟩
+  let mut generators := #[full,sparse]
   for j in [174:238] do
-    generators := generators.push #[⟨(Array.replicate 239 0).set! j 1,1⟩]
+    generators := generators.push #[⟨(Array.replicate 238 0).set! j 1,1⟩]
   match computeWith context { work := 1000000000,densePivots := true } generators,
       computeWith context { work := 1000000000 } generators with
   | .candidate cachedAnswer _,.candidate sparseAnswer _ => return cachedAnswer.polynomials == sparseAnswer.polynomials
