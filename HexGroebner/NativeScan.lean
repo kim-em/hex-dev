@@ -51,7 +51,8 @@ def rowSize (w : Nat) (row : Pivot) : Option Nat :=
 
 /-- A bounded transition: a column visit, one entry update, or completion of
 one reduction per iteration. Pending updates retain their charged work. -/
-def portable (modulus : UInt64) (slots : @& ByteArray) (pivots : @& Array Pivot)
+def portableWith (modulus : UInt64) (slots : @& ByteArray) (count : Nat)
+    (pivotAt : Nat → Pivot)
     (initial : State) (quantum workLimit traceLimit : Nat) (provenance : Bool) : Result := Id.run do
   let p := modulus.toNat
   let w := Native.width p
@@ -60,7 +61,7 @@ def portable (modulus : UInt64) (slots : @& ByteArray) (pivots : @& Array Pivot)
   if p < 2 || p ≥ 2147483648 || quantum > 4096 || initial.dense.size % w != 0 ||
       columns > 4294967295 || slots.size != columns*4 || initial.column > columns ||
       (columns != 0 && initial.last ≥ columns) || initial.leading > columns ||
-      initial.pending > pivots.size || pivots.size > 4294967295 ||
+      initial.pending > count || count > 4294967295 ||
       initial.chargedUntil > columns || initial.entry > 4294967295 ||
       (initial.pending == 0 && initial.entry != 0) ||
       (initial.pending != 0 && initial.column ≥ columns) ||
@@ -69,7 +70,7 @@ def portable (modulus : UInt64) (slots : @& ByteArray) (pivots : @& Array Pivot)
   for _ in [:quantum] do
     let s := out.state
     if s.pending != 0 then
-      let pivot := pivots[s.pending-1]!
+      let pivot := pivotAt (s.pending-1)
       let some size := rowSize w pivot | return { out with status := 4 }
       if s.entry > size then return { out with status := 4 }
       if s.entry == size then
@@ -104,8 +105,8 @@ def portable (modulus : UInt64) (slots : @& ByteArray) (pivots : @& Array Pivot)
       if a == 0 || slot == 0 then
         out := { out with state := { s with column := s.column+1, leading := if a != 0 && s.leading == 0 then s.column+1 else s.leading } }
       else
-        if slot > pivots.size then return { out with status := 4 }
-        let pivot := pivots[slot-1]!
+        if slot > count then return { out with status := 4 }
+        let pivot := pivotAt (slot-1)
         let some size := rowSize w pivot | return { out with status := 4 }
         if Native.read pivot.columns 4 0 != s.column || Native.read pivot.coefficients w 0 != 1 then
           return { out with status := 4 }
@@ -116,6 +117,12 @@ def portable (modulus : UInt64) (slots : @& ByteArray) (pivots : @& Array Pivot)
         out := { out with work := out.work+size, state := { out.state with
           pending := slot, entry := 0, factor := a.toUInt64 } }
   return out
+
+/-- Sparse-array specialization of the shared scalar transition. -/
+def portable (modulus : UInt64) (slots : @& ByteArray) (pivots : @& Array Pivot)
+    (initial : State) (quantum workLimit traceLimit : Nat) (provenance : Bool) : Result :=
+  portableWith modulus slots pivots.size (fun i => pivots[i]!)
+    initial quantum workLimit traceLimit provenance
 
 @[extern "lean_hex_scan_transition"]
 def transition (modulus : UInt64) (slots : @& ByteArray) (pivots : @& Array Pivot)

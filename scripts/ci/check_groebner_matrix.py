@@ -336,11 +336,35 @@ static inline unsigned hex_test_scan8_m31_counted(uint8_t *dense,const uint8_t *
 #define hex_scan8 hex_test_scan8_counted
 #define hex_scan8_m31 hex_test_scan8_m31_counted
 #endif
+static uint64_t dense_prepares=0,dense_scans=0,dense_updates=0;
+#define HEX_GROEBNER_DENSE_USED() (++dense_updates)
+#define lean_hex_prepare_dense hex_test_prepare_dense
+#define lean_hex_dense_transition hex_test_dense_transition
 #define lean_hex_scan_transition hex_test_scan
 #define lean_hex_gather hex_test_gather
 #include SOURCE
 #undef lean_hex_scan_transition
 #undef lean_hex_gather
+#undef lean_hex_prepare_dense
+#undef lean_hex_dense_transition
+__typeof__(hex_test_prepare_dense) __wrap_lean_hex_prepare_dense;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_prepare_dense(uint64_t p,b_lean_obj_arg columns,
+ b_lean_obj_arg source,b_lean_obj_arg work,b_lean_obj_arg bytes) {
+ ++dense_prepares;return hex_test_prepare_dense(p,columns,source,work,bytes);
+}
+__typeof__(hex_test_dense_transition) __wrap_lean_hex_dense_transition;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_dense_transition(uint64_t p,b_lean_obj_arg columns,
+ b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,b_lean_obj_arg quantum,
+ b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
+ ++dense_scans;return hex_test_dense_transition(p,columns,slots,pivots,initial,quantum,work,trace,provenance);
+}
+LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
+ (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(dense_scans));lean_ctor_set(tail,1,lean_box_uint64(dense_updates));
+ lean_ctor_set(out,0,lean_box_uint64(dense_prepares));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
+}
+
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
@@ -697,6 +721,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+                     "-Wl,--wrap=lean_hex_prepare_dense", "-Wl,--wrap=lean_hex_dense_transition",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -710,6 +735,8 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 import HexGroebner.SampledConformance
+import HexGroebner.DenseConformance
+@[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
 @[extern "hex_test_copy_bytes"] opaque copyBytes (input : @& ByteArray) : IO ByteArray
 @[extern "hex_test_reset_pivot_owners"] opaque resetPivotOwners : IO Unit
@@ -768,6 +795,38 @@ def main : IO Unit := do
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
+  let beforeDense ← denseCounts
+  if !Hex.Groebner.DenseConformance.scanChecks primitiveSeed then
+    throw (IO.userError "dense pivot scan prefix mismatch")
+  let mut denseColumns : ByteArray := {}
+  let mut denseValues : ByteArray := {}
+  for i in [:128] do
+    denseColumns := Hex.Groebner.Packed.push .u32 denseColumns i.toUInt64
+    denseValues := Hex.Groebner.Packed.push .u32 denseValues (i+1).toUInt64
+  let denseSource : Hex.Groebner.Native.Scan.Pivot := ⟨denseColumns,denseValues,primitiveSeed⟩
+  let prepared := Hex.Groebner.Native.Dense.prepare 2147483647 128 denseSource 100000 100000
+  let sourceSnapshot ← copyBytes prepared.row.source.coefficients
+  let cacheSnapshot ← copyBytes prepared.row.dense
+  let denseInitial : Hex.Groebner.Native.Scan.State := {
+    dense := prepared.row.dense
+    column := 0
+    last := 127
+    chargedUntil := 128
+    pending := 1
+    factor := 1 }
+  let denseSlots := Hex.Groebner.Native.write (Hex.Groebner.Native.Dense.zeros 512) 4 0 1
+  let denseOutput := Hex.Groebner.Native.Dense.transition 2147483647 128 denseSlots
+    #[prepared.row] denseInitial 128 100000 0 false
+  if denseOutput.state.dense != Hex.Groebner.Native.Dense.zeros 512 ||
+      prepared.row.source.coefficients != sourceSnapshot || prepared.row.dense != cacheSnapshot ||
+      denseInitial.dense != cacheSnapshot then
+    throw (IO.userError "dense pivot source/cache/continuation snapshot was mutated")
+  let afterDense ← denseCounts
+  if afterDense.1 ≤ beforeDense.1 || afterDense.2.1 ≤ beforeDense.2.1 ||
+      afterDense.2.2 ≤ beforeDense.2.2 then
+    throw (IO.userError "dense pivot native materialization/update was not exercised")
+  IO.println s!"dense pivot calls: {afterDense}"
+
   let beforePortableScan ← counts
   let beforePortableWhole ← wholeCounts
   let beforePortableBytes ← byteCount

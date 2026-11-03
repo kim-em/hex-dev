@@ -63,7 +63,51 @@ def checks : Bool := Id.run do
   if (Native.Dense.Row.check modulus 1024 sparse dense 0 2).isSome then return false
   return true
 
+private def same (a b : Native.Scan.Result) : Bool :=
+  a.status == b.status && a.work == b.work && a.reductions == b.reductions &&
+  a.traceNodes == b.traceNodes && a.events == b.events &&
+  a.state.dense == b.state.dense && a.state.column == b.state.column &&
+  a.state.last == b.state.last && a.state.chargedUntil == b.state.chargedUntil &&
+  a.state.leading == b.state.leading && a.state.pending == b.state.pending &&
+  a.state.entry == b.state.entry && a.state.sugar == b.state.sugar && a.state.factor == b.state.factor
+
+/-- Every quantum and error returns the sparse model's exact update prefix,
+including noncanonical target values in zero gaps and active vector lanes. -/
+def scanChecks (seed : Nat) : Bool := Id.run do
+  for step in [1,2] do
+    let source := source 128 5 step
+    let row := (Native.Dense.prepare modulus 300 source 100000 100000).row
+    if row.dense.isEmpty then return false
+    let slots := Native.write (Native.Dense.zeros 1200) 4 20 1
+    let mut buffer := Native.Dense.zeros 1200
+    for i in [:300] do buffer := Native.write buffer 4 (4*i) ((123*i+7+seed)%2147483647)
+    for bad in [0,6,7,12,127,250,259,299,300] do
+      let dense := if bad == 300 then buffer else Native.write buffer 4 (4*bad) 4294967295
+      for entry in [0,1,7,8,127,128,129] do
+        let initial : Native.Scan.State := {
+          dense := dense
+          column := 5
+          last := 299
+          chargedUntil := 300
+          pending := 1
+          entry := entry
+          factor := 2147483646
+          sugar := 3 }
+        for quantum in [0,1,7,8,127,128,129,4096,4097] do
+          for trace in [0,1] do
+            let output := Native.Dense.transition modulus 300 slots #[row] initial quantum 100000 trace true
+            let reference := Native.Dense.portable modulus 300 slots #[row] initial quantum 100000 trace true
+            if !same output reference then return false
+    for work in [0,63,64,127,128,191,192,100000] do
+      let initial : Native.Scan.State := { dense := buffer,column := 5,last := 299,chargedUntil := 5 }
+      let output := Native.Dense.transition modulus 300 slots #[row] initial 4096 work 1 true
+      let reference := Native.Dense.portable modulus 300 slots #[row] initial 4096 work 1 true
+      if !same output reference then return false
+  return true
+
 #guard checks
+#guard scanChecks 0
+
 
 example (row : Native.Scan.Pivot) :
     Native.Dense.valid modulus 1024 (Native.Dense.Row.raw modulus 1024 row).source

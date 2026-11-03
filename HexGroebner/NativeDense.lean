@@ -119,4 +119,25 @@ def prepare (modulus : UInt64) (columns : @& Nat) (source : @& Scan.Pivot)
     (workBudget bytesBudget : @& Nat) : Result modulus columns :=
   preparePortable modulus columns source workBudget bytesBudget
 
+/-- The scalar semantics visit only sparse entries. Cached zero gaps never
+consume logical update steps or change failure prefixes. The ambient dimension
+is checked even for raw rows, so every nonempty cache has this call's geometry. -/
+def portable (modulus : UInt64) (columns : Nat) (slots : ByteArray)
+    (pivots : Array (Row modulus columns)) (initial : Scan.State)
+    (quantum workLimit traceLimit : Nat) (provenance : Bool) : Scan.Result :=
+  if columns != initial.dense.size / Native.width modulus.toNat then
+    { state := initial,status := 4 }
+  else Scan.portableWith modulus slots pivots.size (fun i =>
+    (pivots[i]?.map (·.source)).getD default) initial quantum workLimit traceLimit provenance
+
+/-- Dense-aware native transition. Immutable checked pivot buffers permit
+contiguous M31 updates; unsupported fields and partial rows retain sparse
+execution. Each call has at most 4096 logical updates and twice that many dense
+cells. The Row proof licenses cache reads without revalidating whole pivots. -/
+@[extern "lean_hex_dense_transition"]
+def transition (modulus : UInt64) (columns : @& Nat) (slots : @& ByteArray)
+    (pivots : @& Array (Row modulus columns)) (initial : Scan.State)
+    (quantum workLimit traceLimit : @& Nat) (provenance : Bool) : Scan.Result :=
+  portable modulus columns slots pivots initial quantum workLimit traceLimit provenance
+
 end Hex.Groebner.Native.Dense

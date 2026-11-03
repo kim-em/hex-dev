@@ -63,6 +63,55 @@ static inline int scalar_update(uint8_t *data,const uint8_t *cs,const uint8_t *v
     return 1;
 }
 
+#ifndef HEX_GROEBNER_DENSE_USED
+#define HEX_GROEBNER_DENSE_USED() ((void)0)
+#endif
+/* Checked cache coefficients are canonical, including zero gaps. The target
+   is validated only where the sparse source has an entry. Return the first
+   invalid dense offset after retaining exactly its preceding sparse updates. */
+static uint64_t hex_dense_update_scalar(uint8_t *data,const uint8_t *values,
+        uint64_t span,uint64_t factor) {
+    for(uint64_t i=0;i<span;++i) {
+        uint64_t b=rd(values+(size_t)i*4,4);
+        if(!b) continue;
+        uint64_t a=rd(data+(size_t)i*4,4);
+        if(a>=INT32_MAX) return i;
+        uint64_t x=factor*b;
+        uint64_t product=(x&INT32_MAX)+(x>>31);
+        if(product>=INT32_MAX) product-=INT32_MAX;
+        uint64_t value=a+INT32_MAX-product;
+        if(value>=INT32_MAX) value-=INT32_MAX;
+        wr(data+(size_t)i*4,4,value);
+    }
+    return UINT64_MAX;
+}
+#if HEX_GROEBNER_AVX2
+__attribute__((target("avx2")))
+static uint64_t hex_dense_update_avx2(uint8_t *data,const uint8_t *values,
+        uint64_t span,uint64_t factor) {
+    const __m256i zero=_mm256_setzero_si256(),p=_mm256_set1_epi32(INT32_MAX);
+    const __m256i f=_mm256_set1_epi64x((int64_t)factor);
+    uint64_t i=0;
+    for(;span-i>=8;i+=8) {
+        __m256i a=_mm256_loadu_si256((const __m256i *)(data+(size_t)i*4));
+        __m256i b=_mm256_loadu_si256((const __m256i *)(values+(size_t)i*4));
+        __m256i gaps=_mm256_cmpeq_epi32(b,zero);
+        __m256i valid=_mm256_or_si256(gaps,_mm256_and_si256(
+            _mm256_cmpgt_epi32(a,_mm256_set1_epi32(-1)),_mm256_cmpgt_epi32(p,a)));
+        if(_mm256_movemask_epi8(valid)!=-1) break;
+        __m256i even=hex_mersenne31_even(b,f);
+        __m256i odd=hex_mersenne31_even(_mm256_srli_epi64(b,32),f);
+        __m256i product=_mm256_or_si256(even,_mm256_slli_epi64(odd,32));
+        __m256i value=_mm256_sub_epi32(a,product);
+        value=_mm256_add_epi32(value,_mm256_and_si256(_mm256_srai_epi32(value,31),p));
+        value=_mm256_blendv_epi8(value,a,gaps);
+        _mm256_storeu_si256((__m256i *)(data+(size_t)i*4),value);
+    }
+    uint64_t failed=hex_dense_update_scalar(data+(size_t)i*4,values+(size_t)i*4,span-i,factor);
+    return failed==UINT64_MAX?failed:i+failed;
+}
+#endif
+#define HEX_SCAN_DENSE 0
 #define HEX_SCAN_UPDATE hex_scan8
 #define HEX_SCAN_NAME hex_scan_u8
 #define HEX_SCAN_ATTRIBUTE
@@ -158,6 +207,72 @@ LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
     if(p<=256) return hex_scan_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
     if(p<=65536) return hex_scan_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
     return hex_scan_u32(p,slots,pivots,initial,quantum,work,trace,provenance);
+}
+
+#undef HEX_SCAN_DENSE
+#define HEX_SCAN_DENSE 1
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8
+#define HEX_SCAN_NAME hex_dense_scan_u8
+#define HEX_SCAN_ATTRIBUTE 
+#define HEX_SCAN_VECTOR 0
+#define HEX_SCAN_WIDTH 1
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8
+#define HEX_SCAN_NAME hex_dense_scan_u16
+#define HEX_SCAN_ATTRIBUTE 
+#define HEX_SCAN_VECTOR 0
+#define HEX_SCAN_WIDTH 2
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8
+#define HEX_SCAN_NAME hex_dense_scan_u32
+#define HEX_SCAN_ATTRIBUTE 
+#define HEX_SCAN_VECTOR 0
+#define HEX_SCAN_WIDTH 4
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#if HEX_GROEBNER_AVX2
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8_m31
+#define HEX_SCAN_NAME hex_dense_scan_m31
+#define HEX_SCAN_ATTRIBUTE __attribute__((target("avx2")))
+#define HEX_SCAN_VECTOR 1
+#define HEX_SCAN_WIDTH 4
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#endif
+#undef HEX_SCAN_DENSE
+
+LEAN_EXPORT lean_obj_res lean_hex_dense_transition(uint64_t p,b_lean_obj_arg column_arg,
+        b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
+        b_lean_obj_arg quantum,b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
+    unsigned w=p<=256?1:p<=65536?2:4;
+    uint64_t columns=bounded_nat(column_arg,UINT64_C(4294967296));
+    if(columns!=lean_sarray_size(lean_ctor_get(initial,0))/w)
+        return result(initial,lean_alloc_array(0,0),0,0,0,4);
+#if HEX_GROEBNER_AVX2
+    if(p==INT32_MAX && hex_avx2_available())
+        return hex_dense_scan_m31(p,slots,pivots,initial,quantum,work,trace,provenance);
+#endif
+    if(p<=256) return hex_dense_scan_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
+    if(p<=65536) return hex_dense_scan_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
+    return hex_dense_scan_u32(p,slots,pivots,initial,quantum,work,trace,provenance);
 }
 
 static lean_object *append_scalar(lean_obj_arg bytes,unsigned w,uint64_t value) {

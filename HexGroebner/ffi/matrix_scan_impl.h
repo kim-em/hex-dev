@@ -56,7 +56,12 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
     uint64_t checked_size=0;
     for(uint64_t tick=0;tick<quantum;++tick) {
         if(pending) {
-            lean_object *pivot=lean_array_cptr(pivots)[pending-1];
+            lean_object *view=lean_array_cptr(pivots)[pending-1];
+#if HEX_SCAN_DENSE
+            lean_object *pivot=lean_ctor_get(view,0);
+#else
+            lean_object *pivot=view;
+#endif
             if(pivot!=checked_pivot) {
                 if(!geometry(pivot,w,&checked_size)) {status=4;break;}
                 checked_pivot=pivot;
@@ -76,6 +81,29 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
             } else {
                 const uint8_t *cs=lean_sarray_cptr(lean_ctor_get(pivot,0));
                 const uint8_t *vs=lean_sarray_cptr(lean_ctor_get(pivot,1));
+#if HEX_SCAN_DENSE
+                lean_object *cache=lean_ctor_get(view,1);
+                if(p==INT32_MAX && entry==0 && size<=quantum-tick && lean_sarray_size(cache)) {
+                    uint32_t first=lean_ctor_get_uint32(view,2*sizeof(void*));
+                    const uint8_t *values=lean_sarray_cptr(cache);
+                    uint64_t span=lean_sarray_size(cache)/4;
+#if HEX_SCAN_VECTOR
+                    uint64_t failed=hex_dense_update_avx2(data+(size_t)first*4,values,span,factor);
+#else
+                    uint64_t failed=hex_dense_update_scalar(data+(size_t)first*4,values,span,factor);
+#endif
+                    HEX_GROEBNER_DENSE_USED();
+                    if(failed!=UINT64_MAX) {
+                        /* Previous dense cells have been updated. Recover the
+                           exact sparse cursor at the first invalid target. */
+                        uint64_t low=0,high=size;
+                        while(low<high) {uint64_t mid=low+(high-low)/2;
+                            if(rd(cs+(size_t)mid*4,4)<first+failed) low=mid+1;else high=mid;}
+                        entry=low;status=4;break;
+                    }
+                    entry=size;tick+=size-1;continue;
+                }
+#endif
                 uint64_t updates=size-entry;
                 if(updates>quantum-tick) updates=quantum-tick;
 #if HEX_SCAN_VECTOR
@@ -126,7 +154,12 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
             if(!slot) {if(!leading) leading=col+1;++col;}
             else {
                 if(slot>count) {status=4;break;}
-                lean_object *pivot=lean_array_cptr(pivots)[slot-1];
+                lean_object *view=lean_array_cptr(pivots)[slot-1];
+#if HEX_SCAN_DENSE
+                lean_object *pivot=lean_ctor_get(view,0);
+#else
+                lean_object *pivot=view;
+#endif
                 uint64_t size;
                 if(!geometry(pivot,w,&size)) {status=4;break;}
                 checked_pivot=pivot;checked_size=size;
