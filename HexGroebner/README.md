@@ -143,6 +143,9 @@ statistics and separate sampling counts. Independent complete-basis certificatio
 remains necessary. The current route exposes candidate production and separate
 `certifyWith` validation; a checked retry/fallback driver remains to be implemented.
 The conformance corpus includes deliberate rank misses that certification rejects.
+The [sampling measurements](../reports/bench-results/hexgroebner-sampling.md)
+retain the negative and inconclusive development campaigns. Sampling remains
+slower overall than deterministic F4 on that suite and is explicitly opt-in.
 
 A sealed `Sampled.State` fixes context, inputs, scheduling and sampling controls.
 It preserves the selected pair batch, column map, advanced random state, accepted
