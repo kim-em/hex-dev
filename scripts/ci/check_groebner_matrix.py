@@ -845,6 +845,22 @@ def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
     throw (IO.userError "dense-option bulk work cap differs from reference")
   IO.println "public M31 cached-option bulk frames: 12 accepted; exact boundary counters and work cap passed"
 
+def checkMersenne : IO UInt64 := do
+  let before512 ← avx512Count
+  let beforeMersenne ← mersenneCount
+  Hex.Groebner.NativeChecks.runMersenneF4
+  let mersenne ← mersenneCount
+  let after512 ← avx512Count
+  let available512 ← avx512Available
+  IO.println s!"AVX-512 packets: {after512}; full F4={after512-before512}; available={available512}"
+  if available512 && after512 ≤ before512 then
+    throw (IO.userError "full F4 did not exercise AVX-512 packets")
+  if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX512") == some "1" && !available512 then
+    throw (IO.userError "AVX-512 coverage required but unavailable")
+  if VECTOR && (← avx2) && mersenne ≤ beforeMersenne then
+    throw (IO.userError "complete F4 did not exercise Mersenne vectors")
+  return mersenne
+
 def main : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
   if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
@@ -1099,17 +1115,7 @@ def main : IO Unit := do
   let cacheProducts ← productCount
   if cacheProducts ≤ f4Products then throw (IO.userError "cache checks did not exercise arena product validation")
   if cacheCompared ≤ f4Compared then throw (IO.userError "cache checks did not exercise byte binding")
-  let before512 ← avx512Count
-  let beforeMersenne ← mersenneCount
-  Hex.Groebner.NativeChecks.runMersenneF4
-  let mersenne ← mersenneCount
-  let after512 ← avx512Count
-  let available512 ← avx512Available
-  IO.println s!"AVX-512 packets: {after512}; full F4={after512-before512}; available={available512}"
-  if available512 && after512 ≤ before512 then
-    throw (IO.userError "full F4 did not exercise AVX-512 packets")
-  if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX512") == some "1" && !available512 then
-    throw (IO.userError "AVX-512 coverage required but unavailable")
+  let mersenne ← checkMersenne
   let indexAfter ← indexCount
   let zeroAppendAfter ← zeroAppendCount
   if indexAfter ≤ indexBefore || zeroAppendAfter ≤ zeroAppendBefore then
@@ -1127,8 +1133,6 @@ def main : IO Unit := do
   IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}, zero blocks={afterZero}, F4 zero blocks={afterZero-beforeZero}"
   if VECTOR && available && afterZero ≤ beforeZero then
     throw (IO.userError "complete F4 did not exercise zero blocks")
-  if VECTOR && available && mersenne ≤ beforeMersenne then
-    throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 255) then
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then
