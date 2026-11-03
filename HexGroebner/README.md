@@ -173,6 +173,34 @@ combination retains its consumed words if the row allowance is exhausted.
 `Sampling.next_spec` and `advance_spec` prove agreement with scalar phases;
 compiled native/scalar and sanitizer checks cover actual foreign execution.
 
+`Limits.densePivots` optionally prepares checked dense pivot buffers for
+untraced deterministic M31 matrices (`p = 2147483647`). It defaults to `false`;
+the driver accepts `--dense-pivots true|false`. Other fields, certificate
+production and sampled computation retain their existing sparse kernels.
+Admission requires 128–4096 nonzero entries, at most 65536 matrix columns,
+a non-contiguous span at least three-quarter full, and sufficient parent work
+and packed-byte allowances. Fully contiguous pivots use the existing sparse
+kernel's contiguous SIMD path. Matrices without any admitted cache also keep
+that path.
+
+Each cache retains its immutable sparse source. The typed cache proves exact
+coefficient equality, source-array correspondence and whether any dense buffer
+is active. Preparation reserves its entire bounded cost before traversing the
+row. Dense updates preserve zero gaps, every intermediate cursor and the first
+malformed-target prefix; partial pending reductions use locally bounded dense packets or sparse updates. A call
+advances at most 4096 logical updates and 8192 dense cells. Cache preparation
+and payload count against the same parent allowances as elimination. The
+continuation and whole-eliminator correspondence proofs include these charges.
+Bulk elimination retains its ordinary frame eligibility. Its validated monic
+rows determine exact preparation charges without materializing unused caches;
+the same parent-budget refusal rules and fixed work quantum still apply.
+The low-level `MatrixLimits.densePivots` also charges requested preparation in
+reference and traced calls, preserving the exact shared counter contract; those
+routes discard caches. Scalar row updates remain scalar, while explicitly
+requested preparation uses its bounded native provider. The polynomial
+certificate producer does not enable that low-level policy.
+This option does not establish a full-system speedup or the performance milestone.
+
 The packed-payload allowance is not a process-memory limit: it excludes
 hash tables, tree nodes, object headers and allocator capacity. Structural
 monomial, pair-attempt, basis and variable bounds also limit metadata growth.

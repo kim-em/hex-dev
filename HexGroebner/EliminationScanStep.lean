@@ -51,10 +51,17 @@ private theorem scan_complete_zero (state : MatrixState.State) (output : Native.
     (hstatus : output.status = 1) (hleading : output.state.leading = 0) :
     outcome state = outcome (zeroScanned state output.state (state.quanta-1)
       { stats with reductions := stats.reductions+output.reductions }) := by
+  have hsize : state.scan.dense.size = state.columns*state.field.width.bytes := by
+    have h := hgeometry
+    simp only [MatrixState.State.geometry,hphase] at h
+    exact h.1
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
+    (state.limits.work-state.stats.work) hsize).trans houtput
   have zeroFormula := fun state => zero_run state
   simp only [ExceptT.run] at zeroFormula hwork
   rw [outcome_run state hgeometry (by simp [hphase])]
-  simp [MatrixState.step,MatrixState.takeScan,MatrixState.work,zeroScanned,hphase,hquanta,
+  simp [MatrixState.step,scanFormula,MatrixState.takeScan,MatrixState.work,zeroScanned,hphase,hquanta,
     houtput,hwork,hstatus,hleading,Native.Scan.transition,ExceptT.run,ExceptT.mk,ExceptT.pure,
     ExceptT.bind,ExceptT.bindCont,ExceptT.lift,StateT.bind,StateT.get,StateT.set,StateT.pure,
     Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,liftM,MonadLiftT.monadLift,
@@ -90,6 +97,13 @@ private theorem scan_complete_gather (state : MatrixState.State) (output : Nativ
     (hgather : (Matrix.work state.limits (output.state.last+1-(output.state.leading-1))).run
       inverseStats = (.ok (),stats)) :
     outcome state = outcome (gatheredScan state output.state inverse stats) := by
+  have hsize : state.scan.dense.size = state.columns*state.field.width.bytes := by
+    have h := hgeometry
+    simp only [MatrixState.State.geometry,hphase] at h
+    exact h.1
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
+    (state.limits.work-state.stats.work) hsize).trans houtput
   simp only [ExceptT.run] at hwork hinverse hgather
   by_cases independent : state.independent = true ∧ MatrixState.isTarget state = true
   all_goals first
@@ -102,7 +116,7 @@ private theorem scan_complete_gather (state : MatrixState.State) (output : Nativ
        cases hstats)
     | simp only [Bool.and_eq_true,ite_eq_right independent] at hinverse
   all_goals rw [outcome_run state hgeometry (by simp [hphase])]
-  all_goals simp [MatrixState.step,MatrixState.takeScan,MatrixState.work,gatheredScan,independent,hphase,hquanta,
+  all_goals simp [MatrixState.step,scanFormula,MatrixState.takeScan,MatrixState.work,gatheredScan,independent,hphase,hquanta,
     houtput,hwork,hstatus,hleading,hinverse,hgather,Native.Scan.transition,ExceptT.run,ExceptT.mk,
     ExceptT.pure,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,StateT.bind,StateT.get,StateT.set,StateT.pure,
     Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,liftM,MonadLiftT.monadLift,
@@ -131,9 +145,16 @@ private theorem scan_pending (state : MatrixState.State) (hphase : state.phase =
       | (.error error,stats) => (.error error,stats)
       | (.ok _,stats) => scanPending state output
           { stats with reductions := stats.reductions+output.reductions } := by
+  have hsize : state.scan.dense.size = state.columns*state.field.width.bytes := by
+    have h := hgeometry
+    simp only [MatrixState.State.geometry,hphase] at h
+    exact h.1
+  have scanFormula := MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
+    (state.limits.work-state.stats.work) hsize
   dsimp only
   rw [outcome_run state hgeometry (by simp [hphase])]
-  simp [MatrixState.step,MatrixState.takeScan,MatrixState.work,hphase,hquanta,
+  simp [MatrixState.step,scanFormula,MatrixState.takeScan,MatrixState.work,hphase,hquanta,
     scanPending,scanState,ExceptT.run,ExceptT.mk,ExceptT.pure,ExceptT.bind,ExceptT.bindCont,
     ExceptT.lift,StateT.bind,StateT.get,StateT.set,StateT.pure,Bind.bind,MonadState.get,
     MonadStateOf.get,MonadStateOf.set,MonadExcept.throw,MonadExceptOf.throw,liftM,
@@ -165,9 +186,16 @@ private theorem scan_work_error (state : MatrixState.State) (output : Native.Sca
       4096 (state.limits.work-state.stats.work) 0 false = output)
     (hwork : (Matrix.work state.limits output.work).run state.stats = (.error error,stats)) :
     outcome state = (.error error,stats) := by
+  have hsize : state.scan.dense.size = state.columns*state.field.width.bytes := by
+    have h := hgeometry
+    simp only [MatrixState.State.geometry,hphase] at h
+    exact h.1
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
+    (state.limits.work-state.stats.work) hsize).trans houtput
   simp only [ExceptT.run] at hwork
   rw [outcome_run state hgeometry (by simp [hphase])]
-  simp [MatrixState.step,MatrixState.takeScan,MatrixState.work,hphase,hquanta,houtput,hwork,
+  simp [MatrixState.step,scanFormula,MatrixState.takeScan,MatrixState.work,hphase,hquanta,houtput,hwork,
     ExceptT.run,ExceptT.mk,ExceptT.pure,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,StateT.bind,
     StateT.get,StateT.set,StateT.pure,Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,
     liftM,MonadLiftT.monadLift,MonadLift.monadLift,getThe,StateT.map,Functor.map,Pure.pure,
@@ -219,10 +247,17 @@ private theorem scan_normalize (state : MatrixState.State) (output : Native.Scan
         match (Matrix.work state.limits (output.state.last+1-(output.state.leading-1))).run inverseStats with
         | (.error error,stats) => (.error error,stats)
         | (.ok _,stats) => outcome (gatheredScan state output.state inverse stats) := by
+  have hsize : state.scan.dense.size = state.columns*state.field.width.bytes := by
+    have h := hgeometry
+    simp only [MatrixState.State.geometry,hphase] at h
+    exact h.1
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
+    (state.limits.work-state.stats.work) hsize).trans houtput
   simp only [ExceptT.run] at hwork
   rw [outcome_run state hgeometry (by simp [hphase])]
   by_cases independent : state.independent = true ∧ MatrixState.isTarget state = true
-  all_goals simp [MatrixState.step,MatrixState.takeScan,MatrixState.work,scanInverse,gatheredScan,
+  all_goals simp [MatrixState.step,scanFormula,MatrixState.takeScan,MatrixState.work,scanInverse,gatheredScan,
     hphase,hquanta,houtput,hwork,hstatus,hleading,independent,Native.Scan.transition,
     ExceptT.run,ExceptT.mk,ExceptT.pure,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,StateT.bind,
     StateT.get,StateT.set,StateT.pure,Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,

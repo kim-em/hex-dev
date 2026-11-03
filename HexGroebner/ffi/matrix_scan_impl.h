@@ -56,7 +56,12 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
     uint64_t checked_size=0;
     for(uint64_t tick=0;tick<quantum;++tick) {
         if(pending) {
-            lean_object *pivot=lean_array_cptr(pivots)[pending-1];
+            lean_object *view=lean_array_cptr(pivots)[pending-1];
+#if HEX_SCAN_DENSE
+            lean_object *pivot=lean_ctor_get(view,0);
+#else
+            lean_object *pivot=view;
+#endif
             if(pivot!=checked_pivot) {
                 if(!geometry(pivot,w,&checked_size)) {status=4;break;}
                 checked_pivot=pivot;
@@ -78,6 +83,37 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
                 const uint8_t *vs=lean_sarray_cptr(lean_ctor_get(pivot,1));
                 uint64_t updates=size-entry;
                 if(updates>quantum-tick) updates=quantum-tick;
+#if HEX_SCAN_DENSE
+                lean_object *cache=lean_ctor_get(view,1);
+                uint64_t cache_bytes=lean_sarray_size(cache);
+                uint64_t first=lean_ctor_get_uint32(view,2*sizeof(void*));
+                uint64_t cached_size=lean_ctor_get_uint32(view,2*sizeof(void*)+4);
+                if(p==INT32_MAX && cache_bytes && !(cache_bytes%4) &&
+                   cache_bytes/4<=16384 && cached_size==size && first<=columns && cache_bytes/4<=columns-first) {
+                    uint64_t begin=rd(cs+(size_t)entry*4,4);
+                    uint64_t end=rd(cs+(size_t)(entry+updates-1)*4,4)+1;
+                    /* Bound each partial dense packet independently. A globally
+                       dense row can still have a wide local gap. Refused packets
+                       retain the exact ordinary sparse prefix below. */
+                    if(begin>=first && end>=begin && end-first<=cache_bytes/4 &&
+                       end-begin<=2*updates) {
+                        const uint8_t *values=lean_sarray_cptr(cache)+(size_t)(begin-first)*4;
+#if HEX_SCAN_VECTOR
+                        uint64_t failed=hex_dense_update_avx2(data+(size_t)begin*4,values,end-begin,factor);
+#else
+                        uint64_t failed=hex_dense_update_scalar(data+(size_t)begin*4,values,end-begin,factor);
+#endif
+                        HEX_GROEBNER_DENSE_USED();
+                        if(failed!=UINT64_MAX) {
+                            uint64_t low=entry,high=entry+updates;
+                            while(low<high) {uint64_t mid=low+(high-low)/2;
+                                if(rd(cs+(size_t)mid*4,4)<begin+failed) low=mid+1;else high=mid;}
+                            entry=low;status=4;break;
+                        }
+                        entry+=updates;tick+=updates-1;continue;
+                    }
+                }
+#endif
 #if HEX_SCAN_VECTOR
                 if(updates>=8) {
                     uint32_t multiplier=w<4?(uint32_t)factor:(uint32_t)((factor<<32)%p);
@@ -126,7 +162,12 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
             if(!slot) {if(!leading) leading=col+1;++col;}
             else {
                 if(slot>count) {status=4;break;}
-                lean_object *pivot=lean_array_cptr(pivots)[slot-1];
+                lean_object *view=lean_array_cptr(pivots)[slot-1];
+#if HEX_SCAN_DENSE
+                lean_object *pivot=lean_ctor_get(view,0);
+#else
+                lean_object *pivot=view;
+#endif
                 uint64_t size;
                 if(!geometry(pivot,w,&size)) {status=4;break;}
                 checked_pivot=pivot;checked_size=size;

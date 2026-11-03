@@ -336,11 +336,41 @@ static inline unsigned hex_test_scan8_m31_counted(uint8_t *dense,const uint8_t *
 #define hex_scan8 hex_test_scan8_counted
 #define hex_scan8_m31 hex_test_scan8_m31_counted
 #endif
+static uint64_t dense_prepares=0,dense_scans=0,dense_updates=0,dense_admitted=0;
+#define HEX_GROEBNER_DENSE_USED() (++dense_updates)
+#define lean_hex_prepare_dense hex_test_prepare_dense
+#define lean_hex_dense_transition hex_test_dense_transition
 #define lean_hex_scan_transition hex_test_scan
 #define lean_hex_gather hex_test_gather
 #include SOURCE
 #undef lean_hex_scan_transition
 #undef lean_hex_gather
+#undef lean_hex_prepare_dense
+#undef lean_hex_dense_transition
+__typeof__(hex_test_prepare_dense) __wrap_lean_hex_prepare_dense;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_prepare_dense(uint64_t p,b_lean_obj_arg columns,
+ b_lean_obj_arg source,b_lean_obj_arg work,b_lean_obj_arg bytes) {
+ ++dense_prepares;
+ lean_object *result=hex_test_prepare_dense(p,columns,source,work,bytes);
+ if(lean_sarray_size(lean_ctor_get(lean_ctor_get(result,0),1))) ++dense_admitted;
+ return result;
+}
+__typeof__(hex_test_dense_transition) __wrap_lean_hex_dense_transition;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_dense_transition(uint64_t p,b_lean_obj_arg columns,
+ b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,b_lean_obj_arg quantum,
+ b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
+ ++dense_scans;return hex_test_dense_transition(p,columns,slots,pivots,initial,quantum,work,trace,provenance);
+}
+LEAN_EXPORT lean_obj_res hex_test_dense_admitted(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(dense_admitted));
+}
+LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
+ (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(dense_scans));lean_ctor_set(tail,1,lean_box_uint64(dense_updates));
+ lean_ctor_set(out,0,lean_box_uint64(dense_prepares));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
+}
+
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
@@ -367,7 +397,7 @@ static uint64_t cont_declined_mask=0,cont_edge_mask=0,cont_allocated_mask=0;
 #define HEX_GROEBNER_CONT_ALLOCATE(w) (cont_allocated_mask|=UINT64_C(1)<<(w))
 
 static uint64_t cont_count=0,cont_factor=0,cont_ticks=0,cont_max_ticks=0,cont_max_units=0,cont_violations=0;
-#define HEX_GROEBNER_CONT_BEGIN(c,r,n) do {cont_count=(n);cont_factor=8*(c)+2*(r)+4224;cont_ticks=0;} while(0)
+#define HEX_GROEBNER_CONT_BEGIN(c,r,n,o) do {cont_count=(n);cont_factor=8*(c)+((o)==65536?3:2)*(r)+(o);cont_ticks=0;} while(0)
 #define HEX_GROEBNER_CONT_TICK() (++cont_ticks)
 #define HEX_GROEBNER_CONT_END() do { \
  uint64_t units=cont_ticks*cont_factor; \
@@ -697,6 +727,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+                     "-Wl,--wrap=lean_hex_prepare_dense", "-Wl,--wrap=lean_hex_dense_transition",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -710,6 +741,9 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 import HexGroebner.SampledConformance
+import HexGroebner.DenseConformance
+import HexGroebner.DenseMatrixConformance
+@[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
 @[extern "hex_test_copy_bytes"] opaque copyBytes (input : @& ByteArray) : IO ByteArray
 @[extern "hex_test_reset_pivot_owners"] opaque resetPivotOwners : IO Unit
@@ -753,6 +787,50 @@ import HexGroebner.SampledConformance
 @[extern "hex_test_widths"] opaque widths : IO UInt32
 @[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
+def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
+  for independent in [false,true] do
+    let checkpoint := Hex.Groebner.DenseMatrixConformance.snapshotState primitiveSeed independent
+    let some cache := checkpoint.densePivots | throw (IO.userError "missing dense checkpoint")
+    let some held := cache.rows[0]? | throw (IO.userError "empty dense checkpoint")
+    let heldBytes ← copyBytes held.dense
+    let heldSource ← copyBytes held.source.coefficients
+    let scheduleSeed ← Hex.Groebner.NativeChecks.readSeed
+    let completed := Hex.Groebner.MatrixState.finishState (1+scheduleSeed%64) checkpoint
+    let alternate := Hex.Groebner.MatrixState.finishState (64-scheduleSeed%64) checkpoint
+    if completed.phase != .done || alternate.phase != .done ||
+        checkpoint.nativePivots.size != 1 || cache.rows.size != 1 ||
+        completed.nativePivots.size != (if independent then 3 else 6) ||
+        alternate.stats != completed.stats then
+      throw (IO.userError "shared dense checkpoint did not complete")
+    let afterBytes ← copyBytes held.dense
+    let afterSource ← copyBytes held.source.coefficients
+    if heldBytes != afterBytes || heldSource != afterSource then
+      throw (IO.userError "shared nonempty dense cache was mutated")
+  IO.println "shared dense checkpoints: 4 IO byte comparisons"
+  let beforeTiny ← wholeCounts
+  let tinyRow : Hex.Groebner.SparseRow :=
+    ⟨Hex.Groebner.Packed.push .u32 {} 0,Hex.Groebner.Packed.push .u32 {} 1⟩
+  let tinyField : Hex.Groebner.PrimeField :=
+    ⟨2147483647,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let tiny := Hex.Groebner.eliminateWith tinyField { densePivots := true }
+    (2+primitiveSeed%127) #[tinyRow] #[tinyRow]
+  if !tiny.result.isOk then throw (IO.userError "small cached-option matrix failed")
+  let afterTiny ← wholeCounts
+  if afterTiny.1 != beforeTiny.1+1 || afterTiny.2 != beforeTiny.2 then
+    throw (IO.userError "small cached-option matrix lost its bulk frame")
+  IO.println "small M31 cached-option bulk frame: accepted"
+  let beforeDispatch ← wholeCounts
+  if !Hex.Groebner.DenseMatrixConformance.dispatchChecks primitiveSeed false then
+    throw (IO.userError "public dense-option dispatch counters differ")
+  let afterDispatch ← wholeCounts
+  if afterDispatch.1 != beforeDispatch.1+12 || afterDispatch.2 != beforeDispatch.2 then
+    throw (IO.userError "dense-option public dispatch lost bulk frames")
+  if !Hex.Groebner.DenseMatrixConformance.dispatchChecks primitiveSeed true then
+    throw (IO.userError "dense-option public dispatch boundary counters differ")
+  if !Hex.Groebner.DenseMatrixConformance.capChecks primitiveSeed then
+    throw (IO.userError "dense-option bulk work cap differs from reference")
+  IO.println "public M31 cached-option bulk frames: 12 accepted; exact boundary counters and work cap passed"
+
 def main : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
   if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
@@ -768,6 +846,61 @@ def main : IO Unit := do
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
+  if !Hex.Groebner.DenseMatrixConformance.frameChecks primitiveSeed then
+    throw (IO.userError "dense normalized/target frame boundaries differ")
+  IO.println "dense normalized/target frames: exact parent refusal and density boundaries passed"
+  let beforeDense ← denseCounts
+  if !Hex.Groebner.DenseConformance.packetChecks primitiveSeed ||
+      !Hex.Groebner.DenseMatrixConformance.admissionChecks primitiveSeed ||
+      !Hex.Groebner.DenseMatrixConformance.mixedChecks primitiveSeed ||
+      !Hex.Groebner.DenseMatrixConformance.checks primitiveSeed ||
+      !Hex.Groebner.DenseConformance.largeChecks primitiveSeed ||
+      !Hex.Groebner.DenseConformance.boundaryChecks primitiveSeed ||
+      !Hex.Groebner.DenseConformance.scanChecks primitiveSeed then
+    throw (IO.userError "dense pivot scan prefix mismatch")
+  let mut denseColumns : ByteArray := {}
+  let mut denseValues : ByteArray := {}
+  for i in [:128] do
+    denseColumns := Hex.Groebner.Packed.push .u32 denseColumns i.toUInt64
+    denseValues := Hex.Groebner.Packed.push .u32 denseValues (i+1).toUInt64
+  let denseSource : Hex.Groebner.Native.Scan.Pivot := ⟨denseColumns,denseValues,primitiveSeed⟩
+  let prepared := Hex.Groebner.Native.Dense.prepare 2147483647 128 denseSource 100000 100000
+  let sourceSnapshot ← copyBytes prepared.row.source.coefficients
+  let cacheSnapshot ← copyBytes prepared.row.dense
+  let denseInitial : Hex.Groebner.Native.Scan.State := {
+    dense := prepared.row.dense
+    column := 0
+    last := 127
+    chargedUntil := 128
+    pending := 1
+    factor := 1 }
+  let denseSlots := Hex.Groebner.Native.write (Hex.Groebner.Native.Dense.zeros 512) 4 0 1
+  let denseOutput := Hex.Groebner.Native.Dense.transition 2147483647 128 denseSlots
+    #[prepared.row] denseInitial 128 100000 0 false
+  if denseOutput.state.dense != Hex.Groebner.Native.Dense.zeros 512 ||
+      prepared.row.source.coefficients != sourceSnapshot || prepared.row.dense != cacheSnapshot ||
+      denseInitial.dense != cacheSnapshot then
+    throw (IO.userError "dense pivot source/cache/continuation snapshot was mutated")
+  checkDenseOwnership primitiveSeed
+  let afterDense ← denseCounts
+  if afterDense.1 ≤ beforeDense.1 || afterDense.2.1 ≤ beforeDense.2.1 ||
+      afterDense.2.2 ≤ beforeDense.2.2 then
+    throw (IO.userError "dense pivot native materialization/update was not exercised")
+  IO.println s!"dense pivot calls: {afterDense}"
+  let beforeDenseF4 ← denseCounts
+  let beforeDenseF4Frames ← wholeCounts
+  if !Hex.Groebner.DenseMatrixConformance.fullChecks primitiveSeed then
+    throw (IO.userError "complete dense/sparse F4 basis differs")
+  let afterDenseF4 ← denseCounts
+  let afterDenseF4Frames ← wholeCounts
+  if afterDenseF4Frames.2 ≤ beforeDenseF4Frames.2 then
+    throw (IO.userError "complete F4 fixture did not reach the continuation")
+  IO.println s!"dense full-F4 bulk declines: {afterDenseF4Frames.2-beforeDenseF4Frames.2}"
+  if afterDenseF4.2.2 ≤ beforeDenseF4.2.2 then
+    throw (IO.userError "complete F4 did not exercise dense pivot updates")
+  IO.println s!"dense full-F4 updates: {afterDenseF4.2.2-beforeDenseF4.2.2}"
+
+
   let beforePortableScan ← counts
   let beforePortableWhole ← wholeCounts
   let beforePortableBytes ← byteCount
@@ -1033,9 +1166,31 @@ lean_exe {target} where
   moreLinkObjs := #[probe{variant}]
   moreLinkArgs := #{json.dumps(link_args)}
 '''
+        usage_inputs = os.environ.get("HEX_GROEBNER_USAGE_INPUT_DIR")
+        if usage_inputs:
+            (directory / "Usage.lean").write_text('''import HexGroebner.Driver.Run
+@[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_dense_admitted"] opaque denseAdmitted : IO UInt64
+@[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+def main (args : List String) : IO UInt32 := do
+  let status ← Hex.Groebner.Driver.run args
+  let (prepares,scans,updates) ← denseCounts
+  let admitted ← denseAdmitted
+  let (accepted,declined) ← wholeCounts
+  (← IO.getStderr).putStrLn (Lean.Json.mkObj [
+    ("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
+    ("scans",Lean.toJson scans),("updates",Lean.toJson updates),
+    ("bulkAccepted",Lean.toJson accepted),("bulkDeclined",Lean.toJson declined)]).compress
+  return status
+''')
+            config += f'''\nlean_exe usage where
+  root := `Usage
+  moreLinkObjs := #[probeNative]
+  moreLinkArgs := #{json.dumps(link_args)}
+'''
         (directory / "lakefile.lean").write_text(config)
         print("matrix variants compiler:", subprocess.check_output([cc, "--version"], text=True).splitlines()[0], flush=True)
-        subprocess.run(["lake", "build", *targets], cwd=directory, check=True)
+        subprocess.run(["lake", "build", *targets, *(["usage"] if usage_inputs else [])], cwd=directory, check=True)
         env = dict(os.environ, ASAN_OPTIONS=os.environ.get("ASAN_OPTIONS", "detect_leaks=0"),
                    UBSAN_OPTIONS=os.environ.get("UBSAN_OPTIONS", "halt_on_error=1"),
                    LEAN_ABORT_ON_NONLINEAR="1")
@@ -1053,6 +1208,26 @@ lean_exe {target} where
                 env["LD_PRELOAD"] = os.pathsep.join(preload)
             print(target, "ASan/UBSan" if sanitize else "ordinary", flush=True)
             subprocess.run(command, env=env, check=True)
+        if usage_inputs:
+            output = directory / "usage-results"
+            output.mkdir(exist_ok=False)
+            for input_path in sorted(Path(usage_inputs).glob("*.json")):
+                if input_path.name == "suite.json":
+                    continue
+                for enabled in ["false", "true"]:
+                    usage_command = [str(directory / ".lake/build/bin/usage"),
+                                     "--work", "100000000000", "--packed-bytes", "17179869184",
+                                     "--pairs", "100000000", "--monomials", "10000000",
+                                     "--matrix-entries", "1000000000",
+                                     "--scheduling", "degree", "--dense-pivots", enabled, str(input_path)]
+                    if loader:
+                        usage_command = [loader, "--library-path", library_path,
+                                         "--preload", os.pathsep.join(preload), *usage_command]
+                    with (output / (input_path.stem+"-"+enabled+".stdout")).open("w") as out, \
+                            (output / (input_path.stem+"-"+enabled+".stderr")).open("w") as err:
+                        subprocess.run(usage_command, stdout=out, stderr=err, env=env, check=True)
+                    (output / (input_path.stem+"-"+enabled+".command.json")).write_text(
+                        json.dumps(usage_command, indent=2)+"\n")
         print(f"compiled matrix variants: {time.monotonic()-started:.2f}s elapsed", flush=True)
     finally:
         if not retained:

@@ -95,7 +95,7 @@ theorem advance_one (state : State) : advance state 1 = next state := by
   rw [advance_spec,next_spec]
   unfold advancePortable advanceWith
   have count : min 1 (max 1 (1048576 /
-      (8*state.columns+2*(state.reducers.size+state.targets.size)+4224))) = 1 := by omega
+      (8*state.columns+(if Matrix.cacheEnabled state.field state.limits then 3 else 2)*(state.reducers.size+state.targets.size)+(if Matrix.cacheEnabled state.field state.limits then 65536 else 4224)))) = 1 := by omega
   rw [count]
   simp only [Id.run,Std.Legacy.Range.forIn_eq_forIn_range']
   by_cases hdone : state.phase == .done

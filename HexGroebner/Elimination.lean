@@ -67,7 +67,9 @@ Untraced native 64-bit calls use the same optional `2^20`-work matrix frame and 
 caps as `eliminateWith`; other untraced native calls within the continuation
 shape limits use bounded phases. Larger frames and provenance calls retain
 the reference scan/gather chunks.
-`native := false` uses scalar Lean operations.
+`native := false` uses scalar Lean row updates. Explicit dense-pivot preparation
+retains its bounded provider and shared preparation charges, including traced
+and reference calls; only the untraced continuation reuses the caches.
 This is a linear triangular solve; polynomial normal-form claims additionally
 require the symbolic closure and a Gröbner basis. -/
 def reduceRowsWith (field : PrimeField) (limits : MatrixLimits)

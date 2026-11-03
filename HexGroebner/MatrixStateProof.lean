@@ -197,11 +197,11 @@ private theorem step_geometry_spec (initial : State) (native : Bool) (hgeometry 
     · (fun _ (state : State) => ⌜state.geometry⌝,
         fun _ (_ : State) => ⌜True⌝,PUnit.unit)
     all_goals simp_all +zetaDelta [State.geometry,State.frame,State.contents,State.identity,
-      Packed.size_set,Matrix.zeros_size,gather_size]
+      Packed.size_set,Matrix.zeros_size,gather_size,scanRows_spec]
     all_goals try omega
-    all_goals try grind [State.geometry,State.frame,State.contents,State.identity,scan_geometry,gather_size]
+    all_goals try grind [State.geometry,State.frame,State.contents,State.identity,scan_geometry,gather_size,scanRows_spec]
     all_goals
-      simp only [Native.Scan.transition,ite_self] at *
+      try simp only [Native.Scan.transition,ite_self] at *
       generalize hremaining : initial.limits.work - _ = remaining at *
       have hdense : initial.scan.dense.size = initial.columns*initial.field.width.bytes := by grind
       have hstatus : (Native.Scan.portable initial.field.modulus initial.slots initial.nativePivots

@@ -30,7 +30,7 @@ private theorem trace_status_spec (modulus : UInt64) (slots : ByteArray) (pivots
     (initial : State) (quantum workLimit traceLimit : Nat) :
     Std.Do.Triple (m := Id) (portable modulus slots pivots initial quantum workLimit traceLimit false)
       ⌜True⌝ (PostCond.noThrow fun out => ⌜out.status ≠ 3 ∧ out.traceNodes = 0⌝) := by
-  unfold portable
+  unfold portable portableWith
   dsimp only [Id.run]
   mvcgen invariants
   · Invariant.withEarlyReturnNewDo

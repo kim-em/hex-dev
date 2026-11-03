@@ -66,9 +66,9 @@ private theorem step_remaining_spec (initial : State) (native : Bool)
     · (fun _ (_ : State) => ⌜True⌝,
         fun _ (_ : State) => ⌜True⌝,PUnit.unit)
     all_goals simp_all +zetaDelta [State.remaining,State.geometry,State.frame,State.contents,
-      State.identity,Packed.size_set]
+      State.identity,Packed.size_set,scanRows_spec]
     all_goals try omega
-    all_goals try grind [State.remaining,State.geometry,State.frame,State.contents,State.identity]
+    all_goals try grind [State.remaining,State.geometry,State.frame,State.contents,State.identity,scanRows_spec]
     all_goals
       have hinput : initial.input < initial.reducers.size+initial.targets.size := by grind [State.geometry]
       have row := row_remaining (initial.reducers.size+initial.targets.size) initial.input
@@ -76,7 +76,7 @@ private theorem step_remaining_spec (initial : State) (native : Bool)
       try simp only [Nat.sub_add_eq] at *
       try omega
     all_goals
-      simp only [Native.Scan.transition,ite_self] at *
+      try simp only [Native.Scan.transition,ite_self] at *
       generalize hremaining : initial.limits.work - _ = remaining at *
       have hdense : initial.scan.dense.size = initial.columns*initial.field.width.bytes := by grind
       have hstatus : (Native.Scan.portable initial.field.modulus initial.slots initial.nativePivots

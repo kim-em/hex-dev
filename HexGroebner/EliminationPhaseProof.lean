@@ -28,16 +28,20 @@ private theorem install_run (state : MatrixState.State) (row : SparseRow)
           phase := .input
           stats.processedRows := state.stats.processedRows+1 }
       else
+        let prepared := Matrix.preparePivot state.field state.limits state.columns
+          ⟨row.columns,row.coefficients,sugar⟩ state.stats
         { state with
+          densePivots := state.densePivots.map fun cache => cache.push prepared
           slots := Packed.set .u32 state.slots column (state.pivots.size+1).toUInt64
           pivots := state.pivots.push ⟨row,MatrixState.isTarget state,none,inverse,sugar⟩
           nativePivots := state.nativePivots.push ⟨row.columns,row.coefficients,sugar⟩
           rank := state.rank + if MatrixState.isTarget state then 0 else 1
           input := state.input+1
           phase := .input
-          stats.processedRows := state.stats.processedRows+1 }) := by
+          stats := { Matrix.cacheStats state.stats prepared.work prepared.packedBytes with
+            processedRows := state.stats.processedRows+1 } }) := by
   by_cases h : state.independent && MatrixState.isTarget state
-  all_goals simp [MatrixState.install,MatrixState.completeRow,h,ExceptT.run,ExceptT.mk,
+  all_goals simp [MatrixState.install,Matrix.cacheStats,MatrixState.completeRow,h,ExceptT.run,ExceptT.mk,
     ExceptT.bind,ExceptT.bindCont,ExceptT.lift,StateT.bind,StateT.get,StateT.set,Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,liftM,
     MonadLiftT.monadLift,MonadLift.monadLift,getThe,StateT.map,Functor.map,Pure.pure,modify,modifyGet,MonadStateOf.modifyGet,StateT.modifyGet]
 
