@@ -309,8 +309,10 @@ available and exact word remainder otherwise. One- and two-byte residues use a
 32-bit reciprocal; four-byte residues use a 64-bit reciprocal. Products fit below
 `p² < 2^62`; subtraction uses an unsigned wrap mask.
 On x86 with runtime AVX2 support, odd moduli use eight exact products at a time.
-When AVX-512F/DQ/BW/VL and the corresponding OS register state are available,
-the ordinary sparse scan first attempts sixteen exact products. Refused packets
+Sixteen-lane dispatch is opt-in: run
+`lake -R -KhexGroebnerAVX512=true build` to enable it, and `lake -R build`
+to restore the default. With that option, AVX-512F/DQ/BW/VL and the corresponding
+OS register state available, the ordinary sparse scan first attempts sixteen exact products. Refused packets
 continue through the eight-lane and scalar paths in order. The optional dense
 pivot cache retains its existing AVX2 path.
 One- and two-byte coefficients use a 32-bit Barrett reciprocal: the product is
@@ -332,9 +334,11 @@ so the exact failure prefix is preserved. Other architectures and CPUs use the
 scalar implementation. No floating-point arithmetic or global ISA flag is
 required. CPU detection checks CPUID and the OS-enabled YMM/ZMM state, caches the
 result atomically and needs no compiler-runtime CPU model symbols.
-`HEX_GROEBNER_NO_AVX512` retains AVX2 dispatch; `HEX_GROEBNER_NO_AVX2` disables
-both vector providers. [Matched observations](../reports/bench-results/hexgroebner-avx512.md)
-show kernel improvements on the measured host without an overall F4 speed claim.
+The internal `HEX_GROEBNER_NO_AVX512` test define retains AVX2 dispatch;
+`HEX_GROEBNER_NO_AVX2` disables both vector providers. [Matched observations](../reports/bench-results/hexgroebner-avx512.md)
+show kernel improvements on the measured Zen 5 host without an overall F4 speed claim.
+Performance on other microarchitectures and unmeasured coefficient widths remains
+unevaluated; the default remains AVX2 or scalar.
 
 `scripts/ci/check_groebner_rows.sh` runs the standalone native tests and the
 compiled matrix harness. `scripts/ci/check_groebner_matrix.py` compares all six
