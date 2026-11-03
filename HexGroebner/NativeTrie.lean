@@ -19,7 +19,8 @@ def word (bytes : @& ByteArray) (i : Nat) : Nat := Native.read bytes 4 (i*4)
 Node records contain depth, edge start/count, reducer-plus-one, priority and
 leading monomial. A leaf has positive priority. A branch stores zero (unknown)
 or the minimum positive priority of all its children; a cached branch may
-only have cached children. Depths make this a valid descendant-leaf bound. Edges contain exponent/child pairs. Every nonroot has exactly
+only have cached children. Depths make this a valid descendant-leaf bound.
+Edges contain exponent/child pairs. Every nonroot has exactly
 one parent; depths increase along edges. -/
 def validPortable (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Bool := Id.run do
   let n := nodes.size/24
@@ -78,9 +79,9 @@ def check (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Option
 end View
 
 /-- Status 1 is complete, 2 exhausts work, and 3 declines an unsupported query.
-All work is charged before the corresponding visit or edge scan. Trees with
-more than 2048 nodes decline before traversal, ensuring every admitted walk
-fits the native quantum without discarding attempted traversal work. -/
+All work is charged before the corresponding visit or edge scan. Every valid
+tree has at most 16384 nodes and 16383 edges, so a 32768-unit quantum covers
+every admitted walk without discarding attempted traversal work. -/
 structure Result where
   reducer : Option Nat := none
   work : Nat := 0
@@ -96,7 +97,7 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     (arena metadata : @& ByteArray) (remaining : UInt64) : Result := Id.run do
   let n := view.nodes.size/24
   let w := width.toNat
-  if n > 2048 || (w != 1 && w != 2 && w != 4) || count.toNat > 4294967295 ||
+  if (w != 1 && w != 2 && w != 4) || count.toNat > 4294967295 ||
       monomial ≥ count || view.maxLeading ≥ count ||
       arena.size != count.toNat*view.arity*w || metadata.size != count.toNat*24 then
     return { status := 3 }
@@ -111,7 +112,7 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     if pending.isEmpty then break
     let node := pending.back!
     pending := pending.pop
-    if out.work ≥ 4096 then return { status := 3 }
+    if out.work ≥ 32768 then return { status := 3 }
     if out.work+1 > remaining.toNat then return { out with status := 2 }
     out := { out with work := out.work+1 }
     let bound := word view.nodes (6*node+4)
@@ -130,7 +131,7 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     else
       let start := word view.nodes (6*node+1)
       let count := word view.nodes (6*node+2)
-      if out.work+count > 4096 then return { status := 3 }
+      if out.work+count > 32768 then return { status := 3 }
       if out.work+count > remaining.toNat then return { out with status := 2 }
       out := { out with work := out.work+count }
       let exponent := Native.read arena w ((query*view.arity+depth)*w)
@@ -140,14 +141,13 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
   return out
 
 /-- Native lookup consumes only the validated tree witness and borrowed arenas.
-The validated format admits at most 16384 nodes and 16383 edges; validation
-therefore inspects at most 32767 records. Native lookup admits only trees with
-at most 2048 nodes, so every complete walk fits its 4096-unit quantum. Larger
-views decline before traversal and retain portable priority pruning. `arena` has exactly
-`count*arity*width` little-endian exponent bytes; metadata has `count` records of
-24 bytes (u64 degree, support mask and hash). Status 3 declines an unsupported
-query without charging work. Tree leaves and leading identifiers must belong
-to the same immutable basis/arena snapshot; append and widening preserve IDs. -/
+The format admits at most 16384 nodes and 16383 edges; validation therefore
+inspects at most 32767 records. A 32768-unit node/edge quantum covers every
+complete valid walk. Unsupported shapes decline before traversal.
+`arena` has exactly `count*arity*width` little-endian exponent bytes; metadata
+has `count` records of 24 bytes (u64 degree, support mask and hash). Leaves and
+leading identifiers belong to the same immutable basis/arena snapshot; append
+and widening preserve IDs. -/
 @[extern "lean_hex_groebner_lookup_trie"]
 def lookup (view : @& View) (width : UInt8) (count monomial : UInt64)
     (arena metadata : @& ByteArray) (remaining : UInt64) : Result :=

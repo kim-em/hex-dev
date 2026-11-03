@@ -282,7 +282,12 @@ private def reducerLookup : Bool := Id.run do
           if representative then expected := expected.push i
         let divisors ← index.divisors context limits monomial
         if divisors.size != expected.size || !expected.all divisors.contains then return false
-        match ← index.find context limits basis monomial with
+        let (plain, _) := ReducerIndex.findPortable context index basis table monomial 0 limits.work false
+        let selected ← index.find context limits basis monomial
+        match plain with
+        | .ok reference => if selected != reference then return false
+        | .error _ => return false
+        match selected with
         | none => if !expected.isEmpty then return false
         | some i =>
           if !expected.contains i then return false

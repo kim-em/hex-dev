@@ -52,12 +52,12 @@ static void release(struct buffer b) {
     free(b.mapping);
 #endif
 }
-/* A 2048-node root with 2047 leaf children reaches the lookup work limit and
+/* The format-wide root reaches the maximum stack and 32767-unit walk and
    every last byte of all borrowed inputs. The independent answer is the last
    leaf, with the unique least priority. Both edge placements catch
    overreads and underreads; read protection catches writes to borrowed data. */
-static void bush(unsigned width,unsigned end) {
-    const unsigned n=2048;const size_t edge_bytes=(n-1)*8;
+static void bush(unsigned n,unsigned width,unsigned end) {
+    const size_t edge_bytes=(n-1)*8;
     struct buffer nodes=buffer_new(n*24,end),edges=buffer_new(edge_bytes,end);
     struct buffer arena=buffer_new(n*width,end),metadata=buffer_new(n*24,end);
     put(nodes.data+8,4,n-1);
@@ -85,14 +85,14 @@ static void bush(unsigned width,unsigned end) {
 
     readonly(&nodes);readonly(&edges);readonly(&arena);readonly(&metadata);
     struct trie_result r=trie_lookup(1,n-1,width,n,n-1,arena.data,arena.size,
-        metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,4095);
-    require(r.status==1 && r.work==4095 && r.key==n,"complete maximum lookup");
-    const uint64_t allowances[]={0,1,2047,2048,4094};
+        metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,2*n-1);
+    require(r.status==1 && r.work==2*n-1 && r.key==n,"complete maximum lookup");
+    const uint64_t allowances[]={0,1,n-1,n,2*n-2};
     for(unsigned i=0;i<sizeof(allowances)/sizeof(allowances[0]);++i) {
         uint64_t budget=allowances[i];r=trie_lookup(1,n-1,width,n,n-1,
             arena.data,arena.size,metadata.data,metadata.size,nodes.data,nodes.size,
             edges.data,edges.size,budget);
-        require(r.status==2 && r.work==(budget==0?0:budget<2048?1:budget),"exact exhaustion prefix");
+        require(r.status==2 && r.work==(budget==0?0:budget<n?1:budget),"exact exhaustion prefix");
     }
     r=trie_lookup(1,n-1,width,n,n-1,arena.data,arena.size-1,
         metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,UINT64_MAX);
@@ -104,9 +104,8 @@ static void bush(unsigned width,unsigned end) {
     require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size-1,n-1),"short edge record");
     release(nodes);release(edges);release(arena);release(metadata);
 }
-/* The validator admits larger trees independently of the query quantum.
-   Unsupported trees decline before traversal and report zero work rather
-   than performing speculative visits outside the parent accounting. */
+/* A large validated tree completes within the format-wide native quantum.
+   Smaller parent allowances retain the exact visit/edge prefix. */
 static void large(unsigned end) {
     const unsigned n=3001;
     struct buffer nodes=buffer_new(n*24,end),edges=buffer_new((n-1)*8,end);
@@ -125,14 +124,14 @@ static void large(unsigned end) {
         uint64_t remaining=i?UINT64_MAX:4096;
         struct trie_result r=trie_lookup(1,n-1,4,n,n-1,arena.data,arena.size,
             metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,remaining);
-        require(r.status==3 && !r.key && !r.work,"query quantum declines without exhaustion");
+        require(i?(r.status==1 && r.key==n && r.work==2*n-1):(r.status==2 && r.work==4096),"large query exact parent prefix");
     }
     struct trie_result r=trie_lookup(1,n-1,4,n,n-1,arena.data,arena.size,
         metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,4095);
-    require(r.status==3 && !r.key && !r.work,"large tree rejected before budget traversal");
+    require(r.status==2 && r.work==4095,"large query parent exhaustion");
     r=trie_lookup(1,n-1,4,n,0,arena.data,arena.size,
         metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,UINT64_MAX);
-    require(r.status==3 && !r.key && !r.work,"filtered large tree also declines before traversal");
+    require(r.status==1 && r.key==2 && r.work==n+1,"filtered large tree completes");
     release(nodes);release(edges);release(arena);release(metadata);
 }
 static void constant(unsigned end) {
@@ -188,6 +187,9 @@ static void bounded_priority(void) {
     }
     put(nodes+16,4,2);
     require(!trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"overstated priority bound");
+    put(nodes+16,4,1);put(nodes+24+16,4,1);
+    require(!trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"understated child bound");
+    put(nodes+24+16,4,2);
     put(nodes+16,4,1);put(nodes+24+16,4,0);
     require(!trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"cached parent with unknown child");
     put(nodes+16,4,0);put(nodes+48+16,4,0);
@@ -202,7 +204,9 @@ int main(void) {
         constant(end);
         large(end);
         oversized(end);
-        for(unsigned width=1;width<=4;width*=2) bush(width,end);
+        for(unsigned width=1;width<=4;width*=2) {
+            bush(2048,width,end);bush(2049,width,end);bush(16384,width,end);
+        }
     }
     puts("trie_selftest: maximum tree/stack, read-only guard pages and exact budgets passed");
     return 0;

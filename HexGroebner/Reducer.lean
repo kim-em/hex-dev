@@ -66,7 +66,7 @@ private def priorities (table : MonomialTable) (basis : Array BasisElement)
   for i in [:ordered.size] do ranks := ranks.set! ordered[i]!.1 (i+1)
   return ranks
 
-/-- Encode small tries once, with charged validation and packed payload. Larger
+/-- Encode bounded tries once, with charged validation and packed payload. Larger
 indices and insufficient preparation allowances retain the ordinary traversal. -/
 private def encode (context : Context) (limits : Limits) (nodes : Array DivisorNode)
     (basis : Array BasisElement) : Computation (Option Native.Trie.View) := do
@@ -165,7 +165,9 @@ def findPortable (context : Context) (index : ReducerIndex)
   let mut pending := #[0]
   let mut result : Option Nat := none
   let mut bestPriority := 0
-  let lower := if prune then index.packed.map (fun view => Native.Trie.word view.nodes 4) |>.getD 0 else 0
+  let data := if prune then index.packed.map (·.nodes) |>.getD {} else {}
+  let cached := !data.isEmpty
+  let lower := if cached then Native.Trie.word data 4 else 0
   -- Each trie node has one parent, so at most nodes.size nodes can be visited.
   for _ in [:index.nodes.size] do
     if pending.isEmpty then break
@@ -173,8 +175,7 @@ def findPortable (context : Context) (index : ReducerIndex)
     pending := pending.pop
     if work + 1 > maxWork then return (.error (.exhausted .work), work)
     work := work + 1
-    let bound := if prune then
-      index.packed.map (fun view => Native.Trie.word view.nodes (6*node+4)) |>.getD 0 else 0
+    let bound := if cached then Native.Trie.word data (6*node+4) else 0
     if result.isSome && bound != 0 && bound ≥ bestPriority then continue
     let n := index.nodes[node]!
     let coordinate := n.depth
@@ -216,7 +217,7 @@ def find (context : Context) (limits : Limits) (index : ReducerIndex)
       if state.table.count ≤ 4294967295 && monomial ≤ 4294967295 then
         Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
           state.table.exponents state.table.metadata
-          (min (limits.work-state.statistics.work) 4096).toUInt64
+          (min (limits.work-state.statistics.work) 32768).toUInt64
       else { status := 3 }
       else { status := 3 }
     let (result, work) := if native.status == (3 : UInt8) then
