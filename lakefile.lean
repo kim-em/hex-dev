@@ -87,19 +87,18 @@ target hexarithWideO pkg : FilePath := hexArithOTarget pkg "wide_arith.c"
 -- Nat.extendedGcd: https://github.com/leanprover/lean4/pull/15160
 target hexarithGcdO pkg : FilePath := hexArithOTarget pkg "extended_gcd.c"
 
+/-- Override only Groebner native compilation; the default remains the host cc. -/
+def groebnerCompiler : FilePath :=
+  FilePath.mk ((get_config? hexGroebnerCC).getD "cc")
+
 target hexgroebnerRowsO pkg : FilePath := do
   let oFile := pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "row_update.o"
   let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "row_update.c"
   let trie ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "trie_lookup.h"
   let inputs := source.zipWith (fun source _ => source) trie
-  buildFileAfterDep oFile inputs fun srcFile => do
-    createParentDirs oFile
-    proc {
-      cmd := "cc"
-      args := #["-c", "-o", oFile.toString, srcFile.toString,
-        "-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3", "-DLEAN_EXPORTING"]
-      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
-    }
+  buildO oFile inputs #["-I", (← getLeanIncludeDir).toString]
+    #["-O3", "-fPIC", "-DLEAN_EXPORTING"] (compiler := groebnerCompiler)
+    (extraDepTrace := do addLeanTrace; addPureTrace groebnerCompiler.toString "compiler"; pure BuildTrace.nil)
 
 target hexgroebnerMonomialO pkg : FilePath := do
   let directory := pkg.dir / "HexGroebner" / "ffi"
@@ -109,7 +108,8 @@ target hexgroebnerMonomialO pkg : FilePath := do
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "monomial_hit.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]
-    (extraDepTrace := do addLeanTrace; pure BuildTrace.nil)
+    (compiler := groebnerCompiler)
+    (extraDepTrace := do addLeanTrace; addPureTrace groebnerCompiler.toString "compiler"; pure BuildTrace.nil)
 
 target hexgroebnerStateO pkg : FilePath := do
   let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_state.c"
@@ -118,7 +118,8 @@ target hexgroebnerStateO pkg : FilePath := do
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_state.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]
-    (extraDepTrace := do addLeanTrace; pure BuildTrace.nil)
+    (compiler := groebnerCompiler)
+    (extraDepTrace := do addLeanTrace; addPureTrace groebnerCompiler.toString "compiler"; pure BuildTrace.nil)
 
 target hexgroebnerEliminationO pkg : FilePath := do
   let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_eliminate.c"
@@ -127,7 +128,8 @@ target hexgroebnerEliminationO pkg : FilePath := do
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_eliminate.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]
-    (extraDepTrace := do addLeanTrace; pure BuildTrace.nil)
+    (compiler := groebnerCompiler)
+    (extraDepTrace := do addLeanTrace; addPureTrace groebnerCompiler.toString "compiler"; pure BuildTrace.nil)
 
 target hexgroebnerScanO pkg : FilePath := do
   let directory := pkg.dir / "HexGroebner" / "ffi"
@@ -145,7 +147,8 @@ target hexgroebnerScanO pkg : FilePath := do
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_scan.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     (#["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"] ++ vectorFlags)
-    (extraDepTrace := do addLeanTrace; pure BuildTrace.nil)
+    (compiler := groebnerCompiler)
+    (extraDepTrace := do addLeanTrace; addPureTrace groebnerCompiler.toString "compiler"; pure BuildTrace.nil)
 
 target hexmodarithO pkg : FilePath := zmod64MulOTarget pkg
 
