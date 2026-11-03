@@ -6,7 +6,11 @@ from scripts.bench.groebner_trie_report import source,require,mean
 from scripts.oracle.groebner_singular import polynomial,canonical
 
 
-def msolve(capsule,source_label):
+def msolve(capsule,source_label,*,expected_families=None,moduli=None):
+    if expected_families is not None:
+        require(all(isinstance(n,int)and n>0 for n in expected_families.values())and
+                sum(expected_families.values())%2==0,'invalid expected family counts')
+    case_count=sum(expected_families.values())//2 if expected_families is not None else 14
     label=source_label+'/msolve';meta=capsule.json(label+'/metadata.json');recorded=capsule.json(label+'/analysis.json')
     manifest=source(capsule,source_label)
     require(meta['source_fingerprint']==manifest['source_fingerprint'] and
@@ -25,7 +29,7 @@ def msolve(capsule,source_label):
         require(hashlib.sha256(capsule.read(label+'/inputs/'+name)).hexdigest()==digest,'comparator input differs')
     samples=meta['samples'];index={(s['case'],s['block'],s['arm']):s for s in samples}
     order=[s['case']for s in samples if s['block']==0 and s['arm']=='A']
-    require(len(index)==len(samples)==56 and len(set(order))==14,'comparator coverage differs')
+    require(len(index)==len(samples)==4*case_count and len(set(order))==case_count,'comparator coverage differs')
     require([(s['case'],s['block'],s['arm'])for s in samples]==[(case,block,arm)for block in [0,1]for case in order for arm in (['A','B']if block==0 else ['B','A'])],'comparator adjacency differs')
     families={}
     for case in order:
@@ -42,7 +46,11 @@ def msolve(capsule,source_label):
             require(output['kind']=='unchecked_candidate'and canonical(output['basis'])==basis,'complete comparator bases differ')
             families.setdefault(a['family'],[]).append(a['wall_nanos']/b['wall_nanos'])
     ratio=mean([mean(v)for v in families.values()])
-    require(len(families)==7 and all(len(v)==4 for v in families.values())and
+    coverage=(len(families)==7 and all(len(v)==4 for v in families.values()))if expected_families is None else (
+        {family:len(values)for family,values in families.items()}==expected_families)
+    require(moduli is None or {s['p']for s in samples}==set(moduli),'comparator moduli differ')
+    require(coverage and recorded['samples']==4*case_count and recorded['complete_bases_equal']==2*case_count and
+            recorded['failed_processes']==recorded['timeouts']==0 and
             recorded['ratio_direction']=='Hex/msolve process'and math.isclose(ratio,recorded['family_balanced_geomean'],rel_tol=1e-12),'comparator ratio differs')
     ratios=[r for values in families.values()for r in values]
     for key,value in [('geomean',mean(ratios)),('minimum',min(ratios)),('maximum',max(ratios)),('median',statistics.median(ratios))]:

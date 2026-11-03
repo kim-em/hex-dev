@@ -50,6 +50,9 @@ static inline int scalar_update(uint8_t *data,const uint8_t *cs,const uint8_t *v
     if(j>=columns || !b || b>=p || (entry && rd(cs+(size_t)(entry-1)*4,4)>=j)) return 0;
     uint64_t a=rd(data+(size_t)j*w,w);
     if(a>=p) return 0;
+    /* In F2 validation gives b=1 and a,factor in {0,1}. Keep the same
+       validation/error prefix, then subtract by exact XOR. */
+    if(p==2) {wr(data+(size_t)j*w,w,a^factor);return 1;}
     uint64_t product=factor*b;
 #if defined(__SIZEOF_INT128__) && !defined(HEX_GROEBNER_NO_UINT128)
     uint64_t q=w<4?(product*reciprocal)>>32:(uint64_t)(((__uint128_t)product*reciprocal)>>64);
