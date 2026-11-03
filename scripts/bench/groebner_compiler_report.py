@@ -28,7 +28,7 @@ def verify_guards(guards,science):
             data=guards.read(label+'-sources/'+name)
             require(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==oid,'guard source differs')
     native,full=guards.json('native-status.json'),guards.json('full-status.json')
-    require(len(native)==2 and len(full)==9,'guard coverage differs')
+    require({row['name']for row in native}=={'clang','gcc'} and len(native)==2 and len(full)==9,'guard coverage differs')
     variants={'Native','AVX2','AVX2Remainder','Scalar','Remainder','ScalarRemainder'}
     for row in native+full:
         require(row['exit_code']==0 and all(row[k]==v for k,v in identity.items()),'failed/stale guard')
@@ -55,7 +55,6 @@ def verify_guards(guards,science):
     require(default['native_options']=={'hexGroebnerAVX512':False,'hexGroebnerCC':None},'default option differs')
     require(latest['native_options']['hexGroebnerCC']==latest['compilers']['native']['command'] and
             latest['native_options']['hexGroebnerAVX512'] is False,'override option differs')
-    return identity,latest
 
 
 def msolve(capsule):
@@ -108,6 +107,13 @@ def verify_audit(audit,guards,science):
     require(compiler['command']==status['alias_command'] and compiler['resolved']==status['alias_target'] and
             compiler['command']!=compiler['resolved'] and status['alias_negative_exit']==47,'compiler invocation name was not exercised')
     require(status['alias_version']==compiler['version'],'alias compiler version differs')
+    require(hashlib.sha256(audit.read('compiler-driver')).hexdigest()==compiler['sha256'],'alias wrapper differs')
+    gcc=source(audit,'gcc')
+    require(gcc['source_manifest']==latest['source_manifest'] and
+            '16.2.0' in gcc['compilers']['native']['version'] and
+            gcc['native_options']['hexGroebnerCC']==gcc['compilers']['native']['command'],'GCC build selection differs')
+    require(status['gcc_binary_sha256']==gcc['binary_sha256']['compute'] and
+            status['gcc_binary_sha256']not in [source(science,label)['binary_sha256']['compute']for label in ['avx512-default','native-cc-option']],'GCC executable binding differs')
     require(set(status['gcc_object_comments'])=={'row_update.o','monomial_hit.o','matrix_state.o','matrix_eliminate.o','matrix_scan.o'} and
             all('16.2.0' in text for text in status['gcc_object_comments'].values()),'GCC objects differ')
     cases={row['case']for row in status['gcc']}
@@ -115,12 +121,24 @@ def verify_audit(audit,guards,science):
     require(cases=={row['case']for row in science.json('native-cc-option/f4/metadata.json')['samples']},'GCC replay cases differ')
     for row in status['gcc']:
         require(row['exit_code']==0 and row['complete_non_time_equal'],'GCC replay failed')
+        require(row['binary_sha256_before']==row['binary_sha256_after']==status['gcc_binary_sha256'],'GCC replay executable changed')
         data=audit.read(row['case']+'.stdout')
         require(hashlib.sha256(data).hexdigest()==row['output_sha256'],'GCC output digest differs')
         output=audit.json(row['case']+'.stdout');expected=science.json('native-cc-option/f4/'+row['case']+'-b0-B.stdout')
         for value in [output,expected]:value.pop('candidateNanos',None)
         require(output==expected,'GCC complete output differs')
     require(status['default_binary_sha256']==source(science,'avx512-default')['binary_sha256'],'default restoration differs')
+    cache=audit.json('cache-status.json');identity=audit.json('identity.json')
+    require([row['label']for row in cache]==['default','clang','cached','gcc','restored'] and
+            all(row['exit_code']==0 and all(row[k]==v for k,v in identity.items())for row in cache),'source-bound cache replay failed')
+    objects={'row_update.o','monomial_hit.o','matrix_state.o','matrix_eliminate.o','matrix_scan.o'}
+    for row in cache:
+        require(all(set(row[k])==objects for k in ['mtime_before','mtime_after','compiler_comments','object_sha256']),'cache replay object set differs')
+        version='16.2.0'if row['label']=='gcc'else 'clang version 23.1.3'if row['label']in ['clang','cached']else 'clang version 21.1.8'
+        require(all(version in comment for comment in row['compiler_comments'].values()),'cache replay compiler differs')
+        if row['label']=='cached':require(row['mtime_before']==row['mtime_after'],'cache replay rebuilt unchanged objects')
+        elif row['label']!='default':require(all(row['mtime_before'][n]!=row['mtime_after'][n]for n in objects),'cache replay reused changed compiler')
+    require(cache[0]['object_sha256']==cache[-1]['object_sha256'],'cache replay restoration differs')
     require('Build completed successfully' in audit.text('gcc-build.log') and
             'Build completed successfully' in audit.text('default-build.log'),'targeted build failed')
     identity=audit.json('identity.json')
@@ -137,7 +155,7 @@ def main():
     science,guards,global_data=map(Capsule,[args.science,args.guards,args.global_compiler])
     meta,ratios=kernels(science,'avx512-default','native-cc-option',SHAPES)
     runs=sweeps(science,'avx512-default','native-cc-option')
-    identity,latest=verify_guards(guards,science)
+    verify_guards(guards,science)
     audit=Capsule(args.audit);identity=verify_audit(audit,guards,science)
     a,b=[source(science,label)for label in ['avx512-default','native-cc-option']]
     require(a['compilers']['native']==b['compilers']['other_native'] and
@@ -155,6 +173,11 @@ def main():
     jobs=re.findall(r'Build completed successfully \((\d+) jobs\)',guards.text('full/build.log'))
     require(bool(jobs),'build target count missing')
     comparison,comparison_meta=msolve(global_data)
+    engine=audit.json('msolve-engine.json')
+    require(engine['engine_sha256']==comparison_meta['msolve_engine_sha256'] and
+            'clang version 23.1.3' in engine['engine_comment'],'comparator engine compiler identity differs')
+    require(all(analysis['geomean']<1 and candidate>1 for _,_,analysis,candidate in runs) and
+            all(analysis['geomean']<1 and candidate<1 for _,_,analysis,candidate in global_runs),'compiler comparison direction changed')
     versions={key:value['version'].splitlines()[0]for key,value in b['compilers'].items()}
     lines=['# Groebner native compiler selection','',
            'The optional `hexGroebnerCC` Lake setting selects the compiler for the five Groebner native objects. '
@@ -163,7 +186,7 @@ def main():
            'The executable’s contents and PATH resolution are not part of that trace; use an absolute immutable compiler path for reproducible builds and clean native objects after replacing a compiler in place.','',
            'Use `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner` and restore defaults with `lake -R build`. '
            'Lake retains configured options across later plain builds; reconfiguration resets other `-K` settings, which must be supplied again when needed. '
-           'The freeze tool resolves compiler names before creating detached builds and records compiler versions, executable hashes, build options and supplied wrapper/config inputs.','',
+           'The freeze tool makes compiler commands absolute while preserving symlink invocation names, and records compiler versions, executable hashes, build options and supplied wrapper/config inputs.','',
            '## Scoped compiler comparison','',
            f"Host `{meta['host']}`; one algorithm thread and automatically leased CPUs recorded per campaign. "
            f"Groebner C: {versions['native']}; other native sources: {versions['other_native']}; Lean-generated C: {versions['lean']}. "
@@ -173,7 +196,7 @@ def main():
     for name,(ratio,lo,hi,flags,_)in ratios.items():lines.append(f'| {name} | {ratio:.6f} | {lo:.6f}–{hi:.6f} | {flags} |')
     lines+=['','All 72 kernel invocations (32 matched pairs plus complexity ladders) are retained, with equal complete-output hashes. '
             'The fixed trial-major ladders and adjacent AB/BA pairs use one-second batches; preparation is excluded and validation, allocation, elimination, decoding and complete-output hashing are included. '
-            'Signal flags remain included and limit interpretation.','',
+            'Signal flags remain included and limit interpretation. The strided kernels improve with the scoped override, but those gains do not carry over to full F4 candidate time on these inputs.','',
             '| Full F4 campaign | Process B/A | Candidate B/A | Process pair range | Peak RSS A/B (KiB) |','|---|---:|---:|---:|---:|']
     for name,_,analysis,candidate in runs:
         rss=analysis['peak_rss_kib'];lines.append(f"| {name} | {analysis['geomean']:.6f} | {candidate:.6f} | {analysis['minimum']:.6f}–{analysis['maximum']:.6f} | {rss['A']}/{rss['B']} |")
@@ -195,7 +218,7 @@ def main():
               'The comparison does not cover held-out/hard acceptance families and does not establish the full SPEC milestone.','',
               '## Verification and provenance','',
               'Clang/GCC ASan+UBSan pass twelve opt-in-AVX512/forced-AVX2/scalar and wide-reduction/remainder variants. '
-              f"All nine project gates pass, including the {int(jobs[-1]):,}-target executable/theory build, independent oracles, driver checks, benchmark verification, DAG, phase, release manifest and source checks. "
+              f"All nine project checks pass at runtime `{guards.json('identity.json')['source_fingerprint']}`, including the {int(jobs[-1]):,}-job executable/theory build, independent oracles, driver checks, benchmark verification, DAG, phase, release manifest and source checks. "
               'The cache test switches default Clang 21 → Clang 23 → unchanged Clang 23 → GCC 16 → default Clang 21. '
               'Each changed selection rebuilds all five objects with matching ELF compiler records; the unchanged selection reuses them; restoring the default reproduces the original hashes.','',
               'Fresh final-source builds reproduce all measured executable hashes. The default executables match the earlier default baseline byte for byte. '

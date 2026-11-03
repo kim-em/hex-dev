@@ -2,7 +2,7 @@
 
 The optional `hexGroebnerCC` Lake setting selects the compiler for the five Groebner native objects. The default remains `cc`; other libraries and Lean-generated C retain their existing compiler choices. The compiler path string and flags participate in each object’s build trace. The executable’s contents and PATH resolution are not part of that trace; use an absolute immutable compiler path for reproducible builds and clean native objects after replacing a compiler in place.
 
-Use `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner` and restore defaults with `lake -R build`. Lake retains configured options across later plain builds; reconfiguration resets other `-K` settings, which must be supplied again when needed. The freeze tool resolves compiler names before creating detached builds and records compiler versions, executable hashes, build options and supplied wrapper/config inputs.
+Use `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner` and restore defaults with `lake -R build`. Lake retains configured options across later plain builds; reconfiguration resets other `-K` settings, which must be supplied again when needed. The freeze tool makes compiler commands absolute while preserving symlink invocation names, and records compiler versions, executable hashes, build options and supplied wrapper/config inputs.
 
 ## Scoped compiler comparison
 
@@ -15,7 +15,7 @@ Host `chungus2`; one algorithm thread and automatically leased CPUs recorded per
 | m31-dense | 1.025123 | 0.994801–1.172420 | 4 |
 | m31-strided | 0.901907 | 0.750321–0.997646 | 5 |
 
-All 72 kernel invocations (32 matched pairs plus complexity ladders) are retained, with equal complete-output hashes. The fixed trial-major ladders and adjacent AB/BA pairs use one-second batches; preparation is excluded and validation, allocation, elimination, decoding and complete-output hashing are included. Signal flags remain included and limit interpretation.
+All 72 kernel invocations (32 matched pairs plus complexity ladders) are retained, with equal complete-output hashes. The fixed trial-major ladders and adjacent AB/BA pairs use one-second batches; preparation is excluded and validation, allocation, elimination, decoding and complete-output hashing are included. Signal flags remain included and limit interpretation. The strided kernels improve with the scoped override, but those gains do not carry over to full F4 candidate time on these inputs.
 
 | Full F4 campaign | Process B/A | Candidate B/A | Process pair range | Peak RSS A/B (KiB) |
 |---|---:|---:|---:|---:|
@@ -37,7 +37,7 @@ That broader build remains 1.912043× slower than msolve in matched process time
 
 ## Verification and provenance
 
-Clang/GCC ASan+UBSan pass twelve opt-in-AVX512/forced-AVX2/scalar and wide-reduction/remainder variants. All nine project gates pass, including the 2,264-target executable/theory build, independent oracles, driver checks, benchmark verification, DAG, phase, release manifest and source checks. The cache test switches default Clang 21 → Clang 23 → unchanged Clang 23 → GCC 16 → default Clang 21. Each changed selection rebuilds all five objects with matching ELF compiler records; the unchanged selection reuses them; restoring the default reproduces the original hashes.
+Clang/GCC ASan+UBSan pass twelve opt-in-AVX512/forced-AVX2/scalar and wide-reduction/remainder variants. All nine project checks pass at runtime `a5a3a3acc086`, including the 2,264-job executable/theory build, independent oracles, driver checks, benchmark verification, DAG, phase, release manifest and source checks. The cache test switches default Clang 21 → Clang 23 → unchanged Clang 23 → GCC 16 → default Clang 21. Each changed selection rebuilds all five objects with matching ELF compiler records; the unchanged selection reuses them; restoring the default reproduces the original hashes.
 
 Fresh final-source builds reproduce all measured executable hashes. The default executables match the earlier default baseline byte for byte. The post-measurement source difference only resolves compiler commands before detached builds while preserving symlink invocation names; production algorithms and native C sources are unchanged. A compiler wrapper that rejects its resolved filename passes a fresh detached build when invoked by its alias, reproducing every measured override executable hash. A GCC 16 override builds and links the library and driver through Lake; fourteen untimed driver replays reproduce every complete basis and non-time counter. Restoring defaults reproduces all three default executable hashes. No additional timing samples were collected for that tool fix. Failed SDK-header and concurrent Git-index-lock setup attempts are retained as diagnostics and contribute no timing samples.
 
@@ -46,6 +46,6 @@ Measured override runtime `4abe7f39fd7a`; verified runtime `aaeef06c28e8`, check
 `f4-native-cc-option-4abe7f39fd7a.tar.xz`: SHA-256 `e56c814a9f9a3e1affb837ccf32b57d7229bf00681de256fd7a1b3a6ce697af6`.
 `f4-native-cc-guards-a5a3a3acc086.tar.xz`: SHA-256 `bf3dc9d67f00b7e5b6e5bfb68ae3a3f4b4731b780af57a99611e2c037c2eb7af`.
 `f4-native-compiler23-13a33eb6a851.tar.xz`: SHA-256 `401428e3583f5635af25e0996477bf3a383400c951395d7666c82c4a07be4fe8`.
-`f4-native-cc-audit-aaeef06c28e8.tar.xz`: SHA-256 `aa0ee5f1dbef7f7215fae319f650eed4f47774148d177db614fec2831bbedddb`.
+`f4-native-cc-linked-audit-aaeef06c28e8.tar.xz`: SHA-256 `447712b73a22f40dfc1c5d665ff3ff686ff281154c63ae563b78d326f1df7820`.
 
-Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science reports/bench-results/raw/f4-native-cc-option-4abe7f39fd7a.tar.xz --guards reports/bench-results/raw/f4-native-cc-guards-a5a3a3acc086.tar.xz --global-compiler reports/bench-results/raw/f4-native-compiler23-13a33eb6a851.tar.xz --audit reports/bench-results/raw/f4-native-cc-audit-aaeef06c28e8.tar.xz --report reports/bench-results/hexgroebner-compiler.md --check --current`.
+Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science reports/bench-results/raw/f4-native-cc-option-4abe7f39fd7a.tar.xz --guards reports/bench-results/raw/f4-native-cc-guards-a5a3a3acc086.tar.xz --global-compiler reports/bench-results/raw/f4-native-compiler23-13a33eb6a851.tar.xz --audit reports/bench-results/raw/f4-native-cc-linked-audit-aaeef06c28e8.tar.xz --report reports/bench-results/hexgroebner-compiler.md --check --current`.
