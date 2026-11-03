@@ -717,6 +717,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let source ← inputTextFile (pkg.dir / "probe.c")
   let scan ← inputTextFile (FilePath.mk SCAN)
   let simd ← inputTextFile (FilePath.mk SIMD)
+  let wide ← inputTextFile (FilePath.mk WIDE_HEADER)
   let body ← inputTextFile (FilePath.mk BODY)
   let row ← inputTextFile (FilePath.mk ROW)
   let trie ← inputTextFile (FilePath.mk TRIE)
@@ -725,6 +726,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let whole ← inputTextFile (FilePath.mk WHOLECODE)
   let continuation ← inputTextFile (FilePath.mk STATECODE)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
+  let inputs := inputs.zipWith (fun s _ => s) wide
   let inputs := (inputs.zipWith (fun s _ => s) row).zipWith (fun s _ => s) trie
   let inputs := inputs.zipWith (fun s _ => s) hit
   let inputs := (inputs.zipWith (fun s _ => s) whole).zipWith (fun s _ => s) continuation
@@ -736,6 +738,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 '''.replace("RUNTIME_HEADER", json.dumps(str(source.parent / "matrix_runtime.h"))).replace("ROOT", json.dumps(str(ROOT))).replace("SCAN", json.dumps(str(source))).replace(
             "SIMD", json.dumps(str(source.parent / "matrix_simd.h"))).replace(
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
+            "WIDE_HEADER", json.dumps(str(source.parent / "matrix_avx512.h"))).replace(
             "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c"))).replace("STATECODE", json.dumps(str(source.parent / "matrix_state.c"))).replace("WHOLECODE", json.dumps(str(source.parent / "matrix_eliminate.c")))
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
