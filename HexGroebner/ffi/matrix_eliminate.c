@@ -19,6 +19,7 @@
 typedef struct {
     uint64_t limits[7],stats[8],p,columns;
     unsigned width;
+    uint8_t cache;
     lean_object *dense,*slots,*pivots,*native_pivots,*remainders;
     uint64_t rank;
 } matrix_context;
@@ -82,9 +83,24 @@ static void matrix_cleanup(matrix_context *c) {
     if(c->native_pivots) lean_dec(c->native_pivots);
     if(c->remainders) lean_dec(c->remainders);
 }
+/* Installed rows are already canonical and monic. Thus the optional factory's
+   exact acceptance and charges are known without allocating an unused cache.
+   Parent-budget refusal costs zero, as in Matrix.preparePivot. A work-cap
+   decline occurs only when the same reference charge exceeds MATRIX_QUANTUM. */
+static int matrix_prepare(matrix_context *c,b_lean_obj_arg row) {
+    if(!c->cache) return 1;
+    uint64_t n=lean_sarray_size(lean_ctor_get(row,0))/4;
+    if(n<128 || n>4096) return 1;
+    const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(row,0));
+    uint64_t span=matrix_read(ids+(size_t)(n-1)*4,4)-matrix_read(ids,4)+1;
+    if(n>=span || 3*span>4*n) return 1;
+    uint64_t bytes=4*span,work=bytes+3*n+span+2;
+    if(work>c->limits[5]-c->stats[0] || bytes>c->limits[4]-c->stats[3]) return 1;
+    return matrix_work(c,work) && matrix_bytes(c,bytes);
+}
 static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         uint64_t inverse,uint64_t sugar,uint8_t from_target) {
-    if(column>=c->columns) {lean_dec(row);return 0;}
+    if(column>=c->columns || !matrix_prepare(c,row)) {lean_dec(row);return 0;}
     size_t id=lean_array_size(c->pivots);
     lean_object *native=lean_alloc_ctor(0,3,0);
     lean_ctor_set(native,0,matrix_take(row,0));
@@ -197,14 +213,11 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
 LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         b_lean_obj_arg limits,b_lean_obj_arg column_arg,b_lean_obj_arg reducers,
         b_lean_obj_arg targets,b_lean_obj_arg sugars,uint8_t independent) {
-    if(p==INT32_MAX && lean_ctor_get_uint8(limits,7*sizeof(void*)) &&
-       lean_is_scalar(column_arg) && lean_unbox(column_arg)>128) {
-        HEX_GROEBNER_MATRIX_DEFERRED();return lean_box(0);
-    }
     matrix_context c={0};
     if(sizeof(void*)!=8 || p<2 || p>=UINT64_C(2147483648) ||
        !lean_is_scalar(column_arg)) goto defer;
     c.p=p;c.width=p<=256?1:p<=65536?2:4;c.columns=lean_unbox(column_arg);
+    c.cache=p==INT32_MAX && lean_ctor_get_uint8(limits,7*sizeof(void*));
     size_t nr=lean_array_size(reducers),nt=lean_array_size(targets);
     if(c.columns>4096 || nr>1024 || nt>64) goto defer;
     size_t rows=nr+nt,ns=lean_array_size(sugars);

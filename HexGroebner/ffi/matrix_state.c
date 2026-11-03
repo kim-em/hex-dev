@@ -266,7 +266,7 @@ static void cont_install(continuation *c,lean_obj_arg row,uint64_t column,uint64
             uint64_t n=lean_sarray_size(lean_ctor_get(native,0))/4;
             const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(native,0));
             uint64_t span=n ? cont_read(ids+(size_t)(n-1)*4,4)-cont_read(ids,4)+1 : 0;
-            if(n && n<span && 3*span<=4*n) {
+            if(n>=128 && n<=4096 && n<span && 3*span<=4*n) {
                 lean_object *work=lean_uint64_to_nat(c->limits[5]-c->stats[0]);
                 lean_object *bytes=lean_uint64_to_nat(c->limits[4]-c->stats[3]);
                 prepared=lean_hex_prepare_dense(c->p,c->v[1],native,work,bytes);

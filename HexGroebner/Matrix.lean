@@ -184,7 +184,7 @@ within the caller's remaining bounds. Refusal leaves sparse execution available.
   if !cacheEnabled field limits then ⟨raw,0,0,rfl,Nat.zero_le _,Nat.zero_le _⟩ else
     let n := source.columns.size/4
     let span := Native.read source.columns 4 (4*(n-1))-Native.read source.columns 4 0+1
-    if columns ≤ 65536 && n < span && 3*span ≤ 4*n then
+    if columns ≤ 65536 && 128 ≤ n && n ≤ 4096 && n < span && 3*span ≤ 4*n then
       Native.Dense.prepare field.modulus columns source
         (limits.work-stats.work) (limits.packedBytes-stats.packedBytes)
     else ⟨raw,0,0,rfl,Nat.zero_le _,Nat.zero_le _⟩

@@ -799,7 +799,7 @@ def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
     let alternate := Hex.Groebner.MatrixState.finishState (64-scheduleSeed%64) checkpoint
     if completed.phase != .done || alternate.phase != .done ||
         checkpoint.nativePivots.size != 1 || cache.rows.size != 1 ||
-        completed.nativePivots.size != (if independent then 3 else 5) ||
+        completed.nativePivots.size != (if independent then 3 else 6) ||
         alternate.stats != completed.stats then
       throw (IO.userError "shared dense checkpoint did not complete")
     let afterBytes ← copyBytes held.dense
@@ -819,6 +819,17 @@ def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
   if afterTiny.1 != beforeTiny.1+1 || afterTiny.2 != beforeTiny.2 then
     throw (IO.userError "small cached-option matrix lost its bulk frame")
   IO.println "small M31 cached-option bulk frame: accepted"
+  let beforeDispatch ← wholeCounts
+  if !Hex.Groebner.DenseMatrixConformance.dispatchChecks primitiveSeed false then
+    throw (IO.userError "public dense-option dispatch counters differ")
+  let afterDispatch ← wholeCounts
+  if afterDispatch.1 != beforeDispatch.1+12 || afterDispatch.2 != beforeDispatch.2 then
+    throw (IO.userError "dense-option public dispatch lost bulk frames")
+  if !Hex.Groebner.DenseMatrixConformance.dispatchChecks primitiveSeed true then
+    throw (IO.userError "dense-option public dispatch boundary counters differ")
+  if !Hex.Groebner.DenseMatrixConformance.capChecks primitiveSeed then
+    throw (IO.userError "dense-option bulk work cap differs from reference")
+  IO.println "public M31 cached-option bulk frames: 12 accepted; exact boundary counters and work cap passed"
 
 def main : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")

@@ -191,6 +191,9 @@ malformed-target prefix; partial pending reductions use locally bounded dense pa
 advances at most 4096 logical updates and 8192 dense cells. Cache preparation
 and payload count against the same parent allowances as elimination. The
 continuation and whole-eliminator correspondence proofs include these charges.
+Bulk elimination retains its ordinary frame eligibility. Its validated monic
+rows determine exact preparation charges without materializing unused caches;
+the same parent-budget refusal rules and fixed work quantum still apply.
 The low-level `MatrixLimits.densePivots` also charges requested preparation in
 reference and traced calls, preserving the exact shared counter contract; those
 routes discard caches. Scalar row updates remain scalar, while explicitly

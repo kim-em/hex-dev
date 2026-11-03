@@ -111,7 +111,7 @@ def snapshotState (seed : Nat) (independent : Bool) : MatrixState.State := Id.ru
   let target (row : SparseRow) (column : Nat) : SparseRow :=
     ⟨Packed.push .u32 row.columns column.toUInt64,Packed.push .u32 row.coefficients 1⟩
   let mut state := MatrixState.start field { work := 1000000,densePivots := true } 174
-    #[a,b,c] #[target a 173,target c 172] #[seed,1,3,5,7] independent
+    #[a,b,c] #[target a 173,target c 172,target b 171] #[seed,1,3,5,7,11] independent
   for _ in [:16] do
     state := MatrixState.advance state 1
     if state.pivots.size == 1 then break
@@ -130,28 +130,82 @@ def mixedChecks (seed : Nat) : Bool := Id.run do
     let some old := initial.densePivots | return false
     let some cache := a.densePivots | return false
     if old.rows.size != 1 || initial.nativePivots.size != 1 then return false
-    if cache.rows.size != (if independent then 3 else 5) || cache.rows.size != a.nativePivots.size then return false
+    if cache.rows.size != (if independent then 3 else 6) || cache.rows.size != a.nativePivots.size then return false
     if (cache.rows[0]?.map (·.dense.isEmpty)).getD true ||
         !(cache.rows[1]?.map (·.dense.isEmpty)).getD false ||
         (cache.rows[2]?.map (·.dense.isEmpty)).getD true then return false
-    if independent && (a.remainders.size != 2 || a.remainders.any (·.row.size != 1)) then return false
+    if independent && (a.remainders.size != 3 || a.remainders.any (·.row.size != 1)) then return false
   return true
+
+/-- Public dispatch compares rows and exact charges, including preparation
+refusal after the input and output payload reservations have succeeded. -/
+def dispatchChecks (seed : Nat) (boundaries : Bool) : Bool := Id.run do
+  for columns in [128,129,174] do
+    for n in [127,128] do
+      let mut row : SparseRow := ⟨{},{}⟩
+      for i in [:n] do
+        let column := if i+1 == n then (if columns == 174 then 169 else columns-1) else i
+        row := ⟨Packed.push .u32 row.columns column.toUInt64,
+          Packed.push .u32 row.coefficients (i+1).toUInt64⟩
+      let base := 4*(row.columns.size+row.coefficients.size)+columns*8
+      let bytes := (Matrix.preparePivot field { densePivots := true } columns
+        ⟨row.columns,row.coefficients,seed⟩ {}).packedBytes
+      let allowances := if boundaries then [base-1,base,base+bytes-1,base+bytes] else [1000000]
+      let workLimits := if boundaries then [0,2000,3000,4000,1000000] else [1000000]
+      for allowance in allowances do
+        for work in workLimits do
+          for independent in [false,true] do
+            let limits : MatrixLimits := { work,packedBytes := allowance,densePivots := true }
+            let a := Elimination.run field limits columns #[row] #[row,row] false #[seed,3,5] true independent
+            let b := Elimination.run field limits columns #[row] #[row,row] false #[seed,3,5] false independent
+            if a.stats != b.stats || !resultEq (some a.result) (some b.result) then return false
+  return true
+
+/-- Preparation charges can exhaust the bulk frame's fixed quantum even when
+its original sparse shape bound admits the frame. Accepted and declined results
+agree with the independent reference evaluation. -/
+def capChecks (seed : Nat) : Bool := Id.run do
+  for count in [512,1024] do
+    let mut rows : Array SparseRow := #[]
+    for j in [:count] do
+      let mut row := pivot 128
+      for i in [:row.size] do
+        let columns := Packed.set .u32 row.columns i ((Packed.read .u32 row.columns i)+j.toUInt64)
+        row := { row with columns }
+      rows := rows.push row
+    let limits : MatrixLimits := { work := 10000000,densePivots := true }
+    let sugars := Array.replicate count seed
+    let a := Elimination.attempt field limits 4096 rows #[] sugars false
+    let b := Elimination.attemptPortable field limits 4096 rows #[] sugars false
+    if !resultEq (a.map (·.result)) (b.map (·.result)) || a.map (·.stats) != b.map (·.stats) ||
+        a.isSome != (count == 512) then return false
+  return true
+
+#guard capChecks 0
+
+#guard dispatchChecks 0 false
+#guard dispatchChecks 0 true
 
 #guard admissionChecks 0
 #guard mixedChecks 0
 
 /-- Complete linear-ideal F4 candidates use a three-quarter-full reducer
-inside a wider symbolic column set. Output equality is separate from timing. -/
+inside a wider symbolic column set. Sixty-seven inputs exceed the bulk-frame
+target cap, so the native continuation exercises its dense update. Output
+equality is separate from timing. -/
 def fullChecks (seed : Nat) : Bool := Id.run do
-  let context : Context := ⟨field,174,.grevlex⟩
+  let context : Context := ⟨field,239,.grevlex⟩
   let mut full : RawPolynomial := #[]
   let mut sparse : RawPolynomial := #[]
   for j in [:174] do
-    let powers := (Array.replicate 174 0).set! j 1
+    let powers := (Array.replicate 239 0).set! j 1
     if j == 0 || j ≥ 2 then full := full.push ⟨powers,(j+1).toUInt64⟩
     if j == 1 || (j ≥ 2 && j%4 != 0) then sparse := sparse.push ⟨powers,(j+1).toUInt64⟩
-  full := full.push ⟨(Array.replicate 174 0).set! 1 1,(seed%2147483646+1).toUInt64⟩
-  let generators := #[full,sparse]
+  full := full.push ⟨(Array.replicate 239 0).set! 1 1,(seed%2147483646+1).toUInt64⟩
+  let mut generators := #[full,sparse,
+    #[⟨(Array.replicate 239 0).set! 1 1,1⟩,⟨(Array.replicate 239 0).set! 238 1,1⟩]]
+  for j in [174:238] do
+    generators := generators.push #[⟨(Array.replicate 239 0).set! j 1,1⟩]
   match computeWith context { work := 1000000000,densePivots := true } generators,
       computeWith context { work := 1000000000 } generators with
   | .candidate cachedAnswer _,.candidate sparseAnswer _ => return cachedAnswer.polynomials == sparseAnswer.polynomials
