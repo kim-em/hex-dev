@@ -94,15 +94,15 @@ def sources() -> str:
     return index_listing(FAMILY)
 
 
-def compiler_provenance() -> dict:
+def compiler_provenance(native_cc: str | None = None) -> dict:
     prefix = subprocess.check_output(["lean", "--print-prefix"], text=True).strip()
-    commands = {"native": shutil.which("cc"),
+    commands = {"native": native_cc or shutil.which("cc"), "other_native": shutil.which("cc"),
                 "lean": os.environ.get("LEAN_CC", str(Path(prefix)/"bin/clang"))}
     result = {}
     for kind, command in commands.items():
         if command is None:
             raise ValueError("native C compiler is unavailable")
-        path = Path(command).resolve()
+        path = Path(shutil.which(command) or command).resolve()
         result[kind] = {"command": command, "resolved": str(path), "sha256": sha(path),
                         "version": subprocess.check_output([command,"--version"], text=True)}
     return result
@@ -114,11 +114,14 @@ def main() -> None:
     parser.add_argument("--sampled", action="store_true", help="also freeze both sampled driver initializers")
     parser.add_argument("--bench", action="store_true", help="also freeze the registered kernel benchmark executable")
     parser.add_argument("--avx512", action="store_true", help="enable experimental sixteen-lane native dispatch")
+    parser.add_argument("--native-cc", help="override the Groebner C compiler through Lake configuration")
     parser.add_argument("--compiler-input", type=Path, action="append", default=[],
                         help="retain an external compiler wrapper/config input")
     args = parser.parse_args()
+    if args.native_cc is not None:
+        args.native_cc = str(Path(shutil.which(args.native_cc) or args.native_cc).absolute())
     listing = sources()
-    compilers = compiler_provenance()
+    compilers = compiler_provenance(args.native_cc)
     compiler_inputs = {str(path.resolve()):sha(path) for path in args.compiler_input}
     output = args.output.resolve()
     output.mkdir(exist_ok=False)
@@ -127,7 +130,9 @@ def main() -> None:
         executables += [("sample", "hexgroebner_sample"), ("sample-reference", "hexgroebner_sample_full")]
     if args.bench:
         executables += [("bench", "hexgroebner_bench")]
-    command = ["lake", *(["-R", "-KhexGroebnerAVX512=true"] if args.avx512 else []),
+    options = (["-KhexGroebnerAVX512=true"] if args.avx512 else [])
+    options += (["-KhexGroebnerCC="+args.native_cc] if args.native_cc else [])
+    command = ["lake", *(["-R", *options] if options else []),
                "build", *[target for _, target in executables]]
     tree = subprocess.check_output(["git", "write-tree"], cwd=ROOT, text=True).strip()
     parent = subprocess.check_output(
@@ -182,7 +187,7 @@ def main() -> None:
             )
     if sources() != listing:
         raise RuntimeError("sources changed during build")
-    if compiler_provenance() != compilers or any(sha(Path(path)) != digest for path,digest in compiler_inputs.items()):
+    if compiler_provenance(args.native_cc) != compilers or any(sha(Path(path)) != digest for path,digest in compiler_inputs.items()):
         raise RuntimeError("compiler inputs changed during build")
     initialization = json.loads(
         subprocess.check_output(
@@ -206,7 +211,7 @@ def main() -> None:
             cwd=ROOT,text=True))
     manifest = {
         "source_fingerprint": fingerprint(listing),
-        "native_options": {"hexGroebnerAVX512": args.avx512},
+        "native_options": {"hexGroebnerAVX512": args.avx512, "hexGroebnerCC": args.native_cc},
         "compilers": compilers,
         "compiler_inputs": compiler_inputs,
         "source_manifest": listing,
