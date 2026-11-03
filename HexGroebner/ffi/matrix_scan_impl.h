@@ -118,6 +118,12 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
                 if(updates>=8) {
                     uint32_t multiplier=w<4?(uint32_t)factor:(uint32_t)((factor<<32)%p);
                     for(uint64_t k=0;k<updates;++k) {
+#if defined(HEX_SCAN_PACKET16) && HEX_SCAN_PACKET16
+                        if(updates-k>=16 && hex_scan16_mode(data,cs,vs,(size_t)entry,columns,
+                                (uint32_t)p,multiplier,reduction,w,HEX_SCAN_MODE16)) {
+                            entry+=16;k+=15;continue;
+                        }
+#endif
                         if(updates-k>=8 && HEX_SCAN_UPDATE(data,cs,vs,(size_t)entry,columns,
                                 (uint32_t)p,multiplier,reduction,w)) {
                             entry+=8;k+=7;continue;

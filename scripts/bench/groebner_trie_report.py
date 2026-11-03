@@ -38,16 +38,18 @@ def source(capsule, label):
     return manifest
 
 
-def campaign(capsule, label, manifests):
+def campaign(capsule, label, manifests, *, baseline=None, current=None):
     metadata = capsule.json(label+'/metadata.json')
     recorded = capsule.json(label+'/analysis.json')
     require(metadata['source_unchanged'] and metadata['threads'] == 1 and
             metadata['requested_scheduling'] == {'A': 'degree', 'B': 'degree'}, 'source/thread/scheduling mismatch')
     require(metadata['binary_sha256'] == metadata['binary_sha256_after'], 'binary changed')
-    baseline = metadata['baseline_manifest']
-    require(baseline == manifests[metadata['baseline_source_fingerprint']], 'baseline source mismatch')
+    recorded_baseline = metadata['baseline_manifest']
+    baseline = baseline if baseline is not None else manifests[metadata['baseline_source_fingerprint']]
+    require(recorded_baseline == baseline and baseline['source_fingerprint']==metadata['baseline_source_fingerprint'], 'baseline source mismatch')
     require(hashlib.sha256((json.dumps(baseline, indent=2)+'\n').encode()).hexdigest() == metadata['baseline_manifest_sha256'], 'baseline manifest digest mismatch')
-    current = manifests[metadata['source_fingerprint']]
+    current = current if current is not None else manifests[metadata['source_fingerprint']]
+    require(current['source_fingerprint']==metadata['source_fingerprint'], 'current source mismatch')
     require(metadata['source_manifest'] == current['source_manifest'] and
             metadata['binary_sha256'] == {'A': baseline['binary_sha256']['compute'], 'B': current['binary_sha256']['compute']}, 'source/binary binding mismatch')
     for name, digest in metadata['input_sha256'].items():

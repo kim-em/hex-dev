@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -93,13 +94,32 @@ def sources() -> str:
     return index_listing(FAMILY)
 
 
+def compiler_provenance() -> dict:
+    prefix = subprocess.check_output(["lean", "--print-prefix"], text=True).strip()
+    commands = {"native": shutil.which("cc"),
+                "lean": os.environ.get("LEAN_CC", str(Path(prefix)/"bin/clang"))}
+    result = {}
+    for kind, command in commands.items():
+        if command is None:
+            raise ValueError("native C compiler is unavailable")
+        path = Path(command).resolve()
+        result[kind] = {"command": command, "resolved": str(path), "sha256": sha(path),
+                        "version": subprocess.check_output([command,"--version"], text=True)}
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--sampled", action="store_true", help="also freeze both sampled driver initializers")
     parser.add_argument("--bench", action="store_true", help="also freeze the registered kernel benchmark executable")
+    parser.add_argument("--avx512", action="store_true", help="enable experimental sixteen-lane native dispatch")
+    parser.add_argument("--compiler-input", type=Path, action="append", default=[],
+                        help="retain an external compiler wrapper/config input")
     args = parser.parse_args()
     listing = sources()
+    compilers = compiler_provenance()
+    compiler_inputs = {str(path.resolve()):sha(path) for path in args.compiler_input}
     output = args.output.resolve()
     output.mkdir(exist_ok=False)
     executables = [("compute", "hexgroebner_compute"), ("compute-reference", "hexgroebner_compute_full")]
@@ -107,7 +127,8 @@ def main() -> None:
         executables += [("sample", "hexgroebner_sample"), ("sample-reference", "hexgroebner_sample_full")]
     if args.bench:
         executables += [("bench", "hexgroebner_bench")]
-    command = ["lake", "build", *[target for _, target in executables]]
+    command = ["lake", *(["-R", "-KhexGroebnerAVX512=true"] if args.avx512 else []),
+               "build", *[target for _, target in executables]]
     tree = subprocess.check_output(["git", "write-tree"], cwd=ROOT, text=True).strip()
     parent = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
@@ -161,6 +182,8 @@ def main() -> None:
             )
     if sources() != listing:
         raise RuntimeError("sources changed during build")
+    if compiler_provenance() != compilers or any(sha(Path(path)) != digest for path,digest in compiler_inputs.items()):
+        raise RuntimeError("compiler inputs changed during build")
     initialization = json.loads(
         subprocess.check_output(
             [
@@ -183,6 +206,9 @@ def main() -> None:
             cwd=ROOT,text=True))
     manifest = {
         "source_fingerprint": fingerprint(listing),
+        "native_options": {"hexGroebnerAVX512": args.avx512},
+        "compilers": compilers,
+        "compiler_inputs": compiler_inputs,
         "source_manifest": listing,
         "commit": subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
@@ -201,6 +227,12 @@ def main() -> None:
         "sampled_initialization": sampled_initialization,
         "toolchain": (ROOT / "lean-toolchain").read_text().strip(),
     }
+    for index,(path,digest) in enumerate(compiler_inputs.items()):
+        destination = output / "compiler-inputs" / f"{index}-{Path(path).name}"
+        destination.parent.mkdir(exist_ok=True)
+        shutil.copy2(path,destination)
+        if sha(destination) != digest:
+            raise RuntimeError("compiler input copy differs")
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (output / "source.manifest").write_text(listing)
     for line in listing.splitlines():

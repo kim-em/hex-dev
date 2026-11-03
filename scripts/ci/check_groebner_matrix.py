@@ -19,7 +19,9 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-VARIANTS = {"Native": [], "Scalar": ["-DHEX_GROEBNER_NO_AVX2"],
+VARIANTS = {"Native": [], "AVX2": ["-DHEX_GROEBNER_NO_AVX512"],
+            "AVX2Remainder": ["-DHEX_GROEBNER_NO_AVX512", "-DHEX_GROEBNER_NO_UINT128"],
+            "Scalar": ["-DHEX_GROEBNER_NO_AVX2"],
             "Remainder": ["-DHEX_GROEBNER_NO_UINT128"],
             "ScalarRemainder": ["-DHEX_GROEBNER_NO_AVX2", "-DHEX_GROEBNER_NO_UINT128"]}
 
@@ -299,7 +301,9 @@ LEAN_EXPORT lean_obj_res hex_test_owned_runtime(lean_obj_arg world) {
  ok=ok && lean_obj_tag(result)==1 && lean_ctor_get(result,0)==fake;lean_dec(result);
  return lean_io_result_mk_ok(lean_box(ok));
 }
-static uint64_t mersenne_vectors=0,zero_scans=0;
+static uint64_t mersenne_vectors=0,zero_scans=0,packets16=0;
+static uint32_t widths16=0;
+#define HEX_GROEBNER_AVX512_USED(w,c) (++packets16,widths16|=1u<<(2*((w)==1?0:(w)==2?1:2)+!(c)))
 #define HEX_GROEBNER_ZERO_SCAN_USED() (++zero_scans)
 #define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
 #define hex_scan8 hex_test_scan8_base
@@ -664,6 +668,20 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_gather(uint64_t p,lean_obj_arg initial,
 LEAN_EXPORT lean_obj_res hex_test_zero_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(zero_scans));
 }
+LEAN_EXPORT lean_obj_res hex_test_avx512_widths(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint32(widths16));
+}
+LEAN_EXPORT lean_obj_res hex_test_avx512_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(packets16));
+}
+LEAN_EXPORT lean_obj_res hex_test_avx512_available(lean_obj_arg world) {
+ (void)world;
+#if HEX_GROEBNER_AVX512
+ return lean_io_result_mk_ok(lean_box(hex_avx512_available()));
+#else
+ return lean_io_result_mk_ok(lean_box(0));
+#endif
+}
 LEAN_EXPORT lean_obj_res hex_test_mersenne_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(mersenne_vectors));
 }
@@ -703,6 +721,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let source ← inputTextFile (pkg.dir / "probe.c")
   let scan ← inputTextFile (FilePath.mk SCAN)
   let simd ← inputTextFile (FilePath.mk SIMD)
+  let wide ← inputTextFile (FilePath.mk WIDE_HEADER)
   let body ← inputTextFile (FilePath.mk BODY)
   let row ← inputTextFile (FilePath.mk ROW)
   let trie ← inputTextFile (FilePath.mk TRIE)
@@ -711,6 +730,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let whole ← inputTextFile (FilePath.mk WHOLECODE)
   let continuation ← inputTextFile (FilePath.mk STATECODE)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
+  let inputs := inputs.zipWith (fun s _ => s) wide
   let inputs := (inputs.zipWith (fun s _ => s) row).zipWith (fun s _ => s) trie
   let inputs := inputs.zipWith (fun s _ => s) hit
   let inputs := (inputs.zipWith (fun s _ => s) whole).zipWith (fun s _ => s) continuation
@@ -722,8 +742,9 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 '''.replace("RUNTIME_HEADER", json.dumps(str(source.parent / "matrix_runtime.h"))).replace("ROOT", json.dumps(str(ROOT))).replace("SCAN", json.dumps(str(source))).replace(
             "SIMD", json.dumps(str(source.parent / "matrix_simd.h"))).replace(
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
+            "WIDE_HEADER", json.dumps(str(source.parent / "matrix_avx512.h"))).replace(
             "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c"))).replace("STATECODE", json.dumps(str(source.parent / "matrix_state.c"))).replace("WHOLECODE", json.dumps(str(source.parent / "matrix_eliminate.c")))
-        flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
+        flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING", "-DHEX_GROEBNER_ENABLE_AVX512"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
@@ -787,6 +808,9 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_widths"] opaque widths : IO UInt32
 @[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
+@[extern "hex_test_avx512_count"] opaque avx512Count : IO UInt64
+@[extern "hex_test_avx512_widths"] opaque avx512Widths : IO UInt32
+@[extern "hex_test_avx512_available"] opaque avx512Available : IO Bool
 def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
   for independent in [false,true] do
     let checkpoint := Hex.Groebner.DenseMatrixConformance.snapshotState primitiveSeed independent
@@ -830,6 +854,25 @@ def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
   if !Hex.Groebner.DenseMatrixConformance.capChecks primitiveSeed then
     throw (IO.userError "dense-option bulk work cap differs from reference")
   IO.println "public M31 cached-option bulk frames: 12 accepted; exact boundary counters and work cap passed"
+
+def checkMersenne : IO UInt64 := do
+  let before512 ← avx512Count
+  let beforeMersenne ← mersenneCount
+  Hex.Groebner.NativeChecks.runMersenneF4
+  let mersenne ← mersenneCount
+  let after512 ← avx512Count
+  let paths512 ← avx512Widths
+  let available512 ← avx512Available
+  IO.println s!"AVX-512 packets: {after512}; full F4={after512-before512}; available={available512}; width/layout bits={paths512}"
+  if available512 && paths512 != 63 then
+    throw (IO.userError "an AVX-512 width/layout path was not exercised")
+  if available512 && after512 ≤ before512 then
+    throw (IO.userError "full F4 did not exercise AVX-512 packets")
+  if WIDE && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX512") == some "1" && !available512 then
+    throw (IO.userError "AVX-512 coverage required but unavailable")
+  if VECTOR && (← avx2) && mersenne ≤ beforeMersenne then
+    throw (IO.userError "complete F4 did not exercise Mersenne vectors")
+  return mersenne
 
 def main : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
@@ -1085,9 +1128,7 @@ def main : IO Unit := do
   let cacheProducts ← productCount
   if cacheProducts ≤ f4Products then throw (IO.userError "cache checks did not exercise arena product validation")
   if cacheCompared ≤ f4Compared then throw (IO.userError "cache checks did not exercise byte binding")
-  let beforeMersenne ← mersenneCount
-  Hex.Groebner.NativeChecks.runMersenneF4
-  let mersenne ← mersenneCount
+  let mersenne ← checkMersenne
   let indexAfter ← indexCount
   let zeroAppendAfter ← zeroAppendCount
   if indexAfter ≤ indexBefore || zeroAppendAfter ≤ zeroAppendBefore then
@@ -1105,8 +1146,6 @@ def main : IO Unit := do
   IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}, zero blocks={afterZero}, F4 zero blocks={afterZero-beforeZero}"
   if VECTOR && available && afterZero ≤ beforeZero then
     throw (IO.userError "complete F4 did not exercise zero blocks")
-  if VECTOR && available && mersenne ≤ beforeMersenne then
-    throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 255) then
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then
@@ -1159,7 +1198,7 @@ def main : IO Unit := do
   if afterSubtract ≤ beforeSubtract || afterScan ≤ beforeScan || afterGather ≤ beforeGather then
     throw (IO.userError "sampled F4 did not exercise instrumented combination/scan/gather")
   IO.println s!"sampled native calls: subtract={afterSubtract-beforeSubtract}, scan={afterScan-beforeScan}, gather={afterGather-beforeGather}"
-'''.replace("VECTOR", "true" if variant in ("Native", "Remainder") else "false"))
+'''.replace("VECTOR", "false" if variant.startswith("Scalar") else "true").replace("WIDE", "true" if variant in ("Native", "Remainder") else "false"))
             config += f'''\ntarget probe{variant} pkg : FilePath := probeO pkg "{variant}" #{json.dumps(flags + extra)}
 lean_exe {target} where
   root := `{module}
@@ -1172,13 +1211,15 @@ lean_exe {target} where
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_dense_admitted"] opaque denseAdmitted : IO UInt64
 @[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+@[extern "hex_test_avx512_count"] opaque avx512Count : IO UInt64
 def main (args : List String) : IO UInt32 := do
   let status ← Hex.Groebner.Driver.run args
   let (prepares,scans,updates) ← denseCounts
+  let packets ← avx512Count
   let admitted ← denseAdmitted
   let (accepted,declined) ← wholeCounts
   (← IO.getStderr).putStrLn (Lean.Json.mkObj [
-    ("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
+    ("avx512Packets",Lean.toJson packets),("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
     ("scans",Lean.toJson scans),("updates",Lean.toJson updates),
     ("bulkAccepted",Lean.toJson accepted),("bulkDeclined",Lean.toJson declined)]).compress
   return status

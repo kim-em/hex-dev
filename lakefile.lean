@@ -133,14 +133,18 @@ target hexgroebnerScanO pkg : FilePath := do
   let directory := pkg.dir / "HexGroebner" / "ffi"
   let source ← inputTextFile (directory / "matrix_scan.c")
   let simd ← inputTextFile (directory / "matrix_simd.h")
+  let avx512 ← inputTextFile (directory / "matrix_avx512.h")
   let body ← inputTextFile (directory / "matrix_scan_impl.h")
   let header ← inputTextFile (directory / "matrix_runtime.h")
   let inputs := (source.zipWith (fun source _ => source) simd).zipWith
     (fun source _ => source) body
+  let inputs := inputs.zipWith (fun source _ => source) avx512
   let inputs := inputs.zipWith (fun source _ => source) header
+  let vectorFlags := if get_config? hexGroebnerAVX512 == some "true" then
+    #["-DHEX_GROEBNER_ENABLE_AVX512"] else #[]
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_scan.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
-    #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]
+    (#["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"] ++ vectorFlags)
     (extraDepTrace := do addLeanTrace; pure BuildTrace.nil)
 
 target hexmodarithO pkg : FilePath := zmod64MulOTarget pkg

@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "matrix_simd.h"
+#include "matrix_avx512.h"
 #include "matrix_runtime.h"
 
 static inline uint64_t rd(const uint8_t *p, unsigned w) {
@@ -190,9 +191,74 @@ static uint64_t hex_dense_update_avx2(uint8_t *data,const uint8_t *values,
 #define HEX_SCAN_UPDATE hex_scan8
 #endif
 
+#if HEX_GROEBNER_AVX512 && defined(HEX_GROEBNER_ENABLE_AVX512)
+#define HEX_SCAN_PACKET16 1
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8
+#define HEX_SCAN_MODE16 0
+#define HEX_SCAN_NAME hex_scan_avx512_u8
+#define HEX_SCAN_ATTRIBUTE __attribute__((target("avx512f,avx512dq,avx512bw,avx512vl")))
+#define HEX_SCAN_VECTOR 1
+#define HEX_SCAN_WIDTH 1
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#undef HEX_SCAN_MODE16
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8
+#define HEX_SCAN_MODE16 0
+#define HEX_SCAN_NAME hex_scan_avx512_u16
+#define HEX_SCAN_ATTRIBUTE __attribute__((target("avx512f,avx512dq,avx512bw,avx512vl")))
+#define HEX_SCAN_VECTOR 1
+#define HEX_SCAN_WIDTH 2
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#undef HEX_SCAN_MODE16
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8
+#define HEX_SCAN_MODE16 0
+#define HEX_SCAN_NAME hex_scan_avx512_u32
+#define HEX_SCAN_ATTRIBUTE __attribute__((target("avx512f,avx512dq,avx512bw,avx512vl")))
+#define HEX_SCAN_VECTOR 1
+#define HEX_SCAN_WIDTH 4
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#undef HEX_SCAN_MODE16
+#undef HEX_SCAN_UPDATE
+#define HEX_SCAN_UPDATE hex_scan8_m31
+#define HEX_SCAN_MODE16 1
+#define HEX_SCAN_NAME hex_scan_avx512_m31
+#define HEX_SCAN_ATTRIBUTE __attribute__((target("avx512f,avx512dq,avx512bw,avx512vl")))
+#define HEX_SCAN_VECTOR 1
+#define HEX_SCAN_WIDTH 4
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#undef HEX_SCAN_MODE16
+#undef HEX_SCAN_PACKET16
+#endif
+
 LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
         b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
         b_lean_obj_arg quantum,b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
+#if HEX_GROEBNER_AVX512 && defined(HEX_GROEBNER_ENABLE_AVX512)
+    if((p&1) && hex_avx512_available()) {
+        if(p<=256) return hex_scan_avx512_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
+        if(p<=65536) return hex_scan_avx512_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
+        if(p==INT32_MAX) return hex_scan_avx512_m31(p,slots,pivots,initial,quantum,work,trace,provenance);
+        return hex_scan_avx512_u32(p,slots,pivots,initial,quantum,work,trace,provenance);
+    }
+#endif
 #if HEX_GROEBNER_AVX2
     if(p>65536 && (p&1) && hex_avx2_available()) {
         if(p==INT32_MAX) return hex_scan_avx2_m31(p,slots,pivots,initial,quantum,work,trace,provenance);
