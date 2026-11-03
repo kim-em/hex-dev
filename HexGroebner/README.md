@@ -305,11 +305,15 @@ builder separately uses the 4096-byte append-zero provider in chunks.
 
 The five Groebner native objects use the host `cc` by default. To choose a
 specific compiler, run `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner`.
-The compiler selection and flags are part of the object build traces. Other
+The compiler path string and flags are part of the object build traces; compiler
+contents and PATH resolution are not. Prefer absolute immutable paths, and clean
+native objects after upgrading a compiler in place. Other
 libraries and Lean-generated C retain their own compiler choices. Lake retains
-this setting across later plain builds; `lake -R build` restores defaults and
-resets other `-K` settings too. The freeze tool's `--native-cc` option resolves
-compiler commands before detached builds and records compiler/wrapper inputs.
+this setting across later plain builds; use `-R` when changing it.
+`lake -R build` restores defaults and
+resets other `-K` settings too. The freeze tool's `--native-cc` option makes
+compiler commands absolute before detached builds while preserving symlink invocation
+names. It records compiler identities and any `--compiler-input` files supplied.
 [Compiler observations](../reports/bench-results/hexgroebner-compiler.md) keep
 Groebner-only and broader compiler changes separate, with no overall speed claim.
 

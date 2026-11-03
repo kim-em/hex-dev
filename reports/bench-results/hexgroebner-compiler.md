@@ -1,6 +1,6 @@
 # Groebner native compiler selection
 
-The optional `hexGroebnerCC` Lake setting selects the compiler for the five Groebner native objects. The default remains `cc`; other libraries and Lean-generated C retain their existing compiler choices. The compiler path and flags participate in each object’s build trace.
+The optional `hexGroebnerCC` Lake setting selects the compiler for the five Groebner native objects. The default remains `cc`; other libraries and Lean-generated C retain their existing compiler choices. The compiler path string and flags participate in each object’s build trace. The executable’s contents and PATH resolution are not part of that trace; use an absolute immutable compiler path for reproducible builds and clean native objects after replacing a compiler in place.
 
 Use `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner` and restore defaults with `lake -R build`. Lake retains configured options across later plain builds; reconfiguration resets other `-K` settings, which must be supplied again when needed. The freeze tool resolves compiler names before creating detached builds and records compiler versions, executable hashes, build options and supplied wrapper/config inputs.
 
@@ -22,18 +22,18 @@ All 72 kernel invocations (32 matched pairs plus complexity ladders) are retaine
 | f4 | 0.992638 | 1.031298 | 0.403054–4.615783 | 70044/71796 |
 | f4-repeat | 0.923735 | 1.138220 | 0.233584–3.169040 | 72836/73960 |
 
-Each campaign retains all 56 processes across fourteen inputs from seven families at 32003 and 2147483647. The second is the single unchanged repeat after an inconclusive first campaign. All 112 processes (56 pairs) agree on complete outputs and every non-time counter. There are no failures or timeouts. Broad pair ranges and the differing aggregate results do not establish an overall F4 speedup. The compiler control is optional and makes no fastest-open-source claim.
+Each campaign retains all 56 processes across fourteen inputs from seven families at 32003 and 2147483647. The second is the single unchanged repeat after an inconclusive first campaign. All 112 processes (56 pairs) agree on complete outputs and every non-time counter. There are no failures or timeouts. Candidate time is slower with the Groebner-only override in both campaigns, while the noisy process ratios point the other way. The scoped option shows no candidate-time benefit and does not reproduce the broader compiler experiment’s improvement. Broad pair ranges preclude an overall speedup claim. The compiler control is optional and makes no fastest-open-source claim.
 
 ## Broader compiler experiment and remaining gap
 
-A separate source-identical experiment changed the host `cc` for all native libraries to Clang 23.1.3, with the SDK compiler fixed. This is a different comparison from the Groebner-only option above; its samples are not pooled with it.
+A separate source-identical experiment changed host `cc` to Clang 23.1.3 for native objects compiled in fresh project builds, with the SDK compiler fixed and pinned dependency artifacts shared. This is a different comparison from the Groebner-only option above; its samples are not pooled with it.
 
 | Global-compiler campaign | Process B/A | Candidate B/A |
 |---|---:|---:|
 | f4 | 0.958295 | 0.951034 |
 | f4-repeat | 0.957244 | 0.949575 |
 
-That broader build remains 1.912043× slower than msolve in matched process time on this seven-family suite. All 56 processes complete with 28 equal complete-basis pairs. msolve revision `3672113ee2c696a2ac9c637636e0f7214f500ba1` uses Clang 23.1.3, native CPU tuning, deterministic elimination (`-l 2`), full reduced output (`-g 2`) and one thread. This comparator observation is not the Groebner-only build, does not cover held-out/hard acceptance families, and does not establish the full SPEC milestone.
+That broader build remains 1.912043× slower than msolve in matched process time on this seven-family suite. All 56 processes complete with 28 equal complete-basis pairs. msolve revision `3672113ee2c696a2ac9c637636e0f7214f500ba1` uses Clang 23.1.3, native CPU tuning, deterministic elimination (`-l 2`), full reduced output (`-g 2`) and one thread. This comparator observation is neither the default nor the Groebner-only build; no matched current-msolve gap was collected for either of those builds in these capsules. msolve uses native CPU tuning while this Hex build retains runtime dispatch with AVX-512 off. The comparison does not cover held-out/hard acceptance families and does not establish the full SPEC milestone.
 
 ## Verification and provenance
 

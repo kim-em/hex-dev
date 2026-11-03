@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import math
+import re
 from pathlib import Path
 import sys
 
@@ -35,7 +36,9 @@ def verify_guards(guards,science):
     cache=guards.json('native-compiler-option-cache-status.json')
     require([r['label']for r in cache]==['default','clang','cached','gcc','restored'],'compiler switch coverage differs')
     require(all(r['exit_code']==0 for r in cache),'compiler switch failed')
+    expected_objects={'row_update.o','monomial_hit.o','matrix_state.o','matrix_eliminate.o','matrix_scan.o'}
     for row in cache:
+        require(all(set(row[key])==expected_objects for key in ['mtime_before','mtime_after','object_sha256','compiler_comments']),'compiler cache object set differs')
         if row['label']=='cached':require(row['mtime_before']==row['mtime_after'],'unchanged compiler rebuilt')
         elif row['label']!='default':require(all(row['mtime_before'][k]!=row['mtime_after'][k]for k in row['mtime_before']),'compiler switch was cached')
         version='16.2.0' if row['label']=='gcc' else 'clang version 23.1.3' if row['label']in ['clang','cached']else 'clang version 21.1.8'
@@ -60,6 +63,13 @@ def msolve(capsule):
     manifest=source(capsule,'native-compiler23')
     require(meta['source_fingerprint']==manifest['source_fingerprint'] and
             meta['source_manifest']==manifest['source_manifest'] and meta['source_unchanged'],'msolve source differs')
+    require(meta['binary_sha256']['A']==manifest['binary_sha256']['compute'] and
+            meta['binary_sha256']['B']==meta['msolve_cli_sha256'],'comparator executable binding differs')
+    require(meta['msolve_build']['commit']==meta['msolve_commit'] and
+            meta['msolve_build']['tracked_status']=='','comparator source state differs')
+    commands=meta['msolve_build']['engine_recorded_compile_commands']
+    require(commands is not None and '23.1.3' in commands and
+            '-march=native' in commands.split() and '-O3' in commands.split(),'comparator compiler/tuning record differs')
     require(meta['threads']==1 and meta['msolve_mode']==2 and meta['msolve_commit']=='3672113ee2c696a2ac9c637636e0f7214f500ba1','comparator configuration differs')
     require(meta['binary_sha256']==meta['binary_sha256_after'] and
             meta['msolve_engine_sha256']==meta['msolve_engine_sha256_after'] and meta['msolve_build']==meta['msolve_build_after'],'comparator build changed')
@@ -103,13 +113,22 @@ def main():
     if args.current:
         current=source_identity();require(all(current[k]==v for k,v in identity.items()if k!='source_commit'),'current sources differ')
     global_runs=sweeps(global_data,'avx512-default','native-compiler23')
-    global_meta,global_ratios=kernels(global_data,'avx512-default','native-compiler23',SHAPES)
+    kernels(global_data,'avx512-default','native-compiler23',SHAPES)
+    global_a,global_b=[source(global_data,label)for label in ['avx512-default','native-compiler23']]
+    require(global_a['source_manifest']==global_b['source_manifest'] and
+            global_a['compilers']['lean']==global_b['compilers']['lean'] and
+            'clang version 23.1.3' in global_b['compilers']['native']['version'],'broader compiler/source configuration differs')
+    require(b'hexGroebnerCC' not in science.read('avx512-default/root-sources/lakefile.lean') and
+            b'hexGroebnerCC' in guards.read('runtime-sources/lakefile.lean'),'pre-option default source binding differs')
+    jobs=re.findall(r'Build completed successfully \((\d+) jobs\)',guards.text('full/build.log'))
+    require(bool(jobs),'build target count missing')
     comparison,comparison_meta=msolve(global_data)
     versions={key:value['version'].splitlines()[0]for key,value in b['compilers'].items()}
     lines=['# Groebner native compiler selection','',
            'The optional `hexGroebnerCC` Lake setting selects the compiler for the five Groebner native objects. '
            'The default remains `cc`; other libraries and Lean-generated C retain their existing compiler choices. '
-           'The compiler path and flags participate in each object’s build trace.','',
+           'The compiler path string and flags participate in each object’s build trace. '
+           'The executable’s contents and PATH resolution are not part of that trace; use an absolute immutable compiler path for reproducible builds and clean native objects after replacing a compiler in place.','',
            'Use `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner` and restore defaults with `lake -R build`. '
            'Lake retains configured options across later plain builds; reconfiguration resets other `-K` settings, which must be supplied again when needed. '
            'The freeze tool resolves compiler names before creating detached builds and records compiler versions, executable hashes, build options and supplied wrapper/config inputs.','',
@@ -128,20 +147,23 @@ def main():
         rss=analysis['peak_rss_kib'];lines.append(f"| {name} | {analysis['geomean']:.6f} | {candidate:.6f} | {analysis['minimum']:.6f}–{analysis['maximum']:.6f} | {rss['A']}/{rss['B']} |")
     lines+=['','Each campaign retains all 56 processes across fourteen inputs from seven families at 32003 and 2147483647. '
             'The second is the single unchanged repeat after an inconclusive first campaign. All 112 processes (56 pairs) agree on complete outputs and every non-time counter. '
-            'There are no failures or timeouts. Broad pair ranges and the differing aggregate results do not establish an overall F4 speedup. '
+            'There are no failures or timeouts. Candidate time is slower with the Groebner-only override in both campaigns, while the noisy process ratios point the other way. '
+            'The scoped option shows no candidate-time benefit and does not reproduce the broader compiler experiment’s improvement. Broad pair ranges preclude an overall speedup claim. '
             'The compiler control is optional and makes no fastest-open-source claim.','',
             '## Broader compiler experiment and remaining gap','',
-            'A separate source-identical experiment changed the host `cc` for all native libraries to Clang 23.1.3, with the SDK compiler fixed. '
+            'A separate source-identical experiment changed host `cc` to Clang 23.1.3 for native objects compiled in fresh project builds, with the SDK compiler fixed and pinned dependency artifacts shared. '
             'This is a different comparison from the Groebner-only option above; its samples are not pooled with it.','',
             '| Global-compiler campaign | Process B/A | Candidate B/A |','|---|---:|---:|']
     for name,_,analysis,candidate in global_runs:lines.append(f"| {name} | {analysis['geomean']:.6f} | {candidate:.6f} |")
     lines += ['',f"That broader build remains {comparison['family_balanced_geomean']:.6f}× slower than msolve in matched process time on this seven-family suite. "
               f"All {comparison['samples']} processes complete with {comparison['complete_bases_equal']} equal complete-basis pairs. "
               f"msolve revision `{comparison_meta['msolve_commit']}` uses Clang 23.1.3, native CPU tuning, deterministic elimination (`-l 2`), full reduced output (`-g 2`) and one thread. "
-              'This comparator observation is not the Groebner-only build, does not cover held-out/hard acceptance families, and does not establish the full SPEC milestone.','',
+              'This comparator observation is neither the default nor the Groebner-only build; no matched current-msolve gap was collected for either of those builds in these capsules. '
+              'msolve uses native CPU tuning while this Hex build retains runtime dispatch with AVX-512 off. '
+              'The comparison does not cover held-out/hard acceptance families and does not establish the full SPEC milestone.','',
               '## Verification and provenance','',
               'Clang/GCC ASan+UBSan pass twelve opt-in-AVX512/forced-AVX2/scalar and wide-reduction/remainder variants. '
-              'All nine project gates pass, including the 2,264-target executable/theory build, independent oracles, driver checks, benchmark verification, DAG, phase, release manifest and source checks. '
+              f"All nine project gates pass, including the {int(jobs[-1]):,}-target executable/theory build, independent oracles, driver checks, benchmark verification, DAG, phase, release manifest and source checks. "
               'The cache test switches default Clang 21 → Clang 23 → unchanged Clang 23 → GCC 16 → default Clang 21. '
               'Each changed selection rebuilds all five objects with matching ELF compiler records; the unchanged selection reuses them; restoring the default reproduces the original hashes.','',
               'Fresh final-source builds reproduce all measured executable hashes. The default executables match the earlier default baseline byte for byte. '

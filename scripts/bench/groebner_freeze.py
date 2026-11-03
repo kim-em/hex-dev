@@ -119,7 +119,7 @@ def main() -> None:
                         help="retain an external compiler wrapper/config input")
     args = parser.parse_args()
     if args.native_cc is not None:
-        args.native_cc = str(Path(shutil.which(args.native_cc) or args.native_cc).resolve())
+        args.native_cc = str(Path(shutil.which(args.native_cc) or args.native_cc).absolute())
     listing = sources()
     compilers = compiler_provenance(args.native_cc)
     compiler_inputs = {str(path.resolve()):sha(path) for path in args.compiler_input}
