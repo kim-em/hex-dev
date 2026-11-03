@@ -27,6 +27,8 @@ for variant in simd scalar; do
   fi
   "$row_probe_cc" "${row_probe_flags[@]}" HexGroebner/ffi/matrix_scan_selftest.c -o "$row_probe_dir/$variant"
   "$row_probe_dir/$variant"
+  "$row_probe_cc" "${row_probe_flags[@]}" HexGroebner/ffi/matrix_avx512_selftest.c -o "$row_probe_dir/$variant-avx512"
+  "$row_probe_dir/$variant-avx512"
 done
 
 trie_probe_flags=(-O2 -std=c11 -Wall -Wextra -Werror)

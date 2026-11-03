@@ -133,10 +133,12 @@ target hexgroebnerScanO pkg : FilePath := do
   let directory := pkg.dir / "HexGroebner" / "ffi"
   let source ← inputTextFile (directory / "matrix_scan.c")
   let simd ← inputTextFile (directory / "matrix_simd.h")
+  let avx512 ← inputTextFile (directory / "matrix_avx512.h")
   let body ← inputTextFile (directory / "matrix_scan_impl.h")
   let header ← inputTextFile (directory / "matrix_runtime.h")
   let inputs := (source.zipWith (fun source _ => source) simd).zipWith
     (fun source _ => source) body
+  let inputs := inputs.zipWith (fun source _ => source) avx512
   let inputs := inputs.zipWith (fun source _ => source) header
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_scan.o") inputs
     #["-I", (← getLeanIncludeDir).toString]

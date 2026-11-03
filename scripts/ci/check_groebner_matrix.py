@@ -299,7 +299,8 @@ LEAN_EXPORT lean_obj_res hex_test_owned_runtime(lean_obj_arg world) {
  ok=ok && lean_obj_tag(result)==1 && lean_ctor_get(result,0)==fake;lean_dec(result);
  return lean_io_result_mk_ok(lean_box(ok));
 }
-static uint64_t mersenne_vectors=0,zero_scans=0;
+static uint64_t mersenne_vectors=0,zero_scans=0,packets16=0;
+#define HEX_GROEBNER_AVX512_USED() (++packets16)
 #define HEX_GROEBNER_ZERO_SCAN_USED() (++zero_scans)
 #define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
 #define hex_scan8 hex_test_scan8_base
@@ -664,6 +665,17 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_gather(uint64_t p,lean_obj_arg initial,
 LEAN_EXPORT lean_obj_res hex_test_zero_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(zero_scans));
 }
+LEAN_EXPORT lean_obj_res hex_test_avx512_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(packets16));
+}
+LEAN_EXPORT lean_obj_res hex_test_avx512_available(lean_obj_arg world) {
+ (void)world;
+#if HEX_GROEBNER_AVX512
+ return lean_io_result_mk_ok(lean_box(hex_avx512_available()));
+#else
+ return lean_io_result_mk_ok(lean_box(0));
+#endif
+}
 LEAN_EXPORT lean_obj_res hex_test_mersenne_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(mersenne_vectors));
 }
@@ -787,6 +799,8 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_widths"] opaque widths : IO UInt32
 @[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
+@[extern "hex_test_avx512_count"] opaque avx512Count : IO UInt64
+@[extern "hex_test_avx512_available"] opaque avx512Available : IO Bool
 def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
   for independent in [false,true] do
     let checkpoint := Hex.Groebner.DenseMatrixConformance.snapshotState primitiveSeed independent
@@ -1085,9 +1099,17 @@ def main : IO Unit := do
   let cacheProducts ← productCount
   if cacheProducts ≤ f4Products then throw (IO.userError "cache checks did not exercise arena product validation")
   if cacheCompared ≤ f4Compared then throw (IO.userError "cache checks did not exercise byte binding")
+  let before512 ← avx512Count
   let beforeMersenne ← mersenneCount
   Hex.Groebner.NativeChecks.runMersenneF4
   let mersenne ← mersenneCount
+  let after512 ← avx512Count
+  let available512 ← avx512Available
+  IO.println s!"AVX-512 packets: {after512}; full F4={after512-before512}; available={available512}"
+  if available512 && after512 ≤ before512 then
+    throw (IO.userError "full F4 did not exercise AVX-512 packets")
+  if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX512") == some "1" && !available512 then
+    throw (IO.userError "AVX-512 coverage required but unavailable")
   let indexAfter ← indexCount
   let zeroAppendAfter ← zeroAppendCount
   if indexAfter ≤ indexBefore || zeroAppendAfter ≤ zeroAppendBefore then
