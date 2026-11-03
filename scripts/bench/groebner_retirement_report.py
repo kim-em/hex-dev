@@ -104,6 +104,11 @@ def verify_guards(guards,science):
     require('retirementPairs\ndid not evaluate' in guards.text('mutations/reverse-guard-build.log'),'reversed-divisibility mutant was not detected')
     reverse=guards.json('mutations/reverse-check/status.json')
     reverse_manifest=source(guards,'mutations/reverse')
+    require(code(guards.text('mutations/reverse/root-sources/HexGroebner/Pairs.lean'))==
+            code(science.text('active-list/root-sources/HexGroebner/Pairs.lean')).replace('iflcm==athen','iflcm==bthen',1),
+            'reversed mutation source differs')
+    require(reverse_manifest['binary_sha256']['compute']!=before['binary_sha256']['compute'],
+            'reversed mutation executable equals production')
     require(not reverse['detected'] and len(reverse['records'])==128 and
             reverse['binary_sha256']==reverse_manifest['binary_sha256']['compute'] and
             reverse['mutant_source_fingerprint']==reverse_manifest['source_fingerprint'],'reversed mutation binding differs')
@@ -172,6 +177,10 @@ def verify_review(capsule,before,guards):
     require(code(capsule.text('current/root-sources/HexGroebner/Pairs.lean'))==code(guards.text('reviewed/root-sources/HexGroebner/Pairs.lean')) and
             after['binary_sha256']==before['binary_sha256'],'final review changed executable logic')
     identity=capsule.json('identity.json');text=capsule.text('checks.manifest')
+    old_checks,new_checks=listing(guards.text('review-checks.manifest')),listing(text)
+    require(set(old_checks)==set(new_checks) and
+            {p for p in old_checks if old_checks[p]!=new_checks[p]}=={'conformance/HexGroebner/F4Conformance.lean'},
+            'final guard changes differ')
     require(identity['source_fingerprint']==after['source_fingerprint'] and
             identity['source_manifest_sha256']==hashlib.sha256(after['source_manifest'].encode()).hexdigest() and
             identity['checks_manifest_sha256']==hashlib.sha256(text.encode()).hexdigest(),'final review identity differs')
@@ -180,6 +189,15 @@ def verify_review(capsule,before,guards):
         require(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==oid,'final review check source differs')
     rows=capsule.json('full-status.json')
     require(len(rows)==9 and all(r['exit_code']==0 and all(r[k]==v for k,v in identity.items())for r in rows),'final review project checks failed')
+    audit=capsule.json('reverse-guard/metadata.json')
+    pair=capsule.read('reverse-guard/Pairs.lean');guard=capsule.read('reverse-guard/F4Conformance.lean')
+    require(pair==guards.read('mutations/reverse/root-sources/HexGroebner/Pairs.lean') and
+            guard==capsule.read('checks-sources/conformance/HexGroebner/F4Conformance.lean') and
+            audit['pair_sha256_before']==audit['pair_sha256_after']==hashlib.sha256(pair).hexdigest() and
+            audit['guard_sha256_before']==audit['guard_sha256_after']==hashlib.sha256(guard).hexdigest() and
+            audit['command']==['lake','build','HexGroebner.F4Conformance'] and audit['exit_code']!=0 and
+            'retirementPairs\ndid not evaluate' in capsule.text('reverse-guard/build.log'),
+            'reversed guard compilation is not bound to source')
     meta=capsule.json('mutation/metadata.json');inp=capsule.json('mutation/input.json')
     require(inp==guards.json('mutations/always-check/minimal-f2-input.json') and
             meta['good_manifest']['binary_sha256']==before['binary_sha256'],'minimized mutation source differs')
@@ -257,7 +275,7 @@ def main():
             'Only Lake/freeze metadata differs from the reviewed runtime; all three executables remain byte-identical. '
             'All nine checks pass again after rebasing. Editing and restoring the included header rebuilds the monomial object and preserves its original hash.','',
             f"Final runtime `{final_identity['source_fingerprint']}` makes the UPDATE depth convention explicit, with active depth zero and each removed index one greater than its replacement. "
-            'The runtime edit is documentation only, with all three executable hashes preserved. Final guards additionally compare the four-generator system with unpruned Buchberger and exercise repeated installation; all nine checks pass again.','',
+            'The runtime edit is documentation only, with all three executable hashes preserved. Final guards check the post-preprocessing depth-two chain and exact initial pair counts, compare its final basis with unpruned Buchberger, and exercise repeated installation and a GM–Buchberger–GM resumption with both removed indices and an eligibility gap. All nine checks pass again.','',
             'The reversed-divisibility mutation preserves the tested fresh bases: losing retirement can merely lose pruning. '
             'The targeted queue-obligation guard separately checks the retirement direction. A second mutation retiring unrelated entries produces a wrong basis, independently rejected by SymPy. '
             'Its minimized ordinary-F2 system `yz, xy+xz, y²` misses `xz²`; direct regressions cover both schedules. Mutation attempts and failures are retained.','']
