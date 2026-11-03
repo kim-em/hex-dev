@@ -68,9 +68,11 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
     uint32_t pending[4096],sp=1;
     pending[0]=0;
     uint32_t best=0,best_priority=0;
+    uint32_t lower=(uint32_t)trie_read(nodes+16,4);
     uint64_t work=0,query_degree=trie_read(metadata+query*24,8);
     uint64_t query_mask=trie_read(metadata+query*24+8,8);
     for(uint64_t visited=0;visited<n && sp;++visited) {
+        if(best && lower && best_priority==lower) break;
         uint32_t node=pending[--sp];
         if(node>=n) return trie_decline();
         const uint8_t *record=nodes+(size_t)node*24;

@@ -163,7 +163,7 @@ static void oversized(unsigned end) {
     release(nodes);release(edges);
 }
 /* Two depth-two branches: the first visited leaf has priority one. A
-   checked bound skips the other branch's edge and leaf, preserving selection. */
+   checked global bound skips the other branch entirely, preserving selection. */
 static void bounded_priority(void) {
     uint8_t nodes[5*24]={0},edges[4*8]={0},arena[3*2]={0},metadata[3*24]={0};
     put(nodes+8,4,2);put(nodes+16,4,1);
@@ -180,11 +180,11 @@ static void bounded_priority(void) {
     require(trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"checked priority bounds");
     struct trie_result result=trie_lookup(2,1,1,3,2,arena,sizeof arena,metadata,sizeof metadata,
         nodes,sizeof nodes,edges,sizeof edges,4096);
-    require(result.status==1 && result.key==2 && result.work==7,"priority subtree pruning");
+    require(result.status==1 && result.key==2 && result.work==6,"priority global pruning");
     for(unsigned cap=0;cap<=9;++cap) {
         result=trie_lookup(2,1,1,3,2,arena,sizeof arena,metadata,sizeof metadata,
             nodes,sizeof nodes,edges,sizeof edges,cap);
-        require(result.work<=cap && result.status==(cap<7?2:1),"cached priority budget prefix");
+        require(result.work<=cap && result.status==(cap<6?2:1),"cached priority budget prefix");
     }
     put(nodes+16,4,2);
     require(!trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"overstated priority bound");

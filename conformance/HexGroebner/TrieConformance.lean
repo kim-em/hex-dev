@@ -127,7 +127,7 @@ def largeChecks : Bool := Id.run do
     if Native.Trie.valid view.arity view.nodes view.edges view.maxLeading !=
         Native.Trie.validPortable view.arity view.nodes view.edges view.maxLeading then return false
     let state ← get
-    for query in [0,2099] do
+    for query in [0,2000,2099] do
       let monomial := basis[query]!.polynomial.monomial 0
       for allowance in [0,1,2099,2100,2101,2102,4095,4096,4200,4201,100000,2^90] do
         let raw := Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
@@ -135,15 +135,16 @@ def largeChecks : Bool := Id.run do
         let model := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
           state.table.exponents state.table.metadata (min allowance 4096).toUInt64
         if raw.reducer != model.reducer || raw.work != model.work || raw.status != model.status then return false
-        if query == 2099 && allowance ≥ 4096 &&
+        if query == 2000 && allowance ≥ 4096 &&
             (raw.status != 3 || raw.work != 0 || raw.reducer.isSome) then return false
-        if query == 0 && allowance ≥ 2102 &&
-            (raw.status != 1 || raw.work != 2102 || raw.reducer != some 0) then return false
+        if query != 2000 && allowance ≥ 2102 &&
+            (raw.status != 1 || raw.work != 2102 || raw.reducer != some query) then return false
         let budget := { limits with work := state.statistics.work+allowance }
         let (expected, work) := ReducerIndex.findPortable context index basis state.table monomial
           state.statistics.work budget.work
         let (actual, next) := (index.find context budget basis monomial).run state
         if !equal actual expected || next.statistics.work != work then return false
+        if allowance ≥ 100000 && !equal actual (.ok (some query)) then return false
     return true
   match trial.run ⟨{arity := 1},{}⟩ with
   | (.ok true,_) => return true

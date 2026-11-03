@@ -32,14 +32,14 @@ def budgetChecks : Bool := Id.run do
   for allowance in [:17] do
     let limits : Limits := { work := 17 + allowance }
     let (result, final) := (index.find context limits basis all).run initial
-    let charged := if allowance < 4 then min allowance 1 else min allowance 9
+    let charged := if allowance < 4 then min allowance 1 else min allowance 7
     if final.statistics != { statistics with work := 17 + charged } then return false
     if final.table.work != initial.table.work || final.table.count != initial.table.count ||
         final.table.exponents != initial.table.exponents || final.table.metadata != initial.table.metadata then
       return false
     match result with
-    | .ok selected => if allowance < 9 || selected != some 2 then return false
-    | .error (.exhausted .work) => if allowance ≥ 9 then return false
+    | .ok selected => if allowance < 7 || selected != some 2 then return false
+    | .error (.exhausted .work) => if allowance ≥ 7 then return false
     | _ => return false
   -- Equal support size and degree retain the first leaf in the traversal.
   let (result, final) := (index.find context { work := 27 } basis tie).run initial

@@ -188,7 +188,9 @@ Immutable reducer indices also retain a validated packed tree when small enough.
 A native view admits at most 16384 nodes and 16383 edges, preserving sparse-row
 preference, higher-degree tie breaking and LIFO traversal ties.
 Lean assigns explicit priorities once; native lookup selects the least admitted
-priority without implementing the F4 preference policy.
+priority without implementing the F4 preference policy. Checked descendant
+priority bounds skip non-improving subtrees; a divisor attaining the root bound
+ends the search because no remaining leaf can improve its priority.
 Its fixed stack and at most 4096 charged node/edge visits bound each lookup.
 A query needing further visits declines with zero reported work; the caller
 replays the portable traversal under the actual parent allowance. Validation

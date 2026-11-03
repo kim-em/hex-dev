@@ -106,7 +106,9 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
   let mut pending := #[0]
   let mut out : Result := {}
   let mut bestPriority := 0
+  let lower := word view.nodes 4
   for _ in [:n] do
+    if out.reducer.isSome && lower != 0 && bestPriority == lower then break
     if pending.isEmpty then break
     let node := pending.back!
     pending := pending.pop
