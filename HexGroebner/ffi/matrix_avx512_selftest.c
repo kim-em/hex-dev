@@ -59,6 +59,13 @@ static void check(uint32_t p,unsigned stride,unsigned offset,unsigned at_end) {
         assert(hex_scan16_mode(d,c,b,offset,n,p,mult,reduction,w,mode)==0);
         assert(memcmp(d,saved,n*w)==0);put(c+(offset+i)*4,4,col);
     }
+    if(w<4 && stride>1) {
+        /* A final narrow cell has no complete four-byte gather. Decline
+           before the guard page and leave even the valid prefix unchanged. */
+        put(c+(entries-1)*4,4,n-1);memcpy(saved,d,n*w);
+        assert(hex_scan16_mode(d,c,b,offset,n,p,mult,reduction,w,mode)==0);
+        assert(memcmp(d,saved,n*w)==0);
+    }
     for(unsigned i=0;i<3;++i) assert(munmap(maps[i],3*(size_t)page)==0);
 }
 #endif

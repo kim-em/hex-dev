@@ -19,7 +19,9 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-VARIANTS = {"Native": [], "Scalar": ["-DHEX_GROEBNER_NO_AVX2"],
+VARIANTS = {"Native": [], "AVX2": ["-DHEX_GROEBNER_NO_AVX512"],
+            "AVX2Remainder": ["-DHEX_GROEBNER_NO_AVX512", "-DHEX_GROEBNER_NO_UINT128"],
+            "Scalar": ["-DHEX_GROEBNER_NO_AVX2"],
             "Remainder": ["-DHEX_GROEBNER_NO_UINT128"],
             "ScalarRemainder": ["-DHEX_GROEBNER_NO_AVX2", "-DHEX_GROEBNER_NO_UINT128"]}
 
@@ -855,7 +857,7 @@ def checkMersenne : IO UInt64 := do
   IO.println s!"AVX-512 packets: {after512}; full F4={after512-before512}; available={available512}"
   if available512 && after512 ≤ before512 then
     throw (IO.userError "full F4 did not exercise AVX-512 packets")
-  if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX512") == some "1" && !available512 then
+  if WIDE && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX512") == some "1" && !available512 then
     throw (IO.userError "AVX-512 coverage required but unavailable")
   if VECTOR && (← avx2) && mersenne ≤ beforeMersenne then
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
@@ -1185,7 +1187,7 @@ def main : IO Unit := do
   if afterSubtract ≤ beforeSubtract || afterScan ≤ beforeScan || afterGather ≤ beforeGather then
     throw (IO.userError "sampled F4 did not exercise instrumented combination/scan/gather")
   IO.println s!"sampled native calls: subtract={afterSubtract-beforeSubtract}, scan={afterScan-beforeScan}, gather={afterGather-beforeGather}"
-'''.replace("VECTOR", "true" if variant in ("Native", "Remainder") else "false"))
+'''.replace("VECTOR", "false" if variant.startswith("Scalar") else "true").replace("WIDE", "true" if variant in ("Native", "Remainder") else "false"))
             config += f'''\ntarget probe{variant} pkg : FilePath := probeO pkg "{variant}" #{json.dumps(flags + extra)}
 lean_exe {target} where
   root := `{module}
