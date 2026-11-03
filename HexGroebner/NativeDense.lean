@@ -97,7 +97,9 @@ def zeros (n : Nat) : ByteArray := Id.run do
   return bytes
 
 /-- Opt-in M31 dense pivots, at least half full, with 128–4096 sparse entries.
-The complete dense span has at most 16384 coefficients. Admission reserves the
+The factory admits at most 8192 coefficients: at most 4096 entries and
+a span at most twice their count.
+The checked Row format separately permits spans up to 16384. Admission reserves the
 entire bounded preparation before any traversal; source inputs stay immutable.
 Other fields and unsupported shapes retain the ordinary sparse row. -/
 def preparePortable (modulus : UInt64) (columns : Nat) (source : Scan.Pivot)
@@ -117,7 +119,7 @@ def preparePortable (modulus : UInt64) (columns : Nat) (source : Scan.Pivot)
   let span := last-first+1
   let bytes := span*w
   let cost := bytes+3*n+span+2
-  if span > 16384 || span > 2*n then return fallback
+  if span > 2*n then return fallback
   if hbudget : cost ≤ workBudget ∧ bytes ≤ bytesBudget then
     if !validSparse modulus columns source then
       return { fallback with work := n+1,work_le := by omega }
@@ -188,8 +190,8 @@ theorem portable_cache (modulus : UInt64) (columns : Nat) (slots : ByteArray)
   rw [hsize,hat]
 
 /-- Dense-aware native transition. Immutable checked pivot buffers permit
-contiguous M31 updates; unsupported fields and partial rows retain sparse
-execution. Each call has at most 4096 logical updates and twice that many dense
+contiguous M31 updates; unsupported fields and locally sparse packets retain
+sparse execution. Each call has at most 4096 logical updates and twice that many dense
 cells. The Row proof licenses cache reads without revalidating whole pivots. -/
 @[extern "lean_hex_dense_transition"]
 def transition (modulus : UInt64) (columns : @& Nat) (slots : @& ByteArray)

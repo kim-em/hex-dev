@@ -81,31 +81,39 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
             } else {
                 const uint8_t *cs=lean_sarray_cptr(lean_ctor_get(pivot,0));
                 const uint8_t *vs=lean_sarray_cptr(lean_ctor_get(pivot,1));
-#if HEX_SCAN_DENSE
-                lean_object *cache=lean_ctor_get(view,1);
-                if(p==INT32_MAX && entry==0 && size<=quantum-tick && lean_sarray_size(cache)) {
-                    uint32_t first=lean_ctor_get_uint32(view,2*sizeof(void*));
-                    const uint8_t *values=lean_sarray_cptr(cache);
-                    uint64_t span=lean_sarray_size(cache)/4;
-#if HEX_SCAN_VECTOR
-                    uint64_t failed=hex_dense_update_avx2(data+(size_t)first*4,values,span,factor);
-#else
-                    uint64_t failed=hex_dense_update_scalar(data+(size_t)first*4,values,span,factor);
-#endif
-                    HEX_GROEBNER_DENSE_USED();
-                    if(failed!=UINT64_MAX) {
-                        /* Previous dense cells have been updated. Recover the
-                           exact sparse cursor at the first invalid target. */
-                        uint64_t low=0,high=size;
-                        while(low<high) {uint64_t mid=low+(high-low)/2;
-                            if(rd(cs+(size_t)mid*4,4)<first+failed) low=mid+1;else high=mid;}
-                        entry=low;status=4;break;
-                    }
-                    entry=size;tick+=size-1;continue;
-                }
-#endif
                 uint64_t updates=size-entry;
                 if(updates>quantum-tick) updates=quantum-tick;
+#if HEX_SCAN_DENSE
+                lean_object *cache=lean_ctor_get(view,1);
+                uint64_t cache_bytes=lean_sarray_size(cache);
+                uint64_t first=lean_ctor_get_uint32(view,2*sizeof(void*));
+                uint64_t cached_size=lean_ctor_get_uint32(view,2*sizeof(void*)+4);
+                if(p==INT32_MAX && cache_bytes && !(cache_bytes%4) &&
+                   cache_bytes/4<=16384 && cached_size==size && first<=columns && cache_bytes/4<=columns-first) {
+                    uint64_t begin=rd(cs+(size_t)entry*4,4);
+                    uint64_t end=rd(cs+(size_t)(entry+updates-1)*4,4)+1;
+                    /* Bound each partial dense packet independently. A globally
+                       dense row can still have a wide local gap. Refused packets
+                       retain the exact ordinary sparse prefix below. */
+                    if(begin>=first && end>=begin && end-first<=cache_bytes/4 &&
+                       end-begin<=2*updates) {
+                        const uint8_t *values=lean_sarray_cptr(cache)+(size_t)(begin-first)*4;
+#if HEX_SCAN_VECTOR
+                        uint64_t failed=hex_dense_update_avx2(data+(size_t)begin*4,values,end-begin,factor);
+#else
+                        uint64_t failed=hex_dense_update_scalar(data+(size_t)begin*4,values,end-begin,factor);
+#endif
+                        HEX_GROEBNER_DENSE_USED();
+                        if(failed!=UINT64_MAX) {
+                            uint64_t low=entry,high=entry+updates;
+                            while(low<high) {uint64_t mid=low+(high-low)/2;
+                                if(rd(cs+(size_t)mid*4,4)<begin+failed) low=mid+1;else high=mid;}
+                            entry=low;status=4;break;
+                        }
+                        entry+=updates;tick+=updates-1;continue;
+                    }
+                }
+#endif
 #if HEX_SCAN_VECTOR
                 if(updates>=8) {
                     uint32_t multiplier=w<4?(uint32_t)factor:(uint32_t)((factor<<32)%p);

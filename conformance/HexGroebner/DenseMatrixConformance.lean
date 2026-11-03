@@ -77,6 +77,69 @@ def checks (seed : Nat) : Bool := Id.run do
         if cache.rows.size != 1 || (cache.rows[0]?.map (·.dense.isEmpty)).getD true then return false
   return true
 
+/-- Admission refusal after workspace allocation succeeds, in both target
+modes, leaves exact sparse execution and charges no optimization payload. -/
+def admissionChecks (seed : Nat) : Bool := Id.run do
+  let row := pivot 128
+  let base := 4*(row.columns.size+row.coefficients.size)+174*8
+  let bytes := (Matrix.preparePivot field { densePivots := true } 174
+    ⟨row.columns,row.coefficients,seed⟩ {}).packedBytes
+  if bytes == 0 then return false
+  for independent in [false,true] do
+    for allowance in [base,base+bytes-1,base+bytes] do
+      let limits : MatrixLimits := { work := 1000000,packedBytes := allowance,densePivots := true }
+      let initial := MatrixState.start field limits 174 #[row] #[row,row] #[seed,7,11] independent
+      let a := MatrixState.finishState 1 initial
+      let b := MatrixState.finishState 1 initial false
+      if !same a b || a.phase != .done || a.stats.zeroRows != 2 then return false
+      let some cache := a.densePivots | return false
+      let admitted := allowance == base+bytes
+      if cache.active != admitted || a.stats.packedBytes != base+(if admitted then bytes else 0) then return false
+  return true
+
+private def unitRow (column : Nat) : SparseRow :=
+  ⟨Packed.push .u32 {} column.toUInt64,Packed.push .u32 {} 1⟩
+
+/-- Return a live shared checkpoint after the first nonempty cache is installed. -/
+def snapshotState (seed : Nat) (independent : Bool) : MatrixState.State := Id.run do
+  let a := pivot 128
+  let b := unitRow 1
+  let mut c := a
+  for i in [:128] do
+    let columns := Packed.set .u32 c.columns i ((Packed.read .u32 a.columns i)+2)
+    c := { c with columns }
+  let target (row : SparseRow) (column : Nat) : SparseRow :=
+    ⟨Packed.push .u32 row.columns column.toUInt64,Packed.push .u32 row.coefficients 1⟩
+  let mut state := MatrixState.start field { work := 1000000,densePivots := true } 174
+    #[a,b,c] #[target a 173,target c 172] #[seed,1,3,5,7] independent
+  for _ in [:16] do
+    state := MatrixState.advance state 1
+    if state.pivots.size == 1 then break
+  return state
+
+/-- Mixed raw/dense pivots, nonzero gathered residuals, independent remainders
+and shared nonempty-cache pushes agree across continuation schedules. -/
+def mixedChecks (seed : Nat) : Bool := Id.run do
+  for independent in [false,true] do
+    let initial := snapshotState seed independent
+    if initial.pivots.size != 1 || initial.densePivots.map (·.active) != some true then return false
+    let a := MatrixState.finishState 1 initial
+    let b := MatrixState.finishState 64 initial
+    let c := MatrixState.finishState 1 initial false
+    if !same a b || !same a c || a.phase != .done then return false
+    let some old := initial.densePivots | return false
+    let some cache := a.densePivots | return false
+    if old.rows.size != 1 || initial.nativePivots.size != 1 then return false
+    if cache.rows.size != (if independent then 3 else 5) || cache.rows.size != a.nativePivots.size then return false
+    if (cache.rows[0]?.map (·.dense.isEmpty)).getD true ||
+        !(cache.rows[1]?.map (·.dense.isEmpty)).getD false ||
+        (cache.rows[2]?.map (·.dense.isEmpty)).getD true then return false
+    if independent && (a.remainders.size != 2 || a.remainders.any (·.row.size != 1)) then return false
+  return true
+
+#guard admissionChecks 0
+#guard mixedChecks 0
+
 /-- Complete linear-ideal F4 candidates use a three-quarter-full reducer
 inside a wider symbolic column set. Output equality is separate from timing. -/
 def fullChecks (seed : Nat) : Bool := Id.run do

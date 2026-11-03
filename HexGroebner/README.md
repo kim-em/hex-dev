@@ -187,10 +187,15 @@ Each cache retains its immutable sparse source. The typed cache proves exact
 coefficient equality, source-array correspondence and whether any dense buffer
 is active. Preparation reserves its entire bounded cost before traversing the
 row. Dense updates preserve zero gaps, every intermediate cursor and the first
-malformed-target prefix; partial pending reductions use sparse updates. A call
+malformed-target prefix; partial pending reductions use locally bounded dense packets or sparse updates. A call
 advances at most 4096 logical updates and 8192 dense cells. Cache preparation
 and payload count against the same parent allowances as elimination. The
 continuation and whole-eliminator correspondence proofs include these charges.
+The low-level `MatrixLimits.densePivots` also charges requested preparation in
+reference and traced calls, preserving the exact shared counter contract; those
+routes discard caches. Scalar row updates remain scalar, while explicitly
+requested preparation uses its bounded native provider. The polynomial
+certificate producer does not enable that low-level policy.
 This option does not establish a full-system speedup or the performance milestone.
 
 The packed-payload allowance is not a process-memory limit: it excludes

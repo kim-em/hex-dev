@@ -130,6 +130,38 @@ def sparseThreeQuarters (input : DenseInput) := sparseBatch input
       if present then entry := entry+1
   return true)
 
+private def selectedBatch (native : Bool) (input : DenseInput) := Id.run do
+  let slots := Native.write input.slots 4 0 1
+  let n := input.source.columns.size/4
+  let mut state := input.initial
+  let mut good := true
+  for _ in [:64] do
+    state := { state with
+      dense := Native.write state.dense 4 0 17
+      column := 0
+      pending := 0
+      entry := 0
+      leading := 0 }
+    let first := if native then
+      Native.Dense.transition denseModulus input.columns slots #[input.row] state (min 4096 (n+2)) 100000 0 false
+      else Native.Scan.transition denseModulus slots #[input.source] state (min 4096 (n+2)) 100000 0 false
+    let final := if first.state.pending == 0 then first else
+      if native then Native.Dense.transition denseModulus input.columns slots #[input.row] first.state 2 100000 0 false
+      else Native.Scan.transition denseModulus slots #[input.source] first.state 2 100000 0 false
+    good := good && final.state.pending == 0 && first.work == n &&
+      first.reductions+final.reductions ≥ 1 && final.status == 0
+    state := final.state
+  return (good,state.dense)
+
+/-- Include pivot selection before updates; 4096-entry rows resume their last
+entry in a second call. Every iteration therefore begins its update at tick 1. -/
+def denseSelected (input : DenseInput) := selectedBatch true input
+def sparseSelected (input : DenseInput) := selectedBatch false input
+
+#guard (#[128,256,512,1024,2048,4096].all fun n =>
+  let input := prepareThreeQuarters n
+  (denseSelected input).1 && denseSelected input == sparseSelected input)
+
 -- O(n): update a span shorter than 2*n and consume every output byte.
 setup_benchmark densePivot n => n
   with prep := prepareDensePivot
@@ -220,6 +252,28 @@ setup_benchmark denseThreeQuarters n => n
 
 -- O(n): 64 fixed owned updates of a span at most 2*n and full output hashing.
 setup_benchmark sparseThreeQuarters n => n
+  with prep := prepareThreeQuarters
+  where {
+    paramFloor := 128
+    paramCeiling := 4096
+    paramSchedule := .custom #[128,256,512,1024,2048,4096]
+    targetInnerNanos := 500000000
+    maxSecondsPerCall := 8.0
+  }
+
+-- O(n): 64 selections and sparse-entry updates plus full final output hashing.
+setup_benchmark denseSelected n => n
+  with prep := prepareThreeQuarters
+  where {
+    paramFloor := 128
+    paramCeiling := 4096
+    paramSchedule := .custom #[128,256,512,1024,2048,4096]
+    targetInnerNanos := 500000000
+    maxSecondsPerCall := 8.0
+  }
+
+-- O(n): 64 selections and sparse-entry updates plus full final output hashing.
+setup_benchmark sparseSelected n => n
   with prep := prepareThreeQuarters
   where {
     paramFloor := 128

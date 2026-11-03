@@ -383,7 +383,7 @@ LEAN_EXPORT lean_obj_res lean_hex_prepare_dense(uint64_t p,b_lean_obj_arg column
     uint64_t first=rd(cs,4),last=rd(cs+(n-1)*4,4);
     if(last<first || last>=columns) return dense_pivot_raw(source,0);
     uint64_t span=last-first+1,bytes=span*4,cost=bytes+3*n+span+2;
-    if(span>16384 || span>2*n || cost>bounded_nat(work_arg,65536) ||
+    if(span>2*n || cost>bounded_nat(work_arg,65536) ||
        bytes>bounded_nat(bytes_arg,65536)) return dense_pivot_raw(source,0);
     int valid=rd(vs,4)==1;uint64_t previous=0;
     for(size_t i=0;i<n;++i) {

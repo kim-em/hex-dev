@@ -120,30 +120,36 @@ private def takeGather : Work Native.Gather.State := do
 
 private def scanFuel (columns : Nat) : Nat := (columns*(columns+2)+4095)/4096+1
 
-private def scanRows (state : State) (native : Bool) (initial : Native.Scan.State)
+private def scanRows (field : PrimeField) (columns : Nat) (slots : ByteArray)
+    (pivots : Array Native.Scan.Pivot)
+    (densePivots : Option (Native.Dense.Cache field.modulus columns pivots))
+    (native : Bool) (initial : Native.Scan.State)
     (remaining : Nat) : Native.Scan.Result :=
-  if let some cache := state.densePivots then
+  if let some cache := densePivots then
     if cache.active then
-      if native then Native.Dense.transition state.field.modulus state.columns state.slots cache.rows initial 4096 remaining 0 false
-      else Native.Dense.portable state.field.modulus state.columns state.slots cache.rows initial 4096 remaining 0 false
-    else if native then Native.Scan.transition state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
-    else Native.Scan.portable state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
-  else if native then Native.Scan.transition state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
-  else Native.Scan.portable state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
+      if native then Native.Dense.transition field.modulus columns slots cache.rows initial 4096 remaining 0 false
+      else Native.Dense.portable field.modulus columns slots cache.rows initial 4096 remaining 0 false
+    else if native then Native.Scan.transition field.modulus slots pivots initial 4096 remaining 0 false
+    else Native.Scan.portable field.modulus slots pivots initial 4096 remaining 0 false
+  else if native then Native.Scan.transition field.modulus slots pivots initial 4096 remaining 0 false
+  else Native.Scan.portable field.modulus slots pivots initial 4096 remaining 0 false
 
-private theorem scanRows_spec (state : State) (native : Bool) (initial : Native.Scan.State)
-    (remaining : Nat) (hsize : initial.dense.size = state.columns*state.field.width.bytes) :
-    scanRows state native initial remaining =
-      Native.Scan.portable state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false := by
-  have hdim : state.columns = initial.dense.size / Native.width state.field.modulus.toNat := by
+private theorem scanRows_spec (field : PrimeField) (columns : Nat) (slots : ByteArray)
+    (pivots : Array Native.Scan.Pivot)
+    (densePivots : Option (Native.Dense.Cache field.modulus columns pivots))
+    (native : Bool) (initial : Native.Scan.State)
+    (remaining : Nat) (hsize : initial.dense.size = columns*field.width.bytes) :
+    scanRows field columns slots pivots densePivots native initial remaining =
+      Native.Scan.portable field.modulus slots pivots initial 4096 remaining 0 false := by
+  have hdim : columns = initial.dense.size / Native.width field.modulus.toNat := by
     rw [native_width,hsize]
-    cases state.field.width <;> simp [Width.bytes]
-  cases hcache : state.densePivots with
-  | none => cases native <;> simp [scanRows,hcache,Native.Scan.transition]
+    cases field.width <;> simp [Width.bytes]
+  cases hcache : densePivots with
+  | none => cases native <;> simp [scanRows,Native.Scan.transition]
   | some cache =>
     cases hactive : cache.active
-    · cases native <;> simp [scanRows,hcache,hactive,Native.Scan.transition]
-    · cases native <;> simp only [scanRows,hcache,hactive,Native.Dense.transition]
+    · cases native <;> simp [scanRows,hactive,Native.Scan.transition]
+    · cases native <;> simp only [scanRows,hactive,Native.Dense.transition]
       all_goals exact Native.Dense.portable_cache _ _ _ _ cache _ _ _ _ _ hdim
 
 private def step (native : Bool) : Work Unit := do
@@ -213,10 +219,14 @@ private def step (native : Bool) : Work Unit := do
     let remaining := s.limits.work-s.stats.work
     let independent := s.independent && isTarget s
     let quanta := s.quanta
+    let columns := s.columns
+    let slots := s.slots
+    let pivots := s.nativePivots
+    let cache := s.densePivots
     if quanta == 0 then throw .rowUpdate
     let initial ← takeScan
     modify fun s => { s with quanta := quanta-1 }
-    let output := scanRows s native initial remaining
+    let output := scanRows field columns slots pivots cache native initial remaining
     work output.work
     modify fun s => { s with
       scan := output.state
@@ -311,7 +321,8 @@ def nextPortable (state : State) : State := advancePhase state false
 
 /-- Advance a bounded number of atomic phases. The shape-dependent cap budgets
 workspace initialization, pending sparse-row charges and array growth
-conservatively: at most max(1, 2^20/(8*columns+2*rows+4224)) phases per call. -/
+conservatively: max(1, 2^20/(8*columns+2*rows+4224)) ordinary phases per call.
+Cache mode instead uses 8*columns+3*rows+65536, including bounded preparation. -/
 private def advanceWith (state : State) (steps : Nat) (native : Bool) : State := Id.run do
   let count := min steps (max 1 (1048576 / (8*state.columns+(if Matrix.cacheEnabled state.field state.limits then 3 else 2)*(state.reducers.size+state.targets.size)+(if Matrix.cacheEnabled state.field state.limits then 65536 else 4224))))
   let mut state := state

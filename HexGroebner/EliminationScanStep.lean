@@ -55,7 +55,8 @@ private theorem scan_complete_zero (state : MatrixState.State) (output : Native.
     have h := hgeometry
     simp only [MatrixState.State.geometry,hphase] at h
     exact h.1
-  have scanFormula := (MatrixState.scanRows_spec state false state.scan
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
     (state.limits.work-state.stats.work) hsize).trans houtput
   have zeroFormula := fun state => zero_run state
   simp only [ExceptT.run] at zeroFormula hwork
@@ -100,7 +101,8 @@ private theorem scan_complete_gather (state : MatrixState.State) (output : Nativ
     have h := hgeometry
     simp only [MatrixState.State.geometry,hphase] at h
     exact h.1
-  have scanFormula := (MatrixState.scanRows_spec state false state.scan
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
     (state.limits.work-state.stats.work) hsize).trans houtput
   simp only [ExceptT.run] at hwork hinverse hgather
   by_cases independent : state.independent = true ∧ MatrixState.isTarget state = true
@@ -147,7 +149,8 @@ private theorem scan_pending (state : MatrixState.State) (hphase : state.phase =
     have h := hgeometry
     simp only [MatrixState.State.geometry,hphase] at h
     exact h.1
-  have scanFormula := MatrixState.scanRows_spec state false state.scan
+  have scanFormula := MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
     (state.limits.work-state.stats.work) hsize
   dsimp only
   rw [outcome_run state hgeometry (by simp [hphase])]
@@ -187,7 +190,8 @@ private theorem scan_work_error (state : MatrixState.State) (output : Native.Sca
     have h := hgeometry
     simp only [MatrixState.State.geometry,hphase] at h
     exact h.1
-  have scanFormula := (MatrixState.scanRows_spec state false state.scan
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
     (state.limits.work-state.stats.work) hsize).trans houtput
   simp only [ExceptT.run] at hwork
   rw [outcome_run state hgeometry (by simp [hphase])]
@@ -247,7 +251,8 @@ private theorem scan_normalize (state : MatrixState.State) (output : Native.Scan
     have h := hgeometry
     simp only [MatrixState.State.geometry,hphase] at h
     exact h.1
-  have scanFormula := (MatrixState.scanRows_spec state false state.scan
+  have scanFormula := (MatrixState.scanRows_spec state.field state.columns state.slots state.nativePivots
+    state.densePivots false state.scan
     (state.limits.work-state.stats.work) hsize).trans houtput
   simp only [ExceptT.run] at hwork
   rw [outcome_run state hgeometry (by simp [hphase])]

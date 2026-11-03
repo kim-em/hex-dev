@@ -160,6 +160,35 @@ def largeChecks (seed : Nat) : Bool := Id.run do
           if !same actual model then return false
   return true
 
+/-- Wrapper dimensions fail before reading pivot contents; wide local gaps
+retain sparse prefixes even inside a globally half-full checked cache. -/
+def packetChecks (seed : Nat) : Bool := Id.run do
+  let row := source 128 0 1
+  let initial : Native.Scan.State := {
+    dense := Native.Dense.zeros 1200,column := 0,last := 299,chargedUntil := 300 }
+  let slots := Native.Dense.zeros 1200
+  for columns in [0,1,299,301,2^90] do
+    let prepared := Native.Dense.prepare modulus columns row 100000 100000
+    let actual := Native.Dense.transition modulus columns slots #[prepared.row] initial 4096 100000 0 false
+    let model := Native.Dense.portable modulus columns slots #[prepared.row] initial 4096 100000 0 false
+    if actual.status != 4 || !same actual model then return false
+  let row := { row with columns := Native.write row.columns 4 (4*127) 254 }
+  let cache := (Native.Dense.prepare modulus 300 row 100000 100000).row
+  if cache.dense.isEmpty then return false
+  for entry in [0,1,7,125,126,127] do
+    for quantum in [1,2,3,7,8,63,127,128,4096] do
+      let initial := { initial with
+        dense := Native.write initial.dense 4 (4*200) 4294967295
+        entry := entry
+        pending := 1
+        factor := (seed%2147483646+1).toUInt64 }
+      let actual := Native.Dense.transition modulus 300 slots #[cache] initial quantum 100000 0 false
+      let model := Native.Dense.portable modulus 300 slots #[cache] initial quantum 100000 0 false
+      if !same actual model then return false
+  return true
+
+#guard packetChecks 0
+
 #guard largeChecks 0
 #guard boundaryChecks 0
 #guard checks

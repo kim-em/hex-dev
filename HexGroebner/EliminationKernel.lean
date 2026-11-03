@@ -314,7 +314,7 @@ inputs and reference failures retain the ordinary matrix boundary. -/
 def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
     Option Result :=
-  if Matrix.cacheEnabled field limits || !(fits field limits columns reducers targets sugars) then none else
+  if (Matrix.cacheEnabled field limits && columns > 128) || !(fits field limits columns reducers targets sugars) then none else
     let result := reference field limits columns reducers targets sugars independent
     if result.result.isOk && result.stats.work ≤ 2^20 then some result else none
 

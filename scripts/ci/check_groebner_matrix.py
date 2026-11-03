@@ -336,7 +336,7 @@ static inline unsigned hex_test_scan8_m31_counted(uint8_t *dense,const uint8_t *
 #define hex_scan8 hex_test_scan8_counted
 #define hex_scan8_m31 hex_test_scan8_m31_counted
 #endif
-static uint64_t dense_prepares=0,dense_scans=0,dense_updates=0;
+static uint64_t dense_prepares=0,dense_scans=0,dense_updates=0,dense_admitted=0;
 #define HEX_GROEBNER_DENSE_USED() (++dense_updates)
 #define lean_hex_prepare_dense hex_test_prepare_dense
 #define lean_hex_dense_transition hex_test_dense_transition
@@ -350,13 +350,19 @@ static uint64_t dense_prepares=0,dense_scans=0,dense_updates=0;
 __typeof__(hex_test_prepare_dense) __wrap_lean_hex_prepare_dense;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_prepare_dense(uint64_t p,b_lean_obj_arg columns,
  b_lean_obj_arg source,b_lean_obj_arg work,b_lean_obj_arg bytes) {
- ++dense_prepares;return hex_test_prepare_dense(p,columns,source,work,bytes);
+ ++dense_prepares;
+ lean_object *result=hex_test_prepare_dense(p,columns,source,work,bytes);
+ if(lean_sarray_size(lean_ctor_get(lean_ctor_get(result,0),1))) ++dense_admitted;
+ return result;
 }
 __typeof__(hex_test_dense_transition) __wrap_lean_hex_dense_transition;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_dense_transition(uint64_t p,b_lean_obj_arg columns,
  b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,b_lean_obj_arg quantum,
  b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
  ++dense_scans;return hex_test_dense_transition(p,columns,slots,pivots,initial,quantum,work,trace,provenance);
+}
+LEAN_EXPORT lean_obj_res hex_test_dense_admitted(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(dense_admitted));
 }
 LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
  (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
@@ -797,7 +803,10 @@ def main : IO Unit := do
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
   let beforeDense ← denseCounts
-  if !Hex.Groebner.DenseMatrixConformance.checks primitiveSeed ||
+  if !Hex.Groebner.DenseConformance.packetChecks primitiveSeed ||
+      !Hex.Groebner.DenseMatrixConformance.admissionChecks primitiveSeed ||
+      !Hex.Groebner.DenseMatrixConformance.mixedChecks primitiveSeed ||
+      !Hex.Groebner.DenseMatrixConformance.checks primitiveSeed ||
       !Hex.Groebner.DenseConformance.largeChecks primitiveSeed ||
       !Hex.Groebner.DenseConformance.boundaryChecks primitiveSeed ||
       !Hex.Groebner.DenseConformance.scanChecks primitiveSeed then
@@ -825,6 +834,37 @@ def main : IO Unit := do
       prepared.row.source.coefficients != sourceSnapshot || prepared.row.dense != cacheSnapshot ||
       denseInitial.dense != cacheSnapshot then
     throw (IO.userError "dense pivot source/cache/continuation snapshot was mutated")
+  for independent in [false,true] do
+    let checkpoint := Hex.Groebner.DenseMatrixConformance.snapshotState primitiveSeed independent
+    let some cache := checkpoint.densePivots | throw (IO.userError "missing dense checkpoint")
+    let held := cache.rows[0]!
+    let heldBytes ← copyBytes held.dense
+    let heldSource ← copyBytes held.source.coefficients
+    let scheduleSeed ← Hex.Groebner.NativeChecks.readSeed
+    let completed := Hex.Groebner.MatrixState.finishState (1+scheduleSeed%64) checkpoint
+    let alternate := Hex.Groebner.MatrixState.finishState (64-scheduleSeed%64) checkpoint
+    if completed.phase != .done || alternate.phase != .done ||
+        checkpoint.nativePivots.size != 1 || cache.rows.size != 1 ||
+        completed.nativePivots.size != (if independent then 3 else 5) ||
+        alternate.stats != completed.stats then
+      throw (IO.userError "shared dense checkpoint did not complete")
+    let afterBytes ← copyBytes held.dense
+    let afterSource ← copyBytes held.source.coefficients
+    if heldBytes != afterBytes || heldSource != afterSource then
+      throw (IO.userError "shared nonempty dense cache was mutated")
+  IO.println "shared dense checkpoints: 4 IO byte comparisons"
+  let beforeTiny ← wholeCounts
+  let tinyRow : Hex.Groebner.SparseRow :=
+    ⟨Hex.Groebner.Packed.push .u32 {} 0,Hex.Groebner.Packed.push .u32 {} 1⟩
+  let tinyField : Hex.Groebner.PrimeField :=
+    ⟨2147483647,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let tiny := Hex.Groebner.eliminateWith tinyField { densePivots := true }
+    (2+primitiveSeed%127) #[tinyRow] #[tinyRow]
+  if tiny.result.isError then throw (IO.userError "small cached-option matrix failed")
+  let afterTiny ← wholeCounts
+  if afterTiny.1 != beforeTiny.1+1 || afterTiny.2 != beforeTiny.2 then
+    throw (IO.userError "small cached-option matrix lost its bulk frame")
+  IO.println "small M31 cached-option bulk frame: accepted"
   let afterDense ← denseCounts
   if afterDense.1 ≤ beforeDense.1 || afterDense.2.1 ≤ beforeDense.2.1 ||
       afterDense.2.2 ≤ beforeDense.2.2 then
@@ -1104,9 +1144,31 @@ lean_exe {target} where
   moreLinkObjs := #[probe{variant}]
   moreLinkArgs := #{json.dumps(link_args)}
 '''
+        usage_inputs = os.environ.get("HEX_GROEBNER_USAGE_INPUT_DIR")
+        if usage_inputs:
+            (directory / "Usage.lean").write_text('''import HexGroebner.Driver.Run
+@[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_dense_admitted"] opaque denseAdmitted : IO UInt64
+@[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+def main (args : List String) : IO UInt32 := do
+  let status ← Hex.Groebner.Driver.run args
+  let (prepares,scans,updates) ← denseCounts
+  let admitted ← denseAdmitted
+  let (accepted,declined) ← wholeCounts
+  (← IO.getStderr).putStrLn (Lean.Json.mkObj [
+    ("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
+    ("scans",Lean.toJson scans),("updates",Lean.toJson updates),
+    ("bulkAccepted",Lean.toJson accepted),("bulkDeclined",Lean.toJson declined)]).compress
+  return status
+''')
+            config += f'''\nlean_exe usage where
+  root := `Usage
+  moreLinkObjs := #[probeNative]
+  moreLinkArgs := #{json.dumps(link_args)}
+'''
         (directory / "lakefile.lean").write_text(config)
         print("matrix variants compiler:", subprocess.check_output([cc, "--version"], text=True).splitlines()[0], flush=True)
-        subprocess.run(["lake", "build", *targets], cwd=directory, check=True)
+        subprocess.run(["lake", "build", *targets, *(["usage"] if usage_inputs else [])], cwd=directory, check=True)
         env = dict(os.environ, ASAN_OPTIONS=os.environ.get("ASAN_OPTIONS", "detect_leaks=0"),
                    UBSAN_OPTIONS=os.environ.get("UBSAN_OPTIONS", "halt_on_error=1"),
                    LEAN_ABORT_ON_NONLINEAR="1")
@@ -1124,6 +1186,26 @@ lean_exe {target} where
                 env["LD_PRELOAD"] = os.pathsep.join(preload)
             print(target, "ASan/UBSan" if sanitize else "ordinary", flush=True)
             subprocess.run(command, env=env, check=True)
+        if usage_inputs:
+            output = directory / "usage-results"
+            output.mkdir(exist_ok=False)
+            for input_path in sorted(Path(usage_inputs).glob("*.json")):
+                if input_path.name == "suite.json":
+                    continue
+                for enabled in ["false", "true"]:
+                    usage_command = [str(directory / ".lake/build/bin/usage"),
+                                     "--work", "100000000000", "--packed-bytes", "17179869184",
+                                     "--pairs", "100000000", "--monomials", "10000000",
+                                     "--matrix-entries", "1000000000",
+                                     "--scheduling", "degree", "--dense-pivots", enabled, str(input_path)]
+                    if loader:
+                        usage_command = [loader, "--library-path", library_path,
+                                         "--preload", os.pathsep.join(preload), *usage_command]
+                    with (output / (input_path.stem+"-"+enabled+".stdout")).open("w") as out, \
+                            (output / (input_path.stem+"-"+enabled+".stderr")).open("w") as err:
+                        subprocess.run(usage_command, stdout=out, stderr=err, env=env, check=True)
+                    (output / (input_path.stem+"-"+enabled+".command.json")).write_text(
+                        json.dumps(usage_command, indent=2)+"\n")
         print(f"compiled matrix variants: {time.monotonic()-started:.2f}s elapsed", flush=True)
     finally:
         if not retained:
