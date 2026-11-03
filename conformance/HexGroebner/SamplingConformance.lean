@@ -131,12 +131,37 @@ def corpus : Bool := Id.run do
         if check.rows.size != a.rows.size || !check.rows.all (·.row.size == 0) then return false
   return true
 
+/-- Work, input-entry and packed-payload failures precede the atomic validator.
+No reservation is charged twice when the caller supplies a larger allowance. -/
+def resumeValidation (native : Bool) : Bool := Id.run do
+  let initial := Sampling.start field 2 #[] #[row] (Hex.Rand.ofSeed 0) {} #[] native
+  let ready := seek .validate initial
+  for (caps,resource) in #[({ limits with work := 2 },Resource.work),
+      ({ limits with inputEntries := 1 },Resource.inputEntries),
+      ({ limits with packedBytes := 9 },Resource.packedBytes)] do
+    let stopped := Sampling.next caps ready
+    if stopped.failure != some (.exhausted resource) || stopped.statistics != ready.statistics ||
+        stopped.random != ready.random || !same (run stopped) (run initial) then return false
+  return true
+
+/-- Combining a target consumes words before its new elimination row is
+submitted. Row exhaustion keeps that dense combination and its advanced state. -/
+def resumeRows (native : Bool) : Bool := Id.run do
+  let initial := Sampling.start field 2 #[] #[row] (Hex.Rand.ofSeed 2) {} #[] native
+  let ready := Sampling.next limits (seek .draw initial)
+  let stopped := Sampling.next { limits with rows := 1 } ready
+  return stopped.failure == some (.exhausted .rows) &&
+    stopped.statistics.randomWords == 1 && stopped.statistics.combinations == 0 &&
+    stopped.random == ready.random && same (run stopped) (run initial)
+
 #guard miss false && miss true
 #guard totalZeros false && totalZeros true
 #guard resumeCombine false && resumeCombine true
 #guard resumeGather false && resumeGather true
 #guard resumeSlice false && resumeSlice true
 #guard resumeScan false && resumeScan true
+#guard resumeValidation false && resumeValidation true
+#guard resumeRows false && resumeRows true
 #guard corpus
 
 end Hex.Groebner.SamplingChecks

@@ -91,6 +91,16 @@ def run() -> None:
 #undef lean_hex_groebner_search_monomial
 #undef lean_hex_groebner_equal_bytes
 #undef lean_hex_groebner_equal_products
+static uint64_t subtract_calls=0;
+__typeof__(hex_test_unused_subtract) __wrap_lean_hex_groebner_subtract_row;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_subtract_row(
+ uint64_t modulus,lean_obj_arg dense,b_lean_obj_arg columns,b_lean_obj_arg coefficients,
+ b_lean_obj_arg start,b_lean_obj_arg count,uint64_t factor) {
+ ++subtract_calls;return hex_test_unused_subtract(modulus,dense,columns,coefficients,start,count,factor);
+}
+LEAN_EXPORT lean_obj_res hex_test_subtract_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(subtract_calls));
+}
 static uint64_t remap_calls=0;
 __typeof__(hex_test_remap) __wrap_lean_hex_groebner_remap_columns;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_remap_columns(
@@ -660,7 +670,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -673,6 +683,8 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+import HexGroebner.SampledConformance
+@[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
 @[extern "hex_test_batch_deferrals"] opaque batchDeferrals : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
@@ -937,6 +949,14 @@ def main : IO Unit := do
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then
     throw (IO.userError "AVX2 coverage required but unavailable")
+  let beforeSubtract ← subtractCount
+  let (beforeScan,beforeGather) ← counts
+  Hex.Groebner.SampledConformance.run
+  let afterSubtract ← subtractCount
+  let (afterScan,afterGather) ← counts
+  if afterSubtract ≤ beforeSubtract || afterScan ≤ beforeScan || afterGather ≤ beforeGather then
+    throw (IO.userError "sampled F4 did not exercise instrumented combination/scan/gather")
+  IO.println s!"sampled native calls: subtract={afterSubtract-beforeSubtract}, scan={afterScan-beforeScan}, gather={afterGather-beforeGather}"
 '''.replace("VECTOR", "true" if variant in ("Native", "Remainder") else "false"))
             config += f'''\ntarget probe{variant} pkg : FilePath := probeO pkg "{variant}" #{json.dumps(flags + extra)}
 lean_exe {target} where
