@@ -409,6 +409,23 @@ private def retirementPairs : Bool := Id.run do
 
 #guard retirementPairs
 
+/-- Retiring unrelated leading monomials loses the S-pair producing `xz²`.
+This is in the ordinary characteristic-two polynomial ring. -/
+private def retirementBasis (scheduling : Scheduling) : Bool := Id.run do
+  let field : PrimeField := ⟨2, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+  let context : Context := ⟨field, 3, .lex⟩
+  let generators : Array RawPolynomial := #[
+    #[⟨#[0,1,1],1⟩], #[⟨#[1,1,0],1⟩,⟨#[1,0,1],1⟩], #[⟨#[0,2,0],1⟩]]
+  let expected : Array RawPolynomial := #[
+    #[⟨#[1,1,0],1⟩,⟨#[1,0,1],1⟩], #[⟨#[1,0,2],1⟩],
+    #[⟨#[0,2,0],1⟩], #[⟨#[0,1,1],1⟩]]
+  match computeWith context { scheduling } generators with
+  | .candidate candidate _ => candidate.polynomials == expected
+  | _ => false
+
+#guard retirementBasis .degree
+#guard retirementBasis .sugar
+
 private def strategyResume : Bool := Id.run do
   let context := { context with order := TermOrder.lex }
   let expected := result context input
