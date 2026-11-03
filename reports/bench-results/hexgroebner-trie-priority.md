@@ -25,7 +25,9 @@ retained separately. The fixture audit finds 286 changed
 The fixture baseline is runtime `a1eb7697c27d` at
 revision `5f41fad9c94c5044c3b254ed0e3f7647ca5a4034`; its verification-source manifest checks
 the baseline fixture blob. Every other field and basis agrees, and all changed work values decrease.
-Verification collectors and their host-specific commands are bundled. Sample-order
+A Lean-side maximum-format star also compares `find`, native lookup and both
+portable traversals at allowances 32766, 32767, 32768 and 2^90, requiring the
+complete 32767-visit walk. Verification collectors and their host-specific commands are bundled. Sample-order
 checks verify recorded AB/BA order; the collectors append samples sequentially
 after each process completes. Per-process timestamps were not recorded.
 
@@ -97,8 +99,10 @@ Final format measurements: [f4-trie-format-20c0f7e7df0d.tar.xz](raw/f4-trie-form
 
 Fixture baseline: [f4-sampling-checks-0b5c579aa3eb.tar.xz](raw/f4-sampling-checks-0b5c579aa3eb.tar.xz), SHA-256 `1792e2117dcf389ac3feffc21bb52beec4dbfe31a334b7717345b62f143044f5`, 145 payloads plus manifest.
 
-Final verification: [f4-trie-priority-checks-550e98d5e854.tar.xz](raw/f4-trie-priority-checks-550e98d5e854.tar.xz), SHA-256 `8c6d8c9ed7272d876f61ccc304420dc35b24d6ed6a5728a69198fb692911fc58`, 333 payloads plus manifest.
+Final verification: [f4-trie-priority-checks-f8dd37117d11.tar.xz](raw/f4-trie-priority-checks-f8dd37117d11.tar.xz), SHA-256 `ff82bcdb89cb59ecd86626e2d4c1f3ef71a25fddec6dc0f2f5779c29e43cc0f4`, 333 payloads plus manifest.
 
-Regenerate with `python3 scripts/bench/groebner_trie_report.py --archive reports/bench-results/raw/f4-trie-priority-49de4cd1c280.tar.xz --format reports/bench-results/raw/f4-trie-format-20c0f7e7df0d.tar.xz --fixture-baseline reports/bench-results/raw/f4-sampling-checks-0b5c579aa3eb.tar.xz --intermediate-baseline reports/bench-results/raw/f4-sampling-58952f05cd8c.tar.xz --final-baseline reports/bench-results/raw/f4-sampling-a1eb7697c27d.tar.xz --guards reports/bench-results/raw/f4-trie-priority-checks-550e98d5e854.tar.xz --report reports/bench-results/hexgroebner-trie-priority.md --check`. Historical checks use archived blobs; add `--current` to require current runtime/test identity.
+Regenerate with `python3 scripts/bench/groebner_trie_report.py --archive reports/bench-results/raw/f4-trie-priority-49de4cd1c280.tar.xz --format reports/bench-results/raw/f4-trie-format-20c0f7e7df0d.tar.xz --fixture-baseline reports/bench-results/raw/f4-sampling-checks-0b5c579aa3eb.tar.xz --intermediate-baseline reports/bench-results/raw/f4-sampling-58952f05cd8c.tar.xz --final-baseline reports/bench-results/raw/f4-sampling-a1eb7697c27d.tar.xz --guards reports/bench-results/raw/f4-trie-priority-checks-f8dd37117d11.tar.xz --report reports/bench-results/hexgroebner-trie-priority.md --check`. Historical checks use archived blobs; add `--current` to require current runtime/test identity.
 
 The earlier [verification capsule](raw/f4-trie-priority-checks-7affce133f75.tar.xz) is retained for the conservative dispatch snapshot.
+
+The [initial full-format verification capsule](raw/f4-trie-priority-checks-550e98d5e854.tar.xz) is retained before the additional maximum-walk and fixture-baseline checks.

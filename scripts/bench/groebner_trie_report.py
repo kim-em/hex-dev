@@ -211,7 +211,9 @@ retained separately. The fixture audit finds {fixture_counts['work']} changed
 The fixture baseline is runtime `{fixture_manifest['source_fingerprint']}` at
 revision `{fixture_manifest['commit']}`; its verification-source manifest checks
 the baseline fixture blob. Every other field and basis agrees, and all changed work values decrease.
-Verification collectors and their host-specific commands are bundled. Sample-order
+A Lean-side maximum-format star also compares `find`, native lookup and both
+portable traversals at allowances 32766, 32767, 32768 and 2^90, requiring the
+complete 32767-visit walk. Verification collectors and their host-specific commands are bundled. Sample-order
 checks verify recorded AB/BA order; the collectors append samples sequentially
 after each process completes. Per-process timestamps were not recorded.
 
@@ -262,6 +264,7 @@ outside timing. These inputs are not held out and establish no leadership.
         text += f'\n{label}: [{path.name}](raw/{path.name}), SHA-256 `{capsule.sha256}`, {capsule.count} payloads plus manifest.\n'
     text += f'\nRegenerate with `python3 scripts/bench/groebner_trie_report.py --archive {args.archive} --format {args.format} --fixture-baseline {args.fixture_baseline} --intermediate-baseline {args.intermediate_baseline} --final-baseline {args.final_baseline} --guards {args.guards} --report {args.report} --check`. Historical checks use archived blobs; add `--current` to require current runtime/test identity.\n'
     text += '\nThe earlier [verification capsule](raw/f4-trie-priority-checks-7affce133f75.tar.xz) is retained for the conservative dispatch snapshot.\n'
+    text += '\nThe [initial full-format verification capsule](raw/f4-trie-priority-checks-550e98d5e854.tar.xz) is retained before the additional maximum-walk and fixture-baseline checks.\n'
     if args.check:
         require(args.report.read_text() == text, 'report differs from verified data')
     else:
