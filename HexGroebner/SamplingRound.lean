@@ -19,17 +19,22 @@ open Computation
 /-- A selected pair batch and its immutable symbolic column map survive all
 sampling, output-decoding and basis-update exhaustion. No pair is resolved
 until the whole stage commits. -/
-structure Round where
+structure Frame where
   columns : Array Nat
   queue : PairQueue
   pairs : Array CriticalPair
   cache : ReducerCache
-  matrix : Sampling.State
   base : Statistics
   inputBytes : Nat
   inputEntries : Nat
+  inputRows : Nat
   accounted : MatrixStats := {}
   accountedCombinations : Nat := 0
+
+/-- Immutable round metadata is separate from the owned matrix continuation. -/
+structure Round where
+  frame : Frame
+  matrix : Sampling.State
 
 private def translate (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
     (queue : PairQueue) (pairs : Array CriticalPair) (random : Hex.Rand)
@@ -74,9 +79,10 @@ private def translate (context : Context) (limits : Limits) (matrix : SymbolicMa
     matrixCalls := s.statistics.matrixCalls+1
     peakMatrixRows := max s.statistics.peakMatrixRows rows } }
   return {
-    columns := matrix.columns,queue,pairs,cache := matrix.cache,base := state.statistics,
-    matrix := Sampling.start context.field matrix.columns.size reducers targets random config sugars limits.nativeRows,
-    inputBytes,inputEntries := entries }
+    frame := {
+      columns := matrix.columns,queue,pairs,cache := matrix.cache,base := state.statistics,
+      inputBytes,inputEntries := entries,inputRows := rows }
+    matrix := Sampling.start context.field matrix.columns.size reducers targets random config sugars limits.nativeRows }
 
 /-- Prepare exactly one pair batch. Empty selections commit only their lawful
 pair-criterion work, without consuming random words. -/
@@ -101,7 +107,7 @@ def prepare (context : Context) (limits : Limits) (checkpoint : F4.Checkpoint)
 /-- Remaining parent allowances expressed as cumulative limits within this call.
 Input and output entries share the parent matrix-entry allowance. Input packed
 payload was already charged by polynomial/column translation. -/
-def Round.limits (round : Round) (limits : Limits) (workspace : Workspace) : MatrixLimits := {
+def Frame.limits (round : Frame) (limits : Limits) (workspace : Workspace) : MatrixLimits := {
   columns := limits.monomials
   rows := limits.matrixRows-round.base.matrixRows
   inputEntries := min round.inputEntries (limits.matrixEntries-round.base.matrixEntries)
@@ -111,29 +117,30 @@ def Round.limits (round : Round) (limits : Limits) (workspace : Workspace) : Mat
 
 /-- Merge only newly consumed matrix work. Submitted rows/calls were counted at
 initialization; resumption neither resubmits the matrix nor resets its counters. -/
-def Round.account (round : Round) (workspace : Workspace) : Round × Workspace :=
-  let current := round.matrix.statistics.matrix
+def Frame.account (round : Frame) (sampling : Sampling.Statistics) (workspace : Workspace) : Frame × Workspace :=
+  let current := sampling.matrix
   let old := round.accounted
   let stats := workspace.statistics
   let statistics := { stats with
     work := stats.work+(current.work-old.work)
     allocatedBytes := stats.allocatedBytes+
       ((current.packedBytes-round.inputBytes)-(old.packedBytes-round.inputBytes))
-    matrixRows := stats.matrixRows+(round.matrix.statistics.combinations-round.accountedCombinations)
-    matrixTargets := stats.matrixTargets+(round.matrix.statistics.combinations-round.accountedCombinations)
+    matrixRows := stats.matrixRows+(sampling.combinations-round.accountedCombinations)
+    matrixTargets := stats.matrixTargets+(sampling.combinations-round.accountedCombinations)
     peakMatrixRows := max stats.peakMatrixRows
-      (round.matrix.reducers.size+round.matrix.targets.size+round.matrix.statistics.combinations)
+      (round.inputRows+sampling.combinations)
     matrixEntries := stats.matrixEntries+
       ((current.inputEntries+current.outputEntries)-(old.inputEntries+old.outputEntries))
     matrixReductions := stats.matrixReductions+(current.reductions-old.reductions)
     matrixZeroRows := stats.matrixZeroRows+(current.zeroRows-old.zeroRows)
     peakMatrixEntries := max stats.peakMatrixEntries (current.inputEntries+current.outputEntries) }
-  ({ round with accounted := current,accountedCombinations := round.matrix.statistics.combinations },{ workspace with statistics })
+  ({ round with accounted := current,accountedCombinations := sampling.combinations },{ workspace with statistics })
 
 /-- Commit completed unchecked sample pivots to the F4 basis and pair queue.
 This does not certify that their span equals that of all selected targets. -/
 def finish (context : Context) (limits : Limits) (checkpoint : F4.Checkpoint)
     (round : Round) : Computation F4.Checkpoint := do
+  let frame := round.frame
   let some rows := round.matrix.candidate? | throw (.matrix .rowUpdate)
   let mut new := #[]
   for pivot in rows do
@@ -142,15 +149,15 @@ def finish (context : Context) (limits : Limits) (checkpoint : F4.Checkpoint)
     let mut support := ByteArray.emptyWithCapacity pivot.row.columns.size
     for i in [:pivot.row.size] do
       let column := (Packed.read .u32 pivot.row.columns i).toNat
-      support := Packed.push .u32 support round.columns[column]!.toUInt64
+      support := Packed.push .u32 support frame.columns[column]!.toUInt64
     new := new.push (BasisElement.mk { support,coefficients := pivot.row.coefficients } pivot.sugar)
   let basis := checkpoint.basis++new
   if let some g ← F4.unit limits new then
     if limits.basis == 0 then throw (.exhausted .basis)
     return { basis := #[g],phase := .complete }
-  let mut queue := round.queue
-  for pair in round.pairs do queue ← queue.resolve limits pair.left pair.right
+  let mut queue := frame.queue
+  for pair in frame.pairs do queue ← queue.resolve limits pair.left pair.right
   queue ← F4.install context limits basis queue checkpoint.basis.size
-  return { basis,queue,cache := round.cache,phase := .pairs }
+  return { basis,queue,cache := frame.cache,phase := .pairs }
 
 end Hex.Groebner.Sampled

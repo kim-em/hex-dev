@@ -87,17 +87,17 @@ private def decode (state : State) (limits : Limits) : Computation Candidate := 
   return ⟨state.context,polynomials,state.random.state,limits.batchSize,limits.nativeRows,
     limits.nativeMonomials,limits.gebauerMoller,limits.batchInterreduce,state.scheduling⟩
 
-private def account (state : State) (previous current : Round) : State :=
-  let a := previous.matrix.statistics
-  let b := current.matrix.statistics
-  let (current,workspace) := current.account state.workspace
+private def account (state : State) (before : Sampling.Statistics) (frame : Frame)
+    (matrix : Sampling.State) : State :=
+  let after := matrix.statistics
+  let (frame,workspace) := frame.account after state.workspace
   { state with
-    workspace,pending := some current,random := current.matrix.random,
+    workspace,pending := some ⟨frame,matrix⟩,random := matrix.random,
     statistics := { state.statistics with
-      randomWords := state.statistics.randomWords+(b.randomWords-a.randomWords)
-      combinations := state.statistics.combinations+(b.combinations-a.combinations)
-      combinationEntries := state.statistics.combinationEntries+(b.combinationEntries-a.combinationEntries)
-      completedBlocks := state.statistics.completedBlocks+(b.completedBlocks-a.completedBlocks) } }
+      randomWords := state.statistics.randomWords+(after.randomWords-before.randomWords)
+      combinations := state.statistics.combinations+(after.combinations-before.combinations)
+      combinationEntries := state.statistics.combinationEntries+(after.combinationEntries-before.combinationEntries)
+      completedBlocks := state.statistics.completedBlocks+(after.completedBlocks-before.completedBlocks) } }
 
 /-- Resume under absolute cumulative allowances. At most one million outer
 scheduling slices are performed per call; a smaller explicit quantum supports
@@ -117,9 +117,16 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000) : Result 
         | .error error => return failure state error
         | .ok checkpoint => state := { state with checkpoint,pending := none }
       else
-        let matrix := Sampling.advance (round.limits limits state.workspace) 64 round.matrix
-        state := account state round { round with matrix }
-        if let some error := matrix.failure then return failure state (matrixError error)
+        let frame := round.frame
+        let matrix := round.matrix
+        let previous := matrix.statistics
+        let childLimits := frame.limits limits state.workspace
+        -- Retain scalar accounting, not a second owner of the matrix arrays.
+        state := { state with pending := none }
+        let matrix := Sampling.advance childLimits 64 matrix
+        let failed := matrix.failure
+        state := account state previous frame matrix
+        if let some error := failed then return failure state (matrixError error)
     else if state.checkpoint.phase == .complete then
       let (result,workspace) := (decode state limits).run state.workspace
       state := { state with workspace }
