@@ -35,6 +35,7 @@ def main():
     parser.add_argument("--hex-scheduling", choices=["degree", "sugar"])
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--baseline-sampled", action="store_true")
     parser.add_argument("--baseline-manifest", type=Path)
     parser.add_argument("--baseline-scheduling", choices=["degree", "sugar"])
     parser.add_argument("--msolve", type=Path)
@@ -45,6 +46,12 @@ def main():
     if not 0 <= args.seed < 2**64 or not 1 <= args.block_rows <= 4096 or args.zero_tests < 1:
         parser.error("invalid sampling controls")
     candidate_key = "sample" if args.sampled else "compute"
+    if args.baseline_sampled and not (args.sampled and args.baseline):
+        parser.error("--baseline-sampled requires --sampled and --baseline")
+
+    def sampled_arm(arm):
+        return args.sampled and not (args.baseline and arm == "A" and not args.baseline_sampled)
+
     if sum(map(bool, [args.reference, args.baseline, args.msolve])) != 1:
         parser.error("select exactly one of --reference, --baseline or --msolve")
     if bool(args.baseline) != bool(args.baseline_manifest):
@@ -103,7 +110,7 @@ def main():
         baseline_manifest = json.loads(args.baseline_manifest.read_text())
         if (
             sha(args.baseline.resolve())
-            != baseline_manifest["binary_sha256"]["compute"]
+            != baseline_manifest["binary_sha256"]["sample" if args.baseline_sampled else "compute"]
         ):
             parser.error("baseline binary differs from its frozen manifest")
     inputs = out / "inputs"
@@ -191,6 +198,7 @@ def main():
         "samples": [],
         "msolve_mode": mode,
         "sampled": args.sampled,
+        "baseline_sampled": args.baseline_sampled,
         "sampling_controls": {"seed": args.seed,"block_rows": args.block_rows,"total_zero_tests": args.zero_tests} if args.sampled else None,
         "binary_sha256": {a: sha(f) for a, f in binaries.items()},
         "time_version": time_version,
@@ -244,7 +252,7 @@ def main():
             "Full unchecked reduced candidates from two separately frozen source snapshots; algorithm statistics and explicit degree/sugar scheduling may differ, but complete reduced bases and all other field/order/batch/random-state metadata must agree. Requested and returned scheduling are retained for each arm; older baselines without that field use their archived source's default. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
         )
     if args.sampled:
-        m["contract"] = ("Full unchecked reduced candidates, with explicit sampled F4 using SplitMix64 full-field rejection draws and total-zero stopping, without a probability bound. The --baseline arm is deterministic; --reference compares two initializers of the same sampled driver; an msolve arm retains its recorded mode. Random-state and sampling metadata are checked against each producer's controls. Complete mathematical bases and common field/order/batch metadata must agree outside timing. Candidate timing includes canonicalization, F4 and interreduction. Process timing also includes initialization, parsing, full output and identical GNU-time wrappers. Certificate generation, independent certification and kernel checking are excluded; no checked-computation speedup is claimed. One algorithm thread, matched resource caps, adjacent AB then BA, all completed samples retained.")
+        m["contract"] = ("Full unchecked reduced candidates, with explicit sampled F4 using SplitMix64 full-field rejection draws and total-zero stopping, without a probability bound. The --baseline arm uses the recorded deterministic or sampled producer; --reference compares two initializers of the same sampled driver; an msolve arm retains its recorded mode. Random-state and sampling metadata are checked against each producer's controls. Complete mathematical bases and common field/order/batch metadata must agree outside timing. Candidate timing includes canonicalization, F4 and interreduction. Process timing also includes initialization, parsing, full output and identical GNU-time wrappers. Certificate generation, independent certification and kernel checking are excluded; no checked-computation speedup is claimed. One algorithm thread, matched resource caps, adjacent AB then BA, all completed samples retained.")
     if mode:
         ms = args.msolve_source.resolve()
         assert args.msolve.resolve() == (ms / ".libs/msolve").resolve(), (
@@ -309,7 +317,7 @@ def main():
                             str(binaries[arm]),
                             *cliargs,
                             *(["--seed",str(args.seed),"--block-rows",str(args.block_rows),"--zero-tests",str(args.zero_tests)]
-                              if args.sampled and not (args.baseline and arm == "A") else []),
+                              if sampled_arm(arm) else []),
                             *(
                                 ["--scheduling", scheduling[arm]]
                                 if scheduling[arm]
@@ -403,7 +411,7 @@ def main():
                                     assert selected == scheduling[arm], (
                                         "requested scheduling was ignored"
                                     )
-                                if args.sampled and not (args.baseline and arm == "A"):
+                                if sampled_arm(arm):
                                     assert payload["algorithm"] == "f4-sampled"
                                     assert (payload["seed"],payload["blockRows"],payload["totalZeroTests"]) == (args.seed,args.block_rows,args.zero_tests)
                                     assert payload["randomState"] == (args.seed+payload["sampling"]["randomWords"]*0x9e3779b97f4a7c15) % 2**64
@@ -428,6 +436,9 @@ def main():
                                         else ["basis", "candidateNanos"]
                                     )
                                 }
+                                if args.baseline_sampled:
+                                    results[arm]["statistics"] = payload["statistics"]
+                                    results[arm]["scheduling"] = selected
                                 record["statistics"] = {
                                     **payload["statistics"],
                                     "candidate_nanos": payload["candidateNanos"],
@@ -447,7 +458,7 @@ def main():
                     print(prefix, record["status"], round(elapsed / 1e6, 2), flush=True)
                 equal = len(bases) == 2 and bases["A"] == bases["B"]
                 if not mode and len(results) == 2:
-                    if args.sampled and args.baseline:
+                    if args.sampled and args.baseline and not args.baseline_sampled:
                         common = ["kind","p","variables","order","batchSize"]
                         equal = equal and all(results["A"][key] == results["B"][key] for key in common)
                     else:

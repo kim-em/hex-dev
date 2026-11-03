@@ -28,6 +28,21 @@ private def takeDense : Work ByteArray := do
     dense := {} }
   return dense
 
+private def takeSlots : Work ByteArray := do
+  let slots := (← get).slots
+  modify fun s => { s with slots := {} }
+  return slots
+
+private def takePivots : Work (Array Native.Scan.Pivot) := do
+  let pivots := (← get).pivots
+  modify fun s => { s with pivots := #[] }
+  return pivots
+
+private def takeRows : Work (Array Pivot) := do
+  let rows := (← get).rows
+  modify fun s => { s with rows := #[] }
+  return rows
+
 private def takeScan : Work Native.Scan.State := do
   let scan := (← get).scan
   modify fun s => { s with
@@ -92,11 +107,15 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
         throw (.coefficient s.installed 0)
       let leading := (Packed.read .u32 row.columns 0).toNat
       if Packed.read .u32 s.slots leading != 0 then throw (.column s.installed 0)
+      let sugar := s.sugars[s.installed]?.getD 0
       spend limits 1
+      let pivots ← takePivots
+      let slots ← takeSlots
+      let id := pivots.size+1
+      let pivots := pivots.push ⟨row.columns,row.coefficients,sugar⟩
+      let slots := Packed.set .u32 slots leading id.toUInt64
       modify fun s => { s with
-        slots := Packed.set .u32 s.slots leading (s.pivots.size+1).toUInt64
-        pivots := s.pivots.push ⟨row.columns,row.coefficients,s.sugars[s.installed]?.getD 0⟩
-        installed := s.installed+1
+        slots,pivots,installed := s.installed+1
         statistics.matrix.processedRows := s.statistics.matrix.processedRows+1 }
   | .block =>
     if s.start == s.targets.size then modify fun s => { s with phase := .done }
@@ -220,12 +239,16 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
     if out.status == 1 || out.state.cursor == columns then
       let row : SparseRow := ⟨out.state.columns,out.state.coefficients⟩
       let leading := (Packed.read .u32 row.columns 0).toNat
+      let pivots ← takePivots
+      let slots ← takeSlots
+      let rows ← takeRows
+      let id := pivots.size+1
+      let pivots := pivots.push ⟨row.columns,row.coefficients,sugar⟩
+      let slots := Packed.set .u32 slots leading id.toUInt64
+      let rows := rows.push ⟨row,true,none,inverse,sugar⟩
       modify fun s => { s with
         dense := out.state.dense,gather := ⟨{},{},{},0⟩
-        pivots := s.pivots.push ⟨row.columns,row.coefficients,sugar⟩
-        slots := Packed.set .u32 s.slots leading (s.pivots.size+1).toUInt64
-        rows := s.rows.push ⟨row,true,none,inverse,sugar⟩,
-        statistics.matrix.processedRows := s.statistics.matrix.processedRows+1 }
+        pivots,slots,rows,statistics.matrix.processedRows := s.statistics.matrix.processedRows+1 }
       if trials ≥ blockRows+zeroTests then throw .rowUpdate
       modify fun s => { s with
         row := s.start,phase := .draw }
