@@ -165,14 +165,8 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     let outcome := eliminateWith context.field matrixLimits matrix.columns.size reducers targets false sugars limits.nativeRows
     (outcome.result.map (fun e => e.rows.filterMap fun r =>
       if r.fromTarget then some (r.row, r.multiplier, r.sugar) else none), outcome.stats)
-  set { s with statistics := { s.statistics with
-    work := s.statistics.work + stats.work
-    allocatedBytes := s.statistics.allocatedBytes + (stats.packedBytes - inputBytes)
-    matrixEntries := s.statistics.matrixEntries + stats.inputEntries + stats.outputEntries
-    matrixRows := s.statistics.matrixRows + rows
-    matrixCalls := s.statistics.matrixCalls + 1
-    peakMatrixRows := max s.statistics.peakMatrixRows rows
-    peakMatrixEntries := max s.statistics.peakMatrixEntries (stats.inputEntries + stats.outputEntries) } }
+  set { s with statistics := (s.statistics.recordMatrix stats
+    (inputBytes := inputBytes) (rows := rows) (targets := targets.size)) }
   let rows ← match result with
     | .ok e => pure e
     | .error (.exhausted r) => match r with

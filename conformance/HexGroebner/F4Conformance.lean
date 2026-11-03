@@ -33,6 +33,36 @@ private def input : Array RawPolynomial := #[
   #[⟨#[2, 0], 1⟩, ⟨#[0, 1], 6⟩],
   #[⟨#[1, 1], 1⟩, ⟨#[0, 0], 6⟩]]
 
+/-- One reducer `x`, then targets `1` and `x`: one free target pivot,
+one pivot application and one zero row. No complete F4 computation is involved. -/
+private def countMatrix (limits : Limits) : Computation Unit := do
+  let x ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩]
+  let unit ← Polynomial.normalize context limits 1 #[⟨#[0,0],1⟩]
+  let matrix ← SymbolicMatrix.prepare context limits #[⟨x,1⟩] #[⟨x,1⟩,⟨unit,0⟩]
+  let rows ← matrix.eliminate context limits
+  if rows.size != 1 || rows[0]!.polynomial.toRaw field (← get).table != #[⟨#[0,0],1⟩] then
+    throw (.matrix .rowUpdate)
+
+private def counts (s : Statistics) : Bool :=
+  s.matrixCalls == 1 && s.matrixRows == 3 && s.matrixTargets == 2 &&
+    s.matrixReductions == 1 && s.matrixZeroRows == 1
+
+private def matrixCounts (native : Bool) : Bool := Id.run do
+  let limits : Limits := { nativeRows := native }
+  let (result, workspace) := (countMatrix limits).run ⟨{ arity := 2 },{}⟩
+  if !result.isOk || !counts workspace.statistics then return false
+  -- Final pivot ordering charges two columns, followed by one support-translation unit.
+  -- Leave only one ordering unit: the completed reduction/zero prefix survives.
+  let capped := { limits with work := workspace.statistics.work-2 }
+  let (result, failed) := (countMatrix capped).run ⟨{ arity := 2 },{}⟩
+  return match result with
+    | .error (.exhausted .work) => counts failed.statistics &&
+        failed.statistics.work == workspace.statistics.work-3
+    | _ => false
+
+#guard matrixCounts false
+#guard matrixCounts true
+
 private def result (context : Context) (input : Array RawPolynomial) :
     Except String (Array RawPolynomial) :=
   match computeWith context {} input with

@@ -115,6 +115,14 @@ structure Statistics where
   matrixEntries : Nat := 0
   matrixRows : Nat := 0
   matrixCalls : Nat := 0
+  /-- Targets in calls that reach the elimination kernel, including retried stages. -/
+  matrixTargets : Nat := 0
+  /-- Completed pivot applications, including charged prefixes of failed calls. -/
+  matrixReductions : Nat := 0
+  /-- Rows found zero, including empty inputs and failed-call prefixes.
+  F4 symbolic reducers have distinct leading columns, so successful F4
+  computations count zero rows only among targets. -/
+  matrixZeroRows : Nat := 0
   /-- Largest number of reducer and target rows supplied to one matrix call. -/
   peakMatrixRows : Nat := 0
   /-- Largest logical validated input-plus-output entry count of one matrix call. -/
@@ -125,6 +133,21 @@ structure Statistics where
   chainPairs : Nat := 0
   gmPairs : Nat := 0
   deriving Repr, BEq, Inhabited
+
+/-- Merge one matrix call's counters, preserving consumed prefixes on failure.
+Input payload is already live; only workspace/output bytes are newly allocated. -/
+@[inline] def Statistics.recordMatrix (s : Statistics) (stats : MatrixStats)
+    (inputBytes rows targets : Nat) : Statistics := { s with
+  work := s.work + stats.work
+  allocatedBytes := s.allocatedBytes + (stats.packedBytes - inputBytes)
+  matrixEntries := s.matrixEntries + stats.inputEntries + stats.outputEntries
+  matrixRows := s.matrixRows + rows
+  matrixCalls := s.matrixCalls + 1
+  matrixTargets := s.matrixTargets + targets
+  matrixReductions := s.matrixReductions + stats.reductions
+  matrixZeroRows := s.matrixZeroRows + stats.zeroRows
+  peakMatrixRows := max s.peakMatrixRows rows
+  peakMatrixEntries := max s.peakMatrixEntries (stats.inputEntries + stats.outputEntries) }
 
 /-- Mutable logical workspace, separate from the immutable computation identity. -/
 structure Workspace where

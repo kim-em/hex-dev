@@ -64,3 +64,33 @@ private def pruneExample : Bool :=
     #[#[⟨#[1], 1⟩]] with
   | .candidate value _ => value.forward.nodes == [.generator 0]
   | _ => false
+
+/-- Trace-node exhaustion must retain the matrix prefix before Producer.solve
+maps the failed matrix result. Joint and independent calls reach different
+prefixes because independent targets retain their original order. The joint
+case pins counting a completed pivot application before recording its trace node. -/
+private def matrixPrefix (native independent : Bool) : Bool := Id.run do
+  let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let context : Context := ⟨field,2,.grevlex⟩
+  let limits : Limits := { nativeRows := native }
+  let calculation : Producer.Work Unit := do
+    let x ← Producer.lift (Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩])
+    let unit ← Producer.lift (Polynomial.normalize context limits 1 #[⟨#[0,0],1⟩])
+    let xRoot ← Producer.emit limits 3 (.generator 0)
+    let unitRoot ← Producer.emit limits 3 (.generator 1)
+    let basis : Array Producer.Element := #[⟨⟨x,1⟩,xRoot⟩]
+    let targets : Array Producer.Element := #[basis[0]!,⟨⟨unit,0⟩,unitRoot⟩]
+    let matrix ← Producer.lift (SymbolicMatrix.prepare context limits (Producer.plain basis) (Producer.plain targets))
+    let _ ← Producer.solve context limits 3 basis targets matrix true independent
+  let (result,execution) := calculation.run ⟨⟨{ arity := 2 },{}⟩,{}⟩
+  return match result with
+    | .error (.matrix (.exhausted .traceNodes)) =>
+      let stats := execution.workspace.statistics
+      stats.matrixCalls == 1 && stats.matrixRows == 3 && stats.matrixTargets == 2 &&
+        stats.matrixReductions == 1 && stats.matrixZeroRows == (if independent then 1 else 0)
+    | _ => false
+
+#guard matrixPrefix false false
+#guard matrixPrefix true false
+#guard matrixPrefix false true
+#guard matrixPrefix true true
