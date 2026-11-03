@@ -373,10 +373,47 @@ private def pairCriteria (scheduling : Scheduling) : Bool := Id.run do
 #guard pairCriteria .degree
 #guard pairCriteria .sugar
 
+/-- Equal-LCM replacement chains must retain the connecting obligations even
+when the omitted S-polynomial is nonzero and irreducible by these leading terms. -/
+private def retirementPairs : Bool := Id.run do
+  let context := { context with order := TermOrder.lex }
+  let limits : Limits := {}
+  let trial : Computation Bool := do
+    let raw : Array RawPolynomial := #[
+      #[⟨#[3,1],1⟩, ⟨#[0,0],1⟩], #[⟨#[2,1],1⟩, ⟨#[1,0],1⟩],
+      #[⟨#[1,1],1⟩, ⟨#[0,1],1⟩], #[⟨#[3,0],1⟩, ⟨#[0,2],1⟩]]
+    let mut basis := #[]
+    for i in [:raw.size] do
+      let p ← Polynomial.normalize context limits i raw[i]!
+      basis := basis.push ⟨p, 0⟩
+    let mut queue : PairQueue := {}
+    for i in [:basis.size] do queue ← queue.install context limits basis i
+    if queue.active != #[2,3] || queue.frontier != 4 || queue.heap.size != 3 then return false
+    let s ← Polynomial.sPolynomial context limits basis[0]!.polynomial basis[3]!.polynomial
+    if s.size != 2 then return false
+    let table := (← get).table
+    for g in basis do
+      for k in [:s.size] do
+        if table.divides (g.polynomial.monomial 0) (s.monomial k) then return false
+    let mut keys : Array (Nat × Nat) := #[]
+    for _ in [:3] do
+      let (pair, next) ← queue.pop limits
+      queue := next
+      let some pair := pair | return false
+      keys := keys.push (PairQueue.key pair.left pair.right)
+    return keys.contains (0,1) && keys.contains (1,2) && keys.contains (2,3) &&
+      !keys.contains (0,3) && !keys.contains (1,3) && queue.resolved.isEmpty
+  match trial.run ⟨{ arity := 2 }, {}⟩ with
+  | (.ok answer, _) => answer
+  | _ => false
+
+#guard retirementPairs
+
 private def strategyResume : Bool := Id.run do
   let context := { context with order := TermOrder.lex }
   let expected := result context input
-  let mut prunedCheckpoint := false
+  let mut gapCheckpoint := false
+  let mut retiredCheckpoint := false
   for (strategy, batchInterreduce) in [(false, false), (false, true), (true, false), (true, true)] do
     let total := match computeWith context { gebauerMoller := strategy, batchInterreduce } input with
       | .candidate _ statistics => statistics.work
@@ -386,15 +423,16 @@ private def strategyResume : Bool := Id.run do
       match computeWith context { work, gebauerMoller := strategy, batchInterreduce } input 37 with
       | .candidate candidate _ => if .ok candidate.polynomials != expected then return false
       | .exhausted .work state =>
-        prunedCheckpoint := prunedCheckpoint || state.workspace.statistics.gmPairs > 0 ||
-          state.checkpoint.queue.active.size < state.checkpoint.queue.frontier
+        let queue := state.checkpoint.queue
+        retiredCheckpoint := retiredCheckpoint || (strategy && queue.active.size < queue.frontier)
+        gapCheckpoint := gapCheckpoint || (!strategy && queue.frontier < state.checkpoint.basis.size)
         match resumeWith { gebauerMoller := !strategy, batchInterreduce := !batchInterreduce } state with
         | .candidate candidate statistics =>
           if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
               statistics.work < state.workspace.statistics.work then return false
         | _ => return false
       | _ => return false
-  return prunedCheckpoint
+  return retiredCheckpoint && gapCheckpoint
 
 #guard strategyResume
 

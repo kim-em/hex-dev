@@ -81,9 +81,10 @@ decreasing_by all_goals simp_wf; omega
 end PairHeap
 
 /-- Priority-ordered queue plus completed pair obligations. Pairs omitted by GM
-retain an implicit dependency on retained pairs smaller in the installation
-measure; they are deliberately absent from `resolved`. A complete producer
-proof must establish coverage by queued, completed or justified omitted pairs. -/
+retain implicit dependencies on retained pairs; they are deliberately absent
+from `resolved`. Retirement also leaves future pairs ungenerated. A complete
+producer proof must cover queued, completed, installation-omitted and
+retirement-omitted pairs. -/
 structure PairQueue where
   heap : PairHeap := .empty
   resolved : Std.TreeSet (Nat × Nat)
@@ -152,13 +153,25 @@ private def installBuchberger (context : Context) (limits : Limits) (queue : Pai
 Weispfenning, algorithm UPDATE). Product pairs remain available as divisibility
 filters. Equal LCMs prefer a product pair, then the earliest basis index.
 Omitted pairs are never marked resolved: their justification can still depend
-on retained pairs. The justification is ordered by LCM, then maximum basis
-index, then representative priority within an equal-LCM group. Install-time
-chains may cite an old pair with the same LCM and a smaller maximum index;
-LCM induction alone is insufficient. Proper old-pair pruning is deferred to
-selection. Retired basis entries remain available as reducers and derivations;
-only future new-pair installation omits them. Installation with the retiring
-polynomial precedes retirement, retaining the necessary connecting obligation. -/
+on retained pairs. Coverage uses LCM, then maximum basis index, then a final
+level: zero for a retained representative, one for another equal-LCM group
+member, and one plus the prior retirement-chain depth for an ungenerated pair.
+Depth is measured at installation of the larger index. Replacement along that
+chain decreases depth; connecting obligations have smaller maximum index.
+Proper-LCM chains decrease the first component, even with retired reducers.
+This is a dependency contract for the outstanding producer proof.
+
+The drivers install indices in increasing order. `active` is ascending and lies
+below `frontier`; every earlier index has been installed. A gap before `new`
+consists of indices already installed by the Buchberger route. The helper also
+allows isolated installations, which alone establish no global pair coverage.
+A repeated earlier installation conservatively adds all Buchberger pairs and
+retains eligibility metadata; the drivers do not need this fallback.
+
+Proper old-pair pruning is deferred to selection. Retired basis entries remain
+available as reducers and derivations; only future new-pair installation omits
+them. Installation with the retiring polynomial precedes retirement, retaining
+the necessary connecting obligation. -/
 def install (context : Context) (limits : Limits) (queue : PairQueue)
     (basis : Array BasisElement) (new : Nat) : Computation PairQueue := do
   if !limits.gebauerMoller then return ← installBuchberger context limits queue basis new
@@ -225,6 +238,7 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
     else
       minimal := minimal.push lcm
       if !product then queue ← queue.push limits pair
+  -- The checkpoint may share the array: charge its possible copy before push.
   spend limits (active.size + 1)
   return { queue with active := (if retired then retained else active).push new, frontier := new + 1 }
 

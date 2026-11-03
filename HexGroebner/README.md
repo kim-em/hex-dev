@@ -636,9 +636,17 @@ Reducer-trie traversal caches node depths and keeps node IDs alone on its stacks
 retain all successful and unsuccessful variants and their complete samples.
 
 `Limits.gebauerMoller` enables minimal-LCM pair installation and proper-LCM
-chain pruning by default. Set it to false for the product/resolved-chain
-reference. Omitted obligations remain distinct from completed pairs, and the
-basis is not deleted or renumbered. [Matched pair-management measurements](../reports/bench-results/hexgroebner-gm.md)
+chain pruning by default. When a newer leading monomial divides an older one,
+the older index retires from future pair generation after installation of their
+connecting pair obligation. Its polynomial remains available as a reducer and
+all existing queued pairs remain. Equal-LCM retirement chains require a
+retirement-depth component in the outstanding pair-coverage proof.
+Set the option to false at the start for the product/resolved-chain reference.
+A mid-run change preserves the existing queue and retirements; it does not
+reconstruct a fresh reference run. Omitted obligations remain distinct from
+completed pairs, and the basis is not deleted or renumbered.
+The `pairs` statistic and allowance count considered pairs: retired indices
+produce no future pair attempts under GM. [Matched pair-management measurements](../reports/bench-results/hexgroebner-gm.md)
 include the small-system regression and full raw samples. Full F4 invariant
 and termination proofs remain required.
 
