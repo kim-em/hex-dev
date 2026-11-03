@@ -60,7 +60,7 @@ structure State where
 def start (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) : State :=
   { field,limits,columns,reducers,targets,sugars,independent,
-    densePivots := if limits.densePivots then some (Native.Dense.Cache.empty field.modulus columns) else none }
+    densePivots := if Matrix.cacheEnabled field limits then some (Native.Dense.Cache.empty field.modulus columns) else none }
 
 private abbrev Work := ExceptT MatrixError (StateM State)
 
@@ -123,8 +123,11 @@ private def scanFuel (columns : Nat) : Nat := (columns*(columns+2)+4095)/4096+1
 private def scanRows (state : State) (native : Bool) (initial : Native.Scan.State)
     (remaining : Nat) : Native.Scan.Result :=
   if let some cache := state.densePivots then
-    if native then Native.Dense.transition state.field.modulus state.columns state.slots cache.rows initial 4096 remaining 0 false
-    else Native.Dense.portable state.field.modulus state.columns state.slots cache.rows initial 4096 remaining 0 false
+    if cache.active then
+      if native then Native.Dense.transition state.field.modulus state.columns state.slots cache.rows initial 4096 remaining 0 false
+      else Native.Dense.portable state.field.modulus state.columns state.slots cache.rows initial 4096 remaining 0 false
+    else if native then Native.Scan.transition state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
+    else Native.Scan.portable state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
   else if native then Native.Scan.transition state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
   else Native.Scan.portable state.field.modulus state.slots state.nativePivots initial 4096 remaining 0 false
 
@@ -138,8 +141,10 @@ private theorem scanRows_spec (state : State) (native : Bool) (initial : Native.
   cases hcache : state.densePivots with
   | none => cases native <;> simp [scanRows,hcache,Native.Scan.transition]
   | some cache =>
-    cases native <;> simp only [scanRows,hcache,Native.Dense.transition]
-    all_goals exact Native.Dense.portable_cache _ _ _ _ cache _ _ _ _ _ hdim
+    cases hactive : cache.active
+    · cases native <;> simp [scanRows,hcache,hactive,Native.Scan.transition]
+    · cases native <;> simp only [scanRows,hcache,hactive,Native.Dense.transition]
+      all_goals exact Native.Dense.portable_cache _ _ _ _ cache _ _ _ _ _ hdim
 
 private def step (native : Bool) : Work Unit := do
   let s ← get
@@ -308,7 +313,7 @@ def nextPortable (state : State) : State := advancePhase state false
 workspace initialization, pending sparse-row charges and array growth
 conservatively: at most max(1, 2^20/(8*columns+2*rows+4224)) phases per call. -/
 private def advanceWith (state : State) (steps : Nat) (native : Bool) : State := Id.run do
-  let count := min steps (max 1 (1048576 / (8*state.columns+(if state.limits.densePivots then 3 else 2)*(state.reducers.size+state.targets.size)+(if state.limits.densePivots then 65536 else 4224))))
+  let count := min steps (max 1 (1048576 / (8*state.columns+(if Matrix.cacheEnabled state.field state.limits then 3 else 2)*(state.reducers.size+state.targets.size)+(if Matrix.cacheEnabled state.field state.limits then 65536 else 4224))))
   let mut state := state
   for _ in [:count] do
     if state.phase == .done then break

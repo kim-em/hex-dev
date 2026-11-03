@@ -110,6 +110,8 @@ run_meta do
     ("densePivots","o20")]
   checkLayout ``Hex.Groebner.Native.Dense.Row 2 8 #[
     ("source","o0"),("dense","o1"),("first","s4@0"),("size","s4@4"),("lawful","erased")]
+  checkLayout ``Hex.Groebner.Native.Dense.Cache 1 1 #[
+    ("rows","o0"),("active","s1@0"),("source_eq","erased"),("active_eq","erased")]
   checkLayout ``Hex.Groebner.Native.Dense.Result 3 0 #[
     ("row","o0"),("work","o1"),("packedBytes","o2"),("source_eq","erased"),
     ("work_le","erased"),("bytes_le","erased")]

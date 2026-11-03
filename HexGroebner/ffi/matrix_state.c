@@ -260,6 +260,8 @@ static void cont_install(continuation *c,lean_obj_arg row,uint64_t column,uint64
         lean_ctor_set(native,0,cont_take(row,0));lean_ctor_set(native,1,cont_take(row,1));
         lean_inc(c->v[16]);lean_ctor_set(native,2,c->v[16]);
         if(!lean_is_scalar(c->v[20])) {
+            lean_object *cache=lean_ctor_get(c->v[20],0);
+            uint8_t active=lean_ctor_get_uint8(cache,sizeof(void*));
             lean_object *prepared=NULL,*dense_row;
             uint64_t n=lean_sarray_size(lean_ctor_get(native,0))/4;
             const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(native,0));
@@ -279,9 +281,12 @@ static void cont_install(continuation *c,lean_obj_arg row,uint64_t column,uint64
                 lean_ctor_set_uint32(dense_row,2*sizeof(void*),0);
                 lean_ctor_set_uint32(dense_row,2*sizeof(void*)+4,0);
             }
-            lean_object *rows=cont_take(c->v[20],0);lean_dec(c->v[20]);
+            active=active || lean_sarray_size(lean_ctor_get(dense_row,1))!=0;
+            lean_object *rows=cont_take(cache,0);lean_dec(c->v[20]);
             rows=lean_array_push(rows,dense_row);
-            c->v[20]=lean_alloc_ctor(1,1,0);lean_ctor_set(c->v[20],0,rows);
+            cache=lean_alloc_ctor(0,1,1);lean_ctor_set(cache,0,rows);
+            lean_ctor_set_uint8(cache,sizeof(void*),active);
+            c->v[20]=lean_alloc_ctor(1,1,0);lean_ctor_set(c->v[20],0,cache);
         }
         c->v[10]=lean_array_push(c->v[10],native);
         lean_object *pivot=lean_alloc_ctor(0,3,9);lean_ctor_set(pivot,0,row);
@@ -352,8 +357,9 @@ static void cont_scan(continuation *c) {
     cont_replace(c,19,lean_uint64_to_nat(quanta-1));
     lean_object *remaining=lean_uint64_to_nat(c->limits[5]-c->stats[0]);
     lean_object *out;
-    if(!lean_is_scalar(c->v[20])) out=lean_hex_dense_transition(c->p,c->v[1],c->v[8],
-        lean_ctor_get(c->v[20],0),c->v[13],lean_box(4096),remaining,lean_box(0),0);
+    lean_object *cache=lean_is_scalar(c->v[20])?NULL:lean_ctor_get(c->v[20],0);
+    if(cache && lean_ctor_get_uint8(cache,sizeof(void*))) out=lean_hex_dense_transition(c->p,c->v[1],c->v[8],
+        lean_ctor_get(cache,0),c->v[13],lean_box(4096),remaining,lean_box(0),0);
     else out=lean_hex_scan_transition(c->p,c->v[8],c->v[10],c->v[13],
         lean_box(4096),remaining,lean_box(0),0);
     c->v[13]=NULL;lean_dec(remaining);
@@ -438,7 +444,8 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     if(!lean_is_scalar(columns) || lean_unbox(columns)>65536) return state;
     uint64_t rows=lean_array_size(lean_ctor_get(state,2))+lean_array_size(lean_ctor_get(state,3));
     if(rows>65536) return state;
-    uint64_t overhead=lean_ctor_get_uint8(lean_ctor_get(state,0),7*sizeof(void*))?65536:4224;
+    uint64_t overhead=lean_ctor_get_uint64(state,21*sizeof(void*))==INT32_MAX &&
+        lean_ctor_get_uint8(lean_ctor_get(state,0),7*sizeof(void*))?65536:4224;
     uint64_t cols=lean_unbox(columns),cap=UINT64_C(1048576)/(8*cols+(overhead==65536?3:2)*rows+overhead);
     if(!cap) cap=1;
     uint64_t count=lean_is_scalar(steps)?lean_unbox(steps):cap;

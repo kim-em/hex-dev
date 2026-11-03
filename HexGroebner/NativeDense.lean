@@ -141,17 +141,21 @@ def prepare (modulus : UInt64) (columns : @& Nat) (source : @& Scan.Pivot)
 /-- Checked caches for exactly this immutable sparse pivot array. -/
 structure Cache (modulus : UInt64) (columns : Nat) (sources : Array Scan.Pivot) where
   rows : Array (Row modulus columns)
+  active : Bool
   source_eq : rows.map (·.source) = sources
+  active_eq : active = rows.any (fun row => !row.dense.isEmpty)
 
 namespace Cache
 
-def empty (modulus : UInt64) (columns : Nat) : Cache modulus columns #[] := ⟨#[],by simp⟩
+def empty (modulus : UInt64) (columns : Nat) : Cache modulus columns #[] := ⟨#[],false,by simp,by simp⟩
 
 def push {modulus : UInt64} {columns : Nat} {sources : Array Scan.Pivot}
     (cache : Cache modulus columns sources) {source : Scan.Pivot}
     {workBudget bytesBudget : Nat}
     (prepared : Result modulus columns source workBudget bytesBudget) : Cache modulus columns (sources.push source) :=
-  ⟨cache.rows.push prepared.row,by simp only [Array.map_push,prepared.source_eq,cache.source_eq]⟩
+  ⟨cache.rows.push prepared.row,cache.active || !prepared.row.dense.isEmpty,
+    by simp only [Array.map_push,prepared.source_eq,cache.source_eq],
+    by simp only [Array.any_push,cache.active_eq]⟩
 
 end Cache
 

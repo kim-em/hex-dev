@@ -45,6 +45,7 @@ private def same (a b : MatrixState.State) : Bool :=
   a.gather.coefficients == b.gather.coefficients && a.dense == b.dense && a.slots == b.slots &&
   a.nativePivots.size == b.nativePivots.size &&
   a.densePivots.isSome == b.densePivots.isSome &&
+  a.densePivots.map (·.active) == b.densePivots.map (·.active) &&
   (a.densePivots.map fun c => c.rows.map fun r =>
     (r.source.columns,r.source.coefficients,r.source.sugar,r.dense,r.first,r.size)) ==
   (b.densePivots.map fun c => c.rows.map fun r =>

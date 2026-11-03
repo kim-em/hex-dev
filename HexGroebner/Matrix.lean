@@ -170,6 +170,10 @@ def packedBytes (limits : MatrixLimits) (amount : Nat) : Work Unit :=
   charge .packedBytes amount limits.packedBytes (·.packedBytes)
     fun s n => { s with packedBytes := n }
 
+/-- Dense pivot optimization currently specializes only the M31 field. -/
+@[inline] def cacheEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
+  limits.densePivots && field.modulus == 2147483647
+
 /-- Optional pivot materialization reserves all of its preparation and payload
 within the caller's remaining bounds. Refusal leaves sparse execution available. -/
 @[inline] def preparePivot (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
@@ -177,7 +181,7 @@ within the caller's remaining bounds. Refusal leaves sparse execution available.
     Native.Dense.Result field.modulus columns source
       (limits.work-stats.work) (limits.packedBytes-stats.packedBytes) :=
   let raw := Native.Dense.Row.raw field.modulus columns source
-  if !limits.densePivots then ⟨raw,0,0,rfl,Nat.zero_le _,Nat.zero_le _⟩ else
+  if !cacheEnabled field limits then ⟨raw,0,0,rfl,Nat.zero_le _,Nat.zero_le _⟩ else
     let n := source.columns.size/4
     let span := Native.read source.columns 4 (4*(n-1))-Native.read source.columns 4 0+1
     if columns ≤ 65536 && n < span && 3*span ≤ 4*n then

@@ -197,7 +197,7 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
 LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         b_lean_obj_arg limits,b_lean_obj_arg column_arg,b_lean_obj_arg reducers,
         b_lean_obj_arg targets,b_lean_obj_arg sugars,uint8_t independent) {
-    if(lean_ctor_get_uint8(limits,7*sizeof(void*))) return lean_box(0);
+    if(p==INT32_MAX && lean_ctor_get_uint8(limits,7*sizeof(void*))) return lean_box(0);
     matrix_context c={0};
     if(sizeof(void*)!=8 || p<2 || p>=UINT64_C(2147483648) ||
        !lean_is_scalar(column_arg)) goto defer;
