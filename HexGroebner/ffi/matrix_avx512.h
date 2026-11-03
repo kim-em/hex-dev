@@ -5,7 +5,7 @@
 #define HEX_GROEBNER_AVX512_H
 #include "matrix_simd.h"
 #ifndef HEX_GROEBNER_AVX512_USED
-#define HEX_GROEBNER_AVX512_USED() ((void)0)
+#define HEX_GROEBNER_AVX512_USED(width,contiguous) ((void)0)
 #endif
 #if HEX_GROEBNER_AVX2 && !defined(HEX_GROEBNER_NO_AVX512)
 #define HEX_GROEBNER_AVX512 1
@@ -27,7 +27,8 @@ static inline int hex_avx512_available(void) {
 /* Sixteen independent canonical updates, or zero with dense unchanged.
    The caller bounds all source loads to sixteen entries. Validation, exact
    modular arithmetic and narrow-gather headroom match the eight-lane kernel.
-   A declined packet must fall back to eight-lane/scalar updates in order. */
+   A declined packet must fall back to eight-lane/scalar updates in order.
+   Keep validation and exactness changes in step with hex_scan8_mode. */
 __attribute__((target("avx512f,avx512dq,avx512bw,avx512vl"),always_inline))
 static inline __m512i hex_mont32_even16(__m512i b,__m512i factor,
         __m512i negative_inverse,__m512i p64,__m512i pm1) {
@@ -51,6 +52,7 @@ static inline __m512i hex_mersenne31_even16(__m512i b,__m512i factor) {
 __attribute__((target("avx512f,avx512dq,avx512bw,avx512vl"),always_inline))
 static inline unsigned hex_scan16_mode(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
         size_t entry,uint64_t column_count,uint32_t p,uint32_t multiplier,uint32_t reduction,unsigned width,unsigned mersenne) {
+    if(mersenne && (width!=4 || p!=INT32_MAX)) return 0;
     __m512i j=_mm512_loadu_si512((const void *)(columns+entry*4));
     __m512i b;
     if(width==1) b=_mm512_cvtepu8_epi32(_mm_loadu_si128((const __m128i *)(coefficients+entry)));
@@ -114,7 +116,7 @@ static inline unsigned hex_scan16_mode(uint8_t *dense,const uint8_t *columns,con
         _mm512_storeu_si512((void *)indices,j);_mm512_storeu_si512((void *)values,difference);
         for(unsigned k=0;k<16;++k) memcpy(dense+(size_t)indices[k]*width,&values[k],width);
     }
-    HEX_GROEBNER_AVX512_USED();
+    HEX_GROEBNER_AVX512_USED(width,contiguous);
     return 16;
 }
 #else

@@ -191,7 +191,7 @@ static uint64_t hex_dense_update_avx2(uint8_t *data,const uint8_t *values,
 #define HEX_SCAN_UPDATE hex_scan8
 #endif
 
-#if HEX_GROEBNER_AVX512
+#if HEX_GROEBNER_AVX512 && defined(HEX_GROEBNER_ENABLE_AVX512)
 #define HEX_SCAN_PACKET16 1
 #undef HEX_SCAN_UPDATE
 #define HEX_SCAN_UPDATE hex_scan8
@@ -251,7 +251,7 @@ static uint64_t hex_dense_update_avx2(uint8_t *data,const uint8_t *values,
 LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
         b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
         b_lean_obj_arg quantum,b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
-#if HEX_GROEBNER_AVX512
+#if HEX_GROEBNER_AVX512 && defined(HEX_GROEBNER_ENABLE_AVX512)
     if((p&1) && hex_avx512_available()) {
         if(p<=256) return hex_scan_avx512_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
         if(p<=65536) return hex_scan_avx512_u16(p,slots,pivots,initial,quantum,work,trace,provenance);

@@ -302,7 +302,8 @@ LEAN_EXPORT lean_obj_res hex_test_owned_runtime(lean_obj_arg world) {
  return lean_io_result_mk_ok(lean_box(ok));
 }
 static uint64_t mersenne_vectors=0,zero_scans=0,packets16=0;
-#define HEX_GROEBNER_AVX512_USED() (++packets16)
+static uint32_t widths16=0;
+#define HEX_GROEBNER_AVX512_USED(w,c) (++packets16,widths16|=1u<<(2*((w)==1?0:(w)==2?1:2)+!(c)))
 #define HEX_GROEBNER_ZERO_SCAN_USED() (++zero_scans)
 #define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
 #define hex_scan8 hex_test_scan8_base
@@ -667,6 +668,9 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_gather(uint64_t p,lean_obj_arg initial,
 LEAN_EXPORT lean_obj_res hex_test_zero_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(zero_scans));
 }
+LEAN_EXPORT lean_obj_res hex_test_avx512_widths(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint32(widths16));
+}
 LEAN_EXPORT lean_obj_res hex_test_avx512_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(packets16));
 }
@@ -740,7 +744,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
             "WIDE_HEADER", json.dumps(str(source.parent / "matrix_avx512.h"))).replace(
             "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c"))).replace("STATECODE", json.dumps(str(source.parent / "matrix_state.c"))).replace("WHOLECODE", json.dumps(str(source.parent / "matrix_eliminate.c")))
-        flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
+        flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING", "-DHEX_GROEBNER_ENABLE_AVX512"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
@@ -805,6 +809,7 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
 @[extern "hex_test_avx512_count"] opaque avx512Count : IO UInt64
+@[extern "hex_test_avx512_widths"] opaque avx512Widths : IO UInt32
 @[extern "hex_test_avx512_available"] opaque avx512Available : IO Bool
 def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
   for independent in [false,true] do
@@ -856,8 +861,11 @@ def checkMersenne : IO UInt64 := do
   Hex.Groebner.NativeChecks.runMersenneF4
   let mersenne ← mersenneCount
   let after512 ← avx512Count
+  let paths512 ← avx512Widths
   let available512 ← avx512Available
-  IO.println s!"AVX-512 packets: {after512}; full F4={after512-before512}; available={available512}"
+  IO.println s!"AVX-512 packets: {after512}; full F4={after512-before512}; available={available512}; width/layout bits={paths512}"
+  if available512 && paths512 != 63 then
+    throw (IO.userError "an AVX-512 width/layout path was not exercised")
   if available512 && after512 ≤ before512 then
     throw (IO.userError "full F4 did not exercise AVX-512 packets")
   if WIDE && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX512") == some "1" && !available512 then
@@ -1203,13 +1211,15 @@ lean_exe {target} where
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_dense_admitted"] opaque denseAdmitted : IO UInt64
 @[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+@[extern "hex_test_avx512_count"] opaque avx512Count : IO UInt64
 def main (args : List String) : IO UInt32 := do
   let status ← Hex.Groebner.Driver.run args
   let (prepares,scans,updates) ← denseCounts
+  let packets ← avx512Count
   let admitted ← denseAdmitted
   let (accepted,declined) ← wholeCounts
   (← IO.getStderr).putStrLn (Lean.Json.mkObj [
-    ("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
+    ("avx512Packets",Lean.toJson packets),("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
     ("scans",Lean.toJson scans),("updates",Lean.toJson updates),
     ("bulkAccepted",Lean.toJson accepted),("bulkDeclined",Lean.toJson declined)]).compress
   return status
