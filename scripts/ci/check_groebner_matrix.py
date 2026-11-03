@@ -980,6 +980,13 @@ def main : IO Unit := do
   if pushes != ownerRows.toUInt64 || entries != 0 then
     throw (IO.userError s!"sampling copied shared pivot metadata: {pushes}/{shared}/{entries}")
   IO.println s!"sampling pivot pushes={pushes}, shared={shared}, existing shared entries={entries}"
+  resetPivotOwners
+  if !Hex.Groebner.SamplingChecks.growTargets ownerRows then
+    throw (IO.userError "fresh sampled target pivot growth failed")
+  let (pushes,shared,entries) ← pivotOwners
+  if pushes != ownerRows.toUInt64 || entries != 0 then
+    throw (IO.userError s!"sampling copied shared target pivot metadata: {pushes}/{shared}/{entries}")
+  IO.println s!"sampling target pivot pushes={pushes}, shared={shared}, existing shared entries={entries}"
   let beforeSubtract ← subtractCount
   let (beforeScan,beforeGather) ← counts
   Hex.Groebner.SampledConformance.run

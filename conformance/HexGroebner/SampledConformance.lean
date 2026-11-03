@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexGroebner
 import HexGroebner.F4Fixtures
 import HexGroebner.SamplingConformance
+import HexGroebner.Driver.Sampled
 
 open Hex.Groebner
 
@@ -18,13 +19,18 @@ private def canonical (field : PrimeField) (raw : RawPolynomial) : Certificate.P
 
 private def compare (a b : Sampled.Result) : Bool := match a,b with
   | .candidate a sa ra,.candidate b sb rb =>
-    a.polynomials == b.polynomials && a.randomState == b.randomState && sa == sb && ra == rb
+    a.polynomials == b.polynomials && a.randomState == b.randomState && sa == sb && ra == rb &&
+    a.initialRandom == b.initialRandom && a.config == b.config &&
+    a.monomials == b.monomials && a.monomialBytes == b.monomialBytes
   | _,_ => false
+
+private def scheduleBound (limits : Limits) : Nat :=
+  64*(limits.work+limits.matrixRows+limits.rounds+1)
 
 private def resumed (context : Context) (limits : Limits) (generators : Array RawPolynomial)
     (seed : Nat) : Sampled.Result := Id.run do
   let mut result := Sampled.computeWith context limits generators (Hex.Rand.ofSeed seed) {} 1
-  for _ in [:10000] do
+  for _ in [:scheduleBound limits] do
     match result with
     | .suspended state => result := Sampled.resumeWith limits state 1
     | _ => break
@@ -56,6 +62,94 @@ private def exhaustion : Bool := Id.run do
     | _ => return false
   return false
 
+private def bounded (limits : Limits) (state : Sampled.State) : Bool :=
+  let s := state.workspace.statistics
+  s.work ≤ limits.work && s.allocatedBytes+state.workspace.table.bytes ≤ limits.packedBytes &&
+  s.matrixRows ≤ limits.matrixRows && s.matrixEntries ≤ limits.matrixEntries &&
+  s.pairs ≤ limits.pairs && s.rounds ≤ limits.rounds
+
+private def sameValue (a b : Sampled.Result) : Bool := match a,b with
+  | .candidate a _ ra,.candidate b _ rb =>
+    a.polynomials == b.polynomials && a.randomState == b.randomState && ra == rb &&
+    a.initialRandom == b.initialRandom && a.config == b.config
+  | _,_ => false
+
+/-- Cold admission covers every parent resource. Atomic F4 stages may repeat
+work, so only values/random/sampling counts are equated across those retries. -/
+private def coldBudgets (native : Bool) : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  let some c := (F4Fixtures.cases field)[4]? | return false
+  let context : Context := ⟨field,c.variables,.grevlex⟩
+  let limits : Limits := { nativeRows := native }
+  let expected := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 0)
+  let cases : Array (F4Resource × Limits) := #[
+    (.work,{ limits with work := 0 }),(.packedBytes,{ limits with packedBytes := 0 }),
+    (.matrixRows,{ limits with matrixRows := 0 }),(.matrixEntries,{ limits with matrixEntries := 0 }),
+    (.pairs,{ limits with pairs := 0 }),(.rounds,{ limits with rounds := 0 }),
+    (.monomials,{ limits with monomials := 0 }),(.basis,{ limits with basis := 0 }),
+    (.variables,{ limits with variables := 0 })]
+  for (resource,cap) in cases do
+    match Sampled.computeWith context cap c.generators (Hex.Rand.ofSeed 0) with
+    | .exhausted actual stopped =>
+      if actual != resource || !bounded cap stopped ||
+          !sameValue expected (Sampled.resumeWith limits stopped) then return false
+    | _ => return false
+  return true
+
+/-- Single-phase scheduling exposes parent translations at row submission,
+scan and gather. Exact statistics are required for these resumable phases;
+atomic prepare/finish retries instead retain their consumed prefixes. -/
+private def warmBudgets (native : Bool) : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  let some c := (F4Fixtures.cases field)[4]? | return false
+  let context : Context := ⟨field,c.variables,.grevlex⟩
+  let limits : Limits := { nativeRows := native }
+  let expected := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 0)
+  let mut result := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 0) {} 0
+  let mut tested : Array Nat := #[]
+  for _ in [:10000] do
+    let .suspended state := result | break
+    let stats := state.workspace.statistics
+    let mut cases : Array (Nat × F4Resource × Limits × Bool) := #[]
+    if let some round := state.pending then
+      let matrix := round.matrix
+      if matrix.phase == .draw && matrix.row == matrix.stop then
+        cases := cases.push (0,.matrixRows,{ limits with matrixRows := stats.matrixRows },true)
+        cases := cases.push (6,.matrixRows,{ limits with matrixRows := stats.matrixRows+1 },true)
+      if matrix.phase == .scan then
+        cases := cases.push (1,.work,{ limits with work := stats.work },true)
+        cases := cases.push (7,.work,{ limits with work := stats.work+1 },true)
+      if matrix.phase == .gather then
+        cases := cases.push (2,.matrixEntries,{ limits with matrixEntries := stats.matrixEntries },true)
+        cases := cases.push (3,.packedBytes,
+          { limits with packedBytes := stats.allocatedBytes+state.workspace.table.bytes },true)
+        let remaining := (Array.range (matrix.scan.last+1-matrix.gather.cursor)).foldl
+          (fun n i => n+if Packed.read field.width matrix.gather.dense (matrix.gather.cursor+i) != 0 then 1 else 0) 0
+        if remaining ≥ 2 then
+          cases := cases.push (8,.matrixEntries,{ limits with matrixEntries := stats.matrixEntries+1 },true)
+          cases := cases.push (9,.packedBytes,
+            { limits with packedBytes := stats.allocatedBytes+state.workspace.table.bytes+4+field.width.bytes },true)
+      if matrix.phase == .done && matrix.failure.isNone && !matrix.rows.isEmpty then
+        cases := cases.push (4,.work,{ limits with work := stats.work+1 },false)
+    else if state.checkpoint.phase == .pairs && !state.checkpoint.queue.heap.isEmpty then
+      cases := cases.push (5,.work,{ limits with work := stats.work+1 },false)
+    for (key,resource,cap,exact) in cases do
+      if tested.contains key then continue
+      let mut stopped := Sampled.resumeWith cap state 1 1
+      for _ in [:1000] do
+        match stopped with
+        | .suspended next => stopped := Sampled.resumeWith cap next 1 1
+        | _ => break
+      match stopped with
+      | .exhausted actual saved =>
+        if actual != resource || !bounded cap saved then return false
+        let completed := Sampled.resumeWith limits saved
+        if !(if exact then compare expected completed else sameValue expected completed) then return false
+        tested := tested.push key
+      | _ => return false
+    result := Sampled.resumeWith limits state 1 1
+  return tested.size == 10 && compare expected result
+
 private def forcedMiss : Bool := Id.run do
   let some field := Fixtures.fields[0]? | return false
   let some c := (F4Fixtures.cases field)[4]? | return false
@@ -64,6 +158,8 @@ private def forcedMiss : Bool := Id.run do
       (Hex.Rand.ofSeed 9) { blockRows := 1,zeroTests := 3 } | return false
   let .candidate expected _ := Hex.Groebner.computeWith context {} c.generators | return false
   if candidate.polynomials == expected.polynomials || samples.randomWords == 0 then return false
+  if candidate.initialRandom != Hex.Rand.ofSeed 9 || candidate.config != { blockRows := 1,zeroTests := 3 } then
+    return false
   match certifyWith context {} (c.generators.map (canonical field))
       (candidate.polynomials.map (canonical field)) with
   | .rejected _ => return true
@@ -88,10 +184,14 @@ private def corpus : IO Unit := do
           let .candidate candidate stats samples := direct |
             throw (IO.userError s!"{c.name}: sampled computation failed")
           if stats.work > limits.work || stats.matrixRows > limits.matrixRows ||
-              stats.matrixEntries > limits.matrixEntries || stats.allocatedBytes > limits.packedBytes then
+              stats.matrixEntries > limits.matrixEntries ||
+              stats.allocatedBytes+candidate.monomialBytes > limits.packedBytes ||
+              candidate.monomials > limits.monomials then
             throw (IO.userError s!"{c.name}: exceeded parent allowance")
           if candidate.randomState != 10987+samples.randomWords.toUInt64*0x9e3779b97f4a7c15 then
             throw (IO.userError s!"{c.name}: random state did not advance")
+          if candidate.initialRandom != Hex.Rand.ofSeed 10987 || candidate.config != {} then
+            throw (IO.userError s!"{c.name}: sampling policy provenance changed")
           let .candidate reference _ := Hex.Groebner.computeWith context limits c.generators |
             throw (IO.userError s!"{c.name}: deterministic reference failed")
           let equal := candidate.polynomials == reference.polynomials
@@ -108,14 +208,26 @@ private def corpus : IO Unit := do
   IO.println s!"Sampled F4: {profiles} native/scalar/direct/resumed comparisons, {accepted} certified bases, {rejected} independently rejected misses"
 
 def run : IO Unit := do
+  let some field := Fixtures.fields[6]? | throw (IO.userError "missing field")
+  let some c := (F4Fixtures.cases field)[4]? | throw (IO.userError "missing system")
+  let context : Context := ⟨field,c.variables,.grevlex⟩
+  let completed ← Driver.Sampled.complete {}
+    (Sampled.computeWith context {} c.generators (Hex.Rand.ofSeed 0) {} 0)
+  if !compare completed (Sampled.computeWith context {} c.generators (Hex.Rand.ofSeed 0)) then
+    throw (IO.userError "candidate driver did not continue a scheduling suspension")
   for native in #[false,true] do
     if !(SamplingChecks.miss native && SamplingChecks.totalZeros native &&
         SamplingChecks.resumeCombine native && SamplingChecks.resumeGather native &&
+        SamplingChecks.resumeInverse native &&
+        SamplingChecks.extendRange native &&
         SamplingChecks.resumeSlice native && SamplingChecks.resumeScan native &&
         SamplingChecks.resumeValidation native && SamplingChecks.resumeRows native) then
       throw (IO.userError "sampled matrix prefix/snapshot checks failed")
   if !SamplingChecks.corpus then throw (IO.userError "sampled row-space checks failed")
   if !exhaustion then throw (IO.userError "advanced-state F4 exhaustion/resumption failed")
+  for native in #[false,true] do
+    if !(coldBudgets native && warmBudgets native) then
+      throw (IO.userError "sampled parent budget translation/resumption failed")
   if !forcedMiss then throw (IO.userError "forced rank miss was not independently rejected")
   IO.println "Sampled F4: forced rank miss rejected; exhausted advanced state resumes"
   corpus

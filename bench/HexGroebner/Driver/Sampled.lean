@@ -44,6 +44,16 @@ private def error (kind text : String) (random : Hex.Rand)
     ("statistics",Driver.statistics stats),("sampling",sampling samples),
     ("randomState",toJson random.state.toNat)]).compress
 
+/-- A command-line computation continues cooperative suspensions under the same
+absolute allowances; only the library caller chooses to retain a quantum. -/
+def complete (limits : Limits) (initial : Hex.Groebner.Sampled.Result) : IO Hex.Groebner.Sampled.Result := do
+  let mut result := initial
+  while true do
+    match result with
+    | .suspended state => result := Hex.Groebner.Sampled.resumeWith limits state
+    | _ => break
+  return result
+
 /-- Seeded candidate-only driver. Certification is a separate operation; even
 successful sampled elimination produces an unchecked candidate. -/
 def run (args : List String) : IO UInt32 := do
@@ -63,7 +73,7 @@ def run (args : List String) : IO UInt32 := do
     IO.println (error "invalid_input" message random)
     return 2
   let start ← IO.monoNanosNow
-  let result := Hex.Groebner.Sampled.computeWith context limits generators random config
+  let result ← complete limits (Hex.Groebner.Sampled.computeWith context limits generators random config)
   let response ← match result with
     | .candidate value stats samples => do
       let stop ← IO.monoNanosNow
@@ -72,8 +82,8 @@ def run (args : List String) : IO UInt32 := do
         ("kind",toJson "unchecked_candidate"),("algorithm",toJson "f4-sampled"),
         ("p",toJson context.field.modulus.toNat),("variables",toJson context.variables),
         ("order",toJson order),("statistics",Driver.statistics stats),("sampling",sampling samples),
-        ("seed",toJson seed),("randomState",toJson value.randomState.toNat),
-        ("blockRows",toJson config.blockRows),("totalZeroTests",toJson config.zeroTests),
+        ("seed",toJson value.initialRandom.state.toNat),("randomState",toJson value.randomState.toNat),
+        ("blockRows",toJson value.config.blockRows),("totalZeroTests",toJson value.config.zeroTests),
         ("samplingModel",toJson "SplitMix64 full-field rejection draws; no probability bound"),
         ("candidateNanos",toJson (stop-start)),("batchSize",toJson value.batchSize),
         ("scheduling",toJson (match value.scheduling with | .degree => "degree" | .sugar => "sugar"))]).compress
@@ -81,7 +91,7 @@ def run (args : List String) : IO UInt32 := do
       pure (0,output.push '}')
     | .invalidConfig random => pure (2,error "invalid_configuration" "positive blockRows<=4096 and zeroTests required" random)
     | .invalid message stats samples random => pure (2,error "invalid_input" (reprStr message) random stats samples)
-    | .internal message stats samples random => pure (5,error "internal" (reprStr message) random stats samples)
+    | .internal message stats samples random => pure (5,error "internal_error" (reprStr message) random stats samples)
     | .exhausted resource state => pure (3,error "exhausted" (reprStr resource) state.random state.workspace.statistics state.statistics)
     | .representation message state => pure (4,error "representation" (reprStr message) state.random state.workspace.statistics state.statistics)
     | .suspended state => pure (6,error "suspended" "scheduling quantum ended" state.random state.workspace.statistics state.statistics)

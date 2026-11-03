@@ -74,22 +74,31 @@ private def inputBasis (context : Context) (limits : Limits) (raw : Array RawPol
   let queue ← install context limits basis {} 0
   return { basis, queue, phase := .pairs }
 
-private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint) :
-    Computation Checkpoint := do
-  if checkpoint.queue.heap.isEmpty then return { checkpoint with phase := .interreduce }
+private structure Batch where
+  pairs : Array CriticalPair
+  queue : PairQueue
+  matrix : SymbolicMatrix
+
+private def select (context : Context) (limits : Limits) (checkpoint : Checkpoint) :
+    Computation (Checkpoint ⊕ Batch) := do
+  if checkpoint.queue.heap.isEmpty then return .inl { checkpoint with phase := .interreduce }
   let s ← get
   if s.statistics.rounds ≥ limits.rounds then throw (.exhausted .rounds)
   set { s with statistics.rounds := s.statistics.rounds + 1 }
   let index ← ReducerIndex.build context limits checkpoint.basis
   let (pairs, queue) ← checkpoint.queue.select context limits index checkpoint.basis
   modify fun s => { s with statistics.largestBatch := max s.statistics.largestBatch pairs.size }
-  if pairs.isEmpty then return { checkpoint with queue }
+  if pairs.isEmpty then return .inl { checkpoint with queue }
   let rows ← PairRows.prepare context limits checkpoint.basis pairs checkpoint.cache
   spend limits rows.targets.size
   let targets := rows.targets.map fun row => BasisElement.mk row.polynomial row.sugar
   let matrix ← SymbolicMatrix.prepareWith context limits index checkpoint.basis targets
     rows.cache rows.reducers
-  let new ← matrix.eliminate context limits
+  return .inr ⟨pairs,queue,matrix⟩
+
+private def commit (context : Context) (limits : Limits) (checkpoint : Checkpoint)
+    (queue : PairQueue) (pairs : Array CriticalPair) (cache : ReducerCache)
+    (new : Array BasisElement) : Computation Checkpoint := do
   let basis := checkpoint.basis ++ new
   if let some g ← unit limits new then
     if limits.basis == 0 then throw (.exhausted .basis)
@@ -97,7 +106,15 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
   let mut queue := queue
   for pair in pairs do queue ← queue.resolve limits pair.left pair.right
   queue ← install context limits basis queue checkpoint.basis.size
-  return { basis, queue, phase := .pairs, cache := matrix.cache }
+  return { basis, queue, phase := .pairs, cache }
+
+private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint) :
+    Computation Checkpoint := do
+  match ← select context limits checkpoint with
+  | .inl checkpoint => return checkpoint
+  | .inr batch =>
+    let new ← batch.matrix.eliminate context limits
+    commit context limits checkpoint batch.queue batch.pairs batch.matrix.cache new
 
 private def interreduce (context : Context) (limits : Limits) (basis : Array BasisElement) (cache : ReducerCache) :
     Computation (Array BasisElement) := do
@@ -223,13 +240,22 @@ private def fail (state : ResumeState) (error : ComputeError) : ComputeResult :=
   | .matrix error => .internal error state.workspace.statistics
   | error => .invalid error state.workspace.statistics
 
-private def decode (state : ResumeState) (limits : Limits) : Computation Candidate := do
-  let field := state.context.field
+namespace F4
+
+private def decodeBasis (context : Context) (limits : Limits) (basis : Array BasisElement) :
+    Computation (Array RawPolynomial) := do
+  let field := context.field
   let mut polynomials := #[]
-  for g in state.checkpoint.basis do
-    spend limits (g.polynomial.size * (state.context.variables + 1))
-    allocate limits (8 * g.polynomial.size * (state.context.variables + 1))
+  for g in basis do
+    spend limits (g.polynomial.size * (context.variables + 1))
+    allocate limits (8 * g.polynomial.size * (context.variables + 1))
     polynomials := polynomials.push (g.polynomial.toRaw field (← get).table)
+  return polynomials
+
+end F4
+
+private def decode (state : ResumeState) (limits : Limits) : Computation Candidate := do
+  let polynomials ← F4.decodeBasis state.context limits state.checkpoint.basis
   return ⟨state.context, polynomials, state.randomState, limits.batchSize,
     limits.nativeRows, limits.nativeMonomials, limits.gebauerMoller, limits.batchInterreduce,
     state.scheduling⟩

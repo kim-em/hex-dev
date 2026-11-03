@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+import all HexGroebner.F4
 public import HexGroebner.SamplingRound
 
 public section
@@ -23,6 +24,15 @@ structure Statistics where
   completedBlocks : Nat := 0
   deriving BEq, Repr, Inhabited
 
+/-- Unchecked output retains its original random state and sampling policy.
+The arena counts complete the parent allocation/representation accounting;
+they provide no basis certificate or rank-preservation claim. -/
+structure Candidate extends Hex.Groebner.Candidate where
+  initialRandom : Hex.Rand
+  config : Sampling.Config
+  monomials : Nat
+  monomialBytes : Nat
+
 /-- Sealed F4 continuation with the advanced generator and any partial sampled
 matrix. Field, order, generators, scheduling and sampling policy are immutable.
 A pending pair batch retains its original selection and native mode. -/
@@ -33,6 +43,7 @@ structure State where
   workspace : Workspace
   checkpoint : F4.Checkpoint
   random : Hex.Rand
+  initialRandom : Hex.Rand
   config : Sampling.Config
   scheduling : Scheduling
   pending : Option Round := none
@@ -79,13 +90,10 @@ private def check (state : State) (limits : Limits) : Option F4Resource :=
   else none
 
 private def decode (state : State) (limits : Limits) : Computation Candidate := do
-  let mut polynomials := #[]
-  for g in state.checkpoint.basis do
-    Computation.spend limits (g.polynomial.size*(state.context.variables+1))
-    Computation.allocate limits (8*g.polynomial.size*(state.context.variables+1))
-    polynomials := polynomials.push (g.polynomial.toRaw state.context.field (← get).table)
-  return ⟨state.context,polynomials,state.random.state,limits.batchSize,limits.nativeRows,
-    limits.nativeMonomials,limits.gebauerMoller,limits.batchInterreduce,state.scheduling⟩
+  let polynomials ← F4.decodeBasis state.context limits state.checkpoint.basis
+  return ⟨⟨state.context,polynomials,state.random.state,limits.batchSize,limits.nativeRows,
+    limits.nativeMonomials,limits.gebauerMoller,limits.batchInterreduce,state.scheduling⟩,
+    state.initialRandom,state.config,(← get).table.count,(← get).table.bytes⟩
 
 private def account (state : State) (before : Sampling.Statistics) (frame : Frame)
     (matrix : Sampling.State) : State :=
@@ -101,10 +109,13 @@ private def account (state : State) (before : Sampling.Statistics) (frame : Fram
 
 /-- Resume under absolute cumulative allowances. At most one million outer
 scheduling slices are performed per call; a smaller explicit quantum supports
-cooperative callers. Each sampled slice advances at most 64 bounded phases.
+cooperative callers. Each sampled slice advances `matrixSteps`, clamped to
+1–64 bounded phases. Preparation, basis updates and deterministic F4 steps
+remain atomic stages; retries charge their repeated work.
 Input normalization and final interreduction use deterministic F4. No completed
 sampled candidate is promoted to a checked basis by this operation. -/
-def resumeWith (limits : Limits) (initial : State) (slices := 1000000) : Result := Id.run do
+def resumeWith (limits : Limits) (initial : State) (slices := 1000000)
+    (matrixSteps := 64) : Result := Id.run do
   let limits := { limits with scheduling := initial.scheduling }
   let mut state := initial
   if let some resource := check state limits then return .exhausted resource state
@@ -123,7 +134,7 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000) : Result 
         let childLimits := frame.limits limits state.workspace
         -- Retain scalar accounting, not a second owner of the matrix arrays.
         state := { state with pending := none }
-        let matrix := Sampling.advance childLimits 64 matrix
+        let matrix := Sampling.advance childLimits (min 64 (max 1 matrixSteps)) matrix
         let failed := matrix.failure
         state := account state previous frame matrix
         if let some error := failed then return failure state (matrixError error)
@@ -156,11 +167,13 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000) : Result 
 field coefficients come from SplitMix64 rejection draws; no uniformity or
 independence bound is claimed. An independent complete-basis certificate is
 required before using this candidate for complete normal forms or nonmembership.
-Invalid configuration is rejected before any computation or random draw. -/
+Invalid configuration is rejected before any computation or random draw.
+The optional slice quantum has the same cooperative suspension contract as
+`resumeWith`; callers seeking completion continue its `.suspended` states. -/
 def computeWith (context : Context) (limits : Limits) (generators : Array RawPolynomial)
     (random : Hex.Rand) (config : Sampling.Config := {}) (slices := 1000000) : Result :=
   if config.blockRows == 0 || config.blockRows > 4096 || config.zeroTests == 0 then .invalidConfig random
   else resumeWith limits
-    ⟨context,generators,⟨{ arity := context.variables },{}⟩,{},random,config,limits.scheduling,none,{}⟩ slices
+    ⟨context,generators,⟨{ arity := context.variables },{}⟩,{},random,random,config,limits.scheduling,none,{}⟩ slices
 
 end Hex.Groebner.Sampled

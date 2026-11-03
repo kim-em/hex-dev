@@ -68,13 +68,47 @@ def resumeCombine (native : Bool) : Bool :=
 
 /-- Output exhaustion preserves the first appended entry. A later allowance
 finishes that row without redrawing or charging its first entry again. -/
-def resumeGather (native : Bool) : Bool :=
+def resumeGather (native : Bool) : Bool := Id.run do
   let initial := Sampling.start field 2 #[] #[row] (Hex.Rand.ofSeed 2) {} #[] native
   let ready := seek .gather initial
+  let snapshot := ready.gather.dense.data
   let exhausted := Sampling.next { limits with outputEntries := 1 } ready
-  exhausted.failure == some (.exhausted .outputEntries) && exhausted.phase == .gather &&
+  let completed := run exhausted
+  return exhausted.failure == some (.exhausted .outputEntries) && exhausted.phase == .gather &&
     exhausted.random.state == ready.random.state && exhausted.gather.columns.size == 4 &&
-    same (run exhausted) (run initial)
+    same completed (run initial) && ready.gather.dense.data == snapshot
+
+/-- Every insufficient inverse/gather allowance leaves the phase uncharged.
+The full resumed result includes exactly the uninterrupted statistics. -/
+def resumeInverse (native : Bool) : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  let some row := SparseRow.ofEntries field 5 #[(1,3),(4,1)] | return false
+  let initial := Sampling.start field 5 #[] #[row] (Hex.Rand.ofSeed 0) {} #[] native
+  let ready := seek .inverse initial
+  if ready.phase != .inverse then return false
+  let after := Sampling.next limits ready
+  let charge := after.statistics.matrix.work-ready.statistics.matrix.work
+  if charge < 4 then return false
+  let snapshot := ready.scan.dense.data
+  for extra in [:charge] do
+    let stopped := Sampling.next { limits with work := ready.statistics.matrix.work+extra } ready
+    if stopped.failure != some (.exhausted .work) || stopped.phase != .inverse ||
+        stopped.statistics != ready.statistics || stopped.random != ready.random ||
+        !same (run stopped) (run initial) then return false
+  return ready.scan.dense.data == snapshot
+
+/-- A short target's reduction may reach far beyond its own last column.
+The scan extends its bound when applying that pivot, and gather keeps the tail. -/
+def extendRange (native : Bool) : Bool := Id.run do
+  let some reducer := SparseRow.ofEntries field 4097 #[(3,1),(4096,1)] | return false
+  let some target := SparseRow.ofEntries field 4097 #[(3,1)] | return false
+  let initial := Sampling.start field 4097 #[reducer] #[target]
+    (Hex.Rand.ofSeed 2) {} #[] native
+  let ready := seek .scan initial
+  if ready.scan.column != 4097 then return false -- First sampled coefficient is zero.
+  let completed := run initial
+  return completed.failure.isNone && completed.rows.size == 1 &&
+    completed.rows[0]!.row.entries field == #[(4096,1)]
 
 /-- Split a 4097-entry combination across calls, exhaust before the final
 entry, and preserve an externally retained snapshot while completing it. -/
@@ -104,9 +138,12 @@ def resumeScan (native : Bool) : Bool := Id.run do
     pending := Sampling.next limits pending
   pending := Sampling.next limits pending
   if pending.scan.pending == 0 || pending.scan.entry == 0 then return false
+  let snapshot := pending.scan.dense.data
   let exhausted := Sampling.next { limits with work := pending.statistics.matrix.work } pending
+  let completed := run exhausted
   return exhausted.failure == some (.exhausted .work) &&
-    exhausted.random.state == pending.random.state && same (run exhausted) (run initial)
+    exhausted.random.state == pending.random.state && same completed (run initial) &&
+    pending.scan.dense.data == snapshot
 
 /-- Seeded native/scalar comparisons span all coefficient widths. Every output
 is independently reduced against the full original matrix row space. A rank
@@ -124,6 +161,13 @@ def corpus : Bool := Id.run do
         let a := run initial
         let b := run (Sampling.start field c.columns reducers targets (Hex.Rand.ofSeed seed) {} #[] false)
         if !same a b || a.failure.isSome || a.phase != .done then return false
+        let mut leading := reducers.map fun r => (Packed.read .u32 r.columns 0).toNat
+        for pivot in a.rows do
+          let r := pivot.row
+          if r.size == 0 || Packed.read field.width r.coefficients 0 != 1 then return false
+          let column := (Packed.read .u32 r.columns 0).toNat
+          if leading.contains column then return false
+          leading := leading.push column
         let .ok original := (eliminateWith field limits c.columns (reducers++targets) #[] false #[] false).result |
           return false
         let .ok check := (reduceRowsWith field limits c.columns (original.rows.map (·.row))
@@ -168,15 +212,34 @@ def grow (n : Nat) : Bool := Id.run do
     ((state.pivots.zipIdx).all fun (row,i) =>
       (SparseRow.mk row.columns row.coefficients).entries field == #[(i,1)])
 
+/-- Fresh target pivots exercise gather insertion rather than reducer setup.
+The fixed M31 stream is checked for complete rank on these diagnostic sizes. -/
+def growTargets (n : Nat) : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  let targets := (Array.range n).map fun i => SparseRow.mk
+    (Packed.push .u32 {} i.toUInt64) (Packed.push field.width {} 1)
+  let mut state := Sampling.start field n #[] targets (Hex.Rand.ofSeed 0)
+    { blockRows := 1,zeroTests := 1 }
+  for _ in [:32*n+64] do
+    state := Sampling.advance limits 64 state
+    if state.failure.isSome || state.phase == .done then break
+  return state.failure.isNone && state.phase == .done && state.pivots.size == n &&
+    state.rows.size == n && state.statistics.combinations == 2*n &&
+    ((state.pivots.zipIdx).all fun (row,i) =>
+      (SparseRow.mk row.columns row.coefficients).entries field == #[(i,1)])
+
 #guard miss false && miss true
 #guard totalZeros false && totalZeros true
 #guard resumeCombine false && resumeCombine true
 #guard resumeGather false && resumeGather true
+#guard resumeInverse false && resumeInverse true
+#guard extendRange false && extendRange true
 #guard resumeSlice false && resumeSlice true
 #guard resumeScan false && resumeScan true
 #guard resumeValidation false && resumeValidation true
 #guard resumeRows false && resumeRows true
 #guard grow 128
+#guard growTargets 128
 #guard corpus
 
 end Hex.Groebner.SamplingChecks

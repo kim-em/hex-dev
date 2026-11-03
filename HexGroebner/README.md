@@ -138,8 +138,10 @@ after a new pivot. Full-field coefficients use `Hex.Rand` rejection draws. No
 uniformity, independence or rank-preservation probability is asserted for this
 pseudorandom generator. Block sugar labels bound all contributing rows.
 
-`Sampled.Result.candidate` carries an unchecked `Candidate`, ordinary work
-statistics and separate sampling counts. Independent complete-basis certification
+`Sampled.Result.candidate` carries an unchecked `Sampled.Candidate`, ordinary work
+statistics and separate sampling counts. The candidate retains the initial random
+state, sampling controls and monomial-arena counts alongside the advanced state.
+Independent complete-basis certification
 remains necessary. The current route exposes candidate production and separate
 `certifyWith` validation; a checked retry/fallback driver remains to be implemented.
 The conformance corpus includes deliberate rank misses that certification rejects.
@@ -154,7 +156,12 @@ only new matrix work; atomic output decoding or basis-update retries charge thei
 repeated work. `Sampled.resumeWith` also accepts a scheduling quantum: its
 `suspended` result retains unfinished work without claiming budget exhaustion.
 Each call performs at most one million outer slices, each with at most 64 matrix
-phases. Native combination, scan and gather calls inspect at most 4096 entries.
+phases. The optional matrix quantum is clamped to 1–64 phases. Library callers
+continue `.suspended` states when they want completion; the CLI does this
+automatically. Native combination, scan and gather calls inspect at most 4096 entries.
+Combination bounds omit untouched columns and extend when reducers introduce a
+later column. Inversion reserves its complete multiplication and gather cost
+before charging work, so phase resumption does not repeat an inverse prefix.
 
 Sampling charges random words, combination updates, validation, initialization,
 elimination, output and subsequent F4 work to the parent allowances. The row

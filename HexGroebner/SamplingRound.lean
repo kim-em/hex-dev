@@ -39,40 +39,14 @@ structure Round where
 private def translate (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
     (queue : PairQueue) (pairs : Array CriticalPair) (random : Hex.Rand)
     (config : Sampling.Config) : Computation Round := do
-  if matrix.columns.size > 4294967295 then throw (.representation .index)
-  let positions ← ColumnMap.build limits matrix.columns
-  let mut reducers := #[]
-  let mut targets := #[]
-  let mut inputBytes := 0
-  let mut entries := 0
-  let mut sugars := #[]
-  for reducer in matrix.reducers do
-    let row ← SymbolicMatrix.row context limits positions reducer.polynomial
-    reducers := reducers.push row
-    sugars := sugars.push reducer.sugar
-    inputBytes := inputBytes+row.columns.size+row.coefficients.size
-    entries := entries+row.size
-  -- Preserve the deterministic target order so block membership has a stable
-  -- meaning across native/scalar implementations and resumed computations.
-  spend limits (2*matrix.targets.size*(matrix.targets.size+1).log2*positions.lookupCost)
-  let ordered := (matrix.targets.toList.mergeSort fun a b =>
-    let left := if a.polynomial.size == 0 then matrix.columns.size
-      else positions.getD (a.polynomial.monomial 0) matrix.columns.size
-    let right := if b.polynomial.size == 0 then matrix.columns.size
-      else positions.getD (b.polynomial.monomial 0) matrix.columns.size
-    left > right || (left == right && a.polynomial.size ≤ b.polynomial.size)).toArray
-  for target in ordered do
-    let row ← SymbolicMatrix.row context limits positions target.polynomial
-    targets := targets.push row
-    sugars := sugars.push target.sugar
-    inputBytes := inputBytes+row.columns.size+row.coefficients.size
-    entries := entries+row.size
-  let state ← get
+  let input ← SymbolicMatrix.translate context limits matrix
+  let reducers := input.reducers
+  let targets := input.targets
+  let sugars := input.sugars
+  let inputBytes := input.inputBytes
+  let entries := input.entries
   let rows := reducers.size+targets.size
-  if rows > 4294967295 then throw (.representation .index)
-  if matrix.columns.size*(context.field.width.bytes+4) ≥ USize.size then throw (.representation .address)
-  if state.statistics.matrixRows+rows > limits.matrixRows then throw (.exhausted .matrixRows)
-  if state.statistics.matrixEntries+entries > limits.matrixEntries then throw (.exhausted .matrixEntries)
+  let state ← get
   modify fun s => { s with statistics := { s.statistics with
     matrixRows := s.statistics.matrixRows+rows
     matrixTargets := s.statistics.matrixTargets+targets.size
@@ -90,19 +64,10 @@ def prepare (context : Context) (limits : Limits) (checkpoint : F4.Checkpoint)
     (random : Hex.Rand) (config : Sampling.Config) :
     Computation (F4.Checkpoint × Option Round) := do
   spend limits 1
-  if checkpoint.queue.heap.isEmpty then return ({ checkpoint with phase := .interreduce },none)
-  let state ← get
-  if state.statistics.rounds ≥ limits.rounds then throw (.exhausted .rounds)
-  modify fun s => { s with statistics.rounds := s.statistics.rounds+1 }
-  let index ← ReducerIndex.build context limits checkpoint.basis
-  let (pairs,queue) ← checkpoint.queue.select context limits index checkpoint.basis
-  modify fun s => { s with statistics.largestBatch := max s.statistics.largestBatch pairs.size }
-  if pairs.isEmpty then return ({ checkpoint with queue },none)
-  let rows ← PairRows.prepare context limits checkpoint.basis pairs checkpoint.cache
-  spend limits rows.targets.size
-  let targets := rows.targets.map fun row => BasisElement.mk row.polynomial row.sugar
-  let matrix ← SymbolicMatrix.prepareWith context limits index checkpoint.basis targets rows.cache rows.reducers
-  return (checkpoint,some (← translate context limits matrix queue pairs random config))
+  match ← F4.select context limits checkpoint with
+  | .inl checkpoint => return (checkpoint,none)
+  | .inr batch =>
+    return (checkpoint,some (← translate context limits batch.matrix batch.queue batch.pairs random config))
 
 /-- Remaining parent allowances expressed as cumulative limits within this call.
 Input and output entries share the parent matrix-entry allowance. Input packed
@@ -144,20 +109,7 @@ def finish (context : Context) (limits : Limits) (checkpoint : F4.Checkpoint)
   let some rows := round.matrix.candidate? | throw (.matrix .rowUpdate)
   let mut new := #[]
   for pivot in rows do
-    spend limits pivot.row.size
-    allocate limits pivot.row.columns.size
-    let mut support := ByteArray.emptyWithCapacity pivot.row.columns.size
-    for i in [:pivot.row.size] do
-      let column := (Packed.read .u32 pivot.row.columns i).toNat
-      support := Packed.push .u32 support frame.columns[column]!.toUInt64
-    new := new.push (BasisElement.mk { support,coefficients := pivot.row.coefficients } pivot.sugar)
-  let basis := checkpoint.basis++new
-  if let some g ← F4.unit limits new then
-    if limits.basis == 0 then throw (.exhausted .basis)
-    return { basis := #[g],phase := .complete }
-  let mut queue := frame.queue
-  for pair in frame.pairs do queue ← queue.resolve limits pair.left pair.right
-  queue ← F4.install context limits basis queue checkpoint.basis.size
-  return { basis,queue,cache := frame.cache,phase := .pairs }
+    new := new.push (← SymbolicMatrix.decode context limits frame.columns pivot.row 1 pivot.sugar)
+  F4.commit context limits checkpoint frame.queue frame.pairs frame.cache new
 
 end Hex.Groebner.Sampled

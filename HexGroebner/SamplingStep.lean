@@ -60,6 +60,17 @@ private def takeGather : Work Native.Gather.State := do
     gather := ⟨{},{},{},0⟩ }
   return gather
 
+private def inverseWork (field : PrimeField) (value : UInt64) : Nat := Id.run do
+  if value == 1 then return 0
+  let mut exponent := field.modulus.toNat-2
+  let mut work := 0
+  for _ in [:field.modulus.toNat.log2+1] do
+    if exponent == 0 then break
+    if exponent%2 == 1 then work := work+1
+    exponent := exponent/2
+    if exponent > 0 then work := work+1
+  return work
+
 @[export lean_hex_sampling_install_reducer]
 private def installReducer (limits : MatrixLimits) : Work Unit := do
   let field := (← get).field
@@ -141,7 +152,8 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       let sugar := (List.range (stop-s.start)).foldl
         (fun n i => max n (s.sugars[s.reducers.size+s.start+i]?.getD 0)) 0
       modify fun s => { s with
-        stop,row := s.start,zeros := 0,trials := 0,sugar,phase := .draw }
+        stop,row := s.start,zeros := 0,trials := 0,sugar,phase := .draw,
+        first := s.columns,last := 0 }
   | .draw =>
     let s ← get
     if s.row == s.stop then
@@ -150,7 +162,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       let dense ← takeDense
       modify fun s => { s with
         phase := .scan,
-        scan := { dense,column := 0,last := s.columns-1,chargedUntil := 0,sugar := s.sugar },
+        scan := { dense,column := s.first,last := s.last,chargedUntil := s.first,sugar := s.sugar },
         statistics.combinations := s.statistics.combinations+1,trials := s.trials+1 }
     else
       spend limits 1
@@ -172,6 +184,10 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
     spend limits count
     let field := s.field
         let offset := s.offset
+    let first := if row.size == 0 then s.first else
+      min s.first (Packed.read .u32 row.columns 0).toNat
+    let last := if row.size == 0 then s.last else
+      max s.last (Packed.read .u32 row.columns (row.size-1)).toNat
     let factor := field.modulus-s.multiplier
     let dense ← takeDense
     let updated := if native then
@@ -179,7 +195,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       else Native.subtractPortable field.modulus dense row.columns row.coefficients offset count factor
     let some dense := updated | throw .rowUpdate
     modify fun s => { s with
-      dense,offset := offset+count,
+      dense,offset := offset+count,first,last,
       row := if offset+count == row.size then s.row+1 else s.row,
       phase := if offset+count == row.size then .draw else .combine,
       statistics.combinationEntries := s.statistics.combinationEntries+count }
@@ -215,14 +231,19 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
         else
           if trials ≥ blockRows+zeroTests then throw .rowUpdate
           modify fun s => { s with
-            row := s.start,phase := .draw }
+            row := s.start,phase := .draw,first := s.columns,last := 0 }
       else modify fun s => { s with phase := .inverse }
   | .inverse =>
     let s ← get
     let leading := s.scan.leading-1
+    let value := Packed.read s.field.width s.scan.dense leading
+    -- Inversion and its following gather reservation commit as one phase.
+    -- Admission precedes every multiply, so a retry cannot charge a prefix twice.
+    if s.statistics.matrix.work+inverseWork s.field value+(s.scan.last+1-leading) > limits.work then
+      throw (.exhausted .work)
     let factor ← liftWork (Matrix.inverse s.field s.field.barrett limits
-      (Packed.read s.field.width s.scan.dense leading))
-    spend limits (s.columns-leading)
+      value)
+    spend limits (s.scan.last+1-leading)
     modify fun s => { s with
       inverse := factor,phase := .gather,
       gather := ⟨s.scan.dense,{},{},leading⟩,scan := { s.scan with dense := {} } }
@@ -237,7 +258,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
     let products := if s.inverse == 1 then 4096 else limits.work-s.statistics.matrix.work
     let capacity := min 4096 (min entries (min bytes products))
     let field := s.field
-        let columns := s.columns
+        let columns := s.scan.last+1
     let inverse := s.inverse
     let sugar := s.scan.sugar
     let trials := s.trials
@@ -256,6 +277,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
       if capacity == entries then throw (.exhausted .outputEntries)
       if capacity == bytes then throw (.exhausted .packedBytes)
       throw (.exhausted .work)
+    if out.status == 5 then throw .dimensions
     if out.status != 0 && out.status != 1 then throw .rowUpdate
     if out.status == 1 || out.state.cursor == columns then
       let row : SparseRow := ⟨out.state.columns,out.state.coefficients⟩
@@ -272,7 +294,7 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
         pivots,slots,rows,statistics.matrix.processedRows := s.statistics.matrix.processedRows+1 }
       if trials ≥ blockRows+zeroTests then throw .rowUpdate
       modify fun s => { s with
-        row := s.start,phase := .draw }
+        row := s.start,phase := .draw,first := s.columns,last := 0 }
   | .done => pure ()
 
 private theorem step_spec (limits : MatrixLimits) (native : Bool) :

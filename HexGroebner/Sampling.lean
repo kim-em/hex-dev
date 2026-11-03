@@ -68,6 +68,8 @@ structure State where
   row : Nat := 0
   offset : Nat := 0
   multiplier : UInt64 := 0
+  first : Nat := 0
+  last : Nat := 0
   sugar : Nat := 0
   scan : Native.Scan.State := { dense := {},column := 0,last := 0,chargedUntil := 0 }
   gather : Native.Gather.State := ⟨{},{},{},0⟩
@@ -79,6 +81,6 @@ its advanced random state and pending multiplier through its sealed state. -/
 def start (field : PrimeField) (columns : Nat) (reducers targets : Array SparseRow)
     (random : Hex.Rand) (config : Config := {}) (sugars : Array Nat := #[])
     (native := true) : State :=
-  { field,columns,reducers,targets,random,config,sugars,native }
+  { field,columns,reducers,targets,random,config,sugars,native,first := columns }
 
 end Hex.Groebner.Sampling
