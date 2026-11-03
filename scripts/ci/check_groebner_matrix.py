@@ -787,6 +787,39 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_widths"] opaque widths : IO UInt32
 @[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
+def checkDenseOwnership (primitiveSeed : Nat) : IO Unit := do
+  for independent in [false,true] do
+    let checkpoint := Hex.Groebner.DenseMatrixConformance.snapshotState primitiveSeed independent
+    let some cache := checkpoint.densePivots | throw (IO.userError "missing dense checkpoint")
+    let some held := cache.rows[0]? | throw (IO.userError "empty dense checkpoint")
+    let heldBytes ← copyBytes held.dense
+    let heldSource ← copyBytes held.source.coefficients
+    let scheduleSeed ← Hex.Groebner.NativeChecks.readSeed
+    let completed := Hex.Groebner.MatrixState.finishState (1+scheduleSeed%64) checkpoint
+    let alternate := Hex.Groebner.MatrixState.finishState (64-scheduleSeed%64) checkpoint
+    if completed.phase != .done || alternate.phase != .done ||
+        checkpoint.nativePivots.size != 1 || cache.rows.size != 1 ||
+        completed.nativePivots.size != (if independent then 3 else 5) ||
+        alternate.stats != completed.stats then
+      throw (IO.userError "shared dense checkpoint did not complete")
+    let afterBytes ← copyBytes held.dense
+    let afterSource ← copyBytes held.source.coefficients
+    if heldBytes != afterBytes || heldSource != afterSource then
+      throw (IO.userError "shared nonempty dense cache was mutated")
+  IO.println "shared dense checkpoints: 4 IO byte comparisons"
+  let beforeTiny ← wholeCounts
+  let tinyRow : Hex.Groebner.SparseRow :=
+    ⟨Hex.Groebner.Packed.push .u32 {} 0,Hex.Groebner.Packed.push .u32 {} 1⟩
+  let tinyField : Hex.Groebner.PrimeField :=
+    ⟨2147483647,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let tiny := Hex.Groebner.eliminateWith tinyField { densePivots := true }
+    (2+primitiveSeed%127) #[tinyRow] #[tinyRow]
+  if !tiny.result.isOk then throw (IO.userError "small cached-option matrix failed")
+  let afterTiny ← wholeCounts
+  if afterTiny.1 != beforeTiny.1+1 || afterTiny.2 != beforeTiny.2 then
+    throw (IO.userError "small cached-option matrix lost its bulk frame")
+  IO.println "small M31 cached-option bulk frame: accepted"
+
 def main : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
   if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
@@ -834,37 +867,7 @@ def main : IO Unit := do
       prepared.row.source.coefficients != sourceSnapshot || prepared.row.dense != cacheSnapshot ||
       denseInitial.dense != cacheSnapshot then
     throw (IO.userError "dense pivot source/cache/continuation snapshot was mutated")
-  for independent in [false,true] do
-    let checkpoint := Hex.Groebner.DenseMatrixConformance.snapshotState primitiveSeed independent
-    let some cache := checkpoint.densePivots | throw (IO.userError "missing dense checkpoint")
-    let some held := cache.rows[0]? | throw (IO.userError "empty dense checkpoint")
-    let heldBytes ← copyBytes held.dense
-    let heldSource ← copyBytes held.source.coefficients
-    let scheduleSeed ← Hex.Groebner.NativeChecks.readSeed
-    let completed := Hex.Groebner.MatrixState.finishState (1+scheduleSeed%64) checkpoint
-    let alternate := Hex.Groebner.MatrixState.finishState (64-scheduleSeed%64) checkpoint
-    if completed.phase != .done || alternate.phase != .done ||
-        checkpoint.nativePivots.size != 1 || cache.rows.size != 1 ||
-        completed.nativePivots.size != (if independent then 3 else 5) ||
-        alternate.stats != completed.stats then
-      throw (IO.userError "shared dense checkpoint did not complete")
-    let afterBytes ← copyBytes held.dense
-    let afterSource ← copyBytes held.source.coefficients
-    if heldBytes != afterBytes || heldSource != afterSource then
-      throw (IO.userError "shared nonempty dense cache was mutated")
-  IO.println "shared dense checkpoints: 4 IO byte comparisons"
-  let beforeTiny ← wholeCounts
-  let tinyRow : Hex.Groebner.SparseRow :=
-    ⟨Hex.Groebner.Packed.push .u32 {} 0,Hex.Groebner.Packed.push .u32 {} 1⟩
-  let tinyField : Hex.Groebner.PrimeField :=
-    ⟨2147483647,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
-  let tiny := Hex.Groebner.eliminateWith tinyField { densePivots := true }
-    (2+primitiveSeed%127) #[tinyRow] #[tinyRow]
-  if !tiny.result.isOk then throw (IO.userError "small cached-option matrix failed")
-  let afterTiny ← wholeCounts
-  if afterTiny.1 != beforeTiny.1+1 || afterTiny.2 != beforeTiny.2 then
-    throw (IO.userError "small cached-option matrix lost its bulk frame")
-  IO.println "small M31 cached-option bulk frame: accepted"
+  checkDenseOwnership primitiveSeed
   let afterDense ← denseCounts
   if afterDense.1 ≤ beforeDense.1 || afterDense.2.1 ≤ beforeDense.2.1 ||
       afterDense.2.2 ≤ beforeDense.2.2 then
