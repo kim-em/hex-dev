@@ -53,7 +53,8 @@ static inline struct trie_result trie_decline(void) {return (struct trie_result)
 
 /* A View carries the portable tree-validation proof. Each nonroot has one
    parent, depths increase, and there are at most 16384 nodes and 16383 edges. Validation is bounded separately
-   from the 4096-unit query quantum.
+   from the 4096-unit query quantum. Lookup rejects trees above 2048 nodes
+   before traversal, bounding every admitted walk by 4095 units.
    The fixed stack and work/edge guards additionally bound malformed raw probes.
    No storage is modified and no pointer outlives the call. */
 static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsigned w,
@@ -62,7 +63,7 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
         const uint8_t *nodes,size_t node_bytes,const uint8_t *edges,size_t edge_bytes,
         uint64_t remaining) {
     uint64_t n=node_bytes/24;
-    if(arity>4096 || (w!=1 && w!=2 && w!=4) || !n || n>16384 || node_bytes%24 ||
+    if(arity>4096 || (w!=1 && w!=2 && w!=4) || !n || n>2048 || node_bytes%24 ||
        edge_bytes!=(n-1)*8 || count>UINT32_MAX || query>=count || max_leading>=count ||
        arena_bytes!=count*arity*w || metadata_bytes!=count*24) return trie_decline();
     uint32_t pending[4096],sp=1;

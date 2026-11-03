@@ -78,9 +78,9 @@ def check (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Option
 end View
 
 /-- Status 1 is complete, 2 exhausts work, and 3 declines an unsupported query.
-All work is charged before the corresponding visit or edge scan. A query that
-would exceed 4096 native work units declines with zero reported work, so the
-caller can execute the portable traversal under its actual parent allowance. -/
+All work is charged before the corresponding visit or edge scan. Trees with
+more than 2048 nodes decline before traversal, ensuring every admitted walk
+fits the native quantum without discarding attempted traversal work. -/
 structure Result where
   reducer : Option Nat := none
   work : Nat := 0
@@ -96,7 +96,7 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     (arena metadata : @& ByteArray) (remaining : UInt64) : Result := Id.run do
   let n := view.nodes.size/24
   let w := width.toNat
-  if (w != 1 && w != 2 && w != 4) || count.toNat > 4294967295 ||
+  if n > 2048 || (w != 1 && w != 2 && w != 4) || count.toNat > 4294967295 ||
       monomial ≥ count || view.maxLeading ≥ count ||
       arena.size != count.toNat*view.arity*w || metadata.size != count.toNat*24 then
     return { status := 3 }
@@ -140,9 +140,10 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
   return out
 
 /-- Native lookup consumes only the validated tree witness and borrowed arenas.
-The validated tree admits at most 16384 nodes and 16383 edges; validation
-therefore inspects at most 32767 records. Each lookup has a separate fixed
-4096-unit node/edge bound and declines if it needs further work. `arena` has exactly
+The validated format admits at most 16384 nodes and 16383 edges; validation
+therefore inspects at most 32767 records. Native lookup admits only trees with
+at most 2048 nodes, so every complete walk fits its 4096-unit quantum. Larger
+views decline before traversal and retain portable priority pruning. `arena` has exactly
 `count*arity*width` little-endian exponent bytes; metadata has `count` records of
 24 bytes (u64 degree, support mask and hash). Status 3 declines an unsupported
 query without charging work. Tree leaves and leading identifiers must belong

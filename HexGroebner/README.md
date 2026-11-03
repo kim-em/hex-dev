@@ -192,8 +192,9 @@ priority without implementing the F4 preference policy. Checked descendant
 priority bounds skip non-improving subtrees; a divisor attaining the root bound
 ends the search because no remaining leaf can improve its priority.
 Its fixed stack and at most 4096 charged node/edge visits bound each lookup.
-A query needing further visits declines with zero reported work; the caller
-replays the portable traversal under the actual parent allowance. Validation
+Native lookup admits at most 2048 nodes, so its complete walk fits the quantum.
+Larger views decline before traversal and use portable priority pruning under
+the actual parent allowance, without discarded speculative visits. Validation
 separately inspects at most 32767 node/edge records.
 Encoding and validation charge the parent work and packed-byte allowances;
 insufficient preparation allowances and larger trees retain ordinary traversal.

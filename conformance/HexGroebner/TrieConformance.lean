@@ -111,9 +111,9 @@ def boundaryChecks : Bool := Id.run do
   | (.ok true,_) => return true
   | _ => return false
 
-/-- Large views can finish after exponent filtering or decline their native
-quantum. Declining must preserve exact parent-budget fallback, including a
-parent allowance equal to the native quantum. -/
+/-- Large views decline before native traversal and retain portable pruning.
+Every parent allowance, including the native quantum, has the exact portable
+charged prefix without any discarded native traversal. -/
 def largeChecks : Bool := Id.run do
   let context : Context := ⟨field,1,.grevlex⟩
   let trial : Computation Bool := do
@@ -135,10 +135,7 @@ def largeChecks : Bool := Id.run do
         let model := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
           state.table.exponents state.table.metadata (min allowance 4096).toUInt64
         if raw.reducer != model.reducer || raw.work != model.work || raw.status != model.status then return false
-        if query == 2000 && allowance ≥ 4096 &&
-            (raw.status != 3 || raw.work != 0 || raw.reducer.isSome) then return false
-        if query != 2000 && allowance ≥ 2102 &&
-            (raw.status != 1 || raw.work != 2102 || raw.reducer != some query) then return false
+        if raw.status != 3 || raw.work != 0 || raw.reducer.isSome then return false
         let budget := { limits with work := state.statistics.work+allowance }
         let (expected, work) := ReducerIndex.findPortable context index basis state.table monomial
           state.statistics.work budget.work

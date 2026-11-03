@@ -105,8 +105,8 @@ static void bush(unsigned width,unsigned end) {
     release(nodes);release(edges);release(arena);release(metadata);
 }
 /* The validator admits larger trees independently of the query quantum.
-   Filtering can finish a large tree; reaching the quantum must decline and
-   report zero work rather than falsely exhaust the caller's larger budget. */
+   Unsupported trees decline before traversal and report zero work rather
+   than performing speculative visits outside the parent accounting. */
 static void large(unsigned end) {
     const unsigned n=3001;
     struct buffer nodes=buffer_new(n*24,end),edges=buffer_new((n-1)*8,end);
@@ -129,10 +129,10 @@ static void large(unsigned end) {
     }
     struct trie_result r=trie_lookup(1,n-1,4,n,n-1,arena.data,arena.size,
         metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,4095);
-    require(r.status==2 && r.work==4095,"large query parent exhaustion");
+    require(r.status==3 && !r.key && !r.work,"large tree rejected before budget traversal");
     r=trie_lookup(1,n-1,4,n,0,arena.data,arena.size,
         metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,UINT64_MAX);
-    require(r.status==1 && r.key==2 && r.work==n+1,"filtered large tree completes");
+    require(r.status==3 && !r.key && !r.work,"filtered large tree also declines before traversal");
     release(nodes);release(edges);release(arena);release(metadata);
 }
 static void constant(unsigned end) {
