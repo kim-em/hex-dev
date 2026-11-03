@@ -264,6 +264,8 @@ LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
  return lean_io_result_mk_ok(lean_box(ok));
 }
 static uint64_t batch_hits=0,batch_terms=0,batch_deferrals=0,batch_waste=0,batch_bound_errors=0;
+static uint64_t batch_insertions=0;
+#define HEX_GROEBNER_PRODUCTS_INSERTED(n) (batch_insertions+=(n))
 #define HEX_GROEBNER_PRODUCTS_DEFERRED(w) (++batch_deferrals,batch_waste+=(w),batch_bound_errors+=((w)>4096))
 #define HEX_GROEBNER_PRODUCTS_FOUND(n) (++batch_hits,batch_terms+=(n))
 static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,unique_alias=0,unique_alias_mask=0;
@@ -537,6 +539,9 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_monomial_products_attempt(lean_obj_arg 
  lean_obj_arg max_count,lean_obj_arg max_bytes,lean_obj_arg max_work,uint8_t native) {
  return hex_test_products_attempt(table,support,monomial,start,count,max_count,max_bytes,max_work,native);
 }
+LEAN_EXPORT lean_obj_res hex_test_batch_insertions(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(batch_insertions));
+}
 LEAN_EXPORT lean_obj_res hex_test_batch_counts(lean_obj_arg world) {
  (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
  lean_ctor_set(out,0,lean_box_uint64(batch_hits));
@@ -771,6 +776,7 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_pivot_owners"] opaque pivotOwners : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_deferrals"] opaque batchDeferrals : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
+@[extern "hex_test_batch_insertions"] opaque batchInsertions : IO UInt64
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
@@ -889,6 +895,13 @@ def main : IO Unit := do
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
+  let beforeBatchInsertions ← batchInsertions
+  if !Hex.Groebner.ProductBatchConformance.insertionChecks primitiveSeed then
+    throw (IO.userError "monomial batch insertion/reference state mismatch")
+  let afterBatchInsertions ← batchInsertions
+  if afterBatchInsertions ≤ beforeBatchInsertions then
+    throw (IO.userError "native monomial batch insertion unused")
+  IO.println s!"native monomial batch insertions: {afterBatchInsertions-beforeBatchInsertions}; alias/refusal states passed"
   if !Hex.Groebner.DenseMatrixConformance.frameChecks primitiveSeed then
     throw (IO.userError "dense normalized/target frame boundaries differ")
   IO.println "dense normalized/target frames: exact parent refusal and density boundaries passed"

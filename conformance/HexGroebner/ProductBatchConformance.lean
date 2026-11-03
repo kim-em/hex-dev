@@ -140,6 +140,72 @@ def lastMiss (seed : Nat) : Bool := Id.run do
   let support := (Array.range 64).foldl (fun bytes i => Packed.push .u32 bytes i.toUInt64) {}
   return check table support 1 0 64 1000 10000000 1000000000 true
 
+@[noinline] private def insertionTable (arity count step bits nonce : Nat) (width := Width.u8) :
+    Option MonomialTable := Id.run do
+  let mut table : MonomialTable := { arity,hashBits := bits,width }
+  for i in [:count] do
+    let value := (i*step+(nonce+nonce)%2).toUInt64
+    let next := table.internOwned (Array.replicate arity value) 1000 10000000 1000000000
+    let .ok _ := next.result | return none
+    table := next.table
+  return some table
+
+/-- Insertions, virtual hits, shared arenas and every speculative refusal retain
+all reference bytes. No partial table is published on rehash, widening or limits. -/
+def insertionChecks (seed : Nat) : Bool := Id.run do
+  for bits in [0,3,64] do
+    for step in [1,257,65537] do
+      let some table := insertionTable 3 20 step bits seed | return false
+      let support := (Array.range 12).foldl (fun b i => Packed.push .u32 b i.toUInt64) {}
+      let expected := table.productsReference support 10 0 12 1000 10000000 1000000000 true
+      for attempt in [table.productsAttempt support 10 0 12 1000 10000000 1000000000 true,
+          table.productsAttemptPortable support 10 0 12 1000 10000000 1000000000 true] do
+        let .accepted result := attempt | return false
+        if result.table.count != 22 || !same result expected then return false
+      let repeated := (Array.range 16).foldl (fun b _ => Packed.push .u32 b 19) {}
+      let .accepted result := table.productsAttempt repeated 1 0 16 1000 10000000 1000000000 true
+        | return false
+      if result.table.count != 21 ||
+          !same result (table.productsReference repeated 1 0 16 1000 10000000 1000000000 true) then return false
+      let firstPart := table.productsReference support 10 0 11 1000 10000000 1000000000 true
+      for (countLimit,byteLimit,workLimit) in [(21,10000000,1000000000),
+          (1000,firstPart.table.bytes,1000000000),(1000,10000000,firstPart.table.work)] do
+        let .deferred original := table.productsAttempt support 10 0 12 countLimit byteLimit workLimit true
+          | return false
+        if !same ⟨.ok {},original⟩ ⟨.ok {},table⟩ ||
+            !check table support 10 0 12 countLimit byteLimit workLimit true then return false
+  -- The first missing product fits; the second needs a rehash.
+  let some rehash := insertionTable 1 7 1 64 seed | return false
+  let support := Packed.push .u32 (Packed.push .u32 {} 5) 6
+  let .deferred original := rehash.productsAttempt support 2 0 2 1000 10000000 1000000000 true
+    | return false
+  if !same ⟨.ok {},original⟩ ⟨.ok {},rehash⟩ || !check rehash support 2 0 2 1000 10000000 1000000000 true then return false
+  -- One insertion precedes a width change in each narrow representation.
+  for middle in [128,32768] do
+    let mut table : MonomialTable := { arity := 1 }
+    for value in [0,1,middle-1,middle,2*middle-1] do
+      let next := table.internOwned #[value.toUInt64] 1000 10000000 1000000000
+      let .ok _ := next.result | return false
+      table := next.table
+    let support := Packed.push .u32 (Packed.push .u32 {} 1) 3
+    let .deferred original := table.productsAttempt support 3 0 2 1000 10000000 1000000000 true
+      | return false
+    if !same ⟨.ok {},original⟩ ⟨.ok {},table⟩ || !check table support 3 0 2 1000 10000000 1000000000 true then return false
+  -- A virtual insertion precedes quantum exhaustion on a long collision chain.
+  let some crowded := insertionTable 65 20 1 0 seed | return false
+  let support := ((#[19,18] : Array Nat) ++ Array.range 18).foldl (fun b i => Packed.push .u32 b i.toUInt64) {}
+  let .deferred original := crowded.productsAttempt support 1 0 20 1000 10000000 1000000000 true
+    | return false
+  if !same ⟨.ok {},original⟩ ⟨.ok {},crowded⟩ || !check crowded support 1 0 20 1000 10000000 1000000000 true then return false
+  -- The support aliases the exponent arena; newly inserted ids are not inputs.
+  let some aliased := insertionTable 1 20 1 64 seed .u32 | return false
+  if !check aliased aliased.exponents 1 0 20 1000 10000000 1000000000 true then return false
+  let future := Packed.push .u32 (Packed.push .u32 {} 19) 20
+  if !check aliased future 1 0 2 1000 10000000 1000000000 true then return false
+  return true
+
+#guard insertionChecks 0
+
 #guard capacityChecks
 #guard lastMiss 0
 

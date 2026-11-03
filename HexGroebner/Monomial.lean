@@ -452,9 +452,9 @@ inductive ProductAttempt where
   | accepted (result : ProductResult)
   | deferred (table : MonomialTable)
 
-/-- The native batch model accepts only lookups: no monomial is inserted, at
-most 64 identifiers are returned and all charged visits fit a 4096-unit quantum.
-Only the bounded final workspace and support slice need fresh storage. -/
+/-- A bounded batch may look up or insert stable identifiers without rehashing
+or widening. All input identifiers belong to the initial table, at most 64 are
+returned, and all charged visits and insertions fit a 4096-unit quantum. -/
 @[expose] def productsAttemptPortable (table : MonomialTable) (support : ByteArray)
     (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) : ProductAttempt := Id.run do
   let small := fun n : Nat => n < USize.size / 2
@@ -467,11 +467,17 @@ Only the bounded final workspace and support slice need fresh storage. -/
       table.count == 0 || table.count > 4294967295 || table.hashBits > 64 ||
       monomial ≥ table.count || start ≥ stop || stop-start > 64 || !shape ||
       table.work > maxWork || table.bytes > maxBytes then return .deferred table
+  if !(List.range (stop-start)).all (fun i =>
+      (Packed.read .u32 support (start+i)).toNat < table.count) then return .deferred table
   let outcome := table.productsReference support monomial start count maxCount maxBytes maxWork true
   match outcome.result with
   | .error _ => return .deferred table
   | .ok _ =>
-    if outcome.table.count != table.count || outcome.table.work-table.work > 4096 then
+    if outcome.table.width != table.width ||
+        outcome.table.index.heads.size != table.index.heads.size ||
+        outcome.table.count > 4294967295 || outcome.table.work-table.work > 4096 ||
+        (outcome.table.count != table.count &&
+          (!small maxCount || outcome.table.bytes+1 ≥ USize.size)) then
       return .deferred table
     return .accepted outcome
 
@@ -487,7 +493,12 @@ theorem productsAttemptPortable_spec (table : MonomialTable) (support : ByteArra
   all_goals
     repeat' first | split at h | (cases h <;> rfl)
 
-/-- Bounded lookup batch; misses and unsupported cases defer the unchanged table. -/
+/-- Bounded lookup/insertion batch. The native ABI consumes the eight-object
+field table (trailing Width byte), borrows little-endian UInt32 support ids,
+and returns the complete scalar result or the unchanged owned table. Planning
+uses bounded private scratch; success acquires each arena once, preserving
+shared snapshots and support aliases. Unsupported widths, index growth, limits
+or slices defer before publishing any mutation. -/
 @[expose, extern "lean_hex_monomial_products_attempt"]
 def productsAttempt (table : MonomialTable) (support : @& ByteArray)
     (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) : ProductAttempt :=
