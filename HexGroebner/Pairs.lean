@@ -88,6 +88,9 @@ structure PairQueue where
   heap : PairHeap := .empty
   resolved : Std.TreeSet (Nat × Nat)
     (fun a b => (compare a.1 b.1).then (compare a.2 b.2)) := {}
+  /-- Stable indices retired from future pair installation after a newer leading
+  monomial divides theirs. Their polynomials and existing obligations remain. -/
+  inactive : Std.TreeSet Nat := {}
 
 namespace PairQueue
 
@@ -151,21 +154,31 @@ on retained pairs. The justification is ordered by LCM, then maximum basis
 index, then representative priority within an equal-LCM group. Install-time
 chains may cite an old pair with the same LCM and a smaller maximum index;
 LCM induction alone is insufficient. Proper old-pair pruning is deferred to
-selection. Unlike the full UPDATE algorithm, no basis entry is deleted. -/
+selection. Retired basis entries remain available as reducers and derivations;
+only future new-pair installation omits them. Installation with the retiring
+polynomial precedes retirement, retaining the necessary connecting obligation. -/
 def install (context : Context) (limits : Limits) (queue : PairQueue)
     (basis : Array BasisElement) (new : Nat) : Computation PairQueue := do
   if !limits.gebauerMoller then return ← installBuchberger context limits queue basis new
   let mut queue := queue
+  let mut inactive := queue.inactive
   let mut candidates : Std.HashMap Nat (CriticalPair × Bool) := {}
   let mut lcms : Array Nat := #[]
   for i in [:new] do
     let state ← get
     if state.statistics.pairs ≥ limits.pairs then throw (.exhausted .pairs)
     set { state with statistics.pairs := state.statistics.pairs + 1 }
+    spend limits (2 * (queue.inactive.size + 2).log2)
+    if queue.inactive.contains i then
+      modify fun s => { s with statistics.gmPairs := s.statistics.gmPairs + 1 }
+      continue
     spend limits (context.variables + 1)
     let a := basis[i]!.polynomial.monomial 0
     let b := basis[new]!.polynomial.monomial 0
     let lcm ← combine limits .lcm a b
+    if lcm == a then
+      spend limits (4 * (inactive.size + 2).log2)
+      inactive := inactive.insert i
     let table := (← get).table
     let product := coprime table a b
     let sugar := max (basis[i]!.sugar + table.degree lcm - table.degree a)
@@ -204,7 +217,7 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
     else
       minimal := minimal.push lcm
       if !product then queue ← queue.push limits pair
-  return queue
+  return { queue with inactive }
 
 /-- A completed chain and a proper-LCM chain have different dependency contracts. -/
 inductive PairCriterion where
