@@ -85,7 +85,7 @@ def run : IO Unit := do
     throw (IO.userError "compiled fused monomial lookup mismatch")
   if !SearchConformance.runtimeChecks seed || !SearchConformance.longChecks (seed+2047) then
     throw (IO.userError "compiled packed-chain search mismatch")
-  if !(TrieConformance.runtimeChecks seed && TrieConformance.boundaryChecks && TrieConformance.policyChecks) then
+  if !(TrieConformance.runtimeChecks seed && TrieConformance.boundaryChecks && TrieConformance.largeChecks && TrieConformance.cacheChecks seed && TrieConformance.policyChecks) then
     throw (IO.userError "validated trie lookup mismatch")
   if !ScanConformance.zeroBoundaryChecks seed then
     throw (IO.userError "compiled zero-scan reservation boundary mismatch")

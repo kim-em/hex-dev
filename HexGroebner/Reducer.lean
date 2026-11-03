@@ -66,11 +66,11 @@ private def priorities (table : MonomialTable) (basis : Array BasisElement)
   for i in [:ordered.size] do ranks := ranks.set! ordered[i]!.1 (i+1)
   return ranks
 
-/-- Encode small tries once, with charged validation and packed payload. Larger
+/-- Encode bounded tries once, with charged validation and packed payload. Larger
 indices and insufficient preparation allowances retain the ordinary traversal. -/
 private def encode (context : Context) (limits : Limits) (nodes : Array DivisorNode)
     (basis : Array BasisElement) : Computation (Option Native.Trie.View) := do
-  if context.variables > 4096 || nodes.isEmpty || nodes.size > 2048 then return none
+  if context.variables > 4096 || nodes.isEmpty || nodes.size > 16384 then return none
   let edges := nodes.foldl (fun n node => n+node.edges.size/8) 0
   if edges+1 != nodes.size then return none
   let bytes := nodes.size*24+edges*8
@@ -84,11 +84,24 @@ private def encode (context : Context) (limits : Limits) (nodes : Array DivisorN
   let mut data := ByteArray.emptyWithCapacity (nodes.size*24)
   let mut links := ByteArray.emptyWithCapacity (edges*8)
   let mut maximum : UInt64 := 0
-  let ranks := priorities state.table basis nodes
+  let mut ranks := priorities state.table basis nodes
+  -- Build assigns children larger identifiers than their parents. Cache the
+  -- minimum leaf priority so lookup can omit subtrees that cannot improve it.
+  for k in [:nodes.size] do
+    let i := nodes.size-1-k
+    if nodes[i]!.reducer.isNone then
+      let mut lower := 0
+      for j in [:nodes[i]!.edges.size/8] do
+        let child := (Packed.read .u32 nodes[i]!.edges (2*j+1)).toNat
+        if child ≤ i || child ≥ ranks.size then return none
+        let bound := ranks[child]!
+        if bound == 0 then return none
+        lower := if lower == 0 then bound else min lower bound
+      ranks := ranks.set! i lower
   for i in [:nodes.size] do
     let node := nodes[i]!
     let mut key := 0
-    let mut priority := 0
+    let mut priority := ranks[i]!
     let mut leading := 0
     if let some reducer := node.reducer then
       if reducer ≥ basis.size || reducer ≥ 4294967295 then return none
@@ -145,11 +158,16 @@ replace the exponent tests performed by the trie path. -/
 -- For a fixed immutable basis/index, selection depends only on the monomial.
 -- Shared and separate symbolic closures rely on this deterministic choice.
 def findPortable (context : Context) (index : ReducerIndex)
-    (basis : Array BasisElement) (table : MonomialTable) (monomial initialWork maxWork : Nat) :
+    (basis : Array BasisElement) (table : MonomialTable) (monomial initialWork maxWork : Nat)
+    (prune := true) :
     Except ComputeError (Option Nat) × Nat := Id.run do
   let mut work := initialWork
   let mut pending := #[0]
   let mut result : Option Nat := none
+  let mut bestPriority := 0
+  let data := if prune then index.packed.map (·.nodes) |>.getD {} else {}
+  let cached := !data.isEmpty
+  let lower := if cached then Native.Trie.word data 4 else 0
   -- Each trie node has one parent, so at most nodes.size nodes can be visited.
   for _ in [:index.nodes.size] do
     if pending.isEmpty then break
@@ -157,6 +175,8 @@ def findPortable (context : Context) (index : ReducerIndex)
     pending := pending.pop
     if work + 1 > maxWork then return (.error (.exhausted .work), work)
     work := work + 1
+    let bound := if cached then Native.Trie.word data (6*node+4) else 0
+    if result.isSome && bound != 0 && bound ≥ bestPriority then continue
     let n := index.nodes[node]!
     let coordinate := n.depth
     if coordinate == context.variables then
@@ -169,7 +189,11 @@ def findPortable (context : Context) (index : ReducerIndex)
             let q := basis[old]!.polynomial
             if p.size < q.size || (p.size == q.size && table.degree leading > table.degree (q.monomial 0)) then
               result := some candidate
-          else result := some candidate
+              bestPriority := bound
+          else
+            result := some candidate
+            bestPriority := bound
+          if lower != 0 && bestPriority == lower then return (.ok result, work)
     else
       let exponent := table.exponent monomial coordinate
       let charge := n.edges.size / 8
@@ -193,7 +217,7 @@ def find (context : Context) (limits : Limits) (index : ReducerIndex)
       if state.table.count ≤ 4294967295 && monomial ≤ 4294967295 then
         Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
           state.table.exponents state.table.metadata
-          (min (limits.work-state.statistics.work) 4096).toUInt64
+          (min (limits.work-state.statistics.work) 32768).toUInt64
       else { status := 3 }
       else { status := 3 }
     let (result, work) := if native.status == (3 : UInt8) then

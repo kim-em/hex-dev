@@ -184,12 +184,17 @@ semantic hash and support mask. Hash buckets use full exponent equality checks.
 Exponent storage widens from 8 to 16 to 32 bits before overflow, preserving
 identifiers and hashes. Larger exponents produce representation exhaustion.
 Divisibility masks only reject candidates; trie paths inspect exact exponents.
-Small immutable reducer indices also retain a validated packed tree. Read-only
-native lookup admits at most 2048 nodes and 2047 edges, preserving sparse-row
-preference, higher-degree tie breaking and LIFO traversal ties.
+Immutable reducer indices also retain a validated packed tree when small enough.
+The validated format admits at most 16384 nodes and 16383 edges. Lookup preserves
+sparse-row preference, higher-degree tie breaking and LIFO traversal ties.
 Lean assigns explicit priorities once; native lookup selects the least admitted
-priority without implementing the F4 preference policy.
-Its fixed stack and at most 4095 charged node/edge visits bound each call.
+priority without implementing the F4 preference policy. Checked descendant
+priority bounds skip non-improving subtrees; a divisor attaining the root bound
+ends the search because no remaining leaf can improve its priority.
+Its fixed 16384-entry stack and 32768-unit query quantum cover every complete
+walk of at most 32767 node/edge visits. Unsupported formats decline before
+traversal; larger indices retain ordinary traversal under the parent allowance.
+Validation separately inspects at most 32767 node/edge records.
 Encoding and validation charge the parent work and packed-byte allowances;
 insufficient preparation allowances and larger trees retain ordinary traversal.
 Queries use the current arena and exponent width, so stable IDs remain valid
