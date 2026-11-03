@@ -102,6 +102,16 @@ def verify_guards(guards,science):
         data=guards.read('review-checks-sources/'+path)
         require(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==oid,'reviewed test source differs')
     require('retirementPairs\ndid not evaluate' in guards.text('mutations/reverse-guard-build.log'),'reversed-divisibility mutant was not detected')
+    reverse=guards.json('mutations/reverse-check/status.json')
+    reverse_manifest=source(guards,'mutations/reverse')
+    require(not reverse['detected'] and len(reverse['records'])==128 and
+            reverse['binary_sha256']==reverse_manifest['binary_sha256']['compute'] and
+            reverse['mutant_source_fingerprint']==reverse_manifest['source_fingerprint'],'reversed mutation binding differs')
+    for row in reverse['records']:
+        case=row['case'];require(row['exit_code']==0 and row['basis_equal'],'reversed mutation changed a fresh basis')
+        require(row['input_sha256']==hashlib.sha256(guards.read(f'random/{case}.json')).hexdigest(),'reversed mutation input differs')
+        output=guards.json(f'mutations/reverse-check/{case}.stdout')
+        require(output['basis']==guards.json(f'random/{case}-degree-compute.stdout')['basis'],'reversed mutation output differs')
     final=guards.json('review-full-status.json')
     require(len(final)==9 and all(r['exit_code']==0 and all(r[k]==v for k,v in reviewed.items())for r in final),'final project checks failed')
     mutant=guards.json('mutations/always-check/status.json');last=mutant['records'][-1];case=last['case']
@@ -156,14 +166,48 @@ def verify_rebase(capsule,before,review_identity):
     return identity,after
 
 
+def verify_review(capsule,before,guards):
+    after=source(capsule,'current');a,b=listing(before['source_manifest']),listing(after['source_manifest'])
+    require(set(a)==set(b) and {p for p in a if a[p]!=b[p]}=={'HexGroebner/Pairs.lean'},'final review runtime change differs')
+    require(code(capsule.text('current/root-sources/HexGroebner/Pairs.lean'))==code(guards.text('reviewed/root-sources/HexGroebner/Pairs.lean')) and
+            after['binary_sha256']==before['binary_sha256'],'final review changed executable logic')
+    identity=capsule.json('identity.json');text=capsule.text('checks.manifest')
+    require(identity['source_fingerprint']==after['source_fingerprint'] and
+            identity['source_manifest_sha256']==hashlib.sha256(after['source_manifest'].encode()).hexdigest() and
+            identity['checks_manifest_sha256']==hashlib.sha256(text.encode()).hexdigest(),'final review identity differs')
+    for path,oid in listing(text).items():
+        data=capsule.read('checks-sources/'+path)
+        require(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==oid,'final review check source differs')
+    rows=capsule.json('full-status.json')
+    require(len(rows)==9 and all(r['exit_code']==0 and all(r[k]==v for k,v in identity.items())for r in rows),'final review project checks failed')
+    meta=capsule.json('mutation/metadata.json');inp=capsule.json('mutation/input.json')
+    require(inp==guards.json('mutations/always-check/minimal-f2-input.json') and
+            meta['good_manifest']['binary_sha256']==before['binary_sha256'],'minimized mutation source differs')
+    records=meta['records'];require([r['label']for r in records]==['good','bad'],'minimized mutation coverage differs')
+    expected_hashes=[before['binary_sha256']['compute'],guards.json('mutations/always-check/status.json')['binary_sha256']]
+    for row,digest in zip(records,expected_hashes):
+        require(row['exit_code']==0 and row['binary_sha256_before']==row['binary_sha256_after']==digest and
+                row['input_sha256']==hashlib.sha256(capsule.read('mutation/input.json')).hexdigest(),'minimized mutation executable binding differs')
+    good,bad=[capsule.json('mutation/'+label+'.stdout')for label in ['good','bad']]
+    from scripts.oracle.groebner_sympy import check
+    check({**inp,'basis':good['basis']})
+    require(good['kind']==bad['kind']=='unchecked_candidate' and [[[1,0,2],1]]in good['basis'] and
+            [[[1,0,2],1]]not in bad['basis'],'minimized mutation does not miss xz squared')
+    return identity
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    for key in ['tree','array','guards','rebased','report']:p.add_argument('--'+key,type=Path,required=True)
+    for key in ['tree','array','guards','rebased','review','report']:p.add_argument('--'+key,type=Path,required=True)
     p.add_argument('--check',action='store_true');p.add_argument('--current',action='store_true');args=p.parse_args()
     tree,array,guards=[Capsule(path)for path in [args.tree,args.array,args.guards]]
+    require(source(tree,'baseline')==source(array,'baseline'),'prototype baselines differ')
+    inputs=[capsule.json(label+'/'+name+'/metadata.json')['input_sha256']for capsule,label in [(tree,'active-pairs'),(array,'active-list')]for name in ['f4','f4-repeat']]
+    require(all(value==inputs[0]for value in inputs),'prototype input suites differ')
     runs=[(label,name,campaign(capsule,label,name))for capsule,label in [(tree,'active-pairs'),(array,'active-list')]for name in ['f4','f4-repeat']]
     identity,reviewed,review_identity=verify_guards(guards,array)
     rebased=Capsule(args.rebased);current_identity,current_manifest=verify_rebase(rebased,reviewed,review_identity)
+    review=Capsule(args.review);final_identity=verify_review(review,current_manifest,guards)
     comparison,comparison_meta=msolve(guards,"reviewed")
     engine=guards.json("msolve-engine.json")
     require(engine["engine_sha256"]==comparison_meta["msolve_engine_sha256"] and "clang version 23.1.3" in engine["engine_comment"],"comparator compiler identity differs")
@@ -171,7 +215,7 @@ def main():
     compiled=source(array,'active-list');versions={k:v['version'].splitlines()[0]for k,v in compiled['compilers'].items()}
     host=array.json('active-list/f4/metadata.json')['host']
     if args.current:
-        current=source_identity();require(all(current[k]==v for k,v in current_identity.items()if k!='source_commit'),'current source/check identities differ')
+        current=source_identity();require(all(current[k]==v for k,v in final_identity.items()if k!='source_commit'),'current source/check identities differ')
     lines=['# Critical-pair retirement','',
            'A basis entry whose leading monomial is divisible by a newer leading monomial retires from future pair generation. '
            'Its polynomial remains a reducer, its stable index and derivations remain valid, and existing queued obligations remain. '
@@ -188,7 +232,8 @@ def main():
            '|---|---:|---:|---:|---:|---:|---:|---:|']
     for label,name,r in runs:lines.append(f"| {label} / {name} | {r['cpu']} | {r['process']:.6f} | {r['candidate']:.6f} | {r['work']:.6f} | {r['pairs']:.6f} | {r['minimum']:.6f}–{r['maximum']:.6f} | {r['rss']['A']}/{r['rss']['B']} |")
     lines+=['','All 224 processes (112 pairs) complete with equal canonical bases and no failures or timeouts. '
-            'Statistics can change because pair generation and matrix work change. Results vary by family and campaign; the small balanced-suite improvement does not establish a general speedup or comparator leadership.','',
+            'Statistics can change because pair generation and matrix work change. These campaigns do not establish an overall timing benefit at this resolution. '
+            'The array choice rests on deterministic reductions in considered pairs and charged work, rather than a timing ranking against the tree implementation. No comparator leadership is claimed.','',
             '| Family (process B/A) | Tree first | Tree repeat | Array first | Array repeat |','|---|---:|---:|---:|---:|']
     for family in runs[0][2]['families']:lines.append('| '+family+' | '+' | '.join(f"{r['families'][family]:.6f}"for _,_,r in runs)+' |')
     lines+=['','The array route avoids generating retired pairs; its considered-pair count is lower rather than recording those pairs as GM rejections. '
@@ -208,16 +253,18 @@ def main():
             f"The reviewed runtime `{reviewed['source_fingerprint']}` changes only pair-module documentation after measurement, reproducing both measured executable hashes. "
             'Additional Lean guards check a nonzero omitted S-polynomial, connecting obligations, the required ordinary-F2 term `xz²`, and both retired and Buchberger-to-GM frontier-gap resumptions. '
             'All nine project checks also pass with the final guard sources. Their source and logs are retained separately from the earlier verification snapshot.','',
-            f"Current runtime `{current_manifest['source_fingerprint']}` incorporates the default-preserving compiler-selection setting, compiler-command provenance changes and the monomial target’s missing trie-header dependency. "
+            f"Rebased runtime `{current_manifest['source_fingerprint']}` incorporates the default-preserving compiler-selection setting, compiler-command provenance changes and the monomial target’s missing trie-header dependency. "
             'Only Lake/freeze metadata differs from the reviewed runtime; all three executables remain byte-identical. '
             'All nine checks pass again after rebasing. Editing and restoring the included header rebuilds the monomial object and preserves its original hash.','',
+            f"Final runtime `{final_identity['source_fingerprint']}` makes the UPDATE depth convention explicit, with active depth zero and each removed index one greater than its replacement. "
+            'The runtime edit is documentation only, with all three executable hashes preserved. Final guards additionally compare the four-generator system with unpruned Buchberger and exercise repeated installation; all nine checks pass again.','',
             'The reversed-divisibility mutation preserves the tested fresh bases: losing retirement can merely lose pruning. '
             'The targeted queue-obligation guard separately checks the retirement direction. A second mutation retiring unrelated entries produces a wrong basis, independently rejected by SymPy. '
             'Its minimized ordinary-F2 system `yz, xy+xz, y²` misses `xz²`; direct regressions cover both schedules. Mutation attempts and failures are retained.','']
     at=lines.index('## Verification')
     lines[at:at]=['| Comparator family | Hex/msolve process |','|---|---:|',*[f'| {family} | {ratio:.6f} |'for family,ratio in comparison['per_family'].items()],'']
-    for path,c in [(args.tree,tree),(args.array,array),(args.guards,guards),(args.rebased,rebased)]:lines.append(f'`{path.name}`: SHA-256 `{c.sha256}`.')
-    lines+=['',f'Regenerate with `python3 scripts/bench/groebner_retirement_report.py --tree {args.tree} --array {args.array} --guards {args.guards} --rebased {args.rebased} --report {args.report} --check --current`.','']
+    for path,c in [(args.tree,tree),(args.array,array),(args.guards,guards),(args.rebased,rebased),(args.review,review)]:lines.append(f'`{path.name}`: SHA-256 `{c.sha256}`.')
+    lines+=['',f'Regenerate historical evidence with `python3 scripts/bench/groebner_retirement_report.py --tree {args.tree} --array {args.array} --guards {args.guards} --rebased {args.rebased} --review {args.review} --report {args.report} --check`. Add `--current` to require the present checkout to match the final verification sources.','']
     text='\n'.join(lines)
     if args.check:require(args.report.read_text()==text,'report is stale')
     else:args.report.write_text(text)

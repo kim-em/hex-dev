@@ -1,6 +1,7 @@
 """Verify matched full-basis msolve observations retained in F4 capsules."""
 import hashlib
 import math
+import statistics
 from scripts.bench.groebner_trie_report import source,require,mean
 from scripts.oracle.groebner_singular import polynomial,canonical
 
@@ -43,5 +44,10 @@ def msolve(capsule,source_label):
     ratio=mean([mean(v)for v in families.values()])
     require(len(families)==7 and all(len(v)==4 for v in families.values())and
             recorded['ratio_direction']=='Hex/msolve process'and math.isclose(ratio,recorded['family_balanced_geomean'],rel_tol=1e-12),'comparator ratio differs')
+    ratios=[r for values in families.values()for r in values]
+    for key,value in [('geomean',mean(ratios)),('minimum',min(ratios)),('maximum',max(ratios)),('median',statistics.median(ratios))]:
+        require(math.isclose(recorded[key],value,rel_tol=1e-12),'recorded comparator '+key+' differs')
+    require(set(recorded['per_family'])==set(families) and
+            all(math.isclose(recorded['per_family'][family],mean(values),rel_tol=1e-12)for family,values in families.items()),'recorded comparator family ratio differs')
     return recorded,meta
 
