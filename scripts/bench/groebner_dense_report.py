@@ -39,7 +39,7 @@ def sweep(capsule, label, manifests):
     require(len(samples)==len(indexed)==56 and len(set(order))==14, 'incomplete sweep')
     require([(v['case'],v['block'],v['arm'])for v in samples] ==
             [(case,block,arm)for block in [0,1]for case in order for arm in (['A','B']if block==0 else['B','A'])], 'recorded AB/BA order differs')
-    families={};candidate=[];work=[];allocations=[]
+    families={};candidate=[];work=[];allocations=[];fields={};process=[]
     for case in order:
         for block in [0,1]:
             a,b=[indexed[case,block,arm]for arm in ['A','B']]
@@ -52,6 +52,9 @@ def sweep(capsule, label, manifests):
                 require(int(capsule.text(f'{label}/{case}-b{block}-{arm}.rss'))==sample['peak_rss_kib'], 'RSS differs')
                 outputs.append(output)
             candidate.append(outputs[1]['candidateNanos']/outputs[0]['candidateNanos'])
+            process.append(b['wall_nanos']/a['wall_nanos'])
+            field=fields.setdefault(a['p'],{'process':[],'candidate':[]})
+            field['process'].append(process[-1]);field['candidate'].append(candidate[-1])
             work.append(outputs[1]['statistics']['work']/outputs[0]['statistics']['work'])
             allocations.append(outputs[1]['statistics']['allocatedBytes']-outputs[0]['statistics']['allocatedBytes'])
             for output in outputs:
@@ -63,7 +66,7 @@ def sweep(capsule, label, manifests):
     require(math.isclose(balanced,recorded['family_balanced_geomean'],rel_tol=1e-12), 'process ratio differs')
     require(recorded['samples']==56 and recorded['complete_bases_equal']==28 and recorded['failed_processes']==recorded['timeouts']==0, 'coverage differs')
     require(all(math.isclose(mean(v),recorded['per_family'][k],rel_tol=1e-12)for k,v in families.items()), 'family ratios differ')
-    return metadata,recorded,mean(candidate),mean(work),min(allocations),max(allocations)
+    return metadata,recorded,mean(candidate),mean(work),min(allocations),max(allocations),dict(process=process,candidate=candidate,fields=fields)
 
 
 def kernels(capsule, root, shapes):
@@ -87,7 +90,7 @@ def kernels(capsule, root, shapes):
             pair=[]
             for block in [0,1]:
                 prefix=f'{root}/kernels/matched/' + (''if shape=='single'else shape+'/')
-                functions={'single':{'dense':'densePivot','sparse':'sparsePivot'},'half':{'dense':'denseBatch','sparse':'sparseBatch'},'three-quarters':{'dense':'denseThreeQuarters','sparse':'sparseThreeQuarters'},'full':{'dense':'denseFull','sparse':'sparseFull'}}
+                functions={'single':{'dense':'densePivot','sparse':'sparsePivot'},'half':{'dense':'denseBatch','sparse':'sparseBatch'},'three-quarters':{'dense':'denseThreeQuarters','sparse':'sparseThreeQuarters'},'full':{'dense':'denseFull','sparse':'sparseFull'},'selected':{'dense':'denseSelected','sparse':'sparseSelected'}}
                 records=[capsule.json(prefix+f'b{block}-{n}-{arm}/result.json')['results'][0]for arm in ['sparse','dense']]
                 require(all(record['function']=='Hex.Groebner.Bench.'+functions[shape][arm] for record,arm in zip(records,['sparse','dense'])), 'kernel function differs')
                 a,b=[record['points'][0]for record in records]
@@ -118,17 +121,40 @@ def shape_cache(capsule):
     return ratios
 
 
-def main():
-    parser=argparse.ArgumentParser(description=__doc__)
-    for name in ['experiments','first','final','baseline','old-baseline','guards','report']:
-        parser.add_argument('--'+name,type=Path,required=True)
-    parser.add_argument('--check',action='store_true');parser.add_argument('--current',action='store_true')
-    args=parser.parse_args()
-    experiments,first,final,baseline,old,guards=map(Capsule,[args.experiments,args.first,args.final,args.baseline,args.old_baseline,args.guards])
-    manifests={}
-    for capsule,label in [(experiments,'dense-reviewed'),(experiments,'dense-density'),(experiments,'scan-shapes'),(first,'dense-state'),(final,'dense-active'),(baseline,'trie-format'),(old,'sampled-final')]:
-        manifest=source(capsule,label);manifests[manifest['source_fingerprint']]=manifest
-    current=final.json('dense-active/manifest.json')
+def usage_counts(science, guards, metadata):
+    cases=sorted({sample['case']for sample in metadata['samples']})
+    results=[]
+    for case in cases:
+        input_name=case+'.json'
+        require(hashlib.sha256(guards.read('usage-inputs/'+input_name)).hexdigest()==metadata['input_sha256'][input_name],'usage input differs')
+        modes=[]
+        for enabled,arm in [('false','A'),('true','B')]:
+            by_compiler=[]
+            for compiler in ['clang','gcc']:
+                prefix=f'probes/{compiler}/usage-results/{case}-{enabled}'
+                command=guards.json(prefix+'.command.json')
+                require(command[command.index('--dense-pivots')+1]==enabled and
+                        command[command.index('--scheduling')+1]=='degree' and
+                        Path(command[-1]).name==input_name,'usage controls differ')
+                counts=guards.json(prefix+'.stderr')
+                require(set(counts)=={'prepares','admitted','scans','updates','bulkAccepted','bulkDeclined'}and
+                        all(isinstance(v,str)and v.isdecimal()and int(v)<2**64 for v in counts.values()),'invalid usage counters')
+                counts={k:int(v)for k,v in counts.items()}
+                output=guards.json(prefix+'.stdout')
+                expected=science.json(f'dense-review/enabled/{case}-b0-{arm}.stdout')
+                output.pop('candidateNanos');expected.pop('candidateNanos')
+                require(output==expected,'untimed usage output differs from timed candidate')
+                if enabled=='false' or output['p']==32003:
+                    require(counts['prepares']==counts['admitted']==counts['scans']==counts['updates']==0,'inert path used dense operations')
+                require(counts['admitted']<=counts['prepares'],'admission count exceeds calls')
+                by_compiler.append(counts)
+            require(by_compiler[0]==by_compiler[1],'compiler usage differs')
+            modes.append(by_compiler[0])
+        results.append((case,*modes))
+    require(len(results)==14,'usage coverage differs')
+    return results
+
+def verify_guards(guards, current, expanded=False):
     runtime,checks=guards.text('runtime.manifest'),guards.text('checks.manifest')
     require(runtime==current['source_manifest'],'verification runtime differs')
     for listing,prefix in [(runtime,'runtime-sources/'),(checks,'checks-sources/')]:
@@ -141,13 +167,41 @@ def main():
     require(len(full)==9 and {v['name']for v in full}=={'build','oracles','driver','bench','dag','phase4','manifest','headers','lines'},'project coverage differs')
     require(all(v['exit_code']==0 and v['source_manifest_sha256']==runtime_sha and v['checks_manifest_sha256']==checks_sha for v in native+full),'verification result/identity differs')
     for compiler in ['clang','gcc']:
-        require(guards.text(compiler+'.log').count('dense full-F4 updates: 1')==4,'instrumented full-F4 cache updates missing')
+        log=guards.text(compiler+'.log').splitlines()
+        require(log.count('dense full-F4 updates: 1')==4,'instrumented full-F4 cache updates missing')
+        if expanded:
+            require(log.count('shared dense checkpoints: 4 IO byte comparisons')==4 and
+                    log.count('small M31 cached-option bulk frame: accepted')==4,'expanded runtime checks missing')
+    return runtime_sha,checks_sha
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    for name in ['experiments','first','final','baseline','old-baseline','guards','report']:
+        parser.add_argument('--'+name,type=Path,required=True)
+    parser.add_argument('--reviewed',type=Path);parser.add_argument('--reviewed-guards',type=Path)
+    parser.add_argument('--check',action='store_true');parser.add_argument('--current',action='store_true')
+    args=parser.parse_args()
+    experiments,first,final,baseline,old,guards=map(Capsule,[args.experiments,args.first,args.final,args.baseline,args.old_baseline,args.guards])
+    manifests={}
+    for capsule,label in [(experiments,'dense-reviewed'),(experiments,'dense-density'),(experiments,'scan-shapes'),(first,'dense-state'),(final,'dense-active'),(baseline,'trie-format'),(old,'sampled-final')]:
+        manifest=source(capsule,label);manifests[manifest['source_fingerprint']]=manifest
+    current=final.json('dense-active/manifest.json')
+    runtime_sha,checks_sha=verify_guards(guards,current)
+    reviewed=None;review_guards=None
+    if args.reviewed:
+        require(args.reviewed_guards is not None,'reviewed verification capsule missing')
+        reviewed=Capsule(args.reviewed);review_guards=Capsule(args.reviewed_guards)
+        manifest=source(reviewed,'dense-review');manifests[manifest['source_fingerprint']]=manifest
+        current=reviewed.json('dense-review/manifest.json')
+        runtime_sha,checks_sha=verify_guards(review_guards,current,True)
     if args.current:
         identity=source_identity();require(identity['source_manifest_sha256']==runtime_sha and identity['checks_manifest_sha256']==checks_sha,'current sources differ')
     campaigns=[(first,'dense-state/'+name)for name in ['enabled','control','combined']]+[(final,'dense-active/'+name)for name in ['enabled','control','combined']]
+    if reviewed:campaigns += [(reviewed,'dense-review/'+name)for name in ['enabled','control','combined']]
     sweeps=[sweep(capsule,label,manifests)for capsule,label in campaigns]
     single,one=kernels(experiments,'dense-reviewed',['single'])
     batch,many=kernels(experiments,'dense-density',['half','three-quarters','full'])
+    selected_samples,selected=kernels(reviewed,'dense-review',['selected']) if reviewed else ([],{})
     shape_ratios=shape_cache(experiments)
     require(many['half'][1]==2 and one['single'][1]==many['three-quarters'][1]==many['full'][1]==0, 'reported signal-floor counts differ')
     text=f'''# Checked dense pivots: kernels and complete F4 observations
@@ -158,8 +212,8 @@ allowances. Dense updates preserve zero gaps, invalid-target prefixes, pending
 cursors and trace events. The deterministic continuation and whole-eliminator
 proofs include preparation charges. Final runtime `{runtime_sha[:12]}` and
 verification sources `{checks_sha[:12]}` pass eight Clang/GCC sanitizer variants
-and nine project gates. Instrumented complete F4 exercises a native dense update
-in every compiler variant. Kernel checking remains separate from native testing.
+and nine project gates. One synthetic 174-variable linear-ideal F4 fixture exercises exactly one native
+dense update in each compiler variant. Kernel checking remains separate from native testing.
 
 The experimental option defaults off. Only M31 matrices admit caches; narrower
 fields retain their existing kernels. A proved active-cache bit preserves sparse
@@ -205,8 +259,10 @@ Certificate generation, independent final verification and kernel checking are
 excluded. These inputs are not held out and establish no leadership.
 
 The first integration also routed narrow fields and cache-empty matrices through
-the dense dispatch. Its negative results are retained. The final integration
+the dense dispatch. Its negative results are retained. The second integration
 restricts dispatch as described above; its control uses the merged trie runtime.
+The current integration additionally restores small-matrix bulk frames and
+bounds dense updates over partial pending rows.
 `enabled` compares caches off/on in the same binary; `control` compares prior
 production with caches off; `combined` compares prior production with caches on.
 Each campaign independently keeps adjacent AB/BA samples, peak RSS, host context,
@@ -216,15 +272,38 @@ sequential collector; full-F4 per-process timestamps were not recorded.
 | Campaign | Baseline → candidate | Process ratio | Candidate ratio | Work ratio | Allocated-byte delta range | Peak RSS A/B KiB |
 | --- | --- | ---: | ---: | ---: | --- | --- |
 '''
-    for (_,label),(metadata,analysis,candidate,work,lo,hi) in zip(campaigns,sweeps):
+    for (_,label),(metadata,analysis,candidate,work,lo,hi,variation) in zip(campaigns,sweeps):
         rss=analysis['peak_rss_kib'];text+=f"| `{label}` | `{metadata['baseline_source_fingerprint']}` → `{metadata['source_fingerprint']}` | {analysis['family_balanced_geomean']:.4f} | {candidate:.4f} | {work:.6f} | {lo}–{hi} | {rss['A']}/{rss['B']} |\n"
-    text+='\nAll 336 complete-F4 processes / 168 matched pairs complete with equal bases. Shared-host variability is retained; these descriptive sweeps establish no overall speedup. The option remains disabled by default. The fastest-open-source milestone and remaining compiler/runtime investigation remain open under #10987.\n'
+    text+='\nThe following ranges retain all 28 paired process and candidate ratios in each campaign. They describe variation across inputs and AB/BA blocks, not confidence intervals. Each prime has fourteen pairs. The 32003 enabled comparison runs the same arithmetic path on both arms and provides an inert control.\n'
+    text+='\n| Campaign | Process pair range | Candidate pair range | p=32003 process / candidate | p=2147483647 process / candidate |\n| --- | --- | --- | ---: | ---: |\n'
+    for (_,label),values in zip(campaigns,sweeps):
+        variation=values[-1];ratios=variation['process'];times=variation['candidate'];fields=variation['fields']
+        text+=f'| `{label}` | {min(ratios):.4f}–{max(ratios):.4f} | {min(times):.4f}–{max(times):.4f} | '+ ' | '.join(f"{mean(fields[p]['process']):.4f} / {mean(fields[p]['candidate']):.4f}"for p in [32003,2147483647])+' |\n'
+    composition=sweeps[3][1]['family_balanced_geomean']*sweeps[4][1]['family_balanced_geomean']
+    combined=sweeps[5][1]['family_balanced_geomean']
+    text+=f'\nThe `dense-active` control × enabled process ratios give {composition:.4f}, while its independently collected combined campaign gives {combined:.4f}. This discrepancy exceeds the reported 1–3% point effects. These campaigns cannot attribute a speedup or slowdown to the dense kernel. Both default-off controls exceed 1; these observations do not distinguish default-path overhead from host variation and do not establish that the new path is free.\n'
+    text+=f'\nAll {56*len(campaigns)} complete-F4 processes / {28*len(campaigns)} matched pairs complete with equal bases. Shared-host variability is retained; these descriptive sweeps establish no overall speedup. The option remains disabled by default. The fastest-open-source milestone and remaining compiler/runtime investigation remain open under #10987.\n'
+    if reviewed:
+        composition=sweeps[-3][1]['family_balanced_geomean']*sweeps[-2][1]['family_balanced_geomean']
+        combined=sweeps[-1][1]['family_balanced_geomean']
+        text+=f'\nFor the current integration, control × enabled gives {composition:.4f}, versus {combined:.4f} in the independent combined campaign. Its default-off control also exceeds 1; the attribution limitation remains.\n'
+        usage=usage_counts(reviewed,review_guards,sweeps[-3][0])
+        text+='\nSeparate untimed instrumented executions record native usage for every input with the option off and on. Clang and GCC agree exactly, and complete candidate outputs and counters agree with the timed source. These sanitizer executions are coverage observations and are excluded from timings.\n'
+        text+='\n| Input | Preparation calls / admitted on | Dense scan calls / packets on | Bulk accepted off / on | Bulk declined off / on |\n| --- | ---: | ---: | --- | --- |\n'
+        for case,a,b in usage:text+=f"| {case} | {b['prepares']} / {b['admitted']} | {b['scans']} / {b['updates']} | {a['bulkAccepted']} / {b['bulkAccepted']} | {a['bulkDeclined']} / {b['bulkDeclined']} |\n"
+        ratio,flags,rows=selected['selected']
+        text+=f'\nThe current integration preserves bulk-frame eligibility for M31 matrices of at most 128 columns. Dense packets cover bounded pending prefixes after pivot selection or suspension, with a local span bound; rejected packets retain sparse updates. The selected-pivot kernel includes the selection tick in each of 64 updates and resumes the final entry of 4096-entry rows in a second call. Its {len(selected_samples)} invocations / 12 matched pairs give a dense/sparse geometric mean of {ratio:.4f}, with {flags} matched samples below the signal floor. Preparation remains excluded.\n'
+        text+='\n| Selected-pivot nonzeros | Dense/sparse ratio |\n| ---: | ---: |\n'
+        for n,value in rows:text+=f'| {n} | {value:.4f} |\n'
     text+='\n| Final combined family | Process ratio |\n| --- | ---: |\n'
     for family,value in sweeps[-1][1]['per_family'].items():text+=f'| {family} | {value:.4f} |\n'
     text+=f'\nAn earlier unselected C-local row-shape cache retains 112 process samples / 56 matched deterministic and sampled comparisons in the experiment capsule. Its process ratios are {shape_ratios["deterministic"]:.4f} (deterministic) and {shape_ratios["sampled"]:.4f} (sampled). Its complete outputs agree and it establishes no benefit; that cache is absent from the implementation. The diagnostic profiles and all native-check snapshots are retained with their exact source manifests.\n'
-    for title,path,capsule in [('Kernel and unselected experiments',args.experiments,experiments),('First integration',args.first,first),('Final integration',args.final,final),('Final verification',args.guards,guards),('Trie baseline',args.baseline,baseline),('Earlier production baseline',args.old_baseline,old)]:
+    for title,path,capsule in [('Kernel and unselected experiments',args.experiments,experiments),('First integration',args.first,first),('Second integration',args.final,final),('Second verification',args.guards,guards),('Trie baseline',args.baseline,baseline),('Earlier production baseline',args.old_baseline,old)]:
         text+=f'\n{title}: [{path.name}](raw/{path.name}), SHA-256 `{capsule.sha256}`, {capsule.count} payloads plus manifest.\n'
-    text+='\nRegenerate with `python3 scripts/bench/groebner_dense_report.py '+' '.join('--'+name+' '+str(getattr(args,name.replace('-','_')))for name in ['experiments','first','final','baseline','old-baseline','guards','report'])+' --check`. Add `--current` to require the present runtime and verification sources. Collectors include host-specific commands and paths; adapt those locations when replaying on another host.\n'
+    if reviewed:
+        for title,path,capsule in [('Current integration',args.reviewed,reviewed),('Current verification',args.reviewed_guards,review_guards)]:
+            text+=f'\n{title}: [{path.name}](raw/{path.name}), SHA-256 `{capsule.sha256}`, {capsule.count} payloads plus manifest.\n'
+    text+='\nRegenerate with `python3 scripts/bench/groebner_dense_report.py '+' '.join('--'+name+' '+str(getattr(args,name.replace('-','_')))for name in ['experiments','first','final','baseline','old-baseline','guards','report'])+ ((' --reviewed '+str(args.reviewed)+' --reviewed-guards '+str(args.reviewed_guards))if reviewed else '')+' --check`. Add `--current` to require the present runtime and verification sources. Collectors include host-specific commands and paths; adapt those locations when replaying on another host.\n'
     if args.check:require(args.report.read_text()==text,'report differs from verified data')
     else:args.report.write_text(text)
     print('dense-pivot report verified'if args.check else'dense-pivot report generated')
