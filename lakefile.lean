@@ -104,7 +104,9 @@ target hexgroebnerMonomialO pkg : FilePath := do
   let directory := pkg.dir / "HexGroebner" / "ffi"
   let source ← inputTextFile (directory / "monomial_hit.c")
   let row ← inputTextFile (directory / "row_update.c")
-  let inputs := source.zipWith (fun source _ => source) row
+  let trie ← inputTextFile (directory / "trie_lookup.h")
+  let inputs := (source.zipWith (fun source _ => source) row).zipWith
+    (fun source _ => source) trie
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "monomial_hit.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]
