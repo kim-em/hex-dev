@@ -185,8 +185,8 @@ Exponent storage widens from 8 to 16 to 32 bits before overflow, preserving
 identifiers and hashes. Larger exponents produce representation exhaustion.
 Divisibility masks only reject candidates; trie paths inspect exact exponents.
 Immutable reducer indices also retain a validated packed tree when small enough.
-The validated format admits at most 16384 nodes and 16383 edges, preserving sparse-row
-preference, higher-degree tie breaking and LIFO traversal ties.
+The validated format admits at most 16384 nodes and 16383 edges. Lookup preserves
+sparse-row preference, higher-degree tie breaking and LIFO traversal ties.
 Lean assigns explicit priorities once; native lookup selects the least admitted
 priority without implementing the F4 preference policy. Checked descendant
 priority bounds skip non-improving subtrees; a divisor attaining the root bound

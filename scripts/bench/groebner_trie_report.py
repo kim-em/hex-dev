@@ -126,6 +126,16 @@ def main():
     require(data.text('trie-selected'+path).replace(comment,'') == data.text('trie-bounded'+path), 'selected source comment delta differs')
     latest = format_data.json('trie-format/manifest.json')
     measured = latest
+    fixture_runtime = fixture_baseline.text('final-source.manifest')
+    fixture_checks = fixture_baseline.text('checks-source.manifest')
+    fixture_manifest = baseline.json('sampled-final/manifest.json')
+    require(fixture_runtime == fixture_manifest['source_manifest'], 'fixture baseline runtime differs')
+    for line in fixture_checks.splitlines():
+        _,oid,rest = line.split(' ',2)
+        _,path = rest.split('\t')
+        blob = fixture_baseline.read('checks-sources/'+path)
+        require(hashlib.sha1(b'blob '+str(len(blob)).encode()+b'\0'+blob).hexdigest() == oid, 'fixture baseline source blob mismatch')
+    require('nodes.size > 2048' in baseline.text('sampled-final/root-sources/HexGroebner/Reducer.lean'), 'baseline format limit differs')
     fixture_path = 'checks-sources/conformance-fixtures/HexGroebner/f4.jsonl'
     old_fixture = [loads(line) for line in fixture_baseline.text(fixture_path).splitlines()]
     new_fixture = [loads(line) for line in guards.text(fixture_path).splitlines()]
@@ -198,8 +208,12 @@ project checks pass. Earlier failed stale-cost/fixture-freshness gates are
 retained separately. The fixture audit finds {fixture_counts['work']} changed
 `work` values, {fixture_counts['serialWork']} `serialWork` values and
 {fixture_counts['referenceWork']} `referenceWork` values, among {fixture_records} of 1134 records.
-Every other field and basis agrees, and all changed work values decrease.
-Verification collectors and their host-specific commands are bundled.
+The fixture baseline is runtime `{fixture_manifest['source_fingerprint']}` at
+revision `{fixture_manifest['commit']}`; its verification-source manifest checks
+the baseline fixture blob. Every other field and basis agrees, and all changed work values decrease.
+Verification collectors and their host-specific commands are bundled. Sample-order
+checks verify recorded AB/BA order; the collectors append samples sequentially
+after each process completes. Per-process timestamps were not recorded.
 
 All sweeps use the same fourteen medium development inputs, seven families
 at 32003 and 2147483647, grevlex and degree scheduling. Every run uses one

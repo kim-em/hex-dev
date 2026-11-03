@@ -22,8 +22,12 @@ project checks pass. Earlier failed stale-cost/fixture-freshness gates are
 retained separately. The fixture audit finds 286 changed
 `work` values, 447 `serialWork` values and
 289 `referenceWork` values, among 448 of 1134 records.
-Every other field and basis agrees, and all changed work values decrease.
-Verification collectors and their host-specific commands are bundled.
+The fixture baseline is runtime `a1eb7697c27d` at
+revision `5f41fad9c94c5044c3b254ed0e3f7647ca5a4034`; its verification-source manifest checks
+the baseline fixture blob. Every other field and basis agrees, and all changed work values decrease.
+Verification collectors and their host-specific commands are bundled. Sample-order
+checks verify recorded AB/BA order; the collectors append samples sequentially
+after each process completes. Per-process timestamps were not recorded.
 
 All sweeps use the same fourteen medium development inputs, seven families
 at 32003 and 2147483647, grevlex and degree scheduling. Every run uses one
