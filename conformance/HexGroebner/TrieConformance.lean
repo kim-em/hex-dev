@@ -37,6 +37,11 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
           let values := (Array.range n).map fun i => (base+(k+2*i+seed)%4).toUInt64
           let monomial ← intern limits values
           let state ← get
+          let (plain,plainWork) := ReducerIndex.findPortable context index basis state.table monomial
+            state.statistics.work limits.work false
+          let (pruned,prunedWork) := ReducerIndex.findPortable context index basis state.table monomial
+            state.statistics.work limits.work
+          if !equal plain pruned || prunedWork > plainWork then return false
           for allowance in [0,1,2,5,17,1000,4096,100000,2^90] do
             let budget := { limits with work := state.statistics.work+allowance }
             let (expected,work) := ReducerIndex.findPortable context index basis state.table monomial

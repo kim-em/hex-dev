@@ -27,13 +27,20 @@ static uint8_t trie_valid(uint64_t arity,const uint8_t *nodes,size_t node_bytes,
         uint64_t depth=trie_read(record,4),start=trie_read(record+4,4),count=trie_read(record+8,4);
         uint64_t key=trie_read(record+12,4),priority=trie_read(record+16,4),leading=trie_read(record+20,4);
         if(depth>arity || start!=cursor || start+count>e || (depth==arity && count)) return 0;
-        if(!key) {if(priority || leading) return 0;}
+        if(!key) {if(leading) return 0;}
         else if(depth!=arity || !priority || leading>max_leading) return 0;
+        uint64_t lower=0;
         for(uint64_t k=0;k<count;++k) {
             uint64_t child=trie_read(edges+(start+k)*8+4,4);
             if(!child || child>=n || trie_read(nodes+child*24,4)!=depth+1 || parents[child]) return 0;
+            if(!key && priority) {
+                uint64_t bound=trie_read(nodes+child*24+16,4);
+                if(!bound) return 0;
+                if(!lower || bound<lower) lower=bound;
+            }
             parents[child]=1;
         }
+        if(!key && priority && priority!=lower) return 0;
         cursor+=count;
     }
     if(cursor!=e || parents[0]) return 0;
@@ -70,6 +77,8 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
         if(work+1>remaining) return (struct trie_result){best,work,2};
         if(work>=4096) return trie_decline();
         ++work;
+        uint32_t bound=(uint32_t)trie_read(record+16,4);
+        if(best && bound && bound>=best_priority) continue;
         if(depth==arity) {
             uint32_t key=(uint32_t)trie_read(record+12,4);
             if(key) {

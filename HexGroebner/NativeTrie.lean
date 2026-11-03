@@ -16,8 +16,10 @@ namespace Hex.Groebner.Native.Trie
 def word (bytes : @& ByteArray) (i : Nat) : Nat := Native.read bytes 4 (i*4)
 
 /-- Check a bounded rooted tree and all packed spans before creating its witness.
-Node records contain depth, edge start/count, reducer-plus-one, explicit positive priority and
-leading monomial. Edges contain exponent/child pairs. Every nonroot has exactly
+Node records contain depth, edge start/count, reducer-plus-one, priority and
+leading monomial. A leaf has positive priority. A branch stores zero (unknown)
+or the minimum positive priority of all its children; a cached branch may
+only have cached children. Depths make this a valid descendant-leaf bound. Edges contain exponent/child pairs. Every nonroot has exactly
 one parent; depths increase along edges. -/
 def validPortable (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Bool := Id.run do
   let n := nodes.size/24
@@ -36,13 +38,19 @@ def validPortable (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) 
     if depth > arity || start != cursor || start+count > e ||
         (depth == arity && count != 0) then return false
     if key == 0 then
-      if priority != 0 || leading != 0 then return false
+      if leading != 0 then return false
     else if depth != arity || priority == 0 || leading > maxLeading.toNat then return false
+    let mut lower := 0
     for k in [:count] do
       let child := word edges (2*(start+k)+1)
       if child == 0 || child ≥ n || word nodes (6*child) != depth+1 then return false
+      if key == 0 && priority != 0 then
+        let bound := word nodes (6*child+4)
+        if bound == 0 then return false
+        lower := if lower == 0 then bound else min lower bound
       parents := parents.modify child (·+1)
       if parents[child]! != 1 then return false
+    if key == 0 && priority != 0 && priority != lower then return false
     cursor := cursor+count
   if cursor != e || parents[0]! != 0 then return false
   for i in [1:n] do
@@ -102,6 +110,8 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     pending := pending.pop
     if out.work+1 > remaining.toNat then return { out with status := 2 }
     out := { out with work := out.work+1 }
+    let bound := word view.nodes (6*node+4)
+    if out.reducer.isSome && bound != 0 && bound ≥ bestPriority then continue
     let depth := word view.nodes (6*node)
     if depth == view.arity then
       let key := word view.nodes (6*node+3)

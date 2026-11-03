@@ -131,7 +131,42 @@ static void oversized(unsigned end) {
     require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,0),"2049-node tree rejected");
     release(nodes);release(edges);
 }
+/* Two depth-two branches: the first visited leaf has priority one. A
+   checked bound skips the other branch's edge and leaf, preserving selection. */
+static void bounded_priority(void) {
+    uint8_t nodes[5*24]={0},edges[4*8]={0},arena[3*2]={0},metadata[3*24]={0};
+    put(nodes+8,4,2);put(nodes+16,4,1);
+    for(unsigned i=1;i<=2;++i) {
+        uint8_t *r=nodes+i*24;
+        put(r,4,1);put(r+4,4,i+1);put(r+8,4,1);put(r+16,4,3-i);
+    }
+    for(unsigned i=3;i<5;++i) {
+        uint8_t *r=nodes+i*24;
+        put(r,4,2);put(r+4,4,4);put(r+12,4,i-2);
+        put(r+16,4,5-i);put(r+20,4,i-3);
+    }
+    for(unsigned i=0;i<4;++i) put(edges+i*8+4,4,i+1);
+    require(trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"checked priority bounds");
+    struct trie_result result=trie_lookup(2,1,1,3,2,arena,sizeof arena,metadata,sizeof metadata,
+        nodes,sizeof nodes,edges,sizeof edges,4096);
+    require(result.status==1 && result.key==2 && result.work==7,"priority subtree pruning");
+    for(unsigned cap=0;cap<=9;++cap) {
+        result=trie_lookup(2,1,1,3,2,arena,sizeof arena,metadata,sizeof metadata,
+            nodes,sizeof nodes,edges,sizeof edges,cap);
+        require(result.work<=cap && result.status==(cap<7?2:1),"cached priority budget prefix");
+    }
+    put(nodes+16,4,2);
+    require(!trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"overstated priority bound");
+    put(nodes+16,4,1);put(nodes+24+16,4,0);
+    require(!trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"cached parent with unknown child");
+    put(nodes+16,4,0);put(nodes+48+16,4,0);
+    require(trie_valid(2,nodes,sizeof nodes,edges,sizeof edges,1),"uncached legacy branches");
+    result=trie_lookup(2,1,1,3,2,arena,sizeof arena,metadata,sizeof metadata,
+        nodes,sizeof nodes,edges,sizeof edges,4096);
+    require(result.status==1 && result.key==2 && result.work==9,"uncached complete traversal");
+}
 int main(void) {
+    bounded_priority();
     for(unsigned end=0;end<2;++end) {
         constant(end);
         oversized(end);
