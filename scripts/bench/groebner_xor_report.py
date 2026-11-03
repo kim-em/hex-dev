@@ -3,6 +3,8 @@
 import argparse
 import hashlib
 import math
+from collections import Counter
+import random
 from pathlib import Path
 import statistics
 import sys
@@ -133,12 +135,22 @@ def main():
         observations.append((label,sweep(cap,'xor/'+label,before,after,flags,count)))
     require(observations[1][1]['metadata']['input_sha256']==observations[2][1]['metadata']['input_sha256'],
             'unchanged control inputs differ')
-    family_counts={family:(6 if family=='mq'else 2)for family in observations[0][1]['families']}
-    import random
+    family_counts={'cyclic':2,'kat':2,'eco':2,'noon':2,'reimer':2,
+                   'minrank':2,'dense-quadratic':2,'mq':6}
     plan=cap.json('xor/f2-false/inputs/suite.json')
+    f2=observations[0][1];samples=f2['metadata']['samples']
+    require(Counter(r['family']for r in samples)=={k:2*v for k,v in family_counts.items()} and
+            all(r['p']==2 for r in samples),'F2 family/modulus coverage differs')
+    require([r['name']for r in plan['cases']]==[r['case']for r in samples if r['block']==0 and r['arm']=='A'],
+            'timed cases differ from the provenance suite')
+    named={r['name']:r for r in plan['cases']}
+    require(all(r['family']==named[r['case']]['family']and r['p']==named[r['case']]['p']for r in samples),'timed case metadata differs')
+    require(f2['families']['mq']<1 and min(v for k,v in f2['families'].items()if k!='mq')<1<=
+            max(v for k,v in f2['families'].items()if k!='mq'),'F2 family summary differs')
     prime_meta=observations[1][1]['metadata'];mq_variables=[]
     for row in plan['cases']:
         value=cap.json('xor/f2-false/inputs/'+row['name']+'.json')
+        require(value['p']==row['p']==2 and value['variables']==row['variables'],'suite input metadata differs')
         if row['family']=='mq':
             n=value['variables'];mq_variables.append(n);rng=random.Random(1098727+n)
             require(row['provenance']['seed']==1098727+n,'MQ seed differs')
@@ -164,6 +176,9 @@ def main():
                  'measure-f2-xor-only-prime-repeat.py','measure-f2-xor-only-msolve.py','pack-f2-xor-only.py']:
         require(bool(cap.read('collectors/'+name)),'collector missing')
     comparison,meta=msolve(cap,'xor',expected_families=family_counts,moduli={2})
+    require({r['case']for r in meta['samples']}==set(named) and
+            all(r['family']==named[r['case']]['family'] and r['p']==2 for r in meta['samples']),
+            'comparator cases differ from the provenance suite')
     require(meta['requested_scheduling']=={'A':'degree','B':None} and
             meta['requested_dense_pivots']=={'A':'false','B':None},'comparator controls differ')
     from scripts.oracle.groebner_singular import expression
@@ -189,12 +204,12 @@ def main():
                     cap.json(f'xor/f2-false/{case}-b{block}-B.stdout')['basis'],'comparator basis differs')
     lines=['# Scalar characteristic-two subtraction','',
            'The scalar sparse-row update keeps its existing validation and failure prefix. For modulus two, validation gives source coefficient one and target/factor values in {0,1}; subtraction then uses exact XOR. The runtime change adds only this shortcut. This operates in the ordinary polynomial ring over F2; it does not impose x² = x.','',
-           f'These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses {versions["native"]} and Lean-generated C uses {versions["lean"]}. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.','',
+           f'These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses {versions["native"]} and Lean-generated C uses SDK {versions["lean"]}. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.','',
            '| Comparison | Process B/A | Candidate B/A | Equal-family B/A | Process pair range |',
            '|---|---:|---:|---:|---:|']
     for label,row in observations:
         lines.append(f"| {label} | {row['process']:.6f} | {row['candidate']:.6f} | {row['balanced']:.6f} | {row['minimum']:.6f}–{row['maximum']:.6f} |")
-    lines+=['','All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The seeded MQ systems improve; other F2 families are mixed on two pairs each. The prime controls use AVX2 dispatch on this host, with scalar tails and refused packets. They do not measure scalar-only odd-prime performance or establish a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.','',
+    lines+=['','All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The seeded MQ systems improve; other F2 families are mixed on two pairs each. The prime controls use the default runtime dispatcher. No forced-scalar timing is included; these controls do not establish scalar-only odd-prime performance or a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.','',
             '| Family | F2 | Prime first | Prime repeat |','|---|---:|---:|---:|']
     for family in observations[0][1]['families']:
         values=[f"{r['families'][family]:.6f}"if family in r['families']else'—'for _,r in observations]
@@ -206,7 +221,7 @@ def main():
         lines.append(f"| {label} | {row['metadata']['cpu']} | {rss[0]}/{rss[1]} |")
     lines.append(f"| msolve | {meta['cpu']} | {comparison['peak_rss_kib']['A']}/{comparison['peak_rss_kib']['B']} |")
     lines+=['','The ten F2 systems comprise seven centered signed lifts of the existing prime-field families and three seeded quadratic systems (8, 9 and 10 variables) including squares. Degenerations and zero terms are retained in the A/B inputs. The comparator receives canonical generators for the same ideals. These are development observations, with unequal input counts by family; both input-weighted and equal-family aggregates are shown.','',
-            f"A separate current comparison with msolve `{meta['msolve_commit']}` completes forty processes with twenty equal full bases. Hex/msolve process ratios are {comparison['geomean']:.6f} by input and {comparison['family_balanced_geomean']:.6f} with equal family weights, with pair range {comparison['minimum']:.6f}–{comparison['maximum']:.6f}. msolve uses Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. This leaves a performance gap.",'',
+            f"A separate current comparison with msolve `{meta['msolve_commit']}` completes forty processes with twenty equal full bases. Hex/msolve process ratios are {comparison['geomean']:.6f} by input and {comparison['family_balanced_geomean']:.6f} with equal family weights, with pair range {comparison['minimum']:.6f}–{comparison['maximum']:.6f}. msolve uses Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. Compiler and tuning differences are part of this observed performance gap.",'',
             '| F2 family | Hex/msolve |','|---|---:|']
     for family,ratio in comparison['per_family'].items():lines.append(f'| {family} | {ratio:.6f} |')
     lines+=['','All twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project checks pass. Existing conformance covers native/portable sparse updates, malformed prefixes, aliases, budgets, resumptions and complete F4 outputs. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. The `compute-reference` executable is the full-initialization build of the same native driver; its name does not imply portable arithmetic.','',

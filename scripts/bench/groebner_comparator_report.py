@@ -7,6 +7,9 @@ from scripts.oracle.groebner_singular import polynomial,canonical
 
 
 def msolve(capsule,source_label,*,expected_families=None,moduli=None):
+    if expected_families is not None:
+        require(all(isinstance(n,int)and n>0 for n in expected_families.values())and
+                sum(expected_families.values())%2==0,'invalid expected family counts')
     case_count=sum(expected_families.values())//2 if expected_families is not None else 14
     label=source_label+'/msolve';meta=capsule.json(label+'/metadata.json');recorded=capsule.json(label+'/analysis.json')
     manifest=source(capsule,source_label)

@@ -2,7 +2,7 @@
 
 The scalar sparse-row update keeps its existing validation and failure prefix. For modulus two, validation gives source coefficient one and target/factor values in {0,1}; subtraction then uses exact XOR. The runtime change adds only this shortcut. This operates in the ordinary polynomial ring over F2; it does not impose x² = x.
 
-These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses clang version 21.1.8 and Lean-generated C uses clang version 23.1.0. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.
+These manual shared-host measurements use one algorithm thread, automatically leased CPUs and adjacent AB followed by BA. Every completed process is retained. The inconclusive prime control has exactly one unchanged repeat; the F2 comparison has no repeat. Native C uses clang version 21.1.8 and Lean-generated C uses SDK clang version 23.1.0. Production AVX-512 is disabled. Candidate production, native verification, certificate generation and kernel checking are distinct; only candidate/process times appear below.
 
 | Comparison | Process B/A | Candidate B/A | Equal-family B/A | Process pair range |
 |---|---:|---:|---:|---:|
@@ -10,7 +10,7 @@ These manual shared-host measurements use one algorithm thread, automatically le
 | prime-control | 1.004511 | 1.002884 | 1.004511 | 0.832635–1.215639 |
 | prime-control-repeat | 1.005832 | 0.998731 | 1.005832 | 0.860519–1.220921 |
 
-All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The seeded MQ systems improve; other F2 families are mixed on two pairs each. The prime controls use AVX2 dispatch on this host, with scalar tails and refused packets. They do not measure scalar-only odd-prime performance or establish a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.
+All 152 processes (76 pairs) return equal complete bases, with no failures or timeouts. The seeded MQ systems improve; other F2 families are mixed on two pairs each. The prime controls use the default runtime dispatcher. No forced-scalar timing is included; these controls do not establish scalar-only odd-prime performance or a general timing benefit. These inputs are not the fixed balanced acceptance suite or held-out inputs. No fastest-open-source milestone is claimed.
 
 | Family | F2 | Prime first | Prime repeat |
 |---|---:|---:|---:|
@@ -32,7 +32,7 @@ All 152 processes (76 pairs) return equal complete bases, with no failures or ti
 
 The ten F2 systems comprise seven centered signed lifts of the existing prime-field families and three seeded quadratic systems (8, 9 and 10 variables) including squares. Degenerations and zero terms are retained in the A/B inputs. The comparator receives canonical generators for the same ideals. These are development observations, with unequal input counts by family; both input-weighted and equal-family aggregates are shown.
 
-A separate current comparison with msolve `3672113ee2c696a2ac9c637636e0f7214f500ba1` completes forty processes with twenty equal full bases. Hex/msolve process ratios are 1.423340 by input and 1.234546 with equal family weights, with pair range 0.589214–3.160436. msolve uses Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. This leaves a performance gap.
+A separate current comparison with msolve `3672113ee2c696a2ac9c637636e0f7214f500ba1` completes forty processes with twenty equal full bases. Hex/msolve process ratios are 1.423340 by input and 1.234546 with equal family weights, with pair range 0.589214–3.160436. msolve uses Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. Compiler and tuning differences are part of this observed performance gap.
 
 | F2 family | Hex/msolve |
 |---|---:|
