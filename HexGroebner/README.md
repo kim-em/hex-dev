@@ -649,6 +649,9 @@ The `pairs` statistic and allowance count considered pairs: retired indices
 produce no future pair attempts under GM. [Matched pair-management measurements](../reports/bench-results/hexgroebner-gm.md)
 include the small-system regression and full raw samples. Full F4 invariant
 and termination proofs remain required.
+[Retirement measurements](../reports/bench-results/hexgroebner-retirement.md)
+retain both tested data structures, per-family regressions and the matched
+remaining gap to msolve.
 
 GM installation interns LCMs even for pairs later omitted by its criteria.
 Those stable monomials remain in the arena and count against `monomials` and
