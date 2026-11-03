@@ -13,6 +13,11 @@ public section
 
 namespace Hex.Groebner.Sampling
 
+/- Consuming phase entries use exported, owned ABIs. A borrowed state keeps its
+pivot arrays shared in the caller during a transition, forcing a copy on each
+insertion. The owned ABI permits ordinary in-place growth while real caller
+snapshots retain their immutable contents. Portable definitions are unchanged. -/
+
 private abbrev Work := ExceptT MatrixError (StateM State)
 
 private def liftWork (action : Matrix.Work α) : Work α := ExceptT.mk fun s =>
@@ -55,6 +60,7 @@ private def takeGather : Work Native.Gather.State := do
     gather := ⟨{},{},{},0⟩ }
   return gather
 
+@[export lean_hex_sampling_install_reducer]
 private def installReducer (limits : MatrixLimits) : Work Unit := do
   let field := (← get).field
   let index := (← get).installed
@@ -79,6 +85,7 @@ private def installReducer (limits : MatrixLimits) : Work Unit := do
       slots,pivots,installed := index+1
       statistics.matrix.processedRows := s.statistics.matrix.processedRows+1 }
 
+@[export lean_hex_sampling_phase]
 private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
   let phase := (← get).phase
   match phase with
@@ -277,6 +284,7 @@ private theorem step_spec (limits : MatrixLimits) (native : Bool) :
 partial dense row, advanced random state and charged prefix. Other errors are
 terminal. Native row updates and scan/gather inspect at most 4096 entries per
 call; workspace initialization uses the existing capped native allocator. -/
+@[export lean_hex_sampling_next_mode]
 private def nextWith (limits : MatrixLimits) (state : State) (native : Bool) : State := Id.run do
   match state.failure with
   | some (.exhausted _) => pure ()
@@ -296,6 +304,7 @@ private def nextWith (limits : MatrixLimits) (state : State) (native : Bool) : S
   | .error error => return { state with failure := some error }
 
 /-- Advance using the implementation mode fixed at initialization. -/
+@[export lean_hex_sampling_next]
 def next (limits : MatrixLimits) (state : State) : State := nextWith limits state state.native
 
 /-- Scalar reference phase with identical state, accounting and random draws. -/

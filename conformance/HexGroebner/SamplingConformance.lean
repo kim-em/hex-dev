@@ -154,6 +154,20 @@ def resumeRows (native : Bool) : Bool := Id.run do
     stopped.statistics.randomWords == 1 && stopped.statistics.combinations == 0 &&
     stopped.random == ready.random && same (run stopped) (run initial)
 
+/-- Fresh known-pivot growth for instrumented ownership checks. The caller
+uses a runtime size and observes the result before reading native counters. -/
+def grow (n : Nat) : Bool := Id.run do
+  let reducers := (Array.range n).map fun i => SparseRow.mk
+    (Packed.push .u32 {} i.toUInt64) (Packed.push field.width {} 1)
+  let mut state := Sampling.start field n reducers #[] (Hex.Rand.ofSeed 0)
+  for _ in [:3*n+64] do
+    state := Sampling.advance limits 64 state
+    if state.failure.isSome || state.phase == .done then break
+  return state.failure.isNone && state.phase == .done && state.pivots.size == n &&
+    state.rows.isEmpty && state.statistics.randomWords == 0 &&
+    ((state.pivots.zipIdx).all fun (row,i) =>
+      (SparseRow.mk row.columns row.coefficients).entries field == #[(i,1)])
+
 #guard miss false && miss true
 #guard totalZeros false && totalZeros true
 #guard resumeCombine false && resumeCombine true
@@ -162,6 +176,7 @@ def resumeRows (native : Bool) : Bool := Id.run do
 #guard resumeScan false && resumeScan true
 #guard resumeValidation false && resumeValidation true
 #guard resumeRows false && resumeRows true
+#guard grow 128
 #guard corpus
 
 end Hex.Groebner.SamplingChecks
