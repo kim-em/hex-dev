@@ -303,6 +303,16 @@ The C implementations are audited and compared independently. Disabling native
 rows also disables these validation/allocation calls. The existing column-map
 builder separately uses the 4096-byte append-zero provider in chunks.
 
+The five Groebner native objects use the host `cc` by default. To choose a
+specific compiler, run `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner`.
+The compiler selection and flags are part of the object build traces. Other
+libraries and Lean-generated C retain their own compiler choices. Lake retains
+this setting across later plain builds; `lake -R build` restores defaults and
+resets other `-K` settings too. The freeze tool's `--native-cc` option resolves
+compiler commands before detached builds and records compiler/wrapper inputs.
+[Compiler observations](../reports/bench-results/hexgroebner-compiler.md) keep
+Groebner-only and broader compiler changes separate, with no overall speed claim.
+
 The native scan dispatches once per bounded call to specialized one-, two- or
 four-byte scalar loops. Scalar products use uint128 Barrett reduction when
 available and exact word remainder otherwise. One- and two-byte residues use a
