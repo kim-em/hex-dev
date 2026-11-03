@@ -203,9 +203,11 @@ private def budgets (context : Context) (input : Array RawPolynomial) : Bool := 
 
 #guard budgets context input
 
-#guard match computeWith { context with order := .lex } {} input with
-  | .candidate _ stats => stats.gmPairs > 0
-  | _ => false
+#guard match computeWith { context with order := .lex } {} input,
+    computeWith { context with order := .lex } { gebauerMoller := false } input with
+  | .candidate actual stats, .candidate reference previous =>
+    actual.polynomials == reference.polynomials && stats.pairs < previous.pairs
+  | _, _ => false
 
 #guard budgets { context with order := .lex } input
 
@@ -360,7 +362,8 @@ private def pairCriteria (scheduling : Scheduling) : Bool := Id.run do
       selectedCount := selectedCount + selected.size
       queue := next
     return selectedCount == 3 && queue.heap.isEmpty && queue.resolved.isEmpty &&
-      (← get).statistics.gmPairs == 3
+      (← get).statistics.gmPairs == 1 && (← get).statistics.pairs == 4 &&
+      queue.active == #[3] && queue.frontier == 4
   for trial in [proper, equal, product, dominated, multiple] do
     match trial.run ⟨{ arity := 2 }, {}⟩ with
     | (.ok true, _) => pure ()
@@ -383,7 +386,8 @@ private def strategyResume : Bool := Id.run do
       match computeWith context { work, gebauerMoller := strategy, batchInterreduce } input 37 with
       | .candidate candidate _ => if .ok candidate.polynomials != expected then return false
       | .exhausted .work state =>
-        prunedCheckpoint := prunedCheckpoint || state.workspace.statistics.gmPairs > 0
+        prunedCheckpoint := prunedCheckpoint || state.workspace.statistics.gmPairs > 0 ||
+          state.checkpoint.queue.active.size < state.checkpoint.queue.frontier
         match resumeWith { gebauerMoller := !strategy, batchInterreduce := !batchInterreduce } state with
         | .candidate candidate statistics =>
           if .ok candidate.polynomials != expected || candidate.randomState != 37 ||

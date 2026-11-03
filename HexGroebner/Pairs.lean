@@ -88,9 +88,11 @@ structure PairQueue where
   heap : PairHeap := .empty
   resolved : Std.TreeSet (Nat × Nat)
     (fun a b => (compare a.1 b.1).then (compare a.2 b.2)) := {}
-  /-- Stable indices retired from future pair installation after a newer leading
-  monomial divides theirs. Their polynomials and existing obligations remain. -/
-  inactive : Std.TreeSet Nat := {}
+  /-- Stable indices eligible for future pairs. Retired polynomials and existing
+  obligations remain in their original basis and queue positions. -/
+  active : Array Nat := #[]
+  /-- First basis index not yet considered for eligibility. -/
+  frontier : Nat := 0
 
 namespace PairQueue
 
@@ -161,24 +163,30 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
     (basis : Array BasisElement) (new : Nat) : Computation PairQueue := do
   if !limits.gebauerMoller then return ← installBuchberger context limits queue basis new
   let mut queue := queue
-  let mut inactive := queue.inactive
+  if new < queue.frontier then return ← installBuchberger context limits queue basis new
+  let mut active := queue.active
+  queue := { queue with active := #[] }
+  spend limits (new - queue.frontier)
+  for i in [queue.frontier:new] do active := active.push i
+  let mut retained : Array Nat := #[]
+  let mut retired := false
   let mut candidates : Std.HashMap Nat (CriticalPair × Bool) := {}
   let mut lcms : Array Nat := #[]
-  for i in [:new] do
+  for position in [:active.size] do
+    let i := active[position]!
     let state ← get
     if state.statistics.pairs ≥ limits.pairs then throw (.exhausted .pairs)
     set { state with statistics.pairs := state.statistics.pairs + 1 }
-    spend limits (2 * (queue.inactive.size + 2).log2)
-    if queue.inactive.contains i then
-      modify fun s => { s with statistics.gmPairs := s.statistics.gmPairs + 1 }
-      continue
     spend limits (context.variables + 1)
     let a := basis[i]!.polynomial.monomial 0
     let b := basis[new]!.polynomial.monomial 0
     let lcm ← combine limits .lcm a b
     if lcm == a then
-      spend limits (4 * (inactive.size + 2).log2)
-      inactive := inactive.insert i
+      if !retired then
+        spend limits position
+        retained := active.extract 0 position
+        retired := true
+    else if retired then retained := retained.push i
     let table := (← get).table
     let product := coprime table a b
     let sugar := max (basis[i]!.sugar + table.degree lcm - table.degree a)
@@ -217,7 +225,8 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
     else
       minimal := minimal.push lcm
       if !product then queue ← queue.push limits pair
-  return { queue with inactive }
+  spend limits (active.size + 1)
+  return { queue with active := (if retired then retained else active).push new, frontier := new + 1 }
 
 /-- A completed chain and a proper-LCM chain have different dependency contracts. -/
 inductive PairCriterion where
