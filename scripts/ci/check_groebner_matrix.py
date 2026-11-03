@@ -796,7 +796,8 @@ def main : IO Unit := do
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
   let beforeDense ← denseCounts
-  if !Hex.Groebner.DenseConformance.scanChecks primitiveSeed then
+  if !Hex.Groebner.DenseConformance.boundaryChecks primitiveSeed ||
+      !Hex.Groebner.DenseConformance.scanChecks primitiveSeed then
     throw (IO.userError "dense pivot scan prefix mismatch")
   let mut denseColumns : ByteArray := {}
   let mut denseValues : ByteArray := {}

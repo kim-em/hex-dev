@@ -69,15 +69,27 @@ def check (modulus : UInt64) (columns : Nat) (source : Scan.Pivot)
     some ⟨source,dense,first,size,h⟩
   else none
 
+theorem check_source {modulus : UInt64} {columns : Nat} {source : Scan.Pivot}
+    {dense : ByteArray} {first size : UInt32} {row : Row modulus columns}
+    (h : check modulus columns source dense first size = some row) : row.source = source := by
+  unfold check at h
+  split at h
+  · cases h; rfl
+  · contradiction
+
 end Row
 
 /-- Cache preparation reports its own parent work and logical packed bytes.
 Work counts two sparse validations, sparse writes, initialized bytes and dense
-comparison cells. A refused admission performs no row traversal or allocation. -/
-structure Result (modulus : UInt64) (columns : Nat) where
+comparison cells. A refused admission performs no row traversal or payload allocation. -/
+structure Result (modulus : UInt64) (columns : Nat) (source : Scan.Pivot)
+    (workBudget bytesBudget : Nat) where
   row : Row modulus columns
   work : Nat := 0
   packedBytes : Nat := 0
+  source_eq : row.source = source
+  work_le : work ≤ workBudget
+  bytes_le : packedBytes ≤ bytesBudget
 
 def zeros (n : Nat) : ByteArray := Id.run do
   let mut bytes := ByteArray.emptyWithCapacity n
@@ -89,8 +101,12 @@ The complete dense span has at most 16384 coefficients. Admission reserves the
 entire bounded preparation before any traversal; source inputs stay immutable.
 Other fields and unsupported shapes retain the ordinary sparse row. -/
 def preparePortable (modulus : UInt64) (columns : Nat) (source : Scan.Pivot)
-    (workBudget bytesBudget : Nat) : Result modulus columns := Id.run do
-  let fallback : Result modulus columns := { row := Row.raw modulus columns source }
+    (workBudget bytesBudget : Nat) : Result modulus columns source workBudget bytesBudget := Id.run do
+  let fallback : Result modulus columns source workBudget bytesBudget := {
+    row := Row.raw modulus columns source
+    source_eq := rfl
+    work_le := Nat.zero_le _
+    bytes_le := Nat.zero_le _ }
   let w := Native.width modulus.toNat
   let n := source.columns.size/4
   if modulus != 2147483647 || columns > 4294967295 || n < 128 || n > 4096 ||
@@ -101,23 +117,43 @@ def preparePortable (modulus : UInt64) (columns : Nat) (source : Scan.Pivot)
   let span := last-first+1
   let bytes := span*w
   let cost := bytes+3*n+span+2
-  if span > 16384 || span > 2*n || cost > workBudget || bytes > bytesBudget then return fallback
-  if !validSparse modulus columns source then return { fallback with work := n+1 }
-  let mut dense := zeros bytes
-  for i in [:n] do
-    let column := Native.read source.columns 4 (4*i)
-    dense := Native.write dense w ((column-first)*w) (Native.read source.coefficients w (w*i))
-  match Row.check modulus columns source dense first.toUInt32 n.toUInt32 with
-  | some row => return ⟨row,cost,bytes⟩
-  | none => return { fallback with work := cost,packedBytes := bytes }
+  if span > 16384 || span > 2*n then return fallback
+  if hbudget : cost ≤ workBudget ∧ bytes ≤ bytesBudget then
+    if !validSparse modulus columns source then
+      return { fallback with work := n+1,work_le := by omega }
+    let mut dense := zeros bytes
+    for i in [:n] do
+      let column := Native.read source.columns 4 (4*i)
+      dense := Native.write dense w ((column-first)*w) (Native.read source.coefficients w (w*i))
+    match h : Row.check modulus columns source dense first.toUInt32 n.toUInt32 with
+    | some row => return ⟨row,cost,bytes,Row.check_source h,by omega,by omega⟩
+    | none => return { fallback with work := cost,packedBytes := bytes,work_le := by omega,bytes_le := by omega }
+  else return fallback
 
 /-- Bounded native materialization of checked dense pivots. The sparse source
 is borrowed; output owns its optimization buffer. The Row ABI is two objects
 (source, dense), followed by UInt32 first/size; Result is three object fields. -/
 @[extern "lean_hex_prepare_dense"]
 def prepare (modulus : UInt64) (columns : @& Nat) (source : @& Scan.Pivot)
-    (workBudget bytesBudget : @& Nat) : Result modulus columns :=
+    (workBudget bytesBudget : @& Nat) : Result modulus columns source workBudget bytesBudget :=
   preparePortable modulus columns source workBudget bytesBudget
+
+/-- Checked caches for exactly this immutable sparse pivot array. -/
+structure Cache (modulus : UInt64) (columns : Nat) (sources : Array Scan.Pivot) where
+  rows : Array (Row modulus columns)
+  source_eq : rows.map (·.source) = sources
+
+namespace Cache
+
+def empty (modulus : UInt64) (columns : Nat) : Cache modulus columns #[] := ⟨#[],by simp⟩
+
+def push {modulus : UInt64} {columns : Nat} {sources : Array Scan.Pivot}
+    (cache : Cache modulus columns sources) {source : Scan.Pivot}
+    {workBudget bytesBudget : Nat}
+    (prepared : Result modulus columns source workBudget bytesBudget) : Cache modulus columns (sources.push source) :=
+  ⟨cache.rows.push prepared.row,by simp only [Array.map_push,prepared.source_eq,cache.source_eq]⟩
+
+end Cache
 
 /-- The scalar semantics visit only sparse entries. Cached zero gaps never
 consume logical update steps or change failure prefixes. The ambient dimension
@@ -129,6 +165,23 @@ def portable (modulus : UInt64) (columns : Nat) (slots : ByteArray)
     { state := initial,status := 4 }
   else Scan.portableWith modulus slots pivots.size (fun i =>
     (pivots[i]?.map (·.source)).getD default) initial quantum workLimit traceLimit provenance
+
+/-- Checked cache provenance recovers the ordinary sparse scalar semantics. -/
+theorem portable_cache (modulus : UInt64) (columns : Nat) (slots : ByteArray)
+    (sources : Array Scan.Pivot) (cache : Cache modulus columns sources)
+    (initial : Scan.State) (quantum workLimit traceLimit : Nat) (provenance : Bool)
+    (hcolumns : columns = initial.dense.size / Native.width modulus.toNat) :
+    portable modulus columns slots cache.rows initial quantum workLimit traceLimit provenance =
+      Scan.portable modulus slots sources initial quantum workLimit traceLimit provenance := by
+  have hdim : (columns != initial.dense.size / Native.width modulus.toNat) = false := by simp [hcolumns]
+  simp only [portable,hdim,Bool.false_eq_true,ite_false,Scan.portable]
+  have hsize := congrArg Array.size cache.source_eq
+  simp only [Array.size_map] at hsize
+  have hat : (fun (i : Nat) => (cache.rows[i]?.map (fun row : Row modulus columns => row.source)).getD default) = (fun i => sources[i]!) := by
+    funext i
+    have hget := congrArg (fun (rows : Array Scan.Pivot) => rows[i]!) cache.source_eq
+    simpa only [Array.getElem!_eq_getD,Array.getD_eq_getD_getElem?,Array.getElem?_map] using hget
+  rw [hsize,hat]
 
 /-- Dense-aware native transition. Immutable checked pivot buffers permit
 contiguous M31 updates; unsupported fields and partial rows retain sparse

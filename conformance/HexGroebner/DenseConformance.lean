@@ -63,6 +63,34 @@ def checks : Bool := Id.run do
   if (Native.Dense.Row.check modulus 1024 sparse dense 0 2).isSome then return false
   return true
 
+/-- Maximum preparation spans, wide columns, malformed sparse rows and
+arbitrary Nat allowances compare the actual foreign result with the model. -/
+def boundaryChecks (seed : Nat) : Bool := Id.run do
+  for n in [128,4096] do
+    for first in [0,4294950000] do
+      for step in [1,2] do
+        let original := source n first step
+        let original := { original with
+          sugar := 2^90+seed
+          coefficients := Native.write original.coefficients 4 68 2147483646 }
+        for row in [original,
+            { original with columns := Native.write original.columns 4 4 first },
+            { original with columns := Native.write original.columns 4 68 4294967295 },
+            { original with columns := original.columns.extract 0 (original.columns.size-1) },
+            { original with coefficients := original.coefficients.extract 0 (original.coefficients.size-1) },
+            { original with coefficients := Native.write original.coefficients 4 0 2 },
+            { original with coefficients := Native.write original.coefficients 4 68 0 },
+            { original with coefficients := Native.write original.coefficients 4 68 2147483647 },
+            { original with coefficients := Native.write original.coefficients 4 68 4294967295 }] do
+          for budget in [0,65535,65536,2^90] do
+            let actual := Native.Dense.prepare modulus 4294967295 row budget 32768
+            let model := Native.Dense.preparePortable modulus 4294967295 row budget 32768
+            if actual.work != model.work || actual.packedBytes != model.packedBytes ||
+                actual.row.first != model.row.first || actual.row.size != model.row.size ||
+                actual.row.dense != model.row.dense || actual.row.source.columns != row.columns ||
+                actual.row.source.coefficients != row.coefficients || actual.row.source.sugar != row.sugar then return false
+  return true
+
 private def same (a b : Native.Scan.Result) : Bool :=
   a.status == b.status && a.work == b.work && a.reductions == b.reductions &&
   a.traceNodes == b.traceNodes && a.events == b.events &&
@@ -105,6 +133,7 @@ def scanChecks (seed : Nat) : Bool := Id.run do
       if !same output reference then return false
   return true
 
+#guard boundaryChecks 0
 #guard checks
 #guard scanChecks 0
 

@@ -214,7 +214,7 @@ LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
 #undef HEX_SCAN_UPDATE
 #define HEX_SCAN_UPDATE hex_scan8
 #define HEX_SCAN_NAME hex_dense_scan_u8
-#define HEX_SCAN_ATTRIBUTE 
+#define HEX_SCAN_ATTRIBUTE
 #define HEX_SCAN_VECTOR 0
 #define HEX_SCAN_WIDTH 1
 #include "matrix_scan_impl.h"
@@ -225,7 +225,7 @@ LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
 #undef HEX_SCAN_UPDATE
 #define HEX_SCAN_UPDATE hex_scan8
 #define HEX_SCAN_NAME hex_dense_scan_u16
-#define HEX_SCAN_ATTRIBUTE 
+#define HEX_SCAN_ATTRIBUTE
 #define HEX_SCAN_VECTOR 0
 #define HEX_SCAN_WIDTH 2
 #include "matrix_scan_impl.h"
@@ -236,7 +236,7 @@ LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
 #undef HEX_SCAN_UPDATE
 #define HEX_SCAN_UPDATE hex_scan8
 #define HEX_SCAN_NAME hex_dense_scan_u32
-#define HEX_SCAN_ATTRIBUTE 
+#define HEX_SCAN_ATTRIBUTE
 #define HEX_SCAN_VECTOR 0
 #define HEX_SCAN_WIDTH 4
 #include "matrix_scan_impl.h"

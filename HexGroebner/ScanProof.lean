@@ -24,7 +24,7 @@ private theorem events_spec (modulus : UInt64) (slots : ByteArray)
     Std.Do.Triple (m := Id)
       (Native.Scan.portable modulus slots pivots initial quantum workLimit traceLimit false)
       ⌜True⌝ (PostCond.noThrow fun out => ⌜out.events = #[]⌝) := by
-  unfold Native.Scan.portable
+  unfold Native.Scan.portable Native.Scan.portableWith
   dsimp only [Id.run]
   mvcgen invariants
   · Invariant.withEarlyReturnNewDo
@@ -53,7 +53,7 @@ private theorem bounds_spec (modulus : UInt64) (slots : ByteArray)
         ⌜out.state.dense.size = initial.dense.size ∧
           out.state.last < max 1 (initial.dense.size / Native.width modulus.toNat) ∧
           out.state.leading ≤ initial.dense.size / Native.width modulus.toNat⌝) := by
-  unfold Native.Scan.portable
+  unfold Native.Scan.portable Native.Scan.portableWith
   dsimp only [Id.run]
   mvcgen invariants
   · Invariant.withEarlyReturnNewDo
@@ -94,12 +94,12 @@ theorem bounds_of_status (modulus : UInt64) (slots : ByteArray)
   · by_cases hleading : initial.leading ≤ initial.dense.size / Native.width modulus.toNat
     · exact bounds modulus slots pivots initial quantum workLimit traceLimit provenance hlast hleading
     · have bad : initial.dense.size / Native.width modulus.toNat < initial.leading := by omega
-      simp [portable,bad] at hstatus
+      simp [portable,portableWith,bad] at hstatus
   · by_cases hzero : initial.dense.size / Native.width modulus.toNat = 0
     · have bad : initial.last ≠ 0 := by omega
-      simp [portable,hzero,bad] at hstatus
+      simp [portable,portableWith,hzero,bad] at hstatus
     · have bad : initial.dense.size / Native.width modulus.toNat ≤ initial.last := by omega
-      simp [portable,hzero,bad] at hstatus
+      simp [portable,portableWith,hzero,bad] at hstatus
 
 
 /-- info: 'Hex.Groebner.Native.size_write' depends on axioms: [propext] -/
