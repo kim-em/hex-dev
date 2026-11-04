@@ -277,9 +277,17 @@ def reference (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
 def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
   limits.binaryPivots && field.modulus == 2
 
+/-- Exact UInt64 accumulation is bounded for these explicitly requested fields. -/
+def delayedEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
+  limits.delayedReduction && field.modulus > 2 && field.modulus ≤ 65536
+
+/-- Additional accumulator bytes and flat borrowed-pivot metadata. -/
+def delayedBytes (field : PrimeField) (columns reducers targets : Nat) : Nat :=
+  (8-field.width.bytes)*columns+40*min (reducers+targets) columns
+
 /-- Logical reference work cap, distinct from the physical word-operation cap. -/
 def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
-  if binaryEnabled field limits then 2^38 else 2^20
+  if binaryEnabled field limits then 2^38 else if delayedEnabled field limits then 2^34 else 2^20
 
 /-- Large F2 frames project targets through known reducers in column order. -/
 def binaryProject (columns reducers targets : Nat) : Bool :=
@@ -355,9 +363,11 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
   let rows := reducers.size + targets.size
   if USize.size != 2^64 then return false
   let binary := binaryEnabled field limits
-  if columns > (if binary then 131072 else 4096) ||
-      reducers.size > (if binary then 131072 else 1024) ||
-      targets.size > (if binary then 4096 else 64) ||
+  let delayed := delayedEnabled field limits
+  let wide := binary || delayed
+  if columns > (if wide then 131072 else 4096) ||
+      reducers.size > (if wide then 131072 else 1024) ||
+      targets.size > (if wide then 4096 else 64) ||
       columns > limits.columns || rows > limits.rows ||
       (!sugars.isEmpty && sugars.size != rows) then return false
   if !(sugars.all (· < USize.size / 2)) then return false
@@ -371,7 +381,7 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
       entries := entries + row.size
   let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
     targets.size * (entries + (targets.size + 3) * columns + 64) + columns
-  if bound > frameQuantum field limits then return false
+  if bound > (if delayed then 2^38 else frameQuantum field limits) then return false
   if binary && binaryCost columns reducers targets entries > 2^34 then return false
   let mut seen := Array.replicate columns false
   for row in reducers do
@@ -390,7 +400,9 @@ def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     let result := reference field limits columns reducers targets sugars independent
     if result.result.isOk && result.stats.work ≤ frameQuantum field limits &&
         (!binaryEnabled field limits || result.stats.packedBytes+
-          binaryBytes columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
+          binaryBytes columns reducers.size targets.size ≤ limits.packedBytes) &&
+        (!delayedEnabled field limits || result.stats.packedBytes+
+          delayedBytes field columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
 
 /-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
 column count, row arrays and sugars are borrowed Lean objects, and `independent`

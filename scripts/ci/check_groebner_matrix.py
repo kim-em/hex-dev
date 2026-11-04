@@ -616,6 +616,19 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
  return lean_io_result_mk_ok(out);
 }
 
+static uint64_t delayed_frames=0,delayed_updates=0,delayed_overflows=0;
+static int delayed_offset_enabled=0;
+#define HEX_GROEBNER_DELAYED_FRAME() (++delayed_frames)
+#define HEX_GROEBNER_DELAYED_UPDATE(vectorized) (++delayed_updates)
+#define HEX_GROEBNER_DELAYED_TARGET(context) do { \
+ if(delayed_offset_enabled) { \
+  matrix_context *ctx=(context); \
+  uint64_t room=(ctx->columns+1)*(ctx->p-1)*(ctx->p-1)+(ctx->p-1); \
+  uint64_t offset=((UINT64_MAX-room)/ctx->p)*ctx->p; \
+  for(uint64_t col=0;col<ctx->columns;++col) delayed_write(ctx,col,delayed_read(ctx,col)+offset); \
+  ++delayed_overflows; \
+ } \
+} while(0)
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
 static uint64_t binary_groups=0,binary_installed=0,binary_initialized=0;
@@ -794,6 +807,15 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  lean_ctor_set(tail,0,lean_box_uint64(binary_scans));lean_ctor_set(tail,1,lean_box_uint64(binary_bytes));
  lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
  return lean_io_result_mk_ok(out);
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_counts(lean_obj_arg world) {
+ (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(delayed_updates));lean_ctor_set(tail,1,lean_box_uint64(delayed_overflows));
+ lean_ctor_set(out,0,lean_box_uint64(delayed_frames));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_offsets(uint8_t enabled,lean_obj_arg world) {
+ (void)world;delayed_offset_enabled=enabled;return lean_io_result_mk_ok(lean_box(0));
 }
 LEAN_EXPORT lean_obj_res hex_test_binary_installed(lean_obj_arg world) {
  (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
@@ -1105,6 +1127,9 @@ import HexGroebner.SupportConformance
 import HexGroebner.SampledConformance
 import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
+import HexGroebner.DelayedConformance
+@[extern "hex_test_delayed_counts"] opaque delayedCounts : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_delayed_offsets"] opaque delayedOffsets (enabled : Bool) : IO Unit
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
 @[extern "hex_test_copy_bytes"] opaque copyBytes (input : @& ByteArray) : IO ByteArray
@@ -1270,6 +1295,21 @@ private def checkSupport : IO Unit := do
   checkSupportSystems
 
 private def checkBinaryBuffers : IO Unit := do
+  let delayedBefore ← delayedCounts
+  let delayedSeed ← Hex.Groebner.NativeChecks.readSeed
+  for offsets in [false,true] do
+    delayedOffsets offsets
+    if !Hex.Groebner.DelayedConformance.runtimeChecks (delayedSeed+(if offsets then 7 else 0)) then
+      throw (IO.userError "delayed native/reference rows, inputs or budget cuts differ")
+  delayedOffsets false
+  if !Hex.Groebner.DelayedConformance.boundaryChecks delayedSeed ||
+      !Hex.Groebner.DelayedConformance.producerChecks delayedSeed then
+    throw (IO.userError "delayed high columns or full producer differs")
+  let delayedAfter ← delayedCounts
+  if delayedAfter.1 ≤ delayedBefore.1 || delayedAfter.2.1 ≤ delayedBefore.2.1 ||
+      delayedAfter.2.2 ≤ delayedBefore.2.2 then
+    throw (IO.userError "delayed frames, row updates or near-overflow controls unused")
+  IO.println s!"delayed frames/updates/near-overflow targets: {delayedAfter}"
   let allocationBefore ← binaryCounts
   let targetBefore ← binaryPaths
   let targetSeed ← Hex.Groebner.NativeChecks.readSeed
