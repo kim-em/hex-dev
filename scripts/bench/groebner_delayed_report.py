@@ -139,11 +139,50 @@ def giac(cap,prefix,outputs):
                     'independently compared candidate differs from final logical output')
 
 
-def render(path,replay_path):
+
+HEADER_OLD = '''target hexgroebnerEliminationO pkg : FilePath := do
+  let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_eliminate.c"
+  let header ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_runtime.h"
+  let inputs := source.zipWith (fun source _ => source) header'''
+HEADER_NEW = '''target hexgroebnerEliminationO pkg : FilePath := do
+  let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_eliminate.c"
+  let header ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_runtime.h"
+  let simd ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_simd.h"
+  let inputs := (source.zipWith (fun source _ => source) header).zipWith
+    (fun source _ => source) simd'''
+
+
+def configuration(cap,original,audit_path):
+    audit=Capsule(audit_path);manifest=audit.json('manifest.json')
+    require(manifest['binary_sha256']==original['binary_sha256'],'audited executable bytes differ')
+    require(manifest['compilers']==original['compilers']and manifest['native_options']==original['native_options'],
+            'audited compiler or ISA controls differ')
+    old={line.split('\t',1)[1]:line.split()[1]for line in original['source_manifest'].splitlines()}
+    new={line.split('\t',1)[1]:line.split()[1]for line in manifest['source_manifest'].splitlines()}
+    require(set(old)==set(new),'audited source set differs')
+    require({name for name in old if old[name]!=new[name]}=={'lakefile.lean'},'unexpected audited source change')
+    for name,digest in new.items():
+        data=audit.read('sources/'+name)
+        require(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==digest,
+                'audited source blob differs')
+    old_lake=cap.text('reviewed/sources/lakefile.lean')
+    require(HEADER_OLD in old_lake and old_lake.replace(HEADER_OLD,HEADER_NEW)==audit.text('sources/lakefile.lean'),
+            'header dependency change differs')
+    require(audit.text('checks/source-manifest.txt')==cap.text('reviewed/checks/source-manifest.txt'),
+            'verification sources changed')
+    status=audit.json('checks/status.json')
+    require([r['name']for r in status]==['dag','phase4','manifest','headers','lines']and
+            all(r['exit_code']==0 and r['source_fingerprint']==manifest['source_fingerprint']for r in status),
+            'audited project checks failed or used different sources')
+    return manifest,audit
+
+
+def render(path,replay_path,audit_path):
     cap=Capsule(path);replay=Capsule(replay_path)
     manifests={s:bind_sources(cap,s)for s in ['initial','packets','reviewed']}
     require(manifests['initial']['binary_sha256']['compute']==manifests['packets']['binary_sha256']['compute'],
             'initial/packet F4 code differs')
+    current,audit=configuration(cap,manifests['reviewed'],audit_path)
     first,first_outputs=systems(cap,'measurements/initial-system',manifests['initial'])
     final,outputs=systems(cap,'measurements/reviewed-system',manifests['reviewed'])
     require(first_outputs==outputs,'logical behavior changed between production stages')
@@ -171,29 +210,34 @@ def render(path,replay_path):
         replay_ratios[stage]=gm([r['result']['candidateNanos']for r in rows if r['arm']=='B'])/gm(
             [r['result']['candidateNanos']for r in rows if r['arm']=='A'])
     lines=['# Exact delayed prime-field elimination','',
-           f"The production snapshot is `{manifests['reviewed']['source_fingerprint']}`. `delayedReduction` is opt-in and defaults to false. It applies to primes `3 ≤ p < 2^16`; ordinary F₂ and wider-prime polynomial routes retain their existing arithmetic. The accumulator bound is `(p-1)+columns*(p-1)^2 < 2^50`.",'',
-           'All 120 final full-system processes succeeded. All 60 off/on pairs have identical complete reduced bases, metadata and logical counters. The suite contains the first primary size from each of ten fixed families over three prime fields; it does not cover the complete fixed suite or held-out acceptance. Both arms use the same frozen executable, one leased CPU, degree scheduling, batch size 1024, binary pivots enabled and dense pivots disabled. Adjacent arms alternate AB/BA. Every completed sample, failure and outlier is retained.','',
-           '| Field | Candidate B/A geometric mean | Process B/A geometric mean |','|---|---:|---:|']
+           f"The measured production snapshot is `{manifests['reviewed']['source_fingerprint']}`; the audited configuration is `{current['source_fingerprint']}` with byte-identical executables. `delayedReduction` is opt-in and defaults to false. It applies to primes `3 ≤ p < 2^16`; ordinary F₂ and wider-prime polynomial routes retain their existing arithmetic. The accumulator bound is `(p-1)+columns*(p-1)^2 < 2^50`.",'',
+           'All 120 final full-system processes succeeded. All 60 off/on pairs have identical complete reduced bases, metadata and logical counters. The suite contains the first primary size from each of ten fixed families over three prime fields; it does not cover the complete fixed suite or held-out acceptance. Both arms use the same frozen executable, one leased CPU, grevlex order, degree scheduling, batch size 1024, binary pivots enabled and dense pivots disabled. Adjacent arms alternate AB/BA. Every completed sample, failure and outlier is retained.','',
+           '| Field | Candidate B/A geometric mean | Process B/A geometric mean | Pair candidate ratio range | Peak RSS A/B, KiB |','|---|---:|---:|---:|---:|']
+    records=cap.json('measurements/reviewed-system/metadata.json')['samples']
     for p in [2,32003,2147483647]:
         rows=[r for r in final if r['p']==p];require(len(rows)==20,'field coverage differs')
-        lines.append(f"| {p} | {gm([r['candidate']for r in rows]):.4f} | {gm([r['process']for r in rows]):.4f} |")
+        rss={arm:max(r['peak_rss_kib']for r in records if r['p']==p and r['arm']==arm)
+             for arm in ['A','B']}
+        lines.append(f"| {p} | {gm([r['candidate']for r in rows]):.4f} | {gm([r['process']for r in rows]):.4f} | {min(r['candidate']for r in rows):.4f}–{max(r['candidate']for r in rows):.4f} | {rss['A']}/{rss['B']} |")
     focused=[r for r in final if r['case']=='KLYZ12-15']
-    lines+=['',f"For the in-sample KLYZ-12 motivating case over 32003, candidate B/A is {gm([r['candidate']for r in focused]):.4f}. A separately instrumented full producer accepted all 61 matrices and discarded zero charged native work; its complete output and counters equal the production run. The parent limits are the fixed corpus protocol's explicit large allowances, with 300-second, 8-GiB address-space and 256-MiB per-file external caps. These measurements do not establish behavior under the library's default work/memory allowances.",'',
+    lines+=['',f"For the in-sample KLYZ-12 motivating case over 32003, candidate B/A is {gm([r['candidate']for r in focused]):.4f}. A separately instrumented full producer accepted all 61 matrices and discarded zero charged native work; its complete output and counters equal the production run. Its two candidate pair ratios span {min(r['candidate']for r in focused):.4f}–{max(r['candidate']for r in focused):.4f}. Raw samples retain per-input variability and RSS; the field table's ratio range also includes differences between families. The parent limits are the fixed corpus protocol's explicit large allowances, with 300-second, 8-GiB address-space and 256-MiB per-file external caps. These measurements do not establish behavior under the library's default work/memory allowances.",'',
             '| Kernel coefficient route | Columns | B/A geometric mean |','|---|---:|---:|']
     for shape,n,ratio in matrix:lines.append(f'| {shape} | {n} | {ratio:.4f} |')
-    lines+=['','Kernel inputs use distinct known heads, dense tails and eight shared targets. Preparation is outside timing; validation, elimination and complete output/counter hashing are inside. Byte uses 251, Short uses 32003 and Word is the unchanged M31 control. The final 42-process lean-bench campaign has no point below the signal floor. Six trial-major quadratic sweeps use three trials and three sizes. Matched observations alternate AB/BA. The earlier short-budget campaign was inconclusive because matched points fell below the signal floor; its sole unchanged repeat used a four-second batch target and twenty-second allowance. Both are retained separately from the reviewed implementation campaign.','',
+    lines+=['','Kernel inputs use distinct known heads, dense tails and eight shared targets. Preparation is outside timing; validation, elimination and complete output/counter hashing are inside. Byte uses 251, Short uses 32003 and Word is the unchanged M31 control. The final 42-process lean-bench campaign has no point below the signal floor. The recorded host is AMD EPYC 9455; the production native compiler is Clang 21.1.8, the Lean SDK compiler is Clang 23.1.0, and Lean is 4.35.0-rc3. Native dispatch uses guarded AVX2 with scalar fallback; experimental AVX-512 dispatch is disabled. Compiler hashes, flags, exact selected CPU and environment remain in the manifests. Six trial-major quadratic sweeps use three trials and three sizes. Matched observations alternate AB/BA. The earlier short-budget campaign was inconclusive because matched points fell below the signal floor; its sole unchanged repeat used a four-second batch target and twenty-second allowance. Both are retained separately from the final production campaign.','',
             f"Experimental captured-matrix replay rejected a scalar UInt64 design (B/A {replay_ratios['v1']:.4f}); the AVX2 prototype gave {replay_ratios['v2']:.4f}. Each has four initial AB/BA observations with complete row/label/counter comparison outside the C monotonic timing interval. These experimental binaries are distinct from the production implementation. The retained input is frame 33, selected for maximum work among progressive entry-maximum dumps; the absolute maximum-work frame was not dumped.",'',
             'Local verification covers twelve strict Clang/GCC ASan/UBSan variants, scalar/SIMD fallbacks, exact packet guard pages, near-UInt64-limit residues, work/byte boundary cuts, newly admitted reducer/target counts, direct scalar Lean comparisons, producer parity, independent oracles and all nine project gates. A freestanding 32-bit x86 packet compilation checks the portable intrinsic choice. Native calls remain bounded but cancellation occurs between calls; a late work or byte decline may repeat a bounded prefix.','',
             'All timing results concern unchecked candidate production or matrix elimination. Certificate generation, independent native certification, kernel checking and complete checked calls are not included. Giac process diagnostics in the archive retain installed version 2.0.0-19, explicit monic conversion and full output comparisons; CLI startup affects tiny cases, its internal time() clock is not asserted to be wall time, and no current-fastest claim follows. No CI timing is used. The fastest-open-source milestone and overall-fastest gap remain open.','',
             f"Raw production evidence: `{path.name}` (SHA-256 `{cap.sha256}`). Experimental replay: `{replay_path.name}` (SHA-256 `{replay.sha256}`). Every payload is checked against its archive SHA-256 manifest; the report also replays source blobs, complete outputs, counters and measurement coverage.",'']
-    return '\n'.join(lines),manifests['reviewed']
+    lines.insert(-1,f"The configuration audit `{audit_path.name}` (SHA-256 `{audit.sha256}`) adds only the whole-matrix SIMD header dependency. All three fresh executable hashes and compiler/ISA controls are identical, verification sources are unchanged, and the five project linters passed again. The nine-gate results retain their measured source identity.")
+    return '\n'.join(lines),current
 
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--archive',type=Path,required=True)
     p.add_argument('--replay',type=Path,required=True);p.add_argument('--report',type=Path,required=True)
+    p.add_argument('--audit',type=Path,required=True)
     p.add_argument('--check',action='store_true');p.add_argument('--current',action='store_true');args=p.parse_args()
-    text,manifest=render(args.archive,args.replay)
+    text,manifest=render(args.archive,args.replay,args.audit)
     if args.current:
         from scripts.bench.groebner_measure import FAMILY
         from scripts.bench.sweep_freshness import index_listing
