@@ -355,8 +355,14 @@ run_tuple() {
       return 1
     fi
     if ! python3 -m unittest scripts.oracle.test_groebner_sympy scripts.oracle.test_groebner_singular \
-        scripts.bench.test_groebner_capsule; then
+        scripts.bench.test_groebner_capsule scripts.bench.test_groebner_corpus; then
       echo "FAIL: $lib :: Groebner oracle rejection checks failed"
+      return 1
+    fi
+    if ! python3 scripts/bench/groebner_corpus_report.py \
+        --archive reports/bench-results/raw/f4-fixed-corpus-v1.tar.xz \
+        --report reports/bench-results/hexgroebner-corpus.md --check --current; then
+      echo "FAIL: $lib :: fixed Groebner corpus validation failed"
       return 1
     fi
   fi

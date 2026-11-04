@@ -179,6 +179,13 @@ def main():
         "--matrix-entries",
         "1000000000",
     ]
+    if "hex_limits" in plan["protocol"]:
+        specified = plan["protocol"]["hex_limits"]
+        allowed = {"work", "packed-bytes", "monomials", "pairs", "rounds",
+                   "matrix-entries", "matrix-rows", "batch-size", "basis", "variables"}
+        assert set(specified) == allowed and all(type(v) is int and v > 0 for v in specified.values()), \
+            "invalid explicit Hex resource limits"
+        cliargs = [part for key, value in specified.items() for part in ["--" + key, str(value)]]
     binaries = {
         "A": (args.hex if mode else args.baseline or args.reference).resolve(),
         "B": (args.msolve if mode else args.hex).resolve(),
@@ -317,7 +324,8 @@ def main():
         resource.setrlimit(
             resource.RLIMIT_AS, (plan["protocol"]["address_space_bytes"],) * 2
         )
-        resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024**2,) * 2)
+        output_bytes = plan["protocol"].get("output_bytes_per_file", 64 * 1024**2)
+        resource.setrlimit(resource.RLIMIT_FSIZE, (output_bytes,) * 2)
 
     try:
         for block, order in enumerate(["AB", "BA"]):
