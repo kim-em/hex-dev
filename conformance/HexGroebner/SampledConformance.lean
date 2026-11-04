@@ -288,6 +288,44 @@ def hybridBudgets (native : Bool) : Bool := Id.run do
 #guard hybridBudgets false
 #guard hybridBudgets true
 
+/-- Resume both kinds of batch after the other kind has already run. -/
+private def mixedResume (context : Context) (generators : Array RawPolynomial)
+    (cutoff : Nat) (native : Bool) : Bool := Id.run do
+  let limits : Limits := { nativeRows := native }
+  let expected := Sampled.computeWith context limits generators (Hex.Rand.ofSeed 10987)
+    (minimumTargets := cutoff)
+  let mut result := Sampled.computeWith context limits generators (Hex.Rand.ofSeed 10987) {} 1 cutoff
+  let mut deterministic := false
+  let mut stoppedDeterministic := false
+  let mut stoppedSampled := false
+  for _ in [:10000] do
+    let .suspended state := result | break
+    if state.pending.isNone && state.checkpoint.phase == .pairs then
+      let (prepared,workspace) := (Sampled.prepare context limits state.checkpoint
+        state.random state.config cutoff).run state.workspace
+      if let .ok (_,none) := prepared then
+        if workspace.statistics.matrixCalls > state.workspace.statistics.matrixCalls then
+          deterministic := true
+          if state.statistics.randomWords > 0 && !stoppedDeterministic then
+            let cap := { limits with work := workspace.statistics.work-1 }
+            let .exhausted .work saved := Sampled.resumeWith cap state 1 | return false
+            if saved.random != state.random || saved.statistics != state.statistics ||
+                saved.workspace.statistics.matrixCalls <= state.workspace.statistics.matrixCalls ||
+                saved.checkpoint.phase != state.checkpoint.phase || saved.pending.isSome ||
+                !bounded cap saved || !sameValue expected (Sampled.resumeWith limits saved) then return false
+            stoppedDeterministic := true
+    if let some round := state.pending then
+      if deterministic && !stoppedSampled && round.matrix.phase == .scan then
+        let cap := { limits with work := state.workspace.statistics.work }
+        let mut stopped := Sampled.resumeWith cap state 1 1
+        for _ in [:10000] do
+          if let .suspended next := stopped then stopped := Sampled.resumeWith cap next 1 1 else break
+        let .exhausted .work saved := stopped | return false
+        if !bounded cap saved || !compare expected (Sampled.resumeWith limits saved) then return false
+        stoppedSampled := true
+    result := Sampled.resumeWith limits state 1 1
+  return stoppedDeterministic && stoppedSampled && compare expected result
+
 /-- At least one fixture must exercise both paths within the same run. -/
 def hybridMixed : Bool := Id.run do
   let some field := Fixtures.fields[6]? | return false
@@ -299,7 +337,9 @@ def hybridMixed : Bool := Id.run do
       let .candidate mixed _ samples := Sampled.computeWith context {} c.generators
         (Hex.Rand.ofSeed 10987) (minimumTargets := cutoff) | return false
       if samples.calls > 0 && samples.calls < allSamples.calls &&
-          mixed.polynomials == baseline.polynomials then return true
+          mixed.polynomials == baseline.polynomials &&
+          mixedResume context c.generators cutoff false &&
+          mixedResume context c.generators cutoff true then return true
   return false
 
 #guard hybridMixed
