@@ -551,6 +551,9 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
 }
 
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
+static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
+#define HEX_GROEBNER_BINARY_SCAN_USED() (++binary_scans)
+#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=(n))
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
@@ -691,6 +694,12 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_zeros(b_lean_obj_arg size) {
   assert(lean_is_exclusive(lean_ctor_get(result,0)));
  }
  return result;
+}
+LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
+ (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(binary_scans));lean_ctor_set(tail,1,lean_box_uint64(binary_bytes));
+ lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
 }
 LEAN_EXPORT lean_obj_res hex_test_matrix_primitives(lean_obj_arg world) {
  (void)world;lean_object *pair=lean_alloc_ctor(0,2,0);
@@ -950,6 +959,7 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_batch_deferrals"] opaque batchDeferrals : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_batch_insertions"] opaque batchInsertions : IO UInt64
+@[extern "hex_test_binary_counts"] opaque binaryCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
@@ -1055,6 +1065,16 @@ def checkMersenne : IO UInt64 := do
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   return mersenne
 
+private def checkBinary (seed : Nat) : IO Unit := do
+  let before ← binaryCounts
+  if !Hex.Groebner.EliminationConformance.binaryChecks seed ||
+      !Hex.Groebner.EliminationConformance.binaryWorkChecks seed then
+    throw (IO.userError "private packed F2 frame/reference mismatch")
+  let after ← binaryCounts
+  if after.1 ≤ before.1 || after.2.1 ≤ before.2.1 || after.2.2 ≤ before.2.2 then
+    throw (IO.userError "private F2 pivots or word scan unused")
+  IO.println s!"private F2 frames/scans/bytes: {after}"
+
 private def checkOwnership : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
   if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
@@ -1075,6 +1095,7 @@ def main : IO Unit := do
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
+  checkBinary primitiveSeed
   let beforeBatchInsertions ← batchInsertions
   if !Hex.Groebner.ProductBatchConformance.insertionChecks primitiveSeed then
     throw (IO.userError "monomial batch insertion/reference state mismatch")

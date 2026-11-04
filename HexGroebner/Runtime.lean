@@ -102,6 +102,8 @@ structure Limits where
   within the parent work/memory bounds. Certificate and sampled routes retain
   their existing sparse pivots. -/
   densePivots : Bool := false
+  /-- Optional private packed F2 pivots in bounded untraced matrix frames. -/
+  binaryPivots : Bool := false
   /-- Use bounded packed monomial preparation and exact collision comparison. -/
   nativeMonomials : Bool := true
   /-- Enable minimal-LCM installation and proper-LCM chain pruning. -/
