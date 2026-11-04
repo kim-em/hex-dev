@@ -248,6 +248,42 @@ def binaryLargeChecks (seed : Nat) : Bool := Id.run do
     if expected.isSome != (entries == 14976) || !sameAttempt actual expected then return false
   return true
 
+/-- A target-built dense pivot is reused by an aliased target. The returned
+amount is the complete private allocation expected in the native counter. -/
+def binaryTargetChecks (seed : Nat) : Option Nat := do
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let some row := SparseRow.ofEntries field 257 ((Array.range 257).map (·,(1:UInt64))) | none
+  let limits : MatrixLimits := { binaryPivots := true }
+  let mut allocated := 0
+  for count in [2,3] do
+    let targets := Array.replicate count row
+    let sugars := (Array.range count).map (seed+·)
+    let some expected := Elimination.attemptPortable field limits 257 #[] targets sugars false | none
+    let some actual := Elimination.attempt field limits 257 #[] targets sugars false | none
+    if !same actual expected then none
+    allocated := allocated+Elimination.binaryBytes 257 count
+  return allocated
+
+/-- The logical quantum is attained with 1024 nonempty targets while the
+independent physical bound remains below its cap. One more entry is declined. -/
+def binaryQuantum : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let bound := fun entries => 1024*65+2*entries+3904*5+
+    1024*(entries+(1024+3)*3904+64)+3904
+  if bound 184384 != 2^32 || bound 184385 != 2^32+1026 ||
+      Elimination.binaryBound 3904 0 1024 184385 > 2^28 then return false
+  let some targets := (Array.range 1024).mapM fun i => SparseRow.ofEntries field 3904
+      ((Array.range (if i < 64 then 181 else 180)).map (·,(1:UInt64))) | return false
+  let some expected := Elimination.attemptPortable field limits 3904 #[] targets #[] false | return false
+  let some actual := Elimination.attempt field limits 3904 #[] targets #[] false | return false
+  if !same actual expected then return false
+  let some extra := SparseRow.ofEntries field 3904 ((Array.range 182).map (·,(1:UInt64))) | return false
+  let refused := targets.set! 0 extra
+  return (Elimination.attemptPortable field limits 3904 #[] refused #[] false).isNone &&
+    (Elimination.attempt field limits 3904 #[] refused #[] false).isNone
+
 @[noinline] private def binaryWorkRows (nonce : Nat) : Option (Array SparseRow) :=
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let tail := 1024+nonce%7

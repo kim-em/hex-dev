@@ -362,7 +362,7 @@ possible accepted totals; non-machine-size sugars use checked Lean arithmetic.
 The matrix owns its dense workspace; all inputs remain immutable, including
 shared reducer/target arrays. Unsupported shapes return `none` without changing
 inputs, and a reference-equivalent continuation runs after the native frame. A declined
-attempt's work retains the sparse reference's accounting. Ordinary-frame
+attempt's physical work is unreported; the continuation retains the reference counters. Ordinary-frame
 speculation is bounded by the remaining logical allowance and `2^20`; opt-in
 F2 packing and word visits have their separate shape bound. Without dense
 preparation or private F2 payload, the shape bound makes a charged decline imply

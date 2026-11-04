@@ -59,7 +59,8 @@ def binaryEliminateSparse (input : Nat × Array SparseRow × Array SparseRow) :=
   let input := prepareBinary n
   (binaryEliminate input).1 && binaryEliminate input == binaryEliminateSparse input)
 
--- Dense elimination is O(n³); preparation and complete output hashing are O(n²).
+-- O(n³/64+n²) packed elimination is cubic at fixed word width.
+-- Quadratic scans, decoding and hashing can dominate these finite sizes.
 setup_benchmark binaryEliminate n => n^3
   with prep := prepareBinary
   where {

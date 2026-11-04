@@ -241,7 +241,10 @@ gathers decode the same byte layout on every host.
 
 A byte-allowance refusal can discard a partially or fully processed native frame
 before the reference continuation succeeds. Speculation is bounded per frame;
-multiple matrix calls can incur it. This policy has no fastest-open-source claim.
+multiple matrix calls can incur it. The reservation is conservative: reference workspace charges coexist with the
+private accumulator allowance, and empty or sparse-only pivots still reserve
+bitmap rows. The certificate producer leaves this low-level policy disabled.
+This policy has no fastest-open-source claim.
 
 The packed-payload allowance is not a process-memory limit: it excludes
 hash tables, tree nodes, object headers and allocator capacity. Structural

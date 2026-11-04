@@ -554,7 +554,7 @@ static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independen
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
 static uint64_t binary_sparse=0,binary_words=0,binary_high_words=0;
 #define HEX_GROEBNER_BINARY_SCAN_USED() (++binary_scans)
-#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=(n))
+#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=lean_sarray_size(c.binary_rows))
 #define HEX_GROEBNER_BINARY_SPARSE_USED() (++binary_sparse)
 #define HEX_GROEBNER_BINARY_WORD_USED(id) (++binary_words,(id)>=1024?++binary_high_words:0)
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
@@ -786,7 +786,35 @@ __typeof__(hex_test_whole) __wrap_lean_hex_groebner_eliminate_matrix;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_eliminate_matrix(uint64_t p,
  b_lean_obj_arg limits,b_lean_obj_arg columns,b_lean_obj_arg reducers,
  b_lean_obj_arg targets,b_lean_obj_arg sugars,uint8_t independent) {
- return hex_test_whole(p,limits,columns,reducers,targets,sugars,independent);
+ lean_object *result=hex_test_whole(p,limits,columns,reducers,targets,sugars,independent);
+ const char *path=getenv("HEX_GROEBNER_FRAME_LOG");
+ if(path && p==2 && lean_ctor_get_uint8(limits,7*sizeof(void*)+1) && lean_is_scalar(columns)) {
+  uint64_t nc=lean_unbox(columns),nr=lean_array_size(reducers),nt=lean_array_size(targets),entries=0;
+  for(uint64_t i=0;i<nr+nt;++i) {
+   lean_object *row=lean_array_cptr(i<nr?reducers:targets)[i<nr?i:i-nr];
+   entries+=lean_sarray_size(lean_ctor_get(row,0))/4;
+  }
+  uint64_t words=(nc+63)/64,rows=nr+nt;
+  uint64_t logical=rows*65+2*entries+nc*5+nt*(entries+(nt+3)*nc+64)+nc;
+  uint64_t physical=rows*words+3*entries+4*nt*nc+6*nc+nt*(rows*words+64);
+  uint64_t scratch=((rows<nc?rows:nc)+1)*words*8;
+  /* A loose upper bound includes all inputs, normalized reducers, maximal
+     target output, headers and both workspaces. Below it, bytes cannot refuse. */
+  uint64_t byte_upper=scratch+20*entries+128*rows+25*nt*nc+10*nc;
+  lean_object *cap=lean_ctor_get(limits,4);
+  uint64_t allowance=lean_is_scalar(cap)?lean_unbox(cap):UINT64_MAX/2;
+  int accepted=!lean_is_scalar(result);
+  const char *reason=accepted?"accepted":nc>16384||nr>16384||nt>1024?"shape":
+    logical>(UINT64_C(1)<<32)?"logical":physical>(UINT64_C(1)<<28)?"physical":
+    byte_upper<=allowance?"other_without_byte_refusal":"other_possible_byte_refusal";
+  FILE *stream=fopen(path,"a");
+  if(!stream) abort();
+  fprintf(stream,"%llu,%llu,%llu,%llu,%s,%llu,%llu\\n",
+   (unsigned long long)nc,(unsigned long long)nr,(unsigned long long)nt,
+   (unsigned long long)entries,reason,(unsigned long long)byte_upper,(unsigned long long)allowance);
+  if(fclose(stream)) abort();
+ }
+ return result;
 }
 LEAN_EXPORT lean_obj_res hex_test_whole_modes(lean_obj_arg world) {
  (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
@@ -1076,6 +1104,19 @@ def checkMersenne : IO UInt64 := do
   return mersenne
 
 private def checkBinary (seed : Nat) : IO Unit := do
+  let allocationBefore ← binaryCounts
+  let targetBefore ← binaryPaths
+  let targetSeed ← Hex.Groebner.NativeChecks.readSeed
+  let some allocated := Hex.Groebner.EliminationConformance.binaryTargetChecks targetSeed |
+    throw (IO.userError "target-built packed word pivot/reference mismatch")
+  let allocationAfter ← binaryCounts
+  let targetAfter ← binaryPaths
+  if allocationAfter.1 != allocationBefore.1+2 ||
+      allocationAfter.2.2 != allocationBefore.2.2+allocated.toUInt64 ||
+      targetAfter.2.1 ≤ targetBefore.2.1 then
+    throw (IO.userError "actual private allocation or target-built word pivot unused")
+  if !Hex.Groebner.EliminationConformance.binaryQuantum then
+    throw (IO.userError "F2 logical quantum or maximum target boundary mismatch")
   let before ← binaryCounts
   let pathsBefore ← binaryPaths
   if !Hex.Groebner.EliminationConformance.binaryChecks seed ||
