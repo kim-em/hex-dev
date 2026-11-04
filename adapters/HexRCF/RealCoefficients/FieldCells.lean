@@ -55,15 +55,21 @@ local notation "K" => PolyQuot p (SimpleRoot.ofSquare p s hw hp)
 
 /-- Validate the existing root rows with finite sign coverage and semantic
 degree guards. The original atom and interval are independently supplied. -/
-@[expose] def checkTransport (table : Table K Ctx n roots)
-    (signs : LiteralSign.Table K) (context : Ctx) (head : DensePoly K)
+@[expose] def checkTransportWith (table : Table K Ctx n roots)
+    (lookup : K → Option Int) (context : Ctx) (head : DensePoly K)
     (intervals : Vector DyadicInterval roots)
     (query : RealFormula.Poly n → DensePoly K) (formula : QF n) : Bool :=
   table.checkRows formula fun atom i cert =>
     let interval := intervals[i]
-    FieldQuery.check signs context head (query atom)
+    FieldQuery.checkWith lookup context head (query atom)
       (.finite (PolyQuot.ofRat interval.lower.toRat))
       (.finite (PolyQuot.ofRat interval.upper.toRat)) cert.value cert
+
+@[expose] def checkTransport (table : Table K Ctx n roots)
+    (signs : LiteralSign.Table K) (context : Ctx) (head : DensePoly K)
+    (intervals : Vector DyadicInterval roots)
+    (query : RealFormula.Poly n → DensePoly K) (formula : QF n) : Bool :=
+  table.checkTransportWith signs.lookup? context head intervals query formula
 
 /-- Every accepted row gives the corresponding real query, retaining its
 source atom, selected interval and claimed sign. No common-field
@@ -85,6 +91,7 @@ theorem query_transport (table : Table K Ctx n roots)
       (table.value fallback i atom)
       (Hex.RealClosure.Transport.query (Field.value (Field.literalRep p s hw hp)) id
         (table.evidence fallback i atom)) = true := by
+  unfold checkTransport checkTransportWith at accepted
   have checked := table.query_checkedWith formula _
     (table.checkRows_checked formula _ accepted) i atom member fallback
   change FieldQuery.check signs context head (query atom) _ _
@@ -107,17 +114,23 @@ local notation "E" => PolyQuot p (SimpleRoot.ofSquare p s hw hp)
 
 /-- Validate all evidence before the Boolean fold, including every atom and
 ordinary sector sample. No numerical producer is called during this check. -/
-@[expose] def check (signs : LiteralSign.Table E) (context : Ctx)
+@[expose] def checkWith (signs : LiteralSign.Table E) (lookup : E → Option Int) (context : Ctx)
     (query : RealFormula.Poly n → DensePoly E) (formula : QF n)
     (radical : RadicalCert E Ctx) (cert : IsolationReplay E Ctx)
     (rows : FieldRootSigns.Table E Ctx n cert.isolations.intervals.size) : Bool :=
   Field.checkSignTable p s hw hp signs &&
-    formula.polys.all (fun atom => FieldTransport.leadingCheck signs (query atom)) &&
+    formula.polys.all (fun atom => FieldTransport.leadingWith lookup (query atom)) &&
     radical.check context (RepresentationCarrier.product (formula.polys.map query)) &&
-    FieldIsolation.check signs context radical.core cert &&
-    rows.checkTransport signs context radical.core cert.isolations.intervals.toVector query formula &&
-    FieldQuery.covered signs (SignInputs.openSamples FieldDecision.point cert
+    FieldIsolation.checkWith lookup context radical.core cert &&
+    rows.checkTransportWith lookup context radical.core cert.isolations.intervals.toVector query formula &&
+    FieldQuery.coveredWith lookup (SignInputs.openSamples FieldDecision.point cert
       (formula.polys.map query))
+
+@[expose] def check (signs : LiteralSign.Table E) (context : Ctx)
+    (query : RealFormula.Poly n → DensePoly E) (formula : QF n)
+    (radical : RadicalCert E Ctx) (cert : IsolationReplay E Ctx)
+    (rows : FieldRootSigns.Table E Ctx n cert.isolations.intervals.size) : Bool :=
+  checkWith signs signs.lookup? context query formula radical cert rows
 
 /-- Finite signs needed by the supplied isolations, root queries and ordinary
 samples. Source identities and original divisors are added by the caller. -/
@@ -141,7 +154,7 @@ theorem signs_checked (signs : LiteralSign.Table E) (context : Ctx)
     (rows : FieldRootSigns.Table E Ctx n cert.isolations.intervals.size)
     (accepted : check signs context query formula radical cert rows = true) :
     Field.checkSignTable p s hw hp signs = true := by
-  simp only [check, Bool.and_eq_true] at accepted
+  simp only [check, checkWith, Bool.and_eq_true] at accepted
   exact accepted.1.1.1.1.1
 
 /-- Acceptance certifies each original atom's semantic degree, including
@@ -158,7 +171,7 @@ theorem degrees (signs : LiteralSign.Table E) (context : Ctx)
   have header := signs_checked signs context query formula radical cert rows accepted
   have real := FieldTransport.real signs header
   have zero := Field.value_zero (Field.literalRep p s hw hp) (Field.literalRep_mk p s hw hp) real
-  simp only [check, Bool.and_eq_true] at accepted
+  simp only [check, checkWith, Bool.and_eq_true] at accepted
   have guard := List.all_eq_true.mp accepted.1.1.1.1.2 atom member
   rw [natDegree_interpret (fun x : ℝ => x) (fun _ => Iff.rfl)]
   exact Transport.polynomial_degree _ zero _ (FieldTransport.leading signs header _ guard)
@@ -200,7 +213,7 @@ theorem cells (signs : LiteralSign.Table E) (context : Ctx)
           Decision.cellSign (FieldQuery.cached signs) FieldDecision.point query cert
             (rows.value cert.total) cell atom = some observed ∧
           SignType.sign (((observed.toInt : Int) : ℝ)) = SignType.sign (atom.eval (valuation x)) := by
-  simp only [check, Bool.and_eq_true] at accepted
+  simp only [check, checkWith, Bool.and_eq_true] at accepted
   obtain ⟨⟨⟨⟨⟨header, _⟩, radicalChecked⟩, isolationChecked⟩, rowsChecked⟩, samples⟩ := accepted
   let rep := Field.literalRep p s hw hp
   let read : E → ℝ := Field.value rep

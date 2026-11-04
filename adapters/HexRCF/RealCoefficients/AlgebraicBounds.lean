@@ -50,8 +50,8 @@ private meta def encloseCore (source : Expr) (request : Rat) : MetaM (Bounds × 
       -- Authenticate before interval production. Degree one gives the exact
       -- selected value without imposing positivity or discarding original guards.
       let x : Q(ℝ) ← pure source
-      let authenticated ← match ← (AlgebraicRoot.identify q($x ^ (1 / 1 : ℝ))
-          source 1 Coefficients.prepare
+      let authenticated ← match ← (AlgebraicRoot.identifyCoordinates q($x ^ (1 / 1 : ℝ))
+          source 1 Coefficients.prepareCoordinates
           (CommonTactic.rcf.algebraic.commonDegree.get (← getOptions))).run with
         | .ok identity => pure identity
         | .error error => throwError "rcf: {error.toMessageData}"

@@ -33,6 +33,7 @@ public import HexRCF.RealCoefficients.SignIndex
 public import HexRCF.RealCoefficients.FieldIndex
 public import HexRCF.RealCoefficients.FieldIsolation
 public import HexRCF.RealCoefficients.FieldCells
+public import HexRCF.RealCoefficients.FiniteIndex
 public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRCF.RealCoefficients.RepresentationSpecialize
 public import HexRCF.RealCoefficients.Samples

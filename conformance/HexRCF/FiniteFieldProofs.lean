@@ -11,64 +11,9 @@ import HexRCF.ProofEvidence
 import Lean
 open Lean Meta
 set_option maxHeartbeats 4000000
-private def returnsIrreducible : Expr → Bool
-  | .forallE _ _ body _ => returnsIrreducible body
-  | body => body.isAppOfArity ``Hex.ZPoly.CheckedIrreducible 1
-
-/-- Inspect both explicit class predicates and closed applications returning
-the class at the literal common polynomial or its reducible aliases.
-Generic owner laws and the original quartic constructor remain allowed;
-this audit does not evaluate source normalization searches. -/
 private meta def commonIrreducible (names : NameHashSet) (common : Expr)
-    (expressions : Array Expr := #[]) : MetaM Bool := do
-  let visited ← IO.mkRef ({} : ExprMap Unit)
-  let comparisons ← IO.mkRef ({} : ExprMap Bool)
-  let providers ← IO.mkRef ({} : NameMap Bool)
-  let found ← IO.mkRef false
-  let rec scan (part : Expr) : MetaM Unit := do
-    if (← found.get) || (← visited.get).contains part then return
-    visited.modify (fun seen => seen.insert part ())
-    let closed := !part.hasLooseBVars && !part.hasFVar && !part.hasMVar
-    let mut candidate : Option Expr := none
-    if closed && part.isAppOfArity ``Hex.ZPoly.CheckedIrreducible 1 then
-      candidate := some part.getAppArgs[0]!
-    else if closed then
-      if let some name := part.getAppFn.constName? then
-        let provider ← match (← providers.get).find? name with
-          | some result => pure result
-          | none => do
-            let result := returnsIrreducible (← getConstInfo name).type
-            providers.modify (fun seen => seen.insert name result)
-            pure result
-        if provider then
-          let type ← inferType part
-          if type.isAppOfArity ``Hex.ZPoly.CheckedIrreducible 1 then
-            candidate := some type.getAppArgs[0]!
-    if let some polynomial := candidate then
-      let equal ← match (← comparisons.get).get? polynomial with
-        | some result => pure result
-        | none => do
-          let result ← withoutModifyingState (withReducible (isDefEq polynomial common))
-          comparisons.modify (fun seen => seen.insert polynomial result)
-          pure result
-      if equal then found.set true
-    match part with
-    | .app f a => scan f; scan a
-    | .lam _ type body _ | .forallE _ type body _ => scan type; scan body
-    | .letE _ type value body _ => scan type; scan value; scan body
-    | .mdata _ body | .proj _ _ body => scan body
-    | _ => pure ()
-  for expression in expressions do scan expression
-  let environment ← getEnv
-  let modules := environment.header.moduleNames
-  for name in names.toArray do
-    if let some index := environment.getModuleIdxFor? name then
-      if #[`Init,`Lean,`Std,`Batteries,`Mathlib,`Aesop,`Qq,`TauCeti].any
-          (fun boundary => boundary.isPrefixOf modules[index]!) then continue
-    let info ← getConstInfo name
-    scan info.type
-    if let some body := info.value? (allowOpaque := true) then scan body
-  return ← found.get
+    (expressions : Array Expr := #[]) : MetaM Bool :=
+  Hex.RCF.ProofEvidence.quotesClass names ``Hex.ZPoly.CheckedIrreducible common expressions
 
 run_meta withoutExporting do
   let roots := #[``Hex.RCF.FiniteFieldCells.universal,
@@ -144,6 +89,12 @@ run_meta withoutExporting do
   let positive ← mkAppM ``Hex.ZPoly.CheckedIrreducible #[common]
   unless ← commonIrreducible {} common #[positive] do
     throwError "common-presentation irreducibility audit missed its positive control"
+  let quadratic := mkConst ``Hex.RCF.RealCoefficients.SquareTwo.polynomial
+  let provider := mkConst ``Hex.RCF.RealCoefficients.SquareTwo.checked
+  unless ← commonIrreducible {} quadratic #[provider] do
+    throwError "instance-provider audit missed a well-typed positive control"
+  if ← commonIrreducible {} common #[provider] then
+    throwError "instance-provider audit confused the quadratic with the common octic"
   let quartic ← mkAppM ``Hex.ZPoly.CheckedIrreducible
     #[mkConst ``Hex.RCF.CertificationInputs.polynomial]
   if ← commonIrreducible {} common #[quartic] then

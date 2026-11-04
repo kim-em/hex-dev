@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public meta import HexRCF.RealCoefficients.FieldLiteral
+public meta import HexRCF.RealCoefficients.FieldTransport
 public meta import HexRCF.RealCoefficients.Interpret
 public meta import HexRCF.RealCoefficients.Conversion
 
@@ -50,10 +51,11 @@ private meta def quotient {p : ZPoly} {root : SimpleRoot p}
   return ← checked rep source ⟨value, expression, proof⟩
 
 /-- Compile source arithmetic from already authenticated leaves. This traversal
-uses the existing field operations and constructs ordinary homomorphism proofs;
+constructs ordinary arithmetic proofs and delegates division evidence to its caller;
 it neither selects roots nor simplifies away original divisor obligations. -/
-meta partial def compile {p : ZPoly} {root : SimpleRoot p}
-    [ZPoly.CheckedIrreducible p] (pExpr rootExpr rep hrep hr : Expr)
+meta partial def compileWith {p : ZPoly} {root : SimpleRoot p}
+    (pExpr rootExpr rep hrep hr : Expr)
+    (divide : Result p root → Result p root → Expr → MetaM (Result p root))
     (leaf : Expr → MetaM (Option (Result p root))) (source : Expr) :
     MetaM (Result p root) := do
   if let some result ← leaf source then return ← checked rep source result
@@ -62,13 +64,13 @@ meta partial def compile {p : ZPoly} {root : SimpleRoot p}
   let op := e.getAppFn.constName?
   let sourceQ : Q(ℝ) ← pure source
   if let some (value, equality) ← Conversion.step? source then
-    let compiled ← compile pExpr rootExpr rep hrep hr leaf value
+    let compiled ← compileWith pExpr rootExpr rep hrep hr divide leaf value
     let proof ← mkEqTrans compiled.proof (← mkEqSymm equality)
     return ← checked rep source ⟨compiled.value, compiled.expression, proof⟩
   if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 &&
       e.appArg!.isAppOfArity ``RealAlgebraicNumber.ofRat 1 then
     let rational : Q(ℚ) := e.appArg!.appArg!
-    let compiled ← compile pExpr rootExpr rep hrep hr leaf q(($rational : ℝ))
+    let compiled ← compileWith pExpr rootExpr rep hrep hr divide leaf q(($rational : ℝ))
     let interpretation ← mkAppM ``RealAlgebraicNumber.ofRat_toReal #[rational]
     let proof ← mkEqTrans compiled.proof (← mkEqSymm interpretation)
     return ← checked rep source ⟨compiled.value, compiled.expression, proof⟩
@@ -81,10 +83,10 @@ meta partial def compile {p : ZPoly} {root : SimpleRoot p}
       else if op == some ``HMul.hMul then q($left * $right) else q($left / $right)
     unless ← isDefEq e canonical do
       throwError "rcf: nonstandard fixed-field arithmetic instance"
-    let a ← compile pExpr rootExpr rep hrep hr leaf args[4]!
-    let b ← compile pExpr rootExpr rep hrep hr leaf args[5]!
+    let a ← compileWith pExpr rootExpr rep hrep hr divide leaf args[4]!
+    let b ← compileWith pExpr rootExpr rep hrep hr divide leaf args[5]!
     if op == some ``HDiv.hDiv then
-      return ← quotient pExpr rootExpr rep hrep hr a b source
+      return ← divide a b source
     let va : Q(ℝ) ← mkAppM ``Field.value #[rep, a.expression]
     let vb : Q(ℝ) ← mkAppM ``Field.value #[rep, b.expression]
     let ha : Q($va = $left) ← pure a.proof
@@ -105,11 +107,11 @@ meta partial def compile {p : ZPoly} {root : SimpleRoot p}
     let canonical := if op == some ``Neg.neg then q(-$operand) else q($operand⁻¹)
     unless ← isDefEq e canonical do
       throwError "rcf: nonstandard fixed-field unary instance"
-    let a ← compile pExpr rootExpr rep hrep hr leaf args[2]!
+    let a ← compileWith pExpr rootExpr rep hrep hr divide leaf args[2]!
     if op == some ``Inv.inv then
       let one : Q(ℝ) := q((1 : ℝ))
-      let unit ← compile pExpr rootExpr rep hrep hr leaf one
-      let divided ← quotient pExpr rootExpr rep hrep hr unit a q(1 / $operand)
+      let unit ← compileWith pExpr rootExpr rep hrep hr divide leaf one
+      let divided ← divide unit a q(1 / $operand)
       let proof ← mkEqTrans divided.proof q(one_div $operand)
       return ← checked rep source ⟨divided.value, divided.expression, proof⟩
     let va : Q(ℝ) ← mkAppM ``Field.value #[rep, a.expression]
@@ -127,7 +129,7 @@ meta partial def compile {p : ZPoly} {root : SimpleRoot p}
       throwError "rcf: nonstandard fixed-field power instance"
     let some n ← getNatValue? exponent |
       throwError "rcf: fixed-field power requires a natural literal"
-    let a ← compile pExpr rootExpr rep hrep hr leaf args[4]!
+    let a ← compileWith pExpr rootExpr rep hrep hr divide leaf args[4]!
     let va : Q(ℝ) ← mkAppM ``Field.value #[rep, a.expression]
     let ha : Q($va = $base) ← pure a.proof
     let expression ← mkAppM ``HPow.hPow #[a.expression, exponent]
@@ -143,5 +145,48 @@ meta partial def compile {p : ZPoly} {root : SimpleRoot p}
     q(by push_cast; rfl)
   let proof ← mkEqTrans hom (← mkEqTrans raw q(($h).to_raw_eq.symm))
   return ← checked rep source ⟨PolyQuot.ofRat value, expression, proof⟩
+
+/-- Compile with the existing global field-interpretation proof. -/
+meta def compile {p : ZPoly} {root : SimpleRoot p}
+    [ZPoly.CheckedIrreducible p] (pExpr rootExpr rep hrep hr : Expr)
+    (leaf : Expr → MetaM (Option (Result p root))) (source : Expr) :
+    MetaM (Result p root) :=
+  compileWith pExpr rootExpr rep hrep hr
+    (quotient pExpr rootExpr rep hrep hr) leaf source
+
+/-- Native field division proposes coordinates. Its proof uses only the checked
+nonzero interpretation of the denominator and the literal multiplication
+identity; no global irreducibility or inverse law is quoted. -/
+private meta def guardedQuotient {p : ZPoly} {root : SimpleRoot p}
+    [ZPoly.CheckedIrreducible p] (pExpr rootExpr rep hrep hr : Expr)
+    (nonzero : Result p root → MetaM Expr)
+    (a b : Result p root) (source : Expr) : MetaM (Result p root) := do
+  let denominator : Q(ℝ) ← mkAppM ``Field.value #[rep, b.expression]
+  let guard ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.FieldCompile.denominator
+    q($denominator ≠ 0) (← nonzero b)
+  let value := a.value / b.value
+  let expression ← FieldLiteral.fieldExpr pExpr rootExpr value
+  let product ← mkAppM ``HMul.hMul #[expression, b.expression]
+  let identity ← mkDecideProof (← mkEq product a.expression)
+  let mapped ← mkAppM ``FieldTransport.quotient
+    #[rep, hrep, hr, a.expression, b.expression, expression, guard, identity]
+  let left : Q(ℝ) ← pure (← inferType a.proof).getAppArgs[2]!
+  let right : Q(ℝ) ← pure (← inferType b.proof).getAppArgs[2]!
+  let va : Q(ℝ) ← mkAppM ``Field.value #[rep, a.expression]
+  let ha : Q($va = $left) ← pure a.proof
+  let hb : Q($denominator = $right) ← pure b.proof
+  let proof ← mkEqTrans mapped q(congrArg₂ (fun x y : ℝ => x / y) $ha $hb)
+  return ← checked rep source ⟨value, expression, proof⟩
+
+/-- Compile with finite denominator evidence. The caller retains the complete
+original divisor inventory, including expressions absent from the coefficients.
+The native field instance is used for proposals and is absent from these proofs. -/
+meta def compileGuarded {p : ZPoly} {root : SimpleRoot p}
+    [ZPoly.CheckedIrreducible p] (pExpr rootExpr rep hrep hr : Expr)
+    (leaf : Expr → MetaM (Option (Result p root)))
+    (nonzero : Result p root → MetaM Expr) (source : Expr) :
+    MetaM (Result p root) :=
+  compileWith pExpr rootExpr rep hrep hr
+    (guardedQuotient pExpr rootExpr rep hrep hr nonzero) leaf source
 
 end Hex.RCF.RealCoefficients.FieldCompile

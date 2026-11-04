@@ -44,7 +44,7 @@ structure Identity where
   fieldDegree : Nat
 
 private meta def identifyBase (source : Expr)
-    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment))
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Coordinates))
     (degree degreeLimit : Nat) (cache : Option (IO.Ref (ExprMap Identity))) :
     ExceptT Hex.RealFormula.Reify.Error MetaM Identity := do
   if degree > degreeLimit then
@@ -65,7 +65,7 @@ private meta def identifyBase (source : Expr)
       return authenticated
   let x : Q(ℝ) ← pure source
   let target := q(∀ _ : ℝ, 0 ≤ $x)
-  let outcome : Except Hex.RealFormula.Reify.Error Coefficients.Environment ←
+  let outcome : Except Hex.RealFormula.Reify.Error Coefficients.Coordinates ←
     liftM (prepareBase target)
   let environment ← match outcome with
     | .ok environment => pure environment
@@ -95,58 +95,55 @@ private meta def identifyBase (source : Expr)
         mkApp environment.valuesExpr indexExpr,
         ← mkAppM ``congrFun #[environment.valuationProof, indexExpr]⟩
     throwError "base coefficient index is out of range"
-  let instType ← mkAppM ``ZPoly.CheckedIrreducible #[environment.polynomialExpr]
   let _ : ZPoly.CheckedIrreducible environment.polynomial := environment.checked
   let outcome : Except Hex.RealFormula.Reify.Error Identity ←
-      withLocalDecl `inst .instImplicit instType fun inst =>
-        (show ExceptT Hex.RealFormula.Reify.Error MetaM Identity from do
-          let result ← FieldCompile.compile environment.polynomialExpr environment.rootExpr
-            rep hrep hreal leaf source
-          let converted := result.value.toAlgebraicNumber
-            (Field.literalRep environment.polynomial environment.square
-              environment.witness environment.precision)
-            (Field.literalRep_mk environment.polynomial environment.square
-              environment.witness environment.precision)
-          let some native := RealAlgebraicNumber.ofAlgebraic? converted |
-            throwThe Hex.RealFormula.Reify.Error
-              (.providerFailure (.internal "authenticated base conversion was not real") #[])
-          let baseP := native.toAlgebraic.p
-          let baseSquare := native.toAlgebraic.rep.1.square
-          unless Decidable.decide (atomWitness baseP baseSquare) &&
-              Decidable.decide ((mahlerPrec baseP : Int) ≤ baseSquare.prec) do
-            throwThe Hex.RealFormula.Reify.Error
-              (.providerFailure (.internal "algebraic base has no literal selected-root witness") #[])
-          let some table := FieldBuild.buildTable environment.polynomial environment.square
-              environment.witness environment.precision
-              [CommonPresentation.discSlack baseSquare result.value] |
-            throwThe Hex.RealFormula.Reify.Error
-              (.providerFailure (.internal "base embedding sign production failed") #[])
-          unless CommonPresentation.checkEntry environment.witness environment.precision
-              table (ZPoly.toRatPoly baseP) baseSquare result.value do
-            throwThe Hex.RealFormula.Reify.Error
-              (.providerFailure (.internal "computed base embedding did not match authenticated source") #[])
-          let pExpr : Q(ZPoly) ← FieldLiteral.zpolyExpr baseP
-          let sExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr baseSquare
-          let hw ← mkDecideProof (q(atomWitness $pExpr $sExpr) : Q(Prop))
-          let hp ← mkDecideProof (q((mahlerPrec $pExpr : Int) ≤ ($sExpr).prec) : Q(Prop))
-          let sourceRep ← mkAppM ``Field.literalRep #[pExpr, sExpr, hw, hp]
-          let sourceRoot ← mkAppM ``HexRootsTheory.RefinedIsolation.root #[sourceRep]
-          let value : Q(ℝ) ← mkAppM ``Complex.re #[sourceRoot]
-          let tableExpr ← FieldLiteral.signTableExpr environment.polynomialExpr
-            environment.rootExpr table
-          let basePoly ← mkAppM ``ZPoly.toRatPoly #[pExpr]
-          let accepted ← kernelDecide
-            (← mkEq (← mkAppM ``CommonPresentation.checkEntry
-              #[rootArgs[2]!, rootArgs[3]!, tableExpr, basePoly, sExpr,
-                result.expression]) q(true))
-          let entryIdentity ← mkAppM ``CommonPresentation.checkEntry_sound_of_selected
-            #[rootArgs[2]!, rootArgs[3]!, tableExpr, basePoly, sExpr, pExpr, hw, hp,
-              ← mkEqRefl basePoly, value, ← mkEqRefl value, result.expression, accepted]
-          let identity ← mkEqTrans (← mkEqSymm entryIdentity) result.proof
-          let proof := mkApp (← mkLambdaFVars #[inst] identity) environment.irreducibleExpr
-          let proof : Q($value = $x) ← Hex.RCF.checkProof
-            `Hex.RCF.RealCoefficients.AlgebraicRoot q($value = $x) proof
-          return ⟨native, value, proof, hw, hp, environment.polynomial.natDegree⟩).run
+      (show ExceptT Hex.RealFormula.Reify.Error MetaM Identity from do
+        let result ← FieldCompile.compileGuarded environment.polynomialExpr environment.rootExpr
+          rep hrep hreal leaf environment.nonzero source
+        let converted := result.value.toAlgebraicNumber
+          (Field.literalRep environment.polynomial environment.square
+            environment.witness environment.precision)
+          (Field.literalRep_mk environment.polynomial environment.square
+            environment.witness environment.precision)
+        let some native := RealAlgebraicNumber.ofAlgebraic? converted |
+          throwThe Hex.RealFormula.Reify.Error
+            (.providerFailure (.internal "authenticated base conversion was not real") #[])
+        let baseP := native.toAlgebraic.p
+        let baseSquare := native.toAlgebraic.rep.1.square
+        unless Decidable.decide (atomWitness baseP baseSquare) &&
+            Decidable.decide ((mahlerPrec baseP : Int) ≤ baseSquare.prec) do
+          throwThe Hex.RealFormula.Reify.Error
+            (.providerFailure (.internal "algebraic base has no literal selected-root witness") #[])
+        let some table := FieldBuild.buildTable environment.polynomial environment.square
+            environment.witness environment.precision
+            [CommonPresentation.discSlack baseSquare result.value] |
+          throwThe Hex.RealFormula.Reify.Error
+            (.providerFailure (.internal "base embedding sign production failed") #[])
+        unless CommonPresentation.checkEntry environment.witness environment.precision
+            table (ZPoly.toRatPoly baseP) baseSquare result.value do
+          throwThe Hex.RealFormula.Reify.Error
+            (.providerFailure (.internal "computed base embedding did not match authenticated source") #[])
+        let pExpr : Q(ZPoly) ← FieldLiteral.zpolyExpr baseP
+        let sExpr : Q(DyadicSquare) ← FieldLiteral.squareExpr baseSquare
+        let hw ← mkDecideProof (q(atomWitness $pExpr $sExpr) : Q(Prop))
+        let hp ← mkDecideProof (q((mahlerPrec $pExpr : Int) ≤ ($sExpr).prec) : Q(Prop))
+        let sourceRep ← mkAppM ``Field.literalRep #[pExpr, sExpr, hw, hp]
+        let sourceRoot ← mkAppM ``HexRootsTheory.RefinedIsolation.root #[sourceRep]
+        let value : Q(ℝ) ← mkAppM ``Complex.re #[sourceRoot]
+        let tableExpr ← FieldLiteral.signTableExpr environment.polynomialExpr
+          environment.rootExpr table
+        let basePoly ← mkAppM ``ZPoly.toRatPoly #[pExpr]
+        let accepted ← kernelDecide
+          (← mkEq (← mkAppM ``CommonPresentation.checkEntry
+            #[rootArgs[2]!, rootArgs[3]!, tableExpr, basePoly, sExpr,
+              result.expression]) q(true))
+        let entryIdentity ← mkAppM ``CommonPresentation.checkEntry_sound_of_selected
+          #[rootArgs[2]!, rootArgs[3]!, tableExpr, basePoly, sExpr, pExpr, hw, hp,
+            ← mkEqRefl basePoly, value, ← mkEqRefl value, result.expression, accepted]
+        let identity ← mkEqTrans (← mkEqSymm entryIdentity) result.proof
+        let proof : Q($value = $x) ← Hex.RCF.checkProof
+          `Hex.RCF.RealCoefficients.AlgebraicRoot q($value = $x) identity
+        return ⟨native, value, proof, hw, hp, environment.polynomial.natDegree⟩).run
   let authenticated ← match outcome with
     | .ok authenticated => pure authenticated
     | .error error => throwThe Hex.RealFormula.Reify.Error error
@@ -156,8 +153,8 @@ private meta def identifyBase (source : Expr)
 
 /-- Authenticate the selected root of an algebraic base using only recorded
 polynomial, power and sign evidence in the quoted ordinary proof. -/
-meta def identify (source base : Expr) (degree : Nat)
-    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment))
+meta def identifyCoordinates (source base : Expr) (degree : Nat)
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Coordinates))
     (degreeLimit : Nat) (cache : Option (IO.Ref (ExprMap Identity)) := none) :
     ExceptT Hex.RealFormula.Reify.Error MetaM Identity := do
   if degree == 0 then
@@ -176,8 +173,18 @@ meta def identify (source base : Expr) (degree : Nat)
     let proof ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.AlgebraicRoot.degreeOne
       q($selected = $source) proof
     return {authenticated with proof}
-  let value ← if nonnegative : 0 ≤ authenticated.value then
-      pure (Coefficients.root authenticated.value degree nonnegative)
+  let value ← if 0 ≤ authenticated.value then do
+      let generator := authenticated.value.toAlgebraic
+      let _ : ZPoly.CheckedIrreducible generator.p := generator.checked
+      let polynomial : DensePoly (QAdjoin generator) :=
+        DensePoly.monomial degree 1 - DensePoly.C generator.toQAdjoin
+      let some roots := FieldBuild.roots? generator.rep generator.rep_mk polynomial |
+        throwThe Hex.RealFormula.Reify.Error
+          (.providerFailure (.internal "fixed-field root proposal failed") #[])
+      let some selected := roots.find? (fun root => Decidable.decide (0 ≤ root.root)) |
+        throwThe Hex.RealFormula.Reify.Error
+          (.providerFailure (.internal "fixed-field proposal has no nonnegative root") #[])
+      pure selected.root
     else do
       throwThe Hex.RealFormula.Reify.Error
         (.unsupported base "negative algebraic root base")
@@ -244,5 +251,18 @@ meta def identify (source base : Expr) (degree : Nat)
       return ⟨value, selected, proof, hwe, hpe, p.natDegree⟩
   throwThe Hex.RealFormula.Reify.Error
     (.providerFailure (.internal "proposed root has no literal selected-root witness") #[])
+
+/-- Preserve the legacy callback interface and validate its additional global
+certificate before using the shared finite source authenticator. -/
+meta def identify (source base : Expr) (degree : Nat)
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment))
+    (degreeLimit : Nat) (cache : Option (IO.Ref (ExprMap Identity)) := none) :
+    ExceptT Hex.RealFormula.Reify.Error MetaM Identity :=
+  identifyCoordinates source base degree (fun target => do
+    match ← prepareBase target with
+    | .error error => return .error error
+    | .ok prepared =>
+      prepared.checkDomains
+      return .ok prepared.toCoordinates) degreeLimit cache
 
 end Hex.RCF.RealCoefficients.AlgebraicRoot
