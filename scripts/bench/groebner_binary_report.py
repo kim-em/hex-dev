@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.groebner_capsule import Capsule
 from scripts.bench.groebner_checks import source_identity
+from scripts.bench.groebner_binary_guards import blobs, combined, admission
 from scripts.bench.groebner_comparator_report import msolve
 from scripts.bench.groebner_retirement_report import listing
 from scripts.bench.groebner_trie_report import source, require, mean
@@ -19,12 +20,6 @@ from scripts.bench.groebner_trie_report import source, require, mean
 def close(a, b, message):
     require(math.isclose(a, b, rel_tol=1e-12), message)
 
-
-def blobs(cap, manifest, prefix):
-    for path, oid in listing(manifest).items():
-        data = cap.read(prefix + path)
-        require(hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest() == oid,
-                "source blob differs: " + path)
 
 
 def check_guards(cap, manifest):
@@ -71,7 +66,7 @@ def check_guards(cap, manifest):
     return current, native
 
 
-def sweep(cap, label, before, after, count=10):
+def sweep(cap, label, before, after, count=10, expected_binary=None):
     meta, recorded = cap.json(label + "/metadata.json"), cap.json(label + "/analysis.json")
     require(meta["source_unchanged"] and meta["threads"] == 1 and
             meta["source_manifest"] == after["source_manifest"] and meta["baseline_manifest"] == before and
@@ -81,6 +76,7 @@ def sweep(cap, label, before, after, count=10):
     require(meta["requested_scheduling"] == {"A": "degree", "B": "degree"}, "scheduling differs")
     for name, digest in meta["input_sha256"].items():
         require(hashlib.sha256(cap.read(label + "/inputs/" + name)).hexdigest() == digest, "input differs")
+    require(meta["requested_binary_pivots"] == expected_binary, "binary policy controls differ")
     samples = meta["samples"]
     order = [r["case"] for r in samples if r["block"] == 0 and r["arm"] == "A"]
     require(len(order) == len(set(order)) == count and len(samples) == count * 4 and
@@ -205,6 +201,8 @@ def main():
     for name in ["initial", "word", "blocked", "selected", "report"]:
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--rebased", type=Path, help="additional combined-tree source and verification snapshot")
+    parser.add_argument("--admission", type=Path, help="non-timed native frame admission audit")
+    parser.add_argument("--guards", type=Path, help="additional final verification snapshot")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--current", action="store_true")
     args = parser.parse_args()
@@ -225,53 +223,13 @@ def main():
     rebased = None
     if args.rebased:
         rebased = Capsule(args.rebased)
-        combined = source(rebased, "pivots")
-        documented = rebased.json("identity.json")
-        require(documented["source_fingerprint"] == combined["source_fingerprint"] and
-                documented["source_manifest_sha256"] == hashlib.sha256(
-                    combined["source_manifest"].encode()).hexdigest(), "combined runtime differs")
-        checks = rebased.text("checks.manifest")
-        require(documented["checks_manifest_sha256"] == hashlib.sha256(checks.encode()).hexdigest(),
-                "combined check manifest differs")
-        blobs(rebased, checks, "checks-sources/")
-        for label, names in [("native", ["clang", "gcc"]),
-                ("full", ["build", "oracles", "driver", "bench", "dag", "phase4", "manifest", "headers", "lines"])]:
-            rows = rebased.json(label + "-status.json")
-            require([r["name"] for r in rows] == names and all(r["exit_code"] == 0 and
-                    all(r[k] == v for k, v in documented.items()) for r in rows),
-                    "failed or stale combined checks")
-        require(all(r["variants"] == ["Native", "AVX2", "AVX2Remainder", "Scalar", "Remainder", "ScalarRemainder"] and
-                    r["sanitize"] == ["address", "undefined"] for r in rebased.json("native-status.json")),
-                "combined native coverage differs")
-        require("567 unique reduced bases match SymPy" in rebased.text("full/oracles.log") and
-                "567 reduced bases match Singular" in rebased.text("full/oracles.log"),
-                "combined oracle coverage differs")
-        require(combined["compilers"] == selected_manifest["compilers"] and
-                combined["native_options"] == selected_manifest["native_options"],
-                "combined compiler/options differ")
-        require(all(combined["binary_sha256"][key] == selected_manifest["binary_sha256"][key]
-                    for key in ["compute", "compute-reference"]),
-                "combined computation executable differs from measured carrier")
-        old_sources = listing(selected.text("current.source.manifest"))
-        new_sources = listing(combined["source_manifest"])
-        allowed = {"HexGroebner/README.md", "HexGroebner/Sampled.lean", "HexGroebner/SamplingRound.lean",
-                   "bench/HexGroebner/Driver/Sampled.lean", "scripts/bench/groebner_cli_measure.py"}
-        require(set(old_sources) == set(new_sources) and
-                {p for p in old_sources if old_sources[p] != new_sources[p]} <= allowed,
-                "combined tree changed the packed runtime or kernel definitions")
-        cli = rebased.json("cli/status.json")
-        require(len(cli) == 20 and sum(r["exit_code"] == 2 for r in cli) == 4 and
-                all(r["exit_code"] in [0, 2] for r in cli), "combined CLI coverage differs")
-        for driver in ["compute", "compute-reference"]:
-            for prime in [2, 32003]:
-                reference = None
-                for label in ["default", "false", "true", "duplicate"]:
-                    value = rebased.json(f"cli/{driver}-p{prime}-{label}.stdout")
-                    require(value["binaryPivots"] == (label == "true"), "combined CLI policy differs")
-                    result = value["basis"], value["statistics"]
-                    reference = reference or result
-                    require(result == reference, "combined CLI bases/statistics differ")
-        identity = documented
+        identity = combined(rebased, selected, selected_manifest)
+    guards = Capsule(args.guards) if args.guards else None
+    if guards:
+        identity = combined(guards, selected, selected_manifest)
+    audit = Capsule(args.admission) if args.admission else None
+    coverage = admission(audit, guards, blocked) if audit and guards else None
+    require(not audit or coverage, "admission audit requires final guards")
     if args.current:
         current = source_identity()
         require(all(current[k] == v for k, v in identity.items() if k != "source_commit"),
@@ -282,11 +240,12 @@ def main():
         ("word cursor / packed", word, prototype, word_manifest),
         ("zero blocks / packed", blocked, prototype, blocked_manifest),
     ]:
-        first = sweep(cap, "pivots/f2-false", before, after)
-        repeat = sweep(cap, "pivots/f2-false-repeat", before, after)
+        flags = {"A": None if cap is initial else "true", "B": "true"}
+        first = sweep(cap, "pivots/f2-false", before, after, expected_binary=flags)
+        repeat = sweep(cap, "pivots/f2-false-repeat", before, after, expected_binary=flags)
         require(first["meta"]["input_sha256"] == repeat["meta"]["input_sha256"], "repeat inputs differ")
         observations.extend([(title, first), (title + " repeat", repeat)])
-    control = sweep(initial, "pivots/prime-control", original, prototype, count=14)
+    control = sweep(initial, "pivots/prime-control", original, prototype, count=14, expected_binary={"A": None, "B": None})
     short = kernels(selected, selected_manifest, "", native)
     longer = kernels(selected, selected_manifest, "-long", historical)
     counts = {k: 2 for k in ["cyclic", "kat", "eco", "noon", "reimer", "minrank", "dense-quadratic"]}
@@ -324,14 +283,14 @@ def main():
         cells = [f"{observations[i][1]['recorded']['per_family'][family]:.6f}/{observations[i+1][1]['recorded']['per_family'][family]:.6f}"
                  for i in [0, 2, 4]]
         lines.append("| " + family + " | " + " | ".join(cells) + " |")
-    lines += ["", "The selected scanner lowers observed MQ time in both comparisons with the initial packed implementation. Several small-family ratios vary substantially. These observations justify retaining a useful opt-in kernel, not selecting a universal default or asserting overall performance leadership.", "",
+    lines += ["", "The two MQ ratios are below one, but effects this size are not established against the variability observed across campaigns. Several small-family ratios also vary substantially. These observations do not establish a full-system improvement, justify a universal default or assert overall performance leadership.", "",
         "The registered `binaryEliminate` and `binaryEliminateSparse` kernels use identical prepared F2 matrices with known reducers and dense targets. Timed work includes validation, workspace construction, elimination, complete decoded rows and counters, and structural hashing. Preparation is outside timing. Both arms use the same executable; complete result hashes agree.", "",
         "| Matrix parameter | Short-pass packed/sparse | Short floor flags / 4 | Longer-pass packed/sparse | Longer floor flags / 4 |",
         "|---|---:|---:|---:|---:|"]
     for (n, a, af), (m, b, bf) in zip(short, longer):
         require(n == m, "kernel schedules differ")
         lines.append(f"| {n} | {a:.6f} | {af} | {b:.6f} | {bf} |")
-    lines += ["", "The initial pass targets 0.5 seconds of inner work; its matched rows are below the measured signal threshold. One longer matched pass targets 16 seconds. Its remaining flagged row is retained and does not independently justify a timing claim. No further unchanged kernel pass is collected. The short pass also retains the fixed trial-major complexity runs. Kernel improvements do not establish a full-system speedup of the same size.", "",
+    lines += ["", "The initial pass targets 0.5 seconds of inner work; its matched rows are below the measured signal threshold. One longer matched pass targets 16 seconds. Its remaining flagged row is retained and does not independently justify a timing claim. No further unchanged kernel pass is collected. The short pass also retains the fixed trial-major complexity runs. The sparse arm admits whole frames at parameters 32 and 64, and uses the phased continuation from 128 upward. The packed cost model is O(n³/64+n²) at fixed word width; scans, decoding and hashing may dominate these finite sizes. These ratios compare those complete providers at the stated sizes and do not establish a full-system speedup of the same size.", "",
         "The independent msolve comparison uses the canonical F2 suite, one thread, full reduced grevlex output, commit `3672113ee2c696a2ac9c637636e0f7214f500ba1`, Clang 23.1.3 and `-O3 -march=native`. Hex native C uses Clang 21.1.8 and generated C uses SDK Clang 23.1.0; compiler/tuning differences remain part of this observed gap. Every comparison has 40 completed processes and 20 equal complete bases. Inputs and every Hex logical counter agree across these variants. All samples and outliers remain retained; no further unchanged comparator repeat is collected.", "",
         "| Hex version / msolve | Process ratio | Equal-family ratio | Pair range | CPU |",
         "|---|---:|---:|---:|---:|"]
@@ -343,14 +302,27 @@ def main():
         f"Native runtime `{native['source_fingerprint']}`; documented runtime `{historical['source_fingerprint']}`; checks `{historical['checks_fingerprint']}`.", ""]
     if rebased:
         lines += [f"The combined tree after the scheduling-policy merge has runtime `{identity['source_fingerprint']}` and checks `{identity['checks_fingerprint']}`. Its separate twelve sanitizer variants, nine project gates and twenty CLI policy checks pass. Its computation executables are byte-identical to the measured carrier. The benchmark executable changes through the sampled-policy dependency; the packed runtime and kernel definitions are unchanged. Kernel timings remain bound to the original benchmark executable; no additional timing repeat is used.", ""]
+    if coverage:
+        lines += ["The separate non-timed admission audit uses the exact ten timed F₂ inputs and flags. Its instrumented Clang 23 executable reproduces every complete basis and logical counter. All 108 attempted frames are accepted; shape, logical-work, physical-work and byte refusals are zero in this audit. Larger shapes can still decline under the documented caps. Counts are cumulative row visits, not distinct basis polynomials. Admission confirms path activity without establishing a timing effect.", "",
+            "| Family | Inputs | Accepted / attempted frames | Known row visits | Target row visits |",
+            "|---|---:|---:|---:|---:|"]
+        for family, counts in coverage.items():
+            lines.append(f"| {family} | {counts['inputs']} | {counts['accepted']} / {counts['attempted']} | {counts['reducer_rows']} | {counts['target_rows']} |")
+        lines += ["", "The final validation adds measured buffer-size totals, target-built word-pivot reuse, 1024-target admission, and the exact logical-work boundary plus one entry. The retained initial diagnostic-probe compile failure is corrected by adding standard I/O declarations. The production elimination code and timed computation executables are unchanged.", ""]
     for name, cap in [("initial", initial), ("word", word), ("blocked", blocked), ("selected", selected)]:
         lines.append(f"`{getattr(args, name).name}`: SHA-256 `{cap.sha256}`.")
     if rebased:
         lines.append(f"`{args.rebased.name}`: SHA-256 `{rebased.sha256}`.")
+    if guards:
+        lines.append(f"`{args.guards.name}`: SHA-256 `{guards.sha256}`.")
+    if audit:
+        lines.append(f"`{args.admission.name}`: SHA-256 `{audit.sha256}`.")
     lines += ["", "Regenerate with `python3 scripts/bench/groebner_binary_report.py " + " ".join(
         f"--{name} reports/bench-results/raw/{getattr(args, name).name}" for name in
         ["initial", "word", "blocked", "selected"]) +
         (f" --rebased reports/bench-results/raw/{args.rebased.name}" if rebased else "") +
+        (f" --guards reports/bench-results/raw/{args.guards.name}" if guards else "") +
+        (f" --admission reports/bench-results/raw/{args.admission.name}" if audit else "") +
         " --report reports/bench-results/hexgroebner-binary.md --check`. Add `--current` to bind the checkout.", ""]
     text = "\n".join(lines)
     if args.check:
