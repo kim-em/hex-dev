@@ -118,13 +118,16 @@ def producerChecks (nonce : Nat) : Bool := Id.run do
 
 /-- Newly admitted reducer/target counts exercise real reductions. The optional
 cap models the harness's smaller native work ceiling at its exact boundary. -/
-def wideChecks (nonce : Nat) (cap : Nat := 2^34) : Option Nat := do
-  let field : PrimeField := ⟨65521,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+def wideChecks (nonce : Nat) (cap : Nat := 2^34) (wide : Bool := false) : Option Nat := do
+  let field : PrimeField := if wide then
+    ⟨2147483647,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+    else ⟨65521,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let coefficient := field.modulus-1
   let columns := 2305
   let reducers ← (Array.range 1100).mapM fun h =>
-    SparseRow.ofEntries field columns #[(h,65520),(columns-1,65520)]
+    SparseRow.ofEntries field columns #[(h,1),(columns-1,coefficient)]
   let target ← SparseRow.ofEntries field columns
-    (((Array.range 1100).map fun h => (h,(65520:UInt64))).push (columns-1,65520))
+    (((Array.range 1100).map fun h => (h,(1:UInt64))).push (columns-1,coefficient))
   let targets := Array.replicate 80 target
   let sugars := (Array.range 1180).map fun i => (i+nonce%17)%101
   let limits : MatrixLimits := { delayedReduction := true }
@@ -140,7 +143,7 @@ def wideChecks (nonce : Nat) (cap : Nat := 2^34) : Option Nat := do
 including every joint-elimination row, label, alias and logical counter. -/
 def scalarChecks (nonce : Nat) : Bool := Id.run do
   for field in Fixtures.fields do
-    if field.modulus > 2 && field.modulus < 65536 then
+    if field.modulus > 2 then
       for columns in [1,5,17,65] do
         let some (rs,ts) := rows field columns nonce | return false
         let limits : MatrixLimits := { delayedReduction := true }

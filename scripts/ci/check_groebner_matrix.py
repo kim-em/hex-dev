@@ -626,8 +626,12 @@ static uint64_t delayed_quantum=UINT64_C(1)<<34,delayed_refused_work=0;
 #define HEX_GROEBNER_DELAYED_TARGET(context) do { \
  if(delayed_offset_enabled) { \
   matrix_context *ctx=(context); \
-  uint64_t room=(ctx->columns+1)*(ctx->p-1)*(ctx->p-1)+(ctx->p-1); \
-  uint64_t offset=((UINT64_MAX-room)/ctx->p)*ctx->p; \
+  uint64_t offset; \
+  if(ctx->width==4) offset=(ctx->p-2)*ctx->p; \
+  else { \
+   uint64_t room=(ctx->columns+1)*(ctx->p-1)*(ctx->p-1)+(ctx->p-1); \
+   offset=((UINT64_MAX-room)/ctx->p)*ctx->p; \
+  } \
   for(uint64_t col=0;col<ctx->columns;++col) delayed_write(ctx,col,delayed_read(ctx,col)+offset); \
   ++delayed_overflows; \
  } \
@@ -820,26 +824,29 @@ static int delayed_guard_test(void) {
 #if HEX_GROEBNER_AVX2
  if(!hex_avx2_available()) return 1;
  size_t page=(size_t)sysconf(_SC_PAGESIZE);
- for(unsigned width=1;width<=2;++width) for(unsigned stride=1;stride<=6;stride+=5)
+ for(unsigned width=1;width<=4;width*=2) for(unsigned stride=1;stride<=6;stride+=5)
   for(unsigned n=1;n<=10;++n) {
    uint8_t *cm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
    uint8_t *vm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
    if(cm==MAP_FAILED || vm==MAP_FAILED) return 0;
    if(mprotect(cm+page,page,PROT_NONE)||mprotect(vm+page,page,PROT_NONE)) return 0;
    uint8_t *cols=cm+page-n*4,*vals=vm+page-n*width;
-   matrix_context ctx={0};ctx.columns=64;ctx.width=width;ctx.p=width==1?251:65521;
+   matrix_context ctx={0};ctx.columns=64;ctx.width=width;ctx.p=width==1?251:width==2?65521:INT32_MAX;ctx.modulus_squared=ctx.p*ctx.p;
    ctx.dense=matrix_zeros(64*8);
    uint64_t expected[64],factor=ctx.p-1;
    for(unsigned col=0;col<64;++col) {
-    expected[col]=UINT64_MAX-(UINT64_C(1)<<40)+col;
+    expected[col]=width==4?ctx.modulus_squared-ctx.p-col:UINT64_MAX-(UINT64_C(1)<<40)+col;
     delayed_write(&ctx,col,expected[col]);
    }
    for(unsigned j=0;j<n;++j) {
     matrix_write(cols+j*4,4,j*stride);
     matrix_write(vals+j*width,width,ctx.p-1-j);
-    if(j) expected[j*stride]+=factor*(ctx.p-1-j);
+    if(j) {
+     expected[j*stride]+=factor*(ctx.p-1-j);
+     if(width==4 && expected[j*stride]>=ctx.modulus_squared) expected[j*stride]-=ctx.modulus_squared;
+    }
    }
-   uint8_t cb[40],vb[20];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
+   uint8_t cb[40],vb[40];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
    delayed_pivot pivot={cols,vals,n,(n-1)*stride,0};
    delayed_update_avx2(&ctx,&pivot,factor);
    for(unsigned col=0;col<64;++col) if(delayed_read(&ctx,col)!=expected[col]) return 0;
@@ -1151,6 +1158,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let hit ← inputTextFile (FilePath.mk HITCODE)
   let runtimeHeader ← inputTextFile (FilePath.mk RUNTIME_HEADER)
   let whole ← inputTextFile (FilePath.mk WHOLECODE)
+  let delayed ← inputTextFile (FilePath.mk DELAYED_HEADER)
   let continuation ← inputTextFile (FilePath.mk STATECODE)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
   let inputs := inputs.zipWith (fun s _ => s) wide
@@ -1158,6 +1166,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let inputs := inputs.zipWith (fun s _ => s) hit
   let inputs := (inputs.zipWith (fun s _ => s) whole).zipWith (fun s _ => s) continuation
   let inputs := inputs.zipWith (fun s _ => s) runtimeHeader
+  let inputs := inputs.zipWith (fun s _ => s) delayed
   buildO (pkg.dir / defaultBuildDir / (name ++ ".o")) inputs
     #["-isystem", (← getLeanIncludeDir).toString] flags
     (compiler := FilePath.mk COMPILER)
@@ -1167,6 +1176,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
             "WIDE_HEADER", json.dumps(str(source.parent / "matrix_avx512.h"))).replace(
             "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c"))).replace("STATECODE", json.dumps(str(source.parent / "matrix_state.c"))).replace("WHOLECODE", json.dumps(str(source.parent / "matrix_eliminate.c")))
+        config = config.replace("DELAYED_HEADER", json.dumps(str(source.parent / "matrix_delayed.h")))
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING", "-DHEX_GROEBNER_ENABLE_AVX512"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
@@ -1377,6 +1387,16 @@ private def checkBinaryBuffers : IO Unit := do
     throw (IO.userError "delayed high columns or full producer differs")
   if !Hex.Groebner.DelayedConformance.scalarChecks delayedSeed then
     throw (IO.userError "delayed matrix differs from fully scalar Lean")
+  for wide in [false,true] do
+    let some work := Hex.Groebner.DelayedConformance.wideChecks delayedSeed (2^34) wide |
+      throw (IO.userError "delayed widened coefficient/reducer counts differ")
+    delayedQuantum (work-1).toUInt64
+    if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+17) (work-1) wide).isNone then
+      throw (IO.userError "delayed widened coefficient work refusal differs")
+    delayedQuantum work.toUInt64
+    if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+34) work wide).isNone then
+      throw (IO.userError "delayed widened coefficient exact cap declined")
+    delayedQuantum (2^34)
   let some wideWork := Hex.Groebner.DelayedConformance.wideChecks delayedSeed |
     throw (IO.userError "delayed newly admitted reductions differ")
   let refusedBefore ← delayedRefused
