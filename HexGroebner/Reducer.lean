@@ -24,6 +24,37 @@ structure BasisElement where
   sugar : Nat
   deriving Inhabited
 
+namespace Computation
+
+/-- Retain the first representative of each minimal leading monomial.
+The polynomial argument is a constant-time projection from a basis entry.
+This read-only scan keeps work locally, committing the exact successful or
+exhausted prefix once, without rebuilding the workspace at every comparison. -/
+@[specialize] def minimal {α : Type} [Inhabited α] (context : Context) (limits : Limits)
+    (basis : Array α) (polynomial : α → Polynomial) : Computation (Array α) :=
+  ExceptT.mk fun state =>
+    let table := state.table
+    let charge := context.variables+1
+    let result : Except ComputeError (Array α) × Nat := Id.run do
+      let mut work := state.statistics.work
+      let mut minimal := #[]
+      for i in [:basis.size] do
+        let leading := (polynomial basis[i]!).monomial 0
+        let mut redundant := false
+        for j in [:basis.size] do
+          let next := work+charge
+          if next > limits.work then return (.error (.exhausted .work),work)
+          work := next
+          let other := (polynomial basis[j]!).monomial 0
+          if j != i && table.divides other leading && (other != leading || j < i) then
+            redundant := true
+            break
+        if !redundant then minimal := minimal.push basis[i]!
+      return (.ok minimal,work)
+    (result.1, { state with statistics.work := result.2 })
+
+end Computation
+
 /-- A node of a divisibility trie. Edges are insertion ordered, not hash slots. -/
 structure DivisorNode where
   edges : ByteArray := {}

@@ -33,6 +33,60 @@ private def input : Array RawPolynomial := #[
   #[⟨#[2, 0], 1⟩, ⟨#[0, 1], 6⟩],
   #[⟨#[1, 1], 1⟩, ⟨#[0, 0], 6⟩]]
 
+private def minimalInput : Computation (Array BasisElement) := do
+  let a ← Polynomial.normalize context {} 0 #[⟨#[2,1],1⟩]
+  let b ← Polynomial.normalize context {} 1 #[⟨#[1,0],1⟩]
+  let c ← Polynomial.normalize context {} 2 #[⟨#[0,1],1⟩]
+  Computation.queueSupport {} a.support
+  return #[⟨a,11⟩,⟨b,22⟩,⟨a,33⟩,⟨c,44⟩]
+
+private def tableState (table : MonomialTable) :=
+  (table.arity,table.width.bytes,table.count,table.exponents,table.metadata,
+    table.workspace,table.index.heads,table.index.links,table.hashBits,table.work)
+
+/-- For `[x²y,x,x²y,y]`, only `x,y` survive, and exactly eleven comparisons
+cost three work units each. Check every exhaustion cut, nonzero initial work,
+duplicate ties, carried labels, an empty basis, and immutable shared scratch. -/
+def minimalPrefixes : Bool := Id.run do
+  let (result, workspace) := minimalInput.run { table := { arity := 2 } }
+  let .ok basis := result | return false
+  let payload := fun g : BasisElement =>
+    (g.polynomial.support,g.polynomial.coefficients,g.sugar)
+  for initial in #[0,4,37] do
+    for budget in [:initial+37] do
+      let statistics : Statistics := {
+        work := initial, allocatedBytes := 19, pairs := 23, rounds := 29, matrixRows := 31 }
+      let state := { workspace with statistics }
+      let limits : Limits := { work := budget, packedBytes := 0 }
+      let (actual, out) := (Computation.minimal context limits basis (·.polynomial)).run state
+      let expectedWork := initial + min 33 (3*((budget-initial)/3))
+      if out.statistics != { statistics with work := expectedWork } ||
+          tableState out.table != tableState state.table ||
+          out.support.bits != state.support.bits || out.support.queue != state.support.queue then
+        return false
+      match actual with
+      | .ok rows =>
+        if budget < initial+33 || rows.map payload != #[payload basis[1]!,payload basis[3]!] then
+          return false
+      | .error (.exhausted .work) => if budget ≥ initial+33 then return false
+      | _ => return false
+      let wrapped := basis.zipIdx.map fun (g,i) => (g,100+i)
+      let (actual, out) := (Computation.minimal context limits wrapped (·.1.polynomial)).run state
+      if out.statistics != { statistics with work := expectedWork } then return false
+      match actual with
+      | .ok rows =>
+        if budget < initial+33 || rows.map (·.2) != #[101,103] then return false
+      | .error (.exhausted .work) => if budget ≥ initial+33 then return false
+      | _ => return false
+      let (empty, out) := (Computation.minimal context limits (#[] : Array BasisElement)
+        (·.polynomial)).run state
+      match empty with
+      | .ok rows => if !rows.isEmpty || out.statistics != statistics then return false
+      | _ => return false
+  return true
+
+#guard minimalPrefixes
+
 /-- One reducer `x`, then targets `1` and `x`: one free target pivot,
 one pivot application and one zero row. No complete F4 computation is involved. -/
 private def countMatrix (limits : Limits) : Computation Unit := do

@@ -95,18 +95,7 @@ def round (context : Context) (limits : Limits) (nodeLimit : Nat)
 
 def interreduce (context : Context) (limits : Limits) (nodeLimit : Nat)
     (basis : Array Element) (cache : ReducerCache) : Work (Array Element) := do
-  let table := (← lift get).table
-  let mut minimal := #[]
-  for i in [:basis.size] do
-    let leading := basis[i]!.value.polynomial.monomial 0
-    let mut redundant := false
-    for j in [:basis.size] do
-      lift (Computation.spend limits (context.variables+1))
-      let other := basis[j]!.value.polynomial.monomial 0
-      if j != i && table.divides other leading && (other != leading || j < i) then
-        redundant := true
-        break
-    if !redundant then minimal := minimal.push basis[i]!
+  let minimal ← lift (Computation.minimal context limits basis (·.value.polynomial))
   let values := plain minimal
   let index ← lift (ReducerIndex.build context limits values)
   let mut inputs : Array Element := #[]
