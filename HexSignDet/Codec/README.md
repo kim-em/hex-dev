@@ -4,6 +4,8 @@
 through ordinary public imports for kernel reduction on concrete inputs.
 These bodies are kernel-facing APIs: runtime optimizations should use a proved
 `@[csimp]` implementation twin while preserving the reference definitions.
+Encoders with public literal-shape equations must preserve those statements;
+runtime changes can use a proved `@[csimp]` implementation twin.
 Reading constructs raw graph data; successful decoding still needs independent
 replay before it supplies mathematical evidence. The
 [public-reader audit](../../reports/sign-det-public-codec.md) records the scope
@@ -111,11 +113,18 @@ Every structural record is a positional array with exactly the listed fields. An
 optional value is `[]` or `[value]`. Arrays and lists retain their original
 order; matrices are arrays of rows.
 
-`Codec.graph_eq`, `entry_eq` and `node_eq` give the exact outer encoding
-equations through ordinary `import HexSignDet.Codec`. They support proofs
-binding numerical packets to their source records without unfolding hidden
-encoder bodies. They describe stored fields, including malformed supplied data;
-they do not establish decoding success, context agreement or arithmetic validity.
+`Codec.graph_eq`, `entry_eq` and `node_eq` give outer record equations through
+ordinary `import HexSignDet.Codec`. The function equation `entry_fn` rewrites
+the encoder beneath array maps. `option_none` and `option_some` identify absent
+and present payloads; `system_eq`, `basis_eq` and `encodeMatrix_eq` give the
+stored system, basis and matrix fields. The ordinary-import `PublicCodec`
+consumer composes them to identify a one-entry numerical graph with a size-zero
+node and no moments, reductions or preparation. The nested `tarski`, `chain`,
+`remainder`, `terminal`, `reductionStep`, `reduction` and `preparation` encoders
+remain opaque; these equations do not complete numerical cubic-packet binding.
+These equations
+describe stored data, including malformed witnesses; decoding success, context
+agreement and arithmetic validity remain separate requirements.
 
 | Record | Fields in order |
 | --- | --- |
