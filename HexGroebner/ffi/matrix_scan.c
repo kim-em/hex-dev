@@ -251,47 +251,31 @@ static uint64_t hex_dense_update_avx2(uint8_t *data,const uint8_t *values,
 #undef HEX_SCAN_PACKET16
 #endif
 
-static lean_obj_res scan_dispatch(uint64_t p,
+LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
         b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
-        b_lean_obj_arg quantum,b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance,
-        uint64_t quantum_limit) {
+        b_lean_obj_arg quantum,b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
 #if HEX_GROEBNER_AVX512 && defined(HEX_GROEBNER_ENABLE_AVX512)
     if((p&1) && hex_avx512_available()) {
-        if(p<=256) return hex_scan_avx512_u8(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-        if(p<=65536) return hex_scan_avx512_u16(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-        if(p==INT32_MAX) return hex_scan_avx512_m31(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-        return hex_scan_avx512_u32(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
+        if(p<=256) return hex_scan_avx512_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
+        if(p<=65536) return hex_scan_avx512_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
+        if(p==INT32_MAX) return hex_scan_avx512_m31(p,slots,pivots,initial,quantum,work,trace,provenance);
+        return hex_scan_avx512_u32(p,slots,pivots,initial,quantum,work,trace,provenance);
     }
 #endif
 #if HEX_GROEBNER_AVX2
     if(p>65536 && (p&1) && hex_avx2_available()) {
-        if(p==INT32_MAX) return hex_scan_avx2_m31(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-        return hex_scan_avx2(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
+        if(p==INT32_MAX) return hex_scan_avx2_m31(p,slots,pivots,initial,quantum,work,trace,provenance);
+        return hex_scan_avx2(p,slots,pivots,initial,quantum,work,trace,provenance);
     }
     /* Keep characteristic two scalar; raw even-modulus calls use that fallback too. */
     if((p&1) && hex_avx2_available()) {
-        if(p<=256) return hex_scan_avx2_u8(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-        return hex_scan_avx2_u16(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
+        if(p<=256) return hex_scan_avx2_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
+        return hex_scan_avx2_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
     }
 #endif
-    if(p<=256) return hex_scan_u8(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-    if(p<=65536) return hex_scan_u16(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-    return hex_scan_u32(p,slots,pivots,initial,quantum,work,trace,provenance,quantum_limit);
-}
-
-
-/* Preserve the public resumable operation's 4096-step contract. */
-LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
-        b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
-        b_lean_obj_arg quantum,b_lean_obj_arg work,b_lean_obj_arg trace,uint8_t provenance) {
-    return scan_dispatch(p,slots,pivots,initial,quantum,work,trace,provenance,4096);
-}
-/* Internal whole-matrix specialization: no trace, at most 2^20 microsteps.
-   The same state machine, validation, ownership and exact work charges apply. */
-LEAN_EXPORT lean_obj_res lean_hex_scan_bulk(uint64_t p,
-        b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
-        b_lean_obj_arg quantum,b_lean_obj_arg work) {
-    return scan_dispatch(p,slots,pivots,initial,quantum,work,lean_box(0),0,UINT64_C(1048576));
+    if(p<=256) return hex_scan_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
+    if(p<=65536) return hex_scan_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
+    return hex_scan_u32(p,slots,pivots,initial,quantum,work,trace,provenance);
 }
 
 #undef HEX_SCAN_DENSE
@@ -353,11 +337,11 @@ LEAN_EXPORT lean_obj_res lean_hex_dense_transition(uint64_t p,b_lean_obj_arg col
         return result(initial,lean_alloc_array(0,0),0,0,0,4);
 #if HEX_GROEBNER_AVX2
     if(p==INT32_MAX && hex_avx2_available())
-        return hex_dense_scan_m31(p,slots,pivots,initial,quantum,work,trace,provenance,4096);
+        return hex_dense_scan_m31(p,slots,pivots,initial,quantum,work,trace,provenance);
 #endif
-    if(p<=256) return hex_dense_scan_u8(p,slots,pivots,initial,quantum,work,trace,provenance,4096);
-    if(p<=65536) return hex_dense_scan_u16(p,slots,pivots,initial,quantum,work,trace,provenance,4096);
-    return hex_dense_scan_u32(p,slots,pivots,initial,quantum,work,trace,provenance,4096);
+    if(p<=256) return hex_dense_scan_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
+    if(p<=65536) return hex_dense_scan_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
+    return hex_dense_scan_u32(p,slots,pivots,initial,quantum,work,trace,provenance);
 }
 
 static lean_object *append_scalar(lean_obj_arg bytes,unsigned w,uint64_t value) {

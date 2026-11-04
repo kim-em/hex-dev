@@ -583,12 +583,10 @@ static uint64_t dense_prepares=0,dense_scans=0,dense_updates=0,dense_admitted=0;
 #define HEX_GROEBNER_DENSE_USED() (++dense_updates)
 #define lean_hex_prepare_dense hex_test_prepare_dense
 #define lean_hex_dense_transition hex_test_dense_transition
-#define lean_hex_scan_bulk hex_test_scan_bulk
 #define lean_hex_scan_transition hex_test_scan
 #define lean_hex_gather hex_test_gather
 #include SOURCE
 #undef lean_hex_scan_transition
-#undef lean_hex_scan_bulk
 #undef lean_hex_gather
 #undef lean_hex_prepare_dense
 #undef lean_hex_dense_transition
@@ -624,6 +622,11 @@ static uint64_t delayed_quantum=UINT64_C(1)<<34,delayed_refused_work=0;
 #define HEX_GROEBNER_DELAYED_FRAME() (++delayed_frames)
 static uint64_t delayed_packet_widths[3]={0};
 #define HEX_GROEBNER_DELAYED_UPDATE(width) do { ++delayed_updates; if(width) { ++delayed_vectors; ++delayed_packet_widths[(width)==1?0:(width)==2?1:2]; } } while(0)
+#define HEX_GROEBNER_DELAYED_RESET(context) do { \
+ matrix_context *ctx=(context); \
+ if(delayed_offset_enabled) memset(lean_sarray_cptr(ctx->dense),0,(size_t)ctx->columns*8); \
+ else for(uint64_t col=0;col<ctx->columns;++col) assert(delayed_read(ctx,col)==0); \
+} while(0)
 #define HEX_GROEBNER_DELAYED_TARGET(context) do { \
  if(delayed_offset_enabled) { \
   matrix_context *ctx=(context); \
@@ -792,23 +795,6 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_zeros(b_lean_obj_arg size) {
   assert(lean_is_exclusive(lean_ctor_get(result,0)));
  }
  return result;
-}
-LEAN_EXPORT lean_obj_res hex_test_bulk_bounds(lean_obj_arg world) {
- (void)world;int valid=1;
- const uint64_t quanta[]={0,4096,4097,1048576,1048577};
- for(size_t i=0;i<sizeof(quanta)/sizeof(quanta[0]);++i) {
-  lean_object *state=lean_alloc_ctor(0,8,8);
-  lean_ctor_set(state,0,lean_alloc_sarray(1,0,0));
-  for(unsigned j=1;j<8;++j) lean_ctor_set(state,j,lean_box(0));
-  lean_ctor_set_uint64(state,8*sizeof(void*),0);
-  lean_object *slots=lean_alloc_sarray(1,0,0),*pivots=lean_alloc_array(0,0);
-  lean_object *out=hex_test_scan_bulk(7,slots,pivots,state,lean_box(quanta[i]),lean_box(0));
-  uint8_t expected=quanta[i]>1048576?4:quanta[i]?1:0;
-  valid&=lean_ctor_get_uint8(out,5*sizeof(void*))==expected;
-  valid&=lean_unbox(lean_ctor_get(out,2))==0;
-  lean_dec(out);lean_dec(slots);lean_dec(pivots);
- }
- return lean_io_result_mk_ok(lean_box(valid));
 }
 LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
@@ -1078,16 +1064,6 @@ LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_equal_bytes(b_lean_obj_arg left,
  b_lean_obj_arg right,b_lean_obj_arg start,b_lean_obj_arg count) {
  ++byte_calls;return hex_test_equal_bytes(left,right,start,count);
 }
-static uint64_t bulk_scans=0;
-__typeof__(hex_test_scan_bulk) __wrap_lean_hex_scan_bulk;
-LEAN_EXPORT lean_obj_res __wrap_lean_hex_scan_bulk(uint64_t p,
- b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
- b_lean_obj_arg quantum,b_lean_obj_arg work) {
- ++bulk_scans;return hex_test_scan_bulk(p,slots,pivots,initial,quantum,work);
-}
-LEAN_EXPORT lean_obj_res hex_test_bulk_scans(lean_obj_arg world) {
- (void)world;return lean_io_result_mk_ok(lean_box_uint64(bulk_scans));
-}
 __typeof__(hex_test_scan) __wrap_lean_hex_scan_transition;
 __typeof__(hex_test_gather) __wrap_lean_hex_gather;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_scan_transition(uint64_t p,
@@ -1185,7 +1161,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING", "-DHEX_GROEBNER_ENABLE_AVX512"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_queue_support", "-Wl,--wrap=lean_hex_groebner_clear_support", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_scan_bulk", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_queue_support", "-Wl,--wrap=lean_hex_groebner_clear_support", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_prepare_dense", "-Wl,--wrap=lean_hex_dense_transition",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
@@ -1224,8 +1200,6 @@ import HexGroebner.DelayedConformance
 @[extern "hex_test_binary_counts"] opaque binaryCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_binary_paths"] opaque binaryPaths : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_binary_installed"] opaque binaryInstalled : IO (UInt64 × UInt64)
-@[extern "hex_test_bulk_scans"] opaque bulkScans : IO UInt64
-@[extern "hex_test_bulk_bounds"] opaque bulkBounds : IO Bool
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
@@ -1518,7 +1492,6 @@ private def checkOwnership : IO Unit := do
 
 def main : IO Unit := do
   checkOwnership
-  if !(← bulkBounds) then throw (IO.userError "internal bulk quantum boundary mismatch")
   IO.println "native constructor layout and marked-linear growth passed"
   let beforeOwned ← uniqueCount
   let beforeAlias ← aliasCount
@@ -1748,7 +1721,6 @@ def main : IO Unit := do
   let wholeAfter ← wholeCounts
   if wholeAfter.1 ≤ wholeBefore.1 || wholeAfter.2 ≤ wholeBefore.2 then throw (IO.userError "F4 did not exercise accepted/deferred whole matrices")
   IO.println s!"whole matrix accepted/deferred: {wholeAfter}; F4 accepted/deferred: {wholeAfter.1-wholeBefore.1}/{wholeAfter.2-wholeBefore.2}"
-  if (← bulkScans) == 0 then throw (IO.userError "whole-matrix bulk scan unused")
   let f4Unique ← uniqueCount
   if f4Unique ≤ primitiveUnique then throw (IO.userError "F4 did not exercise exclusive table reuse")
   let f4Inserts ← insertCount

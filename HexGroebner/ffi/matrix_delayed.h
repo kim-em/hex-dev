@@ -115,8 +115,8 @@ static int delayed_scan(matrix_context *c,uint64_t first,uint64_t *last,
                 uint64_t k=matrix_read(pivot.columns+(size_t)j*4,4);
                 uint64_t b=matrix_read(pivot.coefficients+(size_t)j*c->width,c->width);
                 uint64_t value=delayed_read(c,k)+factor*b;
-        if(c->width==4 && value>=c->modulus_squared) value-=c->modulus_squared;
-        delayed_write(c,k,value);
+                if(c->width==4 && value>=c->modulus_squared) value-=c->modulus_squared;
+                delayed_write(c,k,value);
             }
         }
         delayed_write(c,col,0);

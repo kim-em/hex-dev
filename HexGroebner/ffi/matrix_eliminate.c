@@ -24,6 +24,9 @@
 #ifndef HEX_GROEBNER_DELAYED_TARGET
 #define HEX_GROEBNER_DELAYED_TARGET(context) ((void)(context))
 #endif
+#ifndef HEX_GROEBNER_DELAYED_RESET
+#define HEX_GROEBNER_DELAYED_RESET(context) ((void)(context))
+#endif
 
 #define MATRIX_QUANTUM UINT64_C(1048576)
 #define DELAYED_LOGICAL_QUANTUM (UINT64_C(1)<<38)
@@ -513,11 +516,11 @@ static int matrix_scan(matrix_context *c,uint64_t first,uint64_t *last,
     lean_ctor_set(state,7,lean_uint64_to_nat(*sugar));
     lean_ctor_set_uint64(state,8*sizeof(void*),0);
     uint64_t cap=c->limits[5]<c->quantum?c->limits[5]:c->quantum;
-    uint64_t calls=(c->columns*(c->columns+2)+1048575)/1048576+1;
+    uint64_t calls=(c->columns*(c->columns+2)+4095)/4096+1;
     for(uint64_t call=0;call<calls;++call) {
         lean_object *remaining=lean_uint64_to_nat(cap-c->stats[0]);
-        lean_object *out=lean_hex_scan_bulk(c->p,c->slots,c->native_pivots,
-            state,lean_box(1048576),remaining);
+        lean_object *out=lean_hex_scan_transition(c->p,c->slots,c->native_pivots,
+            state,lean_box(4096),remaining,lean_box(0),0);
         state=NULL;lean_dec(remaining);
         uint8_t status=lean_ctor_get_uint8(out,5*sizeof(void*));
         uint64_t work=lean_unbox(lean_ctor_get(out,2));
@@ -595,8 +598,8 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    its explicit shape bound. With optional preparation, the reference
    may succeed above the frame quantum. A declined prefix then costs less than
    its own reference computation; this per-frame overhead can recur on multiple
-   matrices. Without dense preparation, private F2 payload or delayed
-   frames, the shape bound
+   matrices. Without dense preparation, private F2 payload or
+   delayed frames, the shape bound
    makes a charged decline imply reference failure. Private-payload admission
    can decline an otherwise successful reference.
    Scan/gather symbols come from HexGroebnerMatrixNative. Lake links its complete
@@ -746,9 +749,9 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
             if(!matrix_install(&c,output,first,inverse,sugar,0)) goto defer;
         } else {
             if(!c.project && !matrix_work(&c,n)) goto defer;
-            /* Keep target initialization explicit and bound its physical cost
-               by targets*columns, separately from the reference counters. */
-            if(c.delayed) memset(lean_sarray_cptr(c.dense),0,(size_t)c.columns*8);
+            /* Scan and gather leave every production cell zero. Test-only
+               offsets can reset their private accumulator before scattering. */
+            if(c.delayed) HEX_GROEBNER_DELAYED_RESET(&c);
             for(size_t j=0;!c.project && j<n;++j) {
                 uint64_t col=matrix_read(lean_sarray_cptr(cs)+j*4,4);
                 if(c.binary) matrix_binary_dense(&c)[col>>3]|=(uint8_t)(1u<<(col&7));

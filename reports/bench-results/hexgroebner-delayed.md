@@ -1,6 +1,8 @@
-# Exact delayed prime-field elimination
+# Small-prime elimination: measured snapshot
 
-The measured production snapshot is `5d76c73aac25`; the audited configuration is `dd9d311285d9` with byte-identical executables. `delayedReduction` is opt-in and defaults to false. It applies to primes `3 ≤ p < 2^16`; ordinary F₂ and wider-prime polynomial routes retain their existing arithmetic. The accumulator bound is `(p-1)+columns*(p-1)^2 < 2^50`.
+This historical campaign describes an earlier implementation over primes below `2^16`. The current option covers every prime below `2^31`; see [the current prime-field report](hexgroebner-prime.md). Field coverage and controls below describe only the frozen snapshots identified here.
+
+The measured production snapshot is `5d76c73aac25`; the audited configuration is `dd9d311285d9` with byte-identical executables. At that snapshot, `delayedReduction` was opt-in and defaulted to false. It applied to primes `3 ≤ p < 2^16`; ordinary F₂ and wider-prime polynomial routes retained their existing arithmetic. The accumulator bound is `(p-1)+columns*(p-1)^2 < 2^50`.
 
 All 120 final full-system processes succeeded. All 60 off/on pairs have identical complete reduced bases, metadata and logical counters. The suite contains the first primary size from each of ten fixed families over three prime fields; it does not cover the complete fixed suite or held-out acceptance. Both arms use the same frozen executable, one leased CPU, grevlex order, degree scheduling, batch size 1024, binary pivots enabled and dense pivots disabled. Adjacent arms alternate AB/BA. Every completed sample, failure and outlier is retained.
 

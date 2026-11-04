@@ -433,8 +433,8 @@ inputs, and a reference-equivalent continuation runs after the native frame. A d
 attempt's physical work is unreported; the continuation retains the reference counters. Ordinary-frame
 speculation is bounded by the remaining logical allowance and `2^20`; opt-in
 F2 packing and word visits have their separate shape bound. Delayed frames
-have a `2^34` logical-work cap and an additional at-most `targets*columns`
-accumulator-clear bound. Their UInt64 accumulator and flat pivot metadata can
+have a `2^34` logical-work cap. Scan and gather leave the private accumulator
+zero for reuse. Their UInt64 accumulator and flat pivot metadata can
 also cause a late byte refusal, followed by the reference-equivalent continuation. Without dense
 preparation, private F2 payload or delayed frames, the shape bound makes a charged decline imply
 reference failure. F2 payload admission can decline a successful reference. With dense preparation, a successful reference may

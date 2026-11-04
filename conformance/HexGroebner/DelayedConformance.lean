@@ -56,7 +56,7 @@ normalization. The final sparse tail also extends the scan beyond its input. -/
   return (reducers,targets ++ #[targets[1]!,empty,targets[1]!])
 
 /-- Native admission, complete result and immutable inputs agree with the
-portable provider actualTargets every coefficient width and neighboring budget cuts. -/
+portable provider at every coefficient width and neighboring budget cuts. -/
 def runtimeChecks (nonce : Nat) : Bool := Id.run do
   if USize.size != 2^64 then return true
   let nonce := nonce%2^32

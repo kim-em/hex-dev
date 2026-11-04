@@ -6,12 +6,12 @@ HEX_SCAN_ATTRIBUTE
 static lean_obj_res HEX_SCAN_NAME(uint64_t p,
         b_lean_obj_arg slots,b_lean_obj_arg pivots,lean_obj_arg initial,
         b_lean_obj_arg quantum_arg,b_lean_obj_arg work_arg,b_lean_obj_arg trace_arg,
-        uint8_t provenance,uint64_t quantum_limit) {
+        uint8_t provenance) {
     unsigned w=HEX_SCAN_WIDTH;
     lean_object *dense=lean_ctor_get(initial,0);
     size_t db=lean_sarray_size(dense), count=lean_array_size(pivots);
     uint64_t columns=db/w;
-    uint64_t quantum=bounded_nat(quantum_arg,quantum_limit+1);
+    uint64_t quantum=bounded_nat(quantum_arg,4097);
     uint64_t col=bounded_nat(lean_ctor_get(initial,1),UINT64_C(4294967296));
     uint64_t last=bounded_nat(lean_ctor_get(initial,2),UINT64_C(4294967296));
     uint64_t charged=bounded_nat(lean_ctor_get(initial,3),UINT64_C(4294967296));
@@ -19,7 +19,7 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
     uint64_t pending=bounded_nat(lean_ctor_get(initial,5),UINT64_C(4294967296));
     uint64_t entry=bounded_nat(lean_ctor_get(initial,6),UINT64_C(4294967296));
     uint64_t factor=lean_ctor_get_uint64(initial,8*sizeof(void*));
-    if(p<2 || p>=UINT64_C(2147483648) || quantum>quantum_limit || db%w ||
+    if(p<2 || p>=UINT64_C(2147483648) || quantum>4096 || db%w ||
        columns>UINT32_MAX || columns>SIZE_MAX/4 || lean_sarray_size(slots)!=columns*4 ||
        col>columns || (columns && last>=columns) || leading>columns ||
        pending>count || count>UINT32_MAX || charged>columns || entry>UINT32_MAX ||
