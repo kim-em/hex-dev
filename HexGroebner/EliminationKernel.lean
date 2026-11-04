@@ -281,16 +281,62 @@ def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
 def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
   if binaryEnabled field limits then 2^32 else 2^20
 
-/-- Private pivot rows plus one accumulator, reserved against the parent peak. -/
-def binaryBytes (columns rows : Nat) : Nat := (min rows columns+1)*((columns+63)/64)*8
+/-- Large F2 frames project targets through known reducers in column order. -/
+def binaryProject (columns reducers targets : Nat) : Bool :=
+  columns ≥ 64 && reducers ≥ 4 && targets ≥ 64
+
+/-- Private pivot rows, accumulator, metadata, optional projected targets
+and one reusable sixteen-row XOR table,
+reserved against the parent peak. -/
+def binaryBytes (columns reducers targets : Nat) : Nat :=
+  let capacity := min (reducers+targets) columns
+  let words := (columns+63)/64
+  (capacity+1)*words*8+16*capacity+
+    if binaryProject columns reducers targets then targets*(words*8+16)+16*words*8 else 0
 
 /-- Word XORs, packing, validation and scalar scanning have this conservative
-shape bound. A pivot is visited at most once for each target. -/
+shape bound, including metadata packing. A pivot is visited at most once
+for each target. Projected frames additionally bound target-buffer initialization,
+copies, metadata, table construction, mask selection and known-head visits. -/
 def binaryBound (columns reducers targets entries : Nat) : Nat :=
   let rows := reducers+targets
   let words := (columns+63)/64
-  rows*words+3*entries+4*targets*columns+5*columns+
-    targets*(rows*words+64)+columns
+  rows*(words+8)+3*entries+4*targets*columns+5*columns+
+    targets*(rows*words+64)+columns+
+    if binaryProject columns reducers targets then targets*(columns+2*words+8)+((reducers+3)/4)*(16*words+512)+8*targets*reducers+5*columns else 0
+
+/-- Count exactly the groups consumed by column-ordered known-pivot tables.
+Sparse pivots interrupt a run; gaps and empty rows do not. -/
+def binaryGroups (columns : Nat) (reducers : Array SparseRow) : Nat := Id.run do
+  let mut slots := Array.replicate columns 0
+  for i in [:reducers.size] do
+    let row := reducers[i]!
+    if row.size != 0 then
+      let head := (Packed.read .u32 row.columns 0).toNat
+      if head ≥ columns || slots[head]! != 0 then return 0
+      slots := slots.set! head (i+1)
+  let mut run := 0
+  let mut groups := 0
+  for head in [:columns] do
+    let id := slots[head]!
+    if id != 0 then
+      let row := reducers[id-1]!
+      let last := (Packed.read .u32 row.columns (row.size-1)).toNat
+      if row.size > last/64-head/64+1 then
+        run := run+1
+        if run == 4 then
+          groups := groups+1
+          run := 0
+      else run := 0
+  return groups
+
+/-- A four-row table replaces four full-width row updates by at most one.
+Preparation and mask selection remain in the conservative bound. -/
+def binaryCost (columns : Nat) (reducers targets : Array SparseRow) (entries : Nat) : Nat :=
+  let full := binaryBound columns reducers.size targets.size entries
+  if binaryProject columns reducers.size targets.size then
+    full-3*((columns+63)/64)*targets.size*(binaryGroups columns reducers)
+  else full
 
 /-- Known reducers have distinct leading columns. The conservative work bound
 uses `65 * rows` for row visits and inversion products, `2 * entries` for
@@ -326,7 +372,7 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
   let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
     targets.size * (entries + (targets.size + 3) * columns + 64) + columns
   if bound > frameQuantum field limits then return false
-  if binary && binaryBound columns reducers.size targets.size entries > 2^28 then return false
+  if binary && binaryCost columns reducers targets entries > 2^28 then return false
   let mut seen := Array.replicate columns false
   for row in reducers do
     if row.size != 0 then
@@ -344,7 +390,7 @@ def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     let result := reference field limits columns reducers targets sugars independent
     if result.result.isOk && result.stats.work ≤ frameQuantum field limits &&
         (!binaryEnabled field limits || result.stats.packedBytes+
-          binaryBytes columns (reducers.size+targets.size) ≤ limits.packedBytes) then some result else none
+          binaryBytes columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
 
 /-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
 column count, row arrays and sugars are borrowed Lean objects, and `independent`

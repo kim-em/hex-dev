@@ -616,9 +616,15 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
 
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
+static uint64_t binary_groups=0;
+#define HEX_GROEBNER_BINARY_GROUPS(n) (binary_groups+=(n))
+static uint64_t binary_tables=0;
+#define HEX_GROEBNER_BINARY_TABLE_USED() (++binary_tables)
+static uint64_t binary_projects=0;
+#define HEX_GROEBNER_BINARY_PROJECT_USED() (++binary_projects)
 static uint64_t binary_sparse=0,binary_words=0,binary_high_words=0;
 #define HEX_GROEBNER_BINARY_SCAN_USED() (++binary_scans)
-#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=lean_sarray_size(c.binary_rows))
+#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=lean_sarray_size(c.binary_rows)+lean_sarray_size(c.binary_meta)+(c.project_rows?lean_sarray_size(c.project_rows):0)+(c.project_meta?lean_sarray_size(c.project_meta):0)+(c.project_table?lean_sarray_size(c.project_table):0))
 #define HEX_GROEBNER_BINARY_SPARSE_USED() (++binary_sparse)
 #define HEX_GROEBNER_BINARY_WORD_USED(id) (++binary_words,(id)>=1024?++binary_high_words:0)
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
@@ -767,6 +773,15 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  lean_ctor_set(tail,0,lean_box_uint64(binary_scans));lean_ctor_set(tail,1,lean_box_uint64(binary_bytes));
  lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
  return lean_io_result_mk_ok(out);
+}
+LEAN_EXPORT lean_obj_res hex_test_binary_groups(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(binary_groups));
+}
+LEAN_EXPORT lean_obj_res hex_test_binary_tables(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(binary_tables));
+}
+LEAN_EXPORT lean_obj_res hex_test_binary_projects(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(binary_projects));
 }
 LEAN_EXPORT lean_obj_res hex_test_binary_paths(lean_obj_arg world) {
  (void)world;lean_object *out=lean_alloc_ctor(0,2,0),*tail=lean_alloc_ctor(0,2,0);
@@ -1169,6 +1184,10 @@ def checkMersenne : IO UInt64 := do
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   return mersenne
 
+@[extern "hex_test_binary_groups"] opaque binaryGroups : IO UInt64
+@[extern "hex_test_binary_tables"] opaque binaryTables : IO UInt64
+@[extern "hex_test_binary_projects"] opaque binaryProjects : IO UInt64
+
 @[extern "hex_test_support_count"] opaque supportCount : IO UInt64
 @[extern "hex_test_support_aliases"] opaque supportAliases : IO Bool
 @[extern "hex_test_support_copies"] opaque supportCopies : IO UInt64
@@ -1201,9 +1220,6 @@ private def checkSupport : IO Unit := do
   let copiesBefore ← supportCopies
   let queuesBefore ← supportCount
   let clearsBefore ← supportClears
-  let symbolicSeed ← Hex.Groebner.NativeChecks.readSeed
-  if !Hex.Groebner.PairRowsConformance.bitmapChecks symbolicSeed then
-    throw (IO.userError "symbolic support bitmap closure mismatch")
   for native in [true,false] do
     if !Hex.Groebner.PairRowsConformance.chunkChecks seed native then
       throw (IO.userError "production support chunks or separate-tail allocation mismatch")
@@ -1214,7 +1230,7 @@ private def checkSupport : IO Unit := do
   IO.println s!"native support queue calls: {(← supportCount)-before}"
   checkSupportSystems
 
-private def checkBinary (seed : Nat) : IO Unit := do
+private def checkBinaryBuffers : IO Unit := do
   let allocationBefore ← binaryCounts
   let targetBefore ← binaryPaths
   let targetSeed ← Hex.Groebner.NativeChecks.readSeed
@@ -1226,8 +1242,42 @@ private def checkBinary (seed : Nat) : IO Unit := do
       allocationAfter.2.2 != allocationBefore.2.2+allocated.toUInt64 ||
       targetAfter.2.1 ≤ targetBefore.2.1 then
     throw (IO.userError "actual private allocation or target-built word pivot unused")
-  if !Hex.Groebner.EliminationConformance.binaryQuantum then
+  if !Hex.Groebner.EliminationConformance.binaryQuantum targetSeed then
     throw (IO.userError "F2 logical quantum or maximum target boundary mismatch")
+  let before ← binaryCounts
+  let projectsBefore ← binaryProjects
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  let some allocated := Hex.Groebner.EliminationConformance.binaryAllocationChecks seed |
+    throw (IO.userError "projected private allocation/reference mismatch")
+  let after ← binaryCounts
+  if after.1 != before.1+2 || after.2.2 != before.2.2+allocated.toUInt64 ||
+      (← binaryProjects) != projectsBefore+2 then
+    throw (IO.userError "projected private buffer payload differs")
+
+private def checkBinary (seed : Nat) : IO Unit := do
+  let symbolicSeed ← Hex.Groebner.NativeChecks.readSeed
+  if !Hex.Groebner.PairRowsConformance.bitmapChecks symbolicSeed then
+    throw (IO.userError "symbolic support bitmap closure mismatch")
+  checkBinaryBuffers
+  let groupsBefore ← binaryGroups
+  let groupSeed ← Hex.Groebner.NativeChecks.readSeed
+  let some expectedGroups := Hex.Groebner.EliminationConformance.binaryGroupChecks groupSeed |
+    throw (IO.userError "known-pivot groups/reference mismatch")
+  if (← binaryGroups) != groupsBefore+expectedGroups.toUInt64 then
+    throw (IO.userError "native known-pivot group count differs")
+  if !Hex.Groebner.EliminationConformance.binaryTableBoundary seed then
+    throw (IO.userError "refined physical-work boundary mismatch")
+  let tableBefore ← binaryTables
+  if !Hex.Groebner.EliminationConformance.binaryTableChecks seed then
+    throw (IO.userError "known-pivot XOR table/reference mismatch")
+  if (← binaryTables) ≤ tableBefore then throw (IO.userError "known-pivot XOR table unused")
+  if !Hex.Groebner.EliminationConformance.binaryRandomChecks seed then
+    throw (IO.userError "seeded wide projection/reference mismatch")
+  let projectionBefore ← binaryProjects
+  if !Hex.Groebner.EliminationConformance.binaryProjectChecks seed then
+    throw (IO.userError "known-pivot projection/reference mismatch")
+  if (← binaryProjects) ≤ projectionBefore then
+    throw (IO.userError "known-pivot projection unused")
   let before ← binaryCounts
   let pathsBefore ← binaryPaths
   if !Hex.Groebner.EliminationConformance.binaryChecks seed ||

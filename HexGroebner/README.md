@@ -27,6 +27,8 @@ of at most 4096 packed identifiers. Shared and borrowed buffers retain their
 contents; disabling native monomial operations selects the portable definition.
 The [support-queue measurements](../reports/bench-results/hexgroebner-support.md)
 separate primitive timings, complete F4 candidate timings and independent checks.
+The [known-pivot projection measurements](../reports/bench-results/hexgroebner-tables.md)
+include exact four-row XOR tables, complete matrix comparisons and matched F4 controls.
 Joint matrix elimination stably orders targets by decreasing leading-column
 index, then increasing support size, retaining input order for equal keys.
 This starts with smaller leading monomials in the decreasing monomial column
@@ -249,7 +251,23 @@ This preserves ordinary polynomial semantics, including distinct monomials
 most 16384 columns, 16384 reducers and 1024 targets, with bounds of `2^32`
 reference work and `2^28` packing/scalar/word visits. The private bitmap stores
 at most the lesser of the row and column counts in pivot rows, plus one
-accumulator. Its complete payload fits the remaining packed-byte allowance
+accumulator. Each pivot also stores its length, final column and sugar in a
+private 16-byte metadata record, avoiding repeated object traversal during word
+updates. Frames with at least 64 columns, four known reducers and 64 targets
+first project every target through the known reducers in column order, then
+eliminate by target pivots in their original order. Private target bitmaps and
+last-column/sugar records preserve the reference scan extent and labels. Four
+consecutive dense known pivots use a reusable 16-row XOR table. Its triangular
+head-pattern map selects exactly the reference pivots; cancelled tails still
+retain every selected row's work, end column and sugar. A sparse pivot interrupts
+the group and uses its ordinary update. Their
+initialization, copies and reduction visits are included in the physical bound.
+Each group replaces at most four full-width known-row updates by one table
+update. Admission deducts that exact worst-case saving while retaining table
+construction and mask-selection charges. An early lower bound rejects frames
+whose prefix alone exceeds the cap; the complete check follows known-pivot
+installation and precedes target elimination. The physical cap remains `2^28`.
+The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
 identical; the private buffers never escape the call. Sparse wide pivots toggle
 their explicit entries, while denser pivots use exact word XOR. Word scans and
