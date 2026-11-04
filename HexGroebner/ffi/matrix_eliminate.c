@@ -35,6 +35,9 @@
 #ifndef HEX_GROEBNER_BINARY_SPARSE_USED
 #define HEX_GROEBNER_BINARY_SPARSE_USED() ((void)0)
 #endif
+#ifndef HEX_GROEBNER_BINARY_ROW_INSTALLED
+#define HEX_GROEBNER_BINARY_ROW_INSTALLED(packed) ((void)(packed))
+#endif
 #ifndef HEX_GROEBNER_BINARY_WORD_USED
 #define HEX_GROEBNER_BINARY_WORD_USED(id) ((void)(id))
 #endif
@@ -126,6 +129,10 @@ static int matrix_prepare(matrix_context *c,b_lean_obj_arg row) {
     if(work>c->limits[5]-c->stats[0] || bytes>c->limits[4]-c->stats[3]) return 1;
     return matrix_work(c,work) && matrix_bytes(c,bytes);
 }
+/* This is also the initialization invariant: every packed-row reader uses it. */
+static int matrix_binary_packed(uint64_t n,uint64_t head,uint64_t end) {
+    return n>(end>>6)-(head>>6)+1;
+}
 static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         uint64_t inverse,uint64_t sugar,uint8_t from_target) {
     if(column>=c->columns || !matrix_prepare(c,row)) {lean_dec(row);return 0;}
@@ -139,18 +146,22 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         uint64_t last=matrix_read(lean_sarray_cptr(ids)+(n-1)*4,4);
         /* Sparse pivots are read through their immutable column list. Only
            dense pivots and table members ever read the private packed row. */
-        if(n>(last>>6)-(column>>6)+1) {
+        int dense=matrix_binary_packed(n,column,last);
+        if(dense) {
+            /* Tables read other pivot heads and XOR the entire row, so the
+               complete row, including words outside its support, must be zero. */
             memset(packed,0,(size_t)c->words*8);
             for(size_t i=0;i<n;++i) {
                 uint64_t col=matrix_read(lean_sarray_cptr(ids)+4*i,4);
                 packed[col>>3]|=(uint8_t)(1u<<(col&7));
             }
         }
+        HEX_GROEBNER_BINARY_ROW_INSTALLED(dense);
         /* Private little-endian (entry count, final column, sugar) records.
            Canonical nonempty rows have at most columns <= 131072 entries. */
         uint8_t *meta=lean_sarray_cptr(c->binary_meta)+id*16;
         matrix_write(meta,4,n);
-        matrix_write(meta+4,4,matrix_read(lean_sarray_cptr(ids)+(n-1)*4,4));
+        matrix_write(meta+4,4,last);
         for(unsigned b=0;b<8;++b) meta[8+b]=(uint8_t)(sugar>>(8*b));
     }
     /* Packed F2 scans use their private metadata and the existing pivot's row.
@@ -235,7 +246,7 @@ static uint64_t matrix_binary_groups(matrix_context *c) {
         if(!slot) continue;
         const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
         uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
-        if(n>(end>>6)-(col>>6)+1) {
+        if(matrix_binary_packed(n,col,end)) {
             if(++run==4) {++groups;run=0;}
         } else run=0;
     }
@@ -253,7 +264,7 @@ static int matrix_project_table(matrix_context *c,uint64_t first,uint64_t nt,
         if(!slot) continue;
         const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
         uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
-        if(n<=(end>>6)-(col>>6)+1) return 0;
+        if(!matrix_binary_packed(n,col,end)) return 0;
         heads[found]=col;ids[found]=slot-1;sizes[found]=n;ends[found]=end;
         labels[found]=matrix_binary_load(meta+8);++found;
     }
@@ -345,12 +356,11 @@ static int matrix_project_binary(matrix_context *c,lean_obj_arg targets,
         uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
         uint64_t sugar=matrix_binary_load(meta+8);
         const uint8_t *packed=lean_sarray_cptr(c->binary_rows)+(size_t)(slot-1)*c->words*8;
-        uint64_t span=(end>>6)-(col>>6)+1;
         for(uint64_t t=0;t<nt;++t) {
             uint8_t *data=rows+(size_t)t*c->words*8;
             if(!(data[col>>3]&(1u<<(col&7)))) continue;
             if(!matrix_work(c,n)) return 0;
-            if(n<=span) {
+            if(!matrix_binary_packed(n,col,end)) {
                 HEX_GROEBNER_BINARY_SPARSE_USED();
                 const uint8_t *ids=matrix_binary_ids(c,slot);
                 for(uint64_t j=0;j<n;++j) {
@@ -399,8 +409,7 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
         uint64_t label=matrix_binary_load(meta+8);
         if(label>*sugar) *sugar=label;
         if(!matrix_work(c,n)) return 0;
-        uint64_t span=(end>>6)-(col>>6)+1;
-        if(n<=span) {
+        if(!matrix_binary_packed(n,col,end)) {
             HEX_GROEBNER_BINARY_SPARSE_USED();
             const uint8_t *ids=matrix_binary_ids(c,slot);
             for(uint64_t i=0;i<n;++i) {

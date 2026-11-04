@@ -282,13 +282,13 @@ installation and precedes target elimination. The physical cap is `2^34`.
 The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
 identical; the private buffers never escape the call. Sparse wide pivots toggle
-their existing immutable column lists. Only dense pivots initialize and populate
+their existing immutable column lists; denser pivots use exact word XOR.
+Only dense pivots initialize and populate
 their private packed row; all table members satisfy the same density test.
 The accumulator initializes separately. The complete virtual payload remains
 reserved against the parent allowance. Native conformance fills the initially
 uninitialized storage with a nonzero pattern to expose accidental sparse-row reads.
-Denser pivots use exact word XOR. Word scans and gathers decode the same byte
-layout on every host.
+Word scans and gathers decode the same byte layout on every host.
 
 A byte-allowance refusal can discard a partially or fully processed native frame
 before the reference continuation succeeds. Speculation is bounded per frame;

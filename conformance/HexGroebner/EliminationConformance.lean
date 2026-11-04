@@ -498,6 +498,7 @@ def binaryTableBoundary (seed : Nat) : Bool := Id.run do
 /-- Nonzero four-row table savings at adjacent sides of the current physical cap.
 Empty targets keep the accepted portable replay small. -/
 @[noinline] def binaryGroupBoundary (seed : Nat) : Option Nat := do
+  let seed := seed % 2^32
   if USize.size != 2^64 then return 0
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let limits : MatrixLimits := { binaryPivots := true }
@@ -518,6 +519,7 @@ Empty targets keep the accepted portable replay small. -/
 /-- Dense updates, four-row tables and projection in the highest packed word,
 including a partially occupied final word and shared targets. -/
 @[noinline] def binaryHighChecks (seed : Nat) : Bool := Id.run do
+  let seed := seed % 2^32
   if USize.size != 2^64 then return true
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let limits : MatrixLimits := { binaryPivots := true }
@@ -588,6 +590,8 @@ def binaryBounds : Bool := Id.run do
 #guard binaryBounds
 #guard binaryGroupBoundary 0 == some (if USize.size == 2^64 then 2 else 0)
 #guard binaryHighChecks 0
+#guard binaryGroupBoundary (2^70) == some (if USize.size == 2^64 then 2 else 0)
+#guard binaryHighChecks (2^70)
 
 /-- A successful F2 frame with actual charged work above the old quantum and
 an aliased target reduced by a packed known pivot. Runs in compiled conformance. -/
