@@ -62,7 +62,12 @@ mark, including when the table is shared. Other arena sharing retains Lean's
 nonlinearity diagnostics. The private exponent plan uses the conservative
 4096-coordinate scratch bound; successful insertion bytes are at most 5460,
 since `terms*(3*arity+1) ≤ 4096` and each coordinate uses at most four bytes.
-The complete private plan remains below 32 KiB.
+The complete private plan remains below 32 KiB. Independent product rows are
+prepared together, interleaving their exact FNV hash accumulators. The planner
+reserves all coordinate work before traversal and retains each prepared row in
+private scratch until collision lookup and insertion planning finish. A failed
+reservation or preparation leaves the table unchanged for scalar continuation.
+Successful batches retain the scalar model's complete final workspace and work.
 Shared and aliased buffers retain their original contents. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
 hit checks the complete base polynomial, comparing at most 4096 bytes per native
