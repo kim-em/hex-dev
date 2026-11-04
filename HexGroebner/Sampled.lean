@@ -30,6 +30,7 @@ they provide no basis certificate or rank-preservation claim. -/
 structure Candidate extends Hex.Groebner.Candidate where
   initialRandom : Hex.Rand
   config : Sampling.Config
+  minimumTargets : Nat
   monomials : Nat
   monomialBytes : Nat
 
@@ -45,6 +46,7 @@ structure State where
   random : Hex.Rand
   initialRandom : Hex.Rand
   config : Sampling.Config
+  minimumTargets : Nat
   scheduling : Scheduling
   pending : Option Round := none
   statistics : Statistics := {}
@@ -93,7 +95,7 @@ private def decode (state : State) (limits : Limits) : Computation Candidate := 
   let polynomials ← F4.decodeBasis state.context limits state.checkpoint.basis
   return ⟨⟨state.context,polynomials,state.random.state,limits.batchSize,limits.nativeRows,
     limits.nativeMonomials,limits.gebauerMoller,limits.batchInterreduce,state.scheduling⟩,
-    state.initialRandom,state.config,(← get).table.count,(← get).table.bytes⟩
+    state.initialRandom,state.config,state.minimumTargets,(← get).table.count,(← get).table.bytes⟩
 
 private def account (state : State) (before : Sampling.Statistics) (frame : Frame)
     (matrix : Sampling.State) : State :=
@@ -146,7 +148,7 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000)
       | .error error => return failure state error
     else if state.checkpoint.phase == .pairs then
       let (result,workspace) :=
-        (prepare state.context limits state.checkpoint state.random state.config).run state.workspace
+        (prepare state.context limits state.checkpoint state.random state.config state.minimumTargets).run state.workspace
       state := { state with workspace }
       match result with
       | .error error => return failure state error
@@ -168,12 +170,15 @@ field coefficients come from SplitMix64 rejection draws; no uniformity or
 independence bound is claimed. An independent complete-basis certificate is
 required before using this candidate for complete normal forms or nonmembership.
 Invalid configuration is rejected before any computation or random draw.
+Pair matrices with fewer than `minimumTargets` targets use deterministic
+elimination. This explicit policy is retained across resumptions; zero samples
+every selected matrix, preserving the default policy.
 The optional slice quantum has the same cooperative suspension contract as
 `resumeWith`; callers seeking completion continue its `.suspended` states. -/
 def computeWith (context : Context) (limits : Limits) (generators : Array RawPolynomial)
-    (random : Hex.Rand) (config : Sampling.Config := {}) (slices := 1000000) : Result :=
+    (random : Hex.Rand) (config : Sampling.Config := {}) (slices := 1000000) (minimumTargets := 0) : Result :=
   if config.blockRows == 0 || config.blockRows > 4096 || config.zeroTests == 0 then .invalidConfig random
   else resumeWith limits
-    ⟨context,generators,⟨{ arity := context.variables },{}⟩,{},random,random,config,limits.scheduling,none,{}⟩ slices
+    ⟨context,generators,⟨{ arity := context.variables },{}⟩,{},random,random,config,minimumTargets,limits.scheduling,none,{}⟩ slices
 
 end Hex.Groebner.Sampled

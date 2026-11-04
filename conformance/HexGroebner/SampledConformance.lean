@@ -20,7 +20,7 @@ private def canonical (field : PrimeField) (raw : RawPolynomial) : Certificate.P
 private def compare (a b : Sampled.Result) : Bool := match a,b with
   | .candidate a sa ra,.candidate b sb rb =>
     a.polynomials == b.polynomials && a.randomState == b.randomState && sa == sb && ra == rb &&
-    a.initialRandom == b.initialRandom && a.config == b.config &&
+    a.initialRandom == b.initialRandom && a.config == b.config && a.minimumTargets == b.minimumTargets &&
     a.monomials == b.monomials && a.monomialBytes == b.monomialBytes
   | _,_ => false
 
@@ -71,7 +71,7 @@ private def bounded (limits : Limits) (state : Sampled.State) : Bool :=
 private def sameValue (a b : Sampled.Result) : Bool := match a,b with
   | .candidate a _ ra,.candidate b _ rb =>
     a.polynomials == b.polynomials && a.randomState == b.randomState && ra == rb &&
-    a.initialRandom == b.initialRandom && a.config == b.config
+    a.initialRandom == b.initialRandom && a.config == b.config && a.minimumTargets == b.minimumTargets
   | _,_ => false
 
 /-- Cold admission covers every parent resource. Atomic F4 stages may repeat
@@ -218,7 +218,39 @@ def fresh (seed : Nat) : Option UInt64 := do
     some (hash (value.polynomials.map (fun p => p.map (fun t => (t.exponents,t.coefficient))),
       stats.work,samples.randomWords,value.randomState))
 
+/-- A high cutoff uses no random words; mixed cutoffs retain the sealed policy
+and advanced state across scheduling suspension and parent-work exhaustion. -/
+def hybridChecks : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  for c in (F4Fixtures.cases field).extract 0 5 do
+    let context : Context := ⟨field,c.variables,.grevlex⟩
+    let limits : Limits := {}
+    let .candidate expected _ := Hex.Groebner.computeWith context limits c.generators | return false
+    for cutoff in [0,1,8,1000000] do
+      let direct := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 10987)
+        (minimumTargets := cutoff)
+      let .candidate candidate _ samples := direct | return false
+      if candidate.polynomials != expected.polynomials || candidate.minimumTargets != cutoff then return false
+      if cutoff == 1000000 && (samples.calls != 0 || samples.randomWords != 0 || candidate.randomState != 10987) then return false
+      let mut result := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 10987) {} 1 cutoff
+      for _ in [:scheduleBound limits] do
+        match result with
+        | .suspended state =>
+          if state.minimumTargets != cutoff then return false
+          result := Sampled.resumeWith limits state 1
+        | _ => break
+      if !compare direct result then return false
+      let stopped := Sampled.computeWith context { limits with work := 0 } c.generators
+        (Hex.Rand.ofSeed 10987) (minimumTargets := cutoff)
+      let .exhausted .work state := stopped | return false
+      if state.minimumTargets != cutoff || state.random != Hex.Rand.ofSeed 10987 then return false
+      if !sameValue direct (Sampled.resumeWith limits state) then return false
+  return true
+
+#guard hybridChecks
+
 def run : IO Unit := do
+  if !hybridChecks then throw (IO.userError "hybrid sampling policy/resumption mismatch")
   let some field := Fixtures.fields[6]? | throw (IO.userError "missing field")
   let some c := (F4Fixtures.cases field)[4]? | throw (IO.userError "missing system")
   let context : Context := ⟨field,c.variables,.grevlex⟩

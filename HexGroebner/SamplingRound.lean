@@ -59,14 +59,19 @@ private def translate (context : Context) (limits : Limits) (matrix : SymbolicMa
     matrix := Sampling.start context.field matrix.columns.size reducers targets random config sugars limits.nativeRows }
 
 /-- Prepare exactly one pair batch. Empty selections commit only their lawful
-pair-criterion work, without consuming random words. -/
+pair-criterion work, without consuming random words. Batches below the explicit
+minimum target count use deterministic elimination after the same selection and
+symbolic preprocessing. They consume parent allowances and no random words. -/
 def prepare (context : Context) (limits : Limits) (checkpoint : F4.Checkpoint)
-    (random : Hex.Rand) (config : Sampling.Config) :
+    (random : Hex.Rand) (config : Sampling.Config) (minimumTargets := 0) :
     Computation (F4.Checkpoint × Option Round) := do
   spend limits 1
   match ← F4.select context limits checkpoint with
   | .inl checkpoint => return (checkpoint,none)
   | .inr batch =>
+    if batch.matrix.targets.size < minimumTargets then
+      let new ← batch.matrix.eliminate context limits
+      return (← F4.commit context limits checkpoint batch.queue batch.pairs batch.matrix.cache new,none)
     return (checkpoint,some (← translate context limits batch.matrix batch.queue batch.pairs random config))
 
 /-- Remaining parent allowances expressed as cumulative limits within this call.

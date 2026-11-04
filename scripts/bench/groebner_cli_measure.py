@@ -32,6 +32,8 @@ def main():
     parser.add_argument("--seed", type=int, default=10987)
     parser.add_argument("--block-rows", type=int, default=32)
     parser.add_argument("--zero-tests", type=int, default=3)
+    parser.add_argument("--min-targets", type=int, default=0)
+    parser.add_argument("--baseline-min-targets", type=int)
     parser.add_argument("--hex-scheduling", choices=["degree", "sugar"])
     parser.add_argument("--hex-dense-pivots", choices=["true", "false"])
     parser.add_argument("--baseline-dense-pivots", choices=["true", "false"])
@@ -45,11 +47,18 @@ def main():
     parser.add_argument("--msolve-mode", type=int, choices=[2, 42], default=2)
     parser.add_argument("--time", default=shutil.which("time"))
     args = parser.parse_args()
-    if not 0 <= args.seed < 2**64 or not 1 <= args.block_rows <= 4096 or args.zero_tests < 1:
+    if not 0 <= args.seed < 2**64 or not 1 <= args.block_rows <= 4096 or args.zero_tests < 1 or args.min_targets < 0 or (args.baseline_min_targets is not None and args.baseline_min_targets < 0):
         parser.error("invalid sampling controls")
+    if args.baseline_min_targets is not None and not args.baseline_sampled:
+        parser.error("--baseline-min-targets requires --baseline-sampled")
+    if args.min_targets and not args.sampled:
+        parser.error("--min-targets requires --sampled")
     candidate_key = "sample" if args.sampled else "compute"
     if args.baseline_sampled and not (args.sampled and args.baseline):
         parser.error("--baseline-sampled requires --sampled and --baseline")
+
+    def minimum_targets(arm):
+        return args.baseline_min_targets if arm == "A" and args.baseline_sampled and args.baseline_min_targets is not None else args.min_targets
 
     def sampled_arm(arm):
         return args.sampled and not (args.baseline and arm == "A" and not args.baseline_sampled)
@@ -210,7 +219,8 @@ def main():
         "msolve_mode": mode,
         "sampled": args.sampled,
         "baseline_sampled": args.baseline_sampled,
-        "sampling_controls": {"seed": args.seed,"block_rows": args.block_rows,"total_zero_tests": args.zero_tests} if args.sampled else None,
+        "sampling_controls": {"seed": args.seed,"block_rows": args.block_rows,"total_zero_tests": args.zero_tests,"minimum_targets": args.min_targets} if args.sampled else None,
+        "baseline_sampling_min_targets": minimum_targets("A") if args.baseline_sampled else None,
         "binary_sha256": {a: sha(f) for a, f in binaries.items()},
         "time_version": time_version,
         "time_sha256": sha(Path(args.time).resolve()),
@@ -327,7 +337,7 @@ def main():
                         else [
                             str(binaries[arm]),
                             *cliargs,
-                            *(["--seed",str(args.seed),"--block-rows",str(args.block_rows),"--zero-tests",str(args.zero_tests)]
+                            *(["--seed",str(args.seed),"--block-rows",str(args.block_rows),"--zero-tests",str(args.zero_tests),*(["--min-targets",str(minimum_targets(arm))] if minimum_targets(arm) else [])]
                               if sampled_arm(arm) else []),
                             *(
                                 ["--scheduling", scheduling[arm]]
@@ -427,6 +437,7 @@ def main():
                                     assert payload["algorithm"] == "f4-sampled"
                                     assert (payload["seed"],payload["blockRows"],payload["totalZeroTests"]) == (args.seed,args.block_rows,args.zero_tests)
                                     assert payload["randomState"] == (args.seed+payload["sampling"]["randomWords"]*0x9e3779b97f4a7c15) % 2**64
+                                    assert payload.get("minimumTargets",0) == minimum_targets(arm)
                                     record["sampling"] = payload["sampling"]
                                     record["random_state"] = payload["randomState"]
                                 elif args.sampled:
@@ -449,6 +460,7 @@ def main():
                                     )
                                 }
                                 if args.baseline_sampled:
+                                    results[arm].setdefault("minimumTargets",0)
                                     results[arm]["statistics"] = payload["statistics"]
                                     results[arm]["scheduling"] = selected
                                 record["statistics"] = {
@@ -470,7 +482,7 @@ def main():
                     print(prefix, record["status"], round(elapsed / 1e6, 2), flush=True)
                 equal = len(bases) == 2 and bases["A"] == bases["B"]
                 if not mode and len(results) == 2:
-                    if args.sampled and args.baseline and not args.baseline_sampled:
+                    if args.sampled and args.baseline and (not args.baseline_sampled or minimum_targets("A") != minimum_targets("B")):
                         common = ["kind","p","variables","order","batchSize"]
                         equal = equal and all(results["A"][key] == results["B"][key] for key in common)
                     else:
