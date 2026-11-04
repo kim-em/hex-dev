@@ -154,6 +154,14 @@ not turn sampled candidates into checked bases. Final certification remains
 independent. The cutoff can improve small-matrix costs, but is not a universal
 performance choice across fields and systems.
 
+When a minimum target count is requested, a smaller pair matrix uses atomic
+deterministic elimination within its preparation slice. The `matrixSteps`
+quantum applies to sampled matrices. A deterministic batch can contain many
+reducers even when its target count is small; exhaustion retries selection,
+preprocessing and elimination, charging repeated work. A changed resumed
+batch-size cap can change the cutoff decision. Pending sampled matrices retain
+their selected rows and advanced random state.
+
 `Sampled.Result.candidate` carries an unchecked `Sampled.Candidate`, ordinary work
 statistics and separate sampling counts. The candidate retains the initial random
 state, sampling controls and monomial-arena counts alongside the advanced state.
