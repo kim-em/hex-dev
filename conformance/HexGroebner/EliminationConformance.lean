@@ -340,6 +340,18 @@ def binaryChecks (seed : Nat) : Bool := Id.run do
 
 #guard binaryChecks 0
 
+/-- Complete F4 forwards the policy into real native pair matrices. Dynamic
+input degrees prevent compile-time reuse of this ownership/counter window. -/
+def binaryFresh (seed : Nat) : Bool := Id.run do
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let context : Context := ⟨field,2,.grevlex⟩
+  let generators : Array RawPolynomial := #[
+    #[⟨#[2+seed%7,0],1⟩,⟨#[0,1],1⟩],#[⟨#[1,1],1⟩,⟨#[0,0],1⟩]]
+  let .candidate actual stats := computeWith context { binaryPivots := true } generators | return false
+  let .candidate expected reference := computeWith context
+    { binaryPivots := true,nativeRows := false,nativeMonomials := false } generators | return false
+  return actual.polynomials == expected.polynomials && stats == reference
+
 def runtimeChecks (seed : Nat) : Bool := Id.run do
   for field in Fixtures.fields do
     for columns in [0,1,3,9,65,257] do

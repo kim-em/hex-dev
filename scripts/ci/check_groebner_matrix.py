@@ -1088,6 +1088,11 @@ private def checkBinary (seed : Nat) : IO Unit := do
   if after.1 ≤ before.1 || after.2.1 ≤ before.2.1 || after.2.2 ≤ before.2.2 then
     throw (IO.userError "private F2 pivots or word scan unused")
   IO.println s!"private F2 frames/scans/bytes: {after}"
+  let f4Before ← binaryCounts
+  if !Hex.Groebner.EliminationConformance.binaryFresh seed then
+    throw (IO.userError "packed F2 complete F4/reference mismatch")
+  let f4After ← binaryCounts
+  if f4After.1 ≤ f4Before.1 then throw (IO.userError "packed F2 policy unused by complete F4")
 
 private def checkOwnership : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")

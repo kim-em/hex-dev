@@ -202,13 +202,12 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
             uint64_t stop=col+64<*last+1?col+64:*last+1;
             if(!matrix_work(c,stop-col)) return 0;
             charged=stop;
+            int zero=1;
+            for(uint64_t word=col>>6;word<=((stop-1)>>6);++word)
+                if(matrix_binary_interval(data,word,col,stop-1)) {zero=0;break;}
+            if(zero) {col=stop;continue;}
         }
-        uint64_t word=col>>6,stop=(word+1)*64;
-        if(stop>charged) stop=charged;
-        if(stop>*last+1) stop=*last+1;
-        uint64_t bits=matrix_binary_interval(data,word,col,stop-1);
-        if(!bits) {col=stop;continue;}
-        col=word*64+matrix_binary_ctz(bits);
+        if(!(data[col>>3]&(1u<<(col&7)))) {++col;continue;}
         uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
         if(!slot) {if(!*leading) *leading=col+1;++col;continue;}
         lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
