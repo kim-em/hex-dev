@@ -230,7 +230,8 @@ def main():
               'The capsules retain exact source blobs, source manifests, compiler/wrapper inputs, raw samples, outputs, memory, host activity and verification logs. '
               'Collection scripts retain their recorded host paths; rerunning them elsewhere requires adapting those paths.','']
     for path,capsule in [(args.science,science),(args.guards,guards),(args.global_compiler,global_data),(args.audit,audit)]:lines.append(f'`{path.name}`: SHA-256 `{capsule.sha256}`.')
-    lines+=['',f'Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science {args.science} --guards {args.guards} --global-compiler {args.global_compiler} --audit {args.audit} --report {args.report} --check --current`.','']
+    lines+=['',f'Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science {args.science} --guards {args.guards} --global-compiler {args.global_compiler} --audit {args.audit} --report {args.report} --check`.','',
+            'Add `--current` only when checking the measured runtime/check source snapshot.','']
     text='\n'.join(lines)
     if args.check:require(args.report.read_text()==text,'report is stale')
     else:args.report.write_text(text)

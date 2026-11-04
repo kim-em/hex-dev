@@ -45,7 +45,7 @@ def main():
         'and complexity result of both arms against its successful scalar comparison.')
     text = render(cap, before, after, records, values, cpu,
                   title='Precomputed source rows in monomial preparation', intro=intro,
-                  script='groebner_pointer_report.py', report='hexgroebner-pointers.md', current=True)
+                  script='groebner_pointer_report.py', report='hexgroebner-pointers.md')
     if args.check:
         require(args.report.read_text() == text, 'report differs; regenerate it')
     else:

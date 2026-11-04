@@ -38,6 +38,10 @@ traced production moves each target's derivation root with its polynomial.
 Known reducer pivots retain their contracts with either scheduling strategy.
 F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
 append-only monomial arena. Stable IDs survive exponent-width changes.
+Minimal-basis selection keeps the first representative of each minimal leading
+monomial. Its read-only scan accumulates work locally and commits the exact
+successful or exhausted prefix once. Traced and untraced drivers share this
+selection without changing carried derivations or monomial/scratch payloads.
 Monomial hash buckets and collision links use packed `UInt32` buffers. Hashes
 only filter candidates; exact exponent comparison decides equality. Index
 growth, rebuilding work and peak packed payload are charged before allocation.
@@ -255,8 +259,9 @@ in untraced ordinary F2 matrix frames. It defaults to `false`; the deterministic
 driver accepts `--binary-pivots true|false` and records the requested policy.
 This preserves ordinary polynomial semantics, including distinct monomials
 `x` and `x²`. Other fields retain their existing route. Admission permits at
-most 16384 columns, 16384 reducers and 1024 targets, with bounds of `2^32`
-reference work and `2^28` packing/scalar/word visits. The private bitmap stores
+most 131072 columns, 131072 reducers and 4096 targets as separate dimension
+ceilings, subject to joint bounds of `2^38`
+reference work and `2^34` packing/scalar/word visits. The private bitmap stores
 at most the lesser of the row and column counts in pivot rows, plus one
 accumulator. Each pivot also stores its length, final column and sugar in a
 private 16-byte metadata record, avoiding repeated object traversal during word
@@ -273,18 +278,25 @@ Each group replaces at most four full-width known-row updates by one table
 update. Admission deducts that exact worst-case saving while retaining table
 construction and mask-selection charges. An early lower bound rejects frames
 whose prefix alone exceeds the cap; the complete check follows known-pivot
-installation and precedes target elimination. The physical cap remains `2^28`.
+installation and precedes target elimination. The physical cap is `2^34`.
 The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
 identical; the private buffers never escape the call. Sparse wide pivots toggle
-their explicit entries, while denser pivots use exact word XOR. Word scans and
-gathers decode the same byte layout on every host.
+their existing immutable column lists; denser pivots use exact word XOR.
+Only dense pivots initialize and populate
+their private packed row; all table members satisfy the same density test.
+The accumulator initializes separately. The complete virtual payload remains
+reserved against the parent allowance. Native conformance fills the initially
+uninitialized storage with a nonzero pattern to expose accidental sparse-row reads.
+Word scans and gathers decode the same byte layout on every host.
 
 A byte-allowance refusal can discard a partially or fully processed native frame
 before the reference continuation succeeds. Speculation is bounded per frame;
 multiple matrix calls can incur it. The reservation is conservative: reference workspace charges coexist with the
 private accumulator allowance, and empty or sparse-only pivots still reserve
 bitmap rows. The certificate producer leaves this low-level policy disabled.
+A call has no cancellation point inside the native frame; the `2^34` visit
+ceiling is a finite work bound, not a wall-clock latency guarantee.
 This policy has no fastest-open-source claim.
 
 The packed-payload allowance is not a process-memory limit: it excludes

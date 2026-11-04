@@ -616,7 +616,8 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
 
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
-static uint64_t binary_groups=0;
+static uint64_t binary_groups=0,binary_installed=0,binary_initialized=0;
+#define HEX_GROEBNER_BINARY_ROW_INSTALLED(packed) (++binary_installed,binary_initialized+=(packed))
 #define HEX_GROEBNER_BINARY_GROUPS(n) (binary_groups+=(n))
 static uint64_t binary_tables=0;
 #define HEX_GROEBNER_BINARY_TABLE_USED() (++binary_tables)
@@ -629,6 +630,7 @@ static uint64_t binary_sparse=0,binary_words=0,binary_high_words=0;
 #define HEX_GROEBNER_BINARY_WORD_USED(id) (++binary_words,(id)>=1024?++binary_high_words:0)
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
+#define HEX_GROEBNER_BINARY_POISON 1
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
 static uint64_t continuation_phases[8]={0},continuation_successes=0;
 /* cont_counts can leave its scalar cache partial for arbitrary Nat counters.
@@ -774,6 +776,11 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
  return lean_io_result_mk_ok(out);
 }
+LEAN_EXPORT lean_obj_res hex_test_binary_installed(lean_obj_arg world) {
+ (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(out,0,lean_box_uint64(binary_installed));
+ lean_ctor_set(out,1,lean_box_uint64(binary_initialized));return lean_io_result_mk_ok(out);
+}
 LEAN_EXPORT lean_obj_res hex_test_binary_groups(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(binary_groups));
 }
@@ -883,8 +890,8 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_eliminate_matrix(uint64_t p,
   lean_object *cap=lean_ctor_get(limits,4);
   uint64_t allowance=lean_is_scalar(cap)?lean_unbox(cap):UINT64_MAX/2;
   int accepted=!lean_is_scalar(result);
-  const char *reason=accepted?"accepted":nc>16384||nr>16384||nt>1024?"shape":
-    logical>(UINT64_C(1)<<32)?"logical":physical>(UINT64_C(1)<<28)?"physical":
+  const char *reason=accepted?"accepted":nc>131072||nr>131072||nt>4096?"shape":
+    logical>(UINT64_C(1)<<38)?"logical":physical>(UINT64_C(1)<<34)?"physical":
     byte_upper<=allowance?"other_without_byte_refusal":"other_possible_byte_refusal";
   FILE *stream=fopen(path,"a");
   if(!stream) abort();
@@ -1079,6 +1086,7 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_batch_insertions"] opaque batchInsertions : IO UInt64
 @[extern "hex_test_binary_counts"] opaque binaryCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_binary_paths"] opaque binaryPaths : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_binary_installed"] opaque binaryInstalled : IO (UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
@@ -1266,7 +1274,14 @@ private def checkBinary (seed : Nat) : IO Unit := do
   if (← binaryGroups) != groupsBefore+expectedGroups.toUInt64 then
     throw (IO.userError "native known-pivot group count differs")
   if !Hex.Groebner.EliminationConformance.binaryTableBoundary seed then
-    throw (IO.userError "refined physical-work boundary mismatch")
+    throw (IO.userError "former physical-work boundary replay mismatch")
+  let boundaryBefore ← binaryGroups
+  let some boundaryGroups := Hex.Groebner.EliminationConformance.binaryGroupBoundary groupSeed |
+    throw (IO.userError "current grouped physical-work boundary mismatch")
+  if (← binaryGroups) != boundaryBefore+boundaryGroups.toUInt64 then
+    throw (IO.userError "current physical boundary missed table-saving admission")
+  if !Hex.Groebner.EliminationConformance.binaryHighChecks groupSeed then
+    throw (IO.userError "highest-word dense projection/reference mismatch")
   let tableBefore ← binaryTables
   if !Hex.Groebner.EliminationConformance.binaryTableChecks seed then
     throw (IO.userError "known-pivot XOR table/reference mismatch")
@@ -1280,12 +1295,17 @@ private def checkBinary (seed : Nat) : IO Unit := do
     throw (IO.userError "known-pivot projection unused")
   let before ← binaryCounts
   let pathsBefore ← binaryPaths
+  let installedBefore ← binaryInstalled
   if !Hex.Groebner.EliminationConformance.binaryChecks seed ||
       !Hex.Groebner.EliminationConformance.binaryLargeChecks seed ||
       !Hex.Groebner.EliminationConformance.binaryWorkChecks seed then
     throw (IO.userError "private packed F2 frame/reference mismatch")
   let after ← binaryCounts
   let pathsAfter ← binaryPaths
+  let installedAfter ← binaryInstalled
+  let initialized := installedAfter.2-installedBefore.2
+  if initialized == 0 || initialized ≥ installedAfter.1-installedBefore.1 then
+    throw (IO.userError "mixed frames did not skip sparse packed-row initialization")
   if pathsAfter.1 ≤ pathsBefore.1 || pathsAfter.2.1 ≤ pathsBefore.2.1 ||
       pathsAfter.2.2 ≤ pathsBefore.2.2 then
     throw (IO.userError "private F2 sparse or word pivot update unused")

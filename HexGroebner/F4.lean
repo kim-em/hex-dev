@@ -118,18 +118,7 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
 
 private def interreduce (context : Context) (limits : Limits) (basis : Array BasisElement) (cache : ReducerCache) :
     Computation (Array BasisElement) := do
-  let table := (← get).table
-  let mut minimal := #[]
-  for i in [:basis.size] do
-    let leading := basis[i]!.polynomial.monomial 0
-    let mut redundant := false
-    for j in [:basis.size] do
-      spend limits (context.variables + 1)
-      let other := basis[j]!.polynomial.monomial 0
-      if j != i && table.divides other leading && (other != leading || j < i) then
-        redundant := true
-        break
-    if !redundant then minimal := minimal.push basis[i]!
+  let minimal ← Computation.minimal context limits basis (·.polynomial)
   let index ← ReducerIndex.build context limits minimal
   let mut inputs : Array BasisElement := #[]
   for g in minimal do

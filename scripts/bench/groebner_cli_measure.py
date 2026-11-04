@@ -20,6 +20,15 @@ from scripts.bench.groebner_freeze import msolve_build
 from scripts.bench.sweep_freshness import fingerprint, index_listing
 
 
+def read_rss(path):
+    """A killed GNU-time wrapper may leave no memory observation."""
+    try:
+        lines = path.read_text().splitlines()
+    except OSError:
+        return None
+    return int(lines[-1]) if lines and lines[-1].isascii() and lines[-1].isdigit() else None
+
+
 def main():
     if not __debug__:
         raise RuntimeError("measurement validation requires Python without -O")
@@ -27,6 +36,8 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--suite", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--start-index", type=int, default=0,
+                        help="continue the fixed process schedule; earlier samples must be retained separately")
     parser.add_argument("--hex", type=Path, required=True)
     parser.add_argument("--sampled", action="store_true")
     parser.add_argument("--seed", type=int, default=10987)
@@ -89,6 +100,8 @@ def main():
     manifest = json.loads(args.manifest.read_text())
     root = args.suite.resolve().parent
     plan = json.loads(args.suite.read_text())
+    if not 0 <= args.start_index <= 4*len(plan["cases"]):
+        parser.error("start index exceeds the fixed two-block process schedule")
     mode = args.msolve_mode if args.msolve else None
     out = args.output.resolve()
     out.mkdir(exist_ok=False)
@@ -179,6 +192,13 @@ def main():
         "--matrix-entries",
         "1000000000",
     ]
+    if "hex_limits" in plan["protocol"]:
+        specified = plan["protocol"]["hex_limits"]
+        allowed = {"work", "packed-bytes", "monomials", "pairs", "rounds",
+                   "matrix-entries", "matrix-rows", "batch-size", "basis", "variables"}
+        assert set(specified) == allowed and all(type(v) is int and v > 0 for v in specified.values()), \
+            "invalid explicit Hex resource limits"
+        cliargs = [part for key, value in specified.items() for part in ["--" + key, str(value)]]
     binaries = {
         "A": (args.hex if mode else args.baseline or args.reference).resolve(),
         "B": (args.msolve if mode else args.hex).resolve(),
@@ -217,6 +237,8 @@ def main():
         "load_start": os.getloadavg(),
         "suite_sha256": sha(args.suite),
         "schedule": "two fixed blocks, adjacent AB then BA per input; retain all completed samples",
+        "start_index": args.start_index,
+        "expected_schedule_size": 4*len(plan["cases"]),
         "contract": "Full unchecked reduced candidates; no certificate generation, independent final certification or kernel replay in timing. GNU time wrapper is identical on both arms and supplies post-exec peak RSS; wall time includes wrapper/launch/startup/parse/full output. A/B are ordinary/minimal SDK initialization of identical driver code unless msolve mode is present, then A is the dedicated driver and B is msolve full reduced grevlex output. One algorithm thread; resource caps match. No quiet-host filtering.",
         "baseline_source_fingerprint": (baseline_manifest or manifest)[
             "source_fingerprint"
@@ -317,14 +339,19 @@ def main():
         resource.setrlimit(
             resource.RLIMIT_AS, (plan["protocol"]["address_space_bytes"],) * 2
         )
-        resource.setrlimit(resource.RLIMIT_FSIZE, (64 * 1024**2,) * 2)
+        output_bytes = plan["protocol"].get("output_bytes_per_file", 64 * 1024**2)
+        resource.setrlimit(resource.RLIMIT_FSIZE, (output_bytes,) * 2)
 
     try:
         for block, order in enumerate(["AB", "BA"]):
-            for case in plan["cases"]:
+            for case_index, case in enumerate(plan["cases"]):
                 bases = {}
                 results = {}
-                for arm in order:
+                pair_records = []
+                for arm_index, arm in enumerate(order):
+                    schedule_index = 2*(block*len(plan["cases"])+case_index)+arm_index
+                    if schedule_index < args.start_index:
+                        continue
                     prefix = f"{case['name']}-b{block}-{arm}"
                     rss = out / (prefix + ".rss")
                     basisfile = out / (prefix + ".basis")
@@ -395,6 +422,7 @@ def main():
                         "p": case["p"],
                         "block": block,
                         "arm": arm,
+                        "schedule_index": schedule_index,
                         "command": command,
                         "wall_nanos": elapsed,
                         "status": "timeout"
@@ -403,9 +431,8 @@ def main():
                         if proc.returncode == 0
                         else "failed",
                         "returncode": proc.returncode,
-                        "peak_rss_kib": int(rss.read_text().splitlines()[-1])
-                        if rss.exists() and rss.read_text().splitlines()[-1].isdigit()
-                        else None,
+                        "peak_rss_kib": read_rss(rss),
+                        "complete_basis_equal": False,
                     }
                     if proc.returncode == 0:
                         try:
@@ -486,6 +513,7 @@ def main():
                                 }
                         except (
                             ValueError,
+                            TypeError,
                             KeyError,
                             AssertionError,
                             IndexError,
@@ -496,6 +524,7 @@ def main():
                             bases.pop(arm, None)
                             results.pop(arm, None)
                     m["samples"].append(record)
+                    pair_records.append(record)
                     print(prefix, record["status"], round(elapsed / 1e6, 2), flush=True)
                 equal = len(bases) == 2 and bases["A"] == bases["B"]
                 if not mode and len(results) == 2:
@@ -504,7 +533,7 @@ def main():
                         equal = equal and all(results["A"][key] == results["B"][key] for key in common)
                     else:
                         equal = equal and results["A"] == results["B"]
-                for sample in m["samples"][-2:]:
+                for sample in pair_records:
                     sample["complete_basis_equal"] = equal
     finally:
         m["binary_sha256_after"] = {
@@ -541,16 +570,14 @@ def main():
     for case in plan["cases"]:
         for block in [0, 1]:
             a, b = [
-                next(
-                    s
+                next((s
                     for s in m["samples"]
                     if s["case"] == case["name"]
                     and s["block"] == block
-                    and s["arm"] == arm
-                )
+                    and s["arm"] == arm), None)
                 for arm in ["A", "B"]
             ]
-            if a["status"] == b["status"] == "ok" and a["complete_basis_equal"]:
+            if a is not None and b is not None and a["status"] == b["status"] == "ok" and a["complete_basis_equal"]:
                 r = (
                     a["wall_nanos"] / b["wall_nanos"]
                     if mode
@@ -565,6 +592,8 @@ def main():
         "complete_bases_equal": sum(s["complete_basis_equal"] for s in m["samples"])
         // 2,
         "paired_inputs": len(plan["cases"]) * 2,
+        "missing_processes": 4*len(plan["cases"])-len(m["samples"]),
+        "missing_rss_observations": sum(s["peak_rss_kib"] is None for s in m["samples"]),
         "successful_processes": {
             arm: sum(s["arm"] == arm and s["status"] == "ok" for s in m["samples"])
             for arm in ["A", "B"]

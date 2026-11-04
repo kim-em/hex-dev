@@ -23,6 +23,7 @@ import HexGroebner.PolynomialBatchConformance
 import HexGroebner.ProductBatchConformance
 import HexGroebner.ProductConformance
 import HexGroebner.ReducerCacheConformance
+import HexGroebner.F4Conformance
 
 namespace Hex.Groebner.NativeChecks
 
@@ -169,6 +170,8 @@ def runOversizedF4 : IO Unit := do
 
 /-- Exercise complete cached F4 calls under each instrumented native provider. -/
 def runF4 : IO Unit := do
+  if !F4Conformance.minimalPrefixes then
+    throw (IO.userError "compiled minimal-basis work prefix mismatch")
   let seed ← readSeed
   for offset in [:6] do
     if !budgetF4 (seed+offset) then
