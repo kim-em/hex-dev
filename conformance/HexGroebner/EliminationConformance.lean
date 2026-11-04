@@ -203,6 +203,47 @@ def sizeChecks (seed : Nat) : Bool := Id.run do
 
 #guard sizeChecks 0
 
+@[noinline] private def binaryLargeRows (nonce : Nat) : Option (Array SparseRow × Array SparseRow) := do
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let salt := nonce%7
+  let reducers ← (Array.range 2048).mapM fun i =>
+    SparseRow.ofEntries field 8192 #[(i,1),(4096+(17*i+salt)%4096,1)]
+  let targets ← (Array.range 128).mapM fun i =>
+    SparseRow.ofEntries field 8192 #[(i,1),(2048+i,1),(4096+(17*i+salt)%4096,1)]
+  return (reducers,targets)
+
+/-- Nonempty rows beyond all old caps, sparse wide updates, high leading
+columns, and both sides of the physical bound with nonzero input entries. -/
+def binaryLargeChecks (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  for independent in [false,true] do
+    let some (er,et) := binaryLargeRows (seed+7) | return false
+    let some (ar,actualTargets) := binaryLargeRows seed | return false
+    let some expected := Elimination.attemptPortable field limits 8192 er et #[] independent | return false
+    let some actual := Elimination.attempt field limits 8192 ar actualTargets #[] independent | return false
+    if !same actual expected || !sameRows ar er || !sameRows actualTargets et then return false
+  let some high := SparseRow.ofEntries field 8192 #[(7000,1),(8191,1)] | return false
+  if (Elimination.attempt field limits 8192 #[high,high] #[] #[] false).isSome then return false
+  if (Elimination.attempt field {} 8192 #[high] #[] #[] false).isSome ||
+      (Elimination.attemptPortable field {} 8192 #[high] #[] #[] false).isSome then return false
+  let other : PrimeField := ⟨3,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  if (Elimination.attempt other limits 8192 #[] #[] #[] false).isSome ||
+      (Elimination.attemptPortable other limits 8192 #[] #[] #[] false).isSome then return false
+  if !sameAttempt (Elimination.attempt field limits 0 #[] #[{}] #[] true)
+      (Elimination.attemptPortable field limits 0 #[] #[{}] #[] true) then return false
+  if Elimination.binaryBound 16384 16321 62 14976 != 2^28 ||
+      Elimination.binaryBound 16384 16321 62 14977 != 2^28+3 then return false
+  for entries in [14976,14977] do
+    let some row := SparseRow.ofEntries field 16384 ((Array.range entries).map (·,(1:UInt64))) | return false
+    let reducers := (Array.replicate 16321 ({} : SparseRow)).set! 0 row
+    let targets := Array.replicate 62 ({} : SparseRow)
+    let expected := Elimination.attemptPortable field limits 16384 reducers targets #[] false
+    let actual := Elimination.attempt field limits 16384 reducers targets #[] false
+    if expected.isSome != (entries == 14976) || !sameAttempt actual expected then return false
+  return true
+
 @[noinline] private def binaryWorkRows (nonce : Nat) : Option (Array SparseRow) :=
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let tail := 1024+nonce%7

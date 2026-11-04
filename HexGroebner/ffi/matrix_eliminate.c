@@ -23,6 +23,12 @@
 #ifndef HEX_GROEBNER_BINARY_PIVOTS_USED
 #define HEX_GROEBNER_BINARY_PIVOTS_USED(bytes) ((void)(bytes))
 #endif
+#ifndef HEX_GROEBNER_BINARY_SPARSE_USED
+#define HEX_GROEBNER_BINARY_SPARSE_USED() ((void)0)
+#endif
+#ifndef HEX_GROEBNER_BINARY_WORD_USED
+#define HEX_GROEBNER_BINARY_WORD_USED() ((void)0)
+#endif
 
 typedef struct {
     uint64_t limits[7],stats[8],p,columns,quantum,scratch,words,capacity;
@@ -143,11 +149,39 @@ static void matrix_remainder(matrix_context *c,lean_obj_arg row,uint64_t sugar) 
 }
 
 /* F2 rows and the accumulator live in a private bit matrix. The complete
-   scratch payload is admitted against the parent's packed-byte peak. No bit
+   scratch payload is admitted against the parent's packed-byte allowance. No bit
    buffer escapes the frame; logical charges retain the sparse reference model.
    memcpy word loads/stores avoid alignment and effective-type assumptions. */
 static uint8_t *matrix_binary_dense(matrix_context *c) {
     return lean_sarray_cptr(c->binary_rows)+(size_t)c->capacity*c->words*8;
+}
+/* The bitmap has a little-endian byte layout on every host. Compilers fold
+   this fixed-width decode into an unaligned load (and a swap if necessary). */
+static uint64_t matrix_binary_load(const uint8_t *p) {
+    return (uint64_t)p[0] | (uint64_t)p[1]<<8 | (uint64_t)p[2]<<16 |
+        (uint64_t)p[3]<<24 | (uint64_t)p[4]<<32 | (uint64_t)p[5]<<40 |
+        (uint64_t)p[6]<<48 | (uint64_t)p[7]<<56;
+}
+static unsigned matrix_binary_ctz(uint64_t x) {
+#if defined(__GNUC__) || defined(__clang__)
+    return (unsigned)__builtin_ctzll(x);
+#else
+    unsigned n=0;while(!(x&1)) {x>>=1;++n;}return n;
+#endif
+}
+static unsigned matrix_binary_popcount(uint64_t x) {
+    x-=((x>>1)&UINT64_C(0x5555555555555555));
+    x=(x&UINT64_C(0x3333333333333333))+((x>>2)&UINT64_C(0x3333333333333333));
+    x=(x+(x>>4))&UINT64_C(0x0f0f0f0f0f0f0f0f);
+    return (unsigned)((x*UINT64_C(0x0101010101010101))>>56);
+}
+static uint64_t matrix_binary_interval(const uint8_t *data,uint64_t word,
+        uint64_t first,uint64_t last) {
+    uint64_t bits=matrix_binary_load(data+(size_t)word*8);
+    if(word==(first>>6)) bits&=UINT64_MAX<<(first&63);
+    if(word==(last>>6) && (last&63)!=63)
+        bits&=(UINT64_C(1)<<((last&63)+1))-1;
+    return bits;
 }
 static void matrix_binary_xor(uint8_t *restrict data,const uint8_t *restrict row,
         uint64_t first,uint64_t last) {
@@ -162,15 +196,21 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
     HEX_GROEBNER_BINARY_SCAN_USED();
     uint8_t *data=matrix_binary_dense(c);
     uint64_t charged=first;
-    for(uint64_t col=first;col<c->columns && col<=*last;++col) {
+    uint64_t col=first;
+    while(col<c->columns && col<=*last) {
         if(col>=charged) {
             uint64_t stop=col+64<*last+1?col+64:*last+1;
             if(!matrix_work(c,stop-col)) return 0;
             charged=stop;
         }
-        if(!(data[col>>3]&(1u<<(col&7)))) continue;
+        uint64_t word=col>>6,stop=(word+1)*64;
+        if(stop>charged) stop=charged;
+        if(stop>*last+1) stop=*last+1;
+        uint64_t bits=matrix_binary_interval(data,word,col,stop-1);
+        if(!bits) {col=stop;continue;}
+        col=word*64+matrix_binary_ctz(bits);
         uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
-        if(!slot) {if(!*leading) *leading=col+1;continue;}
+        if(!slot) {if(!*leading) *leading=col+1;++col;continue;}
         lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
         const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
         uint64_t n=lean_sarray_size(lean_ctor_get(pivot,0))/4;
@@ -181,31 +221,40 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
         if(!matrix_work(c,n)) return 0;
         uint64_t span=(end>>6)-(col>>6)+1;
         if(n<=span) {
+            HEX_GROEBNER_BINARY_SPARSE_USED();
             for(uint64_t i=0;i<n;++i) {
                 uint64_t j=matrix_read(ids+i*4,4);
                 data[j>>3]^=(uint8_t)(1u<<(j&7));
             }
         } else {
+            HEX_GROEBNER_BINARY_WORD_USED();
             const uint8_t *packed=lean_sarray_cptr(c->binary_rows)+(size_t)(slot-1)*c->words*8;
             matrix_binary_xor(data,packed,col>>6,end>>6);
         }
         ++c->stats[6];
+        ++col;
     }
     return 1;
 }
 static lean_object *matrix_gather_binary(matrix_context *c,uint64_t first,uint64_t last) {
     if(!matrix_work(c,last+1-first)) return NULL;
     uint8_t *data=matrix_binary_dense(c);uint64_t n=0;
-    for(uint64_t j=first;j<=last;++j) if(data[j>>3]&(1u<<(j&7))) {
-        if(!matrix_charge(&c->stats[2],1,c->limits[3]) || !matrix_bytes(c,5)) return NULL;
-        ++n;
-    }
+    for(uint64_t word=first>>6;word<=last>>6;++word)
+        n+=matrix_binary_popcount(matrix_binary_interval(data,word,first,last));
+    /* Only complete successful frames expose counters. Aggregate admission
+       has the same success condition and totals as per-entry reference charges. */
+    if(!matrix_charge(&c->stats[2],n,c->limits[3]) || !matrix_bytes(c,5*n)) return NULL;
     lean_object *ids=lean_alloc_sarray(1,(size_t)(4*n),(size_t)(4*n));
     lean_object *coeff=lean_alloc_sarray(1,(size_t)n,(size_t)n);
     uint64_t index=0;
-    for(uint64_t j=first;j<=last;++j) if(data[j>>3]&(1u<<(j&7))) {
-        matrix_write(lean_sarray_cptr(ids)+4*index,4,j);
-        lean_sarray_cptr(coeff)[index++]=1;
+    for(uint64_t word=first>>6;word<=last>>6;++word) {
+        uint64_t bits=matrix_binary_interval(data,word,first,last);
+        while(bits) {
+            uint64_t j=word*64+matrix_binary_ctz(bits);
+            matrix_write(lean_sarray_cptr(ids)+4*index,4,j);
+            lean_sarray_cptr(coeff)[index++]=1;
+            bits&=bits-1;
+        }
     }
     /* Earlier columns have been eliminated, and later ones were never set. */
     memset(data,0,(size_t)c->words*8);
@@ -327,8 +376,8 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         c.limits[i]=lean_is_scalar(x)?lean_unbox(x):UINT64_MAX/2;
     }
     if(c.columns>c.limits[0] || rows>c.limits[1]) goto defer;
-    c.words=(c.columns+63)/64;c.capacity=rows;
-    if(c.binary) c.scratch=(rows+1)*c.words*8;
+    c.words=(c.columns+63)/64;c.capacity=rows<c.columns?rows:c.columns;
+    if(c.binary) c.scratch=(c.capacity+1)*c.words*8;
     if(c.scratch>c.limits[4]) goto defer;
     for(size_t i=0;i<ns;++i) if(!lean_is_scalar(lean_array_cptr(sugars)[i])) goto defer;
     uint64_t workspace=c.columns*(c.width+4);
@@ -347,7 +396,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         nt*(entries+(nt+3)*c.columns+64)+c.columns;
     if(bound>c.quantum) goto defer;
     if(c.binary) {
-        uint64_t physical=rows*c.words+3*entries+4*nt*c.columns+workspace+
+        uint64_t physical=rows*c.words+3*entries+4*nt*c.columns+5*c.columns+
             nt*(rows*c.words+64)+c.columns;
         if(physical>BINARY_WORD_QUANTUM) goto defer;
     }

@@ -282,7 +282,7 @@ def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
   if binaryEnabled field limits then 2^32 else 2^20
 
 /-- Private pivot rows plus one accumulator, reserved against the parent peak. -/
-def binaryBytes (columns rows : Nat) : Nat := (rows+1)*((columns+63)/64)*8
+def binaryBytes (columns rows : Nat) : Nat := (min rows columns+1)*((columns+63)/64)*8
 
 /-- Word XORs, packing, validation and scalar scanning have this conservative
 shape bound. A pivot is visited at most once for each target. -/
@@ -303,7 +303,7 @@ target because scanning advances through its leading column. The final
 the sparse computation. Optional dense preparation adds separately charged work;
 `attemptPortable` also checks the final total against the selected frame quantum.
 Opt-in F2 frames additionally bound packing, scanning and word updates by `2^28`
-visits and reserve their complete temporary payload against the parent peak. -/
+visits and reserve their complete temporary payload against the packed-byte allowance. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
   let rows := reducers.size + targets.size
@@ -355,7 +355,7 @@ ordinary frames with at most 4096 columns, 1024 known reducers, 64 targets and
 `2^20` charged work. Opt-in F2 frames admit at most 16384 columns, 16384 reducers
 and 1024 targets, with a `2^32` logical-work bound and a separate `2^28` bound
 on packing/scalar/word visits. Their private pivot/accumulator bytes must fit
-the parent peak in addition to the complete reference payload. Known leading
+the packed-byte allowance in addition to the complete reference payload. Known leading
 columns are distinct. Large limits saturate above all
 possible accepted totals; non-machine-size sugars use checked Lean arithmetic.
 

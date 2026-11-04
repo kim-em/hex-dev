@@ -225,6 +225,24 @@ requested preparation uses its bounded native provider. The polynomial
 certificate producer does not enable that low-level policy.
 This option does not establish a full-system speedup or the performance milestone.
 
+`Limits.binaryPivots` optionally uses private bit-packed pivots and an accumulator
+in untraced ordinary F2 matrix frames. It defaults to `false`; the deterministic
+driver accepts `--binary-pivots true|false` and records the requested policy.
+This preserves ordinary polynomial semantics, including distinct monomials
+`x` and `x²`. Other fields retain their existing route. Admission permits at
+most 16384 columns, 16384 reducers and 1024 targets, with bounds of `2^32`
+reference work and `2^28` packing/scalar/word visits. The private bitmap stores
+at most the lesser of the row and column counts in pivot rows, plus one
+accumulator. Its complete payload fits the remaining packed-byte allowance
+alongside the complete sparse-reference charges. Those logical counters remain
+identical; the private buffers never escape the call. Sparse wide pivots toggle
+their explicit entries, while denser pivots use exact word XOR. Word scans and
+gathers decode the same byte layout on every host.
+
+A byte-allowance refusal can discard a partially or fully processed native frame
+before the reference continuation succeeds. Speculation is bounded per frame;
+multiple matrix calls can incur it. This policy has no fastest-open-source claim.
+
 The packed-payload allowance is not a process-memory limit: it excludes
 hash tables, tree nodes, object headers and allocator capacity. Structural
 monomial, pair-attempt, basis and variable bounds also limit metadata growth.
