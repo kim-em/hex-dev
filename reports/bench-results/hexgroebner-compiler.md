@@ -48,4 +48,6 @@ Measured override runtime `4abe7f39fd7a`; verified runtime `aaeef06c28e8`, check
 `f4-native-compiler23-13a33eb6a851.tar.xz`: SHA-256 `401428e3583f5635af25e0996477bf3a383400c951395d7666c82c4a07be4fe8`.
 `f4-native-cc-linked-audit-aaeef06c28e8.tar.xz`: SHA-256 `447712b73a22f40dfc1c5d665ff3ff686ff281154c63ae563b78d326f1df7820`.
 
-Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science reports/bench-results/raw/f4-native-cc-option-4abe7f39fd7a.tar.xz --guards reports/bench-results/raw/f4-native-cc-guards-a5a3a3acc086.tar.xz --global-compiler reports/bench-results/raw/f4-native-compiler23-13a33eb6a851.tar.xz --audit reports/bench-results/raw/f4-native-cc-linked-audit-aaeef06c28e8.tar.xz --report reports/bench-results/hexgroebner-compiler.md --check --current`.
+Regenerate with `python3 scripts/bench/groebner_compiler_report.py --science reports/bench-results/raw/f4-native-cc-option-4abe7f39fd7a.tar.xz --guards reports/bench-results/raw/f4-native-cc-guards-a5a3a3acc086.tar.xz --global-compiler reports/bench-results/raw/f4-native-compiler23-13a33eb6a851.tar.xz --audit reports/bench-results/raw/f4-native-cc-linked-audit-aaeef06c28e8.tar.xz --report reports/bench-results/hexgroebner-compiler.md --check`.
+
+Add `--current` only when checking the measured runtime/check source snapshot.
