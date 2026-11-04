@@ -274,6 +274,44 @@ typedef struct {
     unsigned inserted,changed;
 } product_plan;
 
+/* Independent rows keep the serial FNV accumulators in parallel. All input
+   identifiers belong to the initial arena. Only private planning bytes change.
+   The full preparation reservation is charged before the coordinate traversal. */
+_Static_assert(sizeof(product_plan)+4*64*sizeof(uint64_t)+64*sizeof(uint32_t)<32768,
+    "product planning scratch must remain below 32 KiB");
+static int products_prepare(unsigned width,uint64_t arity,uint64_t count,uint64_t right,
+        const uint8_t *source,const uint8_t *support,size_t start,size_t terms,
+        uint8_t *prepared,size_t stride) {
+    uint32_t left[64];
+    uint64_t degree[64],mask[64],hash[64],largest[64];
+    for(size_t t=0;t<terms;++t) {
+        uint64_t id=read_le(support+(start+t)*4,4);
+        if(id>=count) return 0;
+        left[t]=(uint32_t)id;degree[t]=0;mask[t]=0;largest[t]=0;
+        hash[t]=UINT64_C(14695981039346656037);
+    }
+    unsigned overflow=0;
+    for(size_t i=0;i<(size_t)arity;++i) {
+        uint64_t y=read_le(source+((size_t)right*(size_t)arity+i)*width,width);
+        uint64_t bit=UINT64_C(1)<<(i%64);
+        for(size_t t=0;t<terms;++t) {
+            uint64_t x=read_le(source+((size_t)left[t]*(size_t)arity+i)*width,width),z=x+y;
+            overflow|=z>UINT32_MAX;
+            write_le(prepared+t*stride+4*i,4,z);
+            degree[t]+=z;mask[t]|=z?bit:0;
+            hash[t]=(hash[t]^z)*UINT64_C(1099511628211);
+            if(z>largest[t]) largest[t]=z;
+        }
+    }
+    if(overflow) return 0;
+    for(size_t t=0;t<terms;++t) {
+        uint8_t *meta=prepared+t*stride+(size_t)arity*4;
+        hit_write64(meta,degree[t]);hit_write64(meta+8,mask[t]);
+        hit_write64(meta+16,hash[t]);write_le(meta+24,4,largest[t]);
+    }
+    return 1;
+}
+
 /* Consumes table on success only; NULL leaves its ownership with the caller. */
 static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
         b_lean_obj_arg monomial,b_lean_obj_arg start_arg,b_lean_obj_arg count_arg,
@@ -317,15 +355,16 @@ static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
     bytes+=reserved;
     if(bytes>lean_unbox(max_bytes) || bytes>=SIZE_MAX) return NULL;
     product_plan plan;plan.inserted=0;plan.changed=0;
+    uint64_t preparation=2*arity*terms;
+    if(terms>sizeof(plan.prepared)/size || preparation>allowed-work || preparation>4096) return NULL;
+    *visited_work=preparation;
+    if(!products_prepare(width,arity,count,right,lean_sarray_cptr(exponents),
+        lean_sarray_cptr(support),start,terms,plan.prepared,size)) return NULL;
+    work+=preparation;
     for(size_t term=0;term<terms;++term) {
-        uint64_t left=read_le(lean_sarray_cptr(support)+(start+term)*4,4);
-        if(left>=count || 2*arity>allowed-work || 2*arity>4096-(work-initial)) return NULL;
-        *visited_work=work-initial+2*arity;
-        if(!prepare_monomial(1,width,arity,count,left,right,
-            lean_sarray_cptr(exponents),lean_sarray_size(exponents),plan.prepared,size)) return NULL;
-        work+=2*arity;
-        uint64_t hash=read_le(plan.prepared+arity*4+16,4) |
-            (read_le(plan.prepared+arity*4+20,4)<<32);
+        const uint8_t *prepared=plan.prepared+term*size;
+        uint64_t hash=read_le(prepared+arity*4+16,4) |
+            (read_le(prepared+arity*4+20,4)<<32);
         if(bits<64) hash&=(UINT64_C(1)<<bits)-1;
         size_t slot=(size_t)(hit_mix(hash)&(capacity-1));
         unsigned changed=0;
@@ -349,15 +388,15 @@ static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
             if(arity>allowed-work || arity>4096-(work-initial)) return NULL;
             work+=arity;*visited_work=work-initial;
             int equal=id<count?equal_monomial(width,arity,id,lean_sarray_cptr(exponents),
-                lean_sarray_size(exponents),plan.prepared,size):
+                lean_sarray_size(exponents),prepared,size):
                 equal_monomial(width,arity,id-count,plan.exponents,
-                    (size_t)plan.inserted*arity*width,plan.prepared,size);
+                    (size_t)plan.inserted*arity*width,prepared,size);
             if(equal) {found=id;break;}
         }
         if(found==UINT64_MAX) {
             if(link || current>=UINT32_MAX || !lean_is_scalar(max_count) ||
                current>=lean_unbox(max_count) || current+1>capacity/2) return NULL;
-            uint64_t largest=read_le(plan.prepared+arity*4+24,4);
+            uint64_t largest=read_le(prepared+arity*4+24,4);
             if((width==1 && largest>255) || (width==2 && largest>65535)) return NULL;
             uint64_t needed=(current+1)*(arity*width+28)+size+head_bytes;
             if(needed>lean_unbox(max_bytes) || needed>=SIZE_MAX ||
@@ -365,9 +404,9 @@ static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
             if((size_t)(plan.inserted+1)*arity*width>sizeof(plan.exponents)) return NULL;
             work+=arity+2;*visited_work=work-initial;
             uint8_t *e=plan.exponents+(size_t)plan.inserted*arity*width;
-            for(size_t i=0;i<arity;++i) write_le(e+i*width,width,read_le(plan.prepared+i*4,4));
+            for(size_t i=0;i<arity;++i) write_le(e+i*width,width,read_le(prepared+i*4,4));
             uint8_t *m=plan.metadata+(size_t)plan.inserted*24;
-            memcpy(m,plan.prepared+arity*4,16);hit_write64(m+16,hash);
+            memcpy(m,prepared+arity*4,16);hit_write64(m+16,hash);
             plan.links[plan.inserted]=(uint32_t)start_link;plan.hashes[plan.inserted]=hash;
             if(changed==plan.changed) {plan.slots[changed]=slot;++plan.changed;}
             plan.heads[changed]=(uint32_t)(current+1);
@@ -391,7 +430,7 @@ static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
     if(lean_sarray_size(fields[4])!=size) {
         lean_dec(fields[4]);fields[4]=lean_alloc_sarray(1,size,size);
     } else fields[4]=hit_exclusive_alias(fields[4],support==workspace);
-    memcpy(lean_sarray_cptr(fields[4]),plan.prepared,size);
+    memcpy(lean_sarray_cptr(fields[4]),plan.prepared+(terms-1)*size,size);
     if(plan.inserted) {
         size_t old_bytes=(size_t)count*arity*width;
         fields[1]=hit_extend_alias(fields[1],(size_t)(count+plan.inserted)*arity*width,support==exponents);
