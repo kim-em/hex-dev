@@ -324,6 +324,40 @@ def binaryProjectChecks (seed : Nat) : Bool := Id.run do
           (Elimination.attemptPortable field bounded 129 reducers targets sugars independent) then return false
   return true
 
+/-- All triangular four-pivot patterns and every incoming head mask, with
+common tails that cancel while reference charges and sugar maxima persist. -/
+def binaryTableChecks (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let heads := #[0,3,7,11]
+  for pattern in [:64] do
+    let some rows := (Array.range 4).mapM fun k => SparseRow.ofEntries field 129
+        ((Array.range 129).filterMap fun j =>
+          let bit := if k == 0 then (if j == 3 then 0 else if j == 7 then 1 else 2)
+            else if k == 1 then (if j == 7 then 3 else 4) else 5
+          if j == heads[k]! || (64 ≤ j && j < 96) ||
+              (j > heads[k]! && heads.contains j && (pattern/2^bit)%2 == 1) then
+            some (j,(1:UInt64)) else none)
+      | return false
+    -- Reversing the supplied reducers must not change column-order projection.
+    let reducers := rows.reverse
+    let some targets := (Array.range 64).mapM fun i => SparseRow.ofEntries field 129
+        ((Array.range 129).filterMap fun j =>
+          let bit := if j == 0 then 0 else if j == 3 then 1 else if j == 7 then 2 else 3
+          if (heads.contains j && (i/2^bit)%2 == 1) ||
+              (j == 1 && i/16%2 == 1) || (j == 5 && i/32 == 1) ||
+              (j == 100+seed%7 && i/32 == 1) then some (j,(1:UInt64)) else none)
+      | return false
+    let sugars := (Array.range 68).map fun i => 2^40+i*31+seed
+    for independent in [false,true] do
+      let some expected := Elimination.attemptPortable field limits 129 reducers targets sugars independent
+        | return false
+      let some actual := Elimination.attempt field limits 129 reducers targets sugars independent
+        | return false
+      if !same actual expected then return false
+  return true
+
 @[noinline] private def binaryWorkRows (nonce : Nat) : Option (Array SparseRow) :=
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let tail := 1024+nonce%7

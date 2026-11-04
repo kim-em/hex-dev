@@ -254,7 +254,11 @@ private 16-byte metadata record, avoiding repeated object traversal during word
 updates. Frames with at least 64 columns, four known reducers and 64 targets
 first project every target through the known reducers in column order, then
 eliminate by target pivots in their original order. Private target bitmaps and
-last-column/sugar records preserve the reference scan extent and labels. Their
+last-column/sugar records preserve the reference scan extent and labels. Four
+consecutive dense known pivots use a reusable 16-row XOR table. Its triangular
+head-pattern map selects exactly the reference pivots; cancelled tails still
+retain every selected row's work, end column and sugar. A sparse pivot interrupts
+the group and uses its ordinary update. Their
 initialization, copies and reduction visits are included in the physical bound.
 The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
