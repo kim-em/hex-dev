@@ -118,9 +118,10 @@ run_meta do
   checkLayout ``Hex.Groebner.MatrixStats 8 0 #[
     ("work","o0"),("inputEntries","o1"),("outputEntries","o2"),("packedBytes","o3"),
     ("traceNodes","o4"),("processedRows","o5"),("reductions","o6"),("zeroRows","o7")]
-  checkLayout ``Hex.Groebner.MatrixLimits 7 1 #[
+  checkLayout ``Hex.Groebner.MatrixLimits 7 2 #[
     ("columns","o0"),("rows","o1"),("inputEntries","o2"),("outputEntries","o3"),
-    ("packedBytes","o4"),("work","o5"),("traceNodes","o6"),("densePivots","s1@0")]
+    ("packedBytes","o4"),("work","o5"),("traceNodes","o6"),("densePivots","s1@0"),
+    ("binaryPivots","s1@1")]
 
 -- A same-kind field permutation must be rejected by name, even when the
 -- total object count and every scalar offset remain unchanged.
