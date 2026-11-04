@@ -74,6 +74,8 @@ setup_benchmark bulkByte n => n*n
     targetInnerNanos := 4000000000
   }
 
+-- Each of eight targets visits n/2 tails of length n/2+1; two-byte
+-- coefficients preserve O(n²) updates, validation and complete output hashing.
 setup_benchmark bulkShort n => n*n
   with prep := prepareBulkShort
   where {
@@ -83,6 +85,8 @@ setup_benchmark bulkShort n => n*n
     targetInnerNanos := 4000000000
   }
 
+-- Four-byte coefficients likewise require eight*(n/2)*(n/2+1) sparse updates,
+-- plus O(n²) input validation, installation and complete output hashing.
 setup_benchmark bulkWord n => n*n
   with prep := prepareBulkWord
   where {
