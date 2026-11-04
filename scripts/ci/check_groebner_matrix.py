@@ -67,6 +67,8 @@ def run() -> None:
         # The included source gets private names; only our counted wrappers use --wrap.
         source = ROOT / "HexGroebner/ffi/matrix_scan.c"
         (directory / "probe.c").write_text('''#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include RUNTIME_HEADER
 #define lean_hex_groebner_subtract_row hex_test_unused_subtract
 #define lean_hex_groebner_remap_columns hex_test_remap
