@@ -32,10 +32,18 @@ Both stages pass all twelve Clang/GCC ASan/UBSan variants and all nine project g
 
 Initial capsule `f4-lazy-pivots-176673354ffa.tar.xz`: SHA-256 `3ba260bc18e651e4a35053b5dcd42c068abd548ebe4fd075dc94e65449343a60`. Final capsule `f4-lazy-pivots-4fb747423df0.tar.xz`: SHA-256 `7715cf0eda4819edb188d33bc7592e0914084771ff9eeaf3ff6f221f7cd77b67`. They bind full source/check manifests, compiler inputs, raw samples and complete logs. Earlier failed setup/check attempts remain diagnostic records.
 
+
+## Current configuration audit
+
+Current runtime `8861aaf91c08` changes only the Lake registrations for unrelated RCF modules relative to the measured final snapshot. The only verification-manifest change is CI disk reclamation. All three freshly frozen compute/reference/bench executables have exactly the measured SHA-256 hashes; compiler controls match. All twelve native sanitizer variants and all nine project gates pass on this current snapshot.
+
+Audit capsule `f4-lazy-config-audit-8861aaf91c08.tar.xz`: SHA-256 `b88fe9fd87361718f1c7940d531ddb10155fc3a8674a29f93637216b55add463`. No timing sample is replaced or inferred from the configuration update.
+
 ```bash
 python3 scripts/bench/groebner_lazy_report.py \
   --initial reports/bench-results/raw/f4-lazy-pivots-176673354ffa.tar.xz \
   --archive reports/bench-results/raw/f4-lazy-pivots-4fb747423df0.tar.xz \
+  --audit reports/bench-results/raw/f4-lazy-config-audit-8861aaf91c08.tar.xz \
   --report reports/bench-results/hexgroebner-lazy-pivots.md --check
 ```
 

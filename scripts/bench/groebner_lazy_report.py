@@ -39,10 +39,26 @@ def stage(cap, repeated=False):
     return before, after, identity, records
 
 
+def audited(cap, measured, measured_cap):
+    current = source(cap, 'audit')
+    a, b = listing(measured['source_manifest']), listing(current['source_manifest'])
+    require(set(a) == set(b) and {p for p in a if a[p] != b[p]} == {'lakefile.lean'},
+            'configuration refresh changed implementation sources')
+    old, new = listing(measured_cap.text('checks.manifest')), listing(cap.text('checks.manifest'))
+    require(set(old) == set(new) and {p for p in old if old[p] != new[p]} == {'.github/workflows/ci.yml'},
+            'configuration refresh changed verification sources')
+    require(current['binary_sha256'] == measured['binary_sha256'] and
+            current['compilers'] == measured['compilers'] and
+            current['native_options'] == measured['native_options'],
+            'configuration refresh changed executables or compiler controls')
+    return current, checks(cap, current, True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ['archive', 'initial', 'report']:
         parser.add_argument('--'+name, type=Path, required=True)
+    parser.add_argument('--audit', type=Path)
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--current', action='store_true')
     args = parser.parse_args()
@@ -53,6 +69,10 @@ def main():
     require('mixed frames did not skip sparse packed-row initialization' in
             final.text('checks-sources/scripts/ci/check_groebner_matrix.py'),
             'final sparse-row initialization assertion missing')
+    audit = Capsule(args.audit) if args.audit else None
+    current_manifest = after
+    if audit:
+        current_manifest, identity = audited(audit, after, final)
     if args.current:
         current = source_identity()
         require(all(current[k] == identity[k] for k in ['source_fingerprint', 'source_manifest_sha256',
@@ -118,6 +138,21 @@ def main():
         '  --report reports/bench-results/hexgroebner-lazy-pivots.md --check', '```', '',
         'Add `--current` for the measured final runtime/check snapshot. '
         '[Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.', '']
+    if audit:
+        section = ['', '## Current configuration audit', '',
+            f'Current runtime `{current_manifest["source_fingerprint"]}` changes only the Lake '
+            'registrations for unrelated RCF modules relative to the measured final snapshot. '
+            'The only verification-manifest change is CI disk reclamation. All three freshly '
+            'frozen compute/reference/bench executables have exactly the measured SHA-256 hashes; '
+            'compiler controls match. All twelve native sanitizer variants and all nine project '
+            'gates pass on this current snapshot.', '',
+            f'Audit capsule `{audit.path.name}`: SHA-256 `{audit.sha256}`. No timing sample is '
+            'replaced or inferred from the configuration update.', '']
+        # The audit argument binds --current to the configuration used now.
+        pos = lines.index('```bash')
+        lines[pos:pos] = section
+        pos = lines.index('  --report reports/bench-results/hexgroebner-lazy-pivots.md --check')
+        lines.insert(pos, f'  --audit reports/bench-results/raw/{audit.path.name} '+chr(92))
     text = '\n'.join(lines)
     if args.check:
         require(args.report.read_text() == text, 'report differs; regenerate it')
