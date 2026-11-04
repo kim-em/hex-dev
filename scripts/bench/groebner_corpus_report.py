@@ -22,6 +22,7 @@ def main():
     cap = Capsule(args.archive)
     suite = cap.json('suite.json')
     protocol, cases = suite['protocol'], suite['cases']
+    require(protocol['format'] == 2, 'corpus protocol version differs')
     require(len(cases) == 126 and len({c['name'] for c in cases}) == 126, 'case identities differ')
     require(Counter(c['split'] for c in cases) == {'primary': 90, 'lex': 9, 'heldout': 27},
             'split sizes differ')
@@ -64,9 +65,9 @@ def main():
             and protocol['threads'] == [1, 2, 4, 8], 'resource protocol differs')
     require(protocol['hex_limits'] == {**dict.fromkeys(['work', 'packed-bytes', 'monomials', 'pairs',
             'rounds', 'matrix-entries', 'matrix-rows', 'basis'], 2**50), 'variables': 1000000,
-            'batch-size': 64}, 'Hex internal limits differ')
+            'batch-size': 1024}, 'Hex internal limits differ')
     lines = ['# Fixed finite-field F4 performance corpus', '',
-        'This corpus fixes inputs and a comparison protocol before measurements or tuning against it. '
+        'This corpus contains fixed inputs and an explicit comparison protocol. '
         'It contains no timing result and establishes no performance milestone. The primary route '
         'is ordinary prime-field polynomial rings with grevlex order and complete monic reduced output. '
         'No characteristic-two field equations are added.', '',
@@ -97,7 +98,7 @@ def main():
         'single-thread runs and retain every completed sample, outlier, failure, timeout, memory '
         'observation and host-activity record. One unchanged repeat is permitted after inconclusive '
         'results. Never wait for a quiet core or discard a completed sample.', '',
-        'The Hex batch size is fixed at 64. Internal work and storage counters have explicit 2⁵⁰ '
+        'The Hex batch size is fixed at 1024, matching the library default. Internal work and storage counters have explicit 2⁵⁰ '
         'ceilings instead of the smaller development-sweep defaults. The common wall-time and '
         'address-space limits apply in addition. The variable cap is 1,000,000. Record any internal exhaustion '
         'separately from process timeouts, allocation failures and invalid inputs.', '',

@@ -361,7 +361,7 @@ run_tuple() {
       return 1
     fi
     if ! python3 scripts/bench/groebner_corpus_report.py \
-        --archive reports/bench-results/raw/f4-fixed-corpus-v1.tar.xz \
+        --archive reports/bench-results/raw/f4-fixed-corpus-v2.tar.xz \
         --report reports/bench-results/hexgroebner-corpus.md --check --current; then
       echo "FAIL: $lib :: fixed Groebner corpus validation failed"
       return 1

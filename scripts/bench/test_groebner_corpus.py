@@ -1,12 +1,20 @@
 """Representation and field-boundary checks for the fixed F4 inputs."""
 import unittest
+from pathlib import Path
+import re
 
 import sympy
 
-from scripts.bench.groebner_corpus import canonical, generated, public_input
+from scripts.bench.groebner_corpus import BATCH_SIZE, canonical, generated, public_input
 
 
 class CorpusTests(unittest.TestCase):
+    def test_library_batch_default(self):
+        runtime = Path(__file__).resolve().parents[2] / 'HexGroebner/Runtime.lean'
+        match = re.search(r'^\s+batchSize : Nat := (\d+)$', runtime.read_text(), re.MULTILINE)
+        self.assertIsNotNone(match)
+        self.assertEqual(BATCH_SIZE, int(match[1]))
+
     def test_characteristic_header(self):
         # The public -2 filename suffix means a two-bit prime, namely 3.
         data = b'x,y,\n3\nx^2+x+y,\n'

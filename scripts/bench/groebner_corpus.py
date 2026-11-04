@@ -10,6 +10,7 @@ import subprocess
 import sympy
 
 REVISION = 'f18c2db3a288f20f63f752b44e0171cf1cb86163'
+BATCH_SIZE = 1024
 FIELDS = [(2, 2), (15, 32003), (31, 2147483647)]
 PUBLIC = {
     'cyclic': ['cyclic7', 'cyclic9', 'cyclic10'],
@@ -166,7 +167,7 @@ def main():
     assert sum(c['split'] == 'lex' for c in cases) == 9
     assert sum(c['split'] == 'heldout' for c in cases) == 27
     protocol = dict(
-        format=1, purpose='Fixed F4 performance corpus; no performance result or leadership claim.',
+        format=2, purpose='Fixed F4 performance corpus; no performance result or leadership claim.',
         primary='90 grevlex systems: ten equally weighted families, three cases in each of three prime fields.',
         lex='Nine separate lex systems; compare only engines supporting the identical order.',
         heldout='27 additional inputs; do not use them to select implementation policies or thresholds.',
@@ -174,7 +175,7 @@ def main():
         threads=[1, 2, 4, 8], wall_seconds_per_process=300, address_space_bytes=8*2**30,
         output_bytes_per_file=256*2**20, initial_pairs=2,
         hex_limits={**dict.fromkeys(['work', 'packed-bytes', 'monomials', 'pairs', 'rounds',
-                    'matrix-entries', 'matrix-rows', 'basis'], 2**50), 'variables': 1000000, 'batch-size': 64},
+                    'matrix-entries', 'matrix-rows', 'basis'], 2**50), 'variables': 1000000, 'batch-size': BATCH_SIZE},
         schedule='Lease one CPU for single-thread trials. Trial-major adjacent pairs alternate AB/BA. Record all completed samples and failures; one unchanged repeat after inconclusive results.',
         comparisons='Match field, variable precedence, order, deterministic guarantee and full output. Report unsupported routes separately. No loss of solved coverage is allowed.',
         scoring='For each comparator, compute geometric mean Hex/comparator ratios within each family across fields, then geometric mean with equal family weights. Also report each field width separately. Retain missing families, failures, timeouts and per-instance coverage; never score jointly solved ratios as success after a coverage loss.',

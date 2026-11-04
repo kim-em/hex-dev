@@ -1,6 +1,6 @@
 # Fixed finite-field F4 performance corpus
 
-This corpus fixes inputs and a comparison protocol before measurements or tuning against it. It contains no timing result and establishes no performance milestone. The primary route is ordinary prime-field polynomial rings with grevlex order and complete monic reduced output. No characteristic-two field equations are added.
+This corpus contains fixed inputs and an explicit comparison protocol. It contains no timing result and establishes no performance milestone. The primary route is ordinary prime-field polynomial rings with grevlex order and complete monic reduced output. No characteristic-two field equations are added.
 
 ## Inputs
 
@@ -27,7 +27,7 @@ Public examples and their GPL-3.0 license are retained from [GamBa `f18c2db3a288
 
 Each process has 300 seconds of wall time, 8 GiB of address space and 256 MiB per output file. Use two initial adjacent pairs in trial-major order, alternating AB/BA. Lease a CPU for single-thread runs and retain every completed sample, outlier, failure, timeout, memory observation and host-activity record. One unchanged repeat is permitted after inconclusive results. Never wait for a quiet core or discard a completed sample.
 
-The Hex batch size is fixed at 64. Internal work and storage counters have explicit 2⁵⁰ ceilings instead of the smaller development-sweep defaults. The common wall-time and address-space limits apply in addition. The variable cap is 1,000,000. Record any internal exhaustion separately from process timeouts, allocation failures and invalid inputs.
+The Hex batch size is fixed at 1024, matching the library default. Internal work and storage counters have explicit 2⁵⁰ ceilings instead of the smaller development-sweep defaults. The common wall-time and address-space limits apply in addition. The variable cap is 1,000,000. Record any internal exhaustion separately from process timeouts, allocation failures and invalid inputs.
 
 A collector killed before writing RSS leaves that observation unknown. For an interrupted campaign, retain the original fragment and continue with `--start-index` in the fixed process schedule. A fragment reports missing processes and cannot establish full coverage. Join fragments only with identical inputs, policies and executable hashes, retain each original source/CPU record, and reject duplicate schedule positions. Censored failures remain failures and receive no invented elapsed time or memory observation.
 
@@ -39,12 +39,12 @@ Candidate production yields unchecked candidates. Compare every coefficient and 
 
 ## Replay
 
-Corpus capsule `f4-fixed-corpus-v1.tar.xz`: SHA-256 `1884d16bf293f053c6b22c943136cb6181f7bc3b081a1ba24aa24f93f3b93256`. All inputs, original public examples, license and generator have individual SHA-256 bindings. The generator requires the pinned public checkout and SymPy 1.14.0. Reproduction uses:
+Corpus capsule `f4-fixed-corpus-v2.tar.xz`: SHA-256 `56ec21d063e39e27605c37456166cca47dcad446daea018d7afcd81b97782812`. All inputs, original public examples, license and generator have individual SHA-256 bindings. The generator requires the pinned public checkout and SymPy 1.14.0. Reproduction uses:
 
 ```bash
 python3 scripts/bench/groebner_corpus.py --gamba /path/to/pinned/gamba --output /new/corpus
 python3 scripts/bench/groebner_corpus_report.py \
-  --archive reports/bench-results/raw/f4-fixed-corpus-v1.tar.xz \
+  --archive reports/bench-results/raw/f4-fixed-corpus-v2.tar.xz \
   --report reports/bench-results/hexgroebner-corpus.md --check
 ```
 
