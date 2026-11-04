@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexGroebner
 import HexGroebner.Bench.Cauchy
+import HexGroebner.Bench.Bulk
 import HexGroebner.Bench.Products
 import HexGroebner.Bench.Primitives
 import HexGroebner.Bench.Continuation
