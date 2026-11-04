@@ -1055,12 +1055,15 @@ def checkMersenne : IO UInt64 := do
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   return mersenne
 
-def main : IO Unit := do
+private def checkOwnership : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
   if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
   if !(← productExclusive) then throw (IO.userError "exclusive multi-slot insertion/lookup mismatch")
   if !(← productAliases) then throw (IO.userError "exclusive product insertion/alias mismatch")
   if !(← ownedRuntime) then throw (IO.userError "native layout or linear resize mismatch")
+
+def main : IO Unit := do
+  checkOwnership
   IO.println "native constructor layout and marked-linear growth passed"
   let beforeOwned ← uniqueCount
   let beforeAlias ← aliasCount
