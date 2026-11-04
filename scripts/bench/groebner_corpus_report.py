@@ -101,6 +101,12 @@ def main():
         'ceilings instead of the smaller development-sweep defaults. The common wall-time and '
         'address-space limits apply in addition. The variable cap is 1,000,000. Record any internal exhaustion '
         'separately from process timeouts, allocation failures and invalid inputs.', '',
+        'A collector killed before writing RSS leaves that observation unknown. For an interrupted '
+        'campaign, retain the original fragment and continue with `--start-index` in the fixed '
+        'process schedule. A fragment reports missing processes and cannot establish full coverage. '
+        'Join fragments only with identical inputs, policies and executable hashes, retain each '
+        'original source/CPU record, and reject duplicate schedule positions. Censored failures '
+        'remain failures and receive no invented elapsed time or memory observation.', '',
         'Measure candidate production through complete reduced output with parsing, setup and launch '
         'included consistently. Match coefficient field, variable precedence, order, deterministic '
         'guarantees and output. Record exact source revisions, licenses, compiler/runtime versions, '

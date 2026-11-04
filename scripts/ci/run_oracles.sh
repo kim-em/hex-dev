@@ -355,7 +355,8 @@ run_tuple() {
       return 1
     fi
     if ! python3 -m unittest scripts.oracle.test_groebner_sympy scripts.oracle.test_groebner_singular \
-        scripts.bench.test_groebner_capsule scripts.bench.test_groebner_corpus; then
+        scripts.bench.test_groebner_capsule scripts.bench.test_groebner_corpus \
+        scripts.bench.test_groebner_cli_measure; then
       echo "FAIL: $lib :: Groebner oracle rejection checks failed"
       return 1
     fi

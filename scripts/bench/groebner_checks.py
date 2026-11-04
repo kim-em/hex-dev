@@ -12,6 +12,7 @@ CHECKS = Family(
              "scripts/bench/test_groebner_capsule.py",
              "scripts/bench/groebner_corpus.py", "scripts/bench/groebner_corpus_report.py",
              "scripts/bench/test_groebner_corpus.py",
+             "scripts/bench/test_groebner_cli_measure.py",
              "reports/bench-results/raw/f4-fixed-corpus-v1.tar.xz",
              "reports/bench-results/hexgroebner-corpus.md",
              "scripts/check_dag.py", "scripts/check_phase4.py",
