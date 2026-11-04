@@ -17,6 +17,11 @@ The workspace retains the bitmap across preparations and checkpoints. Growth
 counts against the parent work and packed-byte limits once; the next preparation
 clears only the previously visited identifiers and charges that clearing work.
 Cache hits and separate-tail normal forms reuse the paid-for bitmap payload.
+Deterministic, sampled and certificate-producing loops move the workspace out
+of the old round state before running the next computation. Column sorting
+consumes the visited queue; the sorted columns also identify bits to clear.
+Externally retained checkpoints and shared raw buffers preserve their snapshots
+through ordinary copy-on-write.
 With `nativeMonomials := true`, a bounded operation validates and queues slices
 of at most 4096 packed identifiers. Shared and borrowed buffers retain their
 contents; disabling native monomial operations selects the portable definition.
