@@ -210,10 +210,49 @@ def sizeChecks (seed : Nat) : Bool := Id.run do
     SparseRow.ofEntries field 2055 (#[ (i,(1:UInt64)) ] ++
       (Array.range 1024).map fun j => (tail+j,(1:UInt64)))
 
+/-- Expanded shape caps and adjacent sides of the physical-work guard, plus
+malformed rows and arbitrary natural-number limits in the packed F2 route. -/
+def binaryBounds : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let empty : SparseRow := {}
+  let reducers := Array.replicate 16384 empty
+  let targets := Array.replicate 61 empty
+  if Elimination.binaryBound 16384 16384 61 0 > 2^28 ||
+      Elimination.binaryBound 16384 16384 62 0 <= 2^28 then return false
+  let some expected := Elimination.attemptPortable field limits 16384 reducers targets #[] false | return false
+  let some actual := Elimination.attempt field limits 16384 reducers targets #[] false | return false
+  if !same actual expected then return false
+  for (columns,rs,ts) in [(16385,#[],#[]),(1,Array.replicate 16385 empty,#[]),
+      (1,#[],Array.replicate 1025 empty),(16384,reducers,targets.push empty),
+      (16384,reducers,Array.replicate 1024 empty)] do
+    if (Elimination.attempt field limits columns rs ts #[] false).isSome ||
+        (Elimination.attemptPortable field limits columns rs ts #[] false).isSome then return false
+  let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
+  let malformed : Array SparseRow := #[
+    { row with columns := row.columns.push 0 },
+    { row with coefficients := row.coefficients.push 0 },
+    { row with coefficients := Packed.set .u8 row.coefficients 0 0 },
+    { row with coefficients := Packed.set .u8 row.coefficients 0 2 },
+    { row with columns := Packed.set .u32 row.columns 1 3 },
+    { row with columns := Packed.set .u32 row.columns 1 0 }]
+  for bad in malformed do
+    for (rs,ts) in [(#[bad],#[row]),(#[row],#[bad])] do
+      if !sameAttempt (Elimination.attempt field limits 3 rs ts #[] false)
+          (Elimination.attemptPortable field limits 3 rs ts #[] false) then return false
+  for amount in [0,1,15,16,31,32,63,64,2^90] do
+    for cap in ([{ limits with packedBytes := amount },{ limits with work := amount },
+        { limits with inputEntries := amount },{ limits with outputEntries := amount }] : List MatrixLimits) do
+      if !sameAttempt (Elimination.attempt field cap 3 #[row] #[row] #[] false)
+          (Elimination.attemptPortable field cap 3 #[row] #[row] #[] false) then return false
+  return true
+
 /-- A successful F2 frame with actual charged work above the old quantum and
 an aliased target reduced by a packed known pivot. Runs in compiled conformance. -/
 def binaryWorkChecks (seed : Nat) : Bool := Id.run do
   if USize.size != 2^64 then return true
+  if !binaryBounds then return false
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let some er := binaryWorkRows (seed+7) | return false
   let some ar := binaryWorkRows seed | return false
