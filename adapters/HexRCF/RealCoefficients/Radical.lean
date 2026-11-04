@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.RadicalCheck
 public import HexPolyTheory.Interpret
+public import HexRealClosureTheory.TransportPower
 public import HexRealAlgebraicTheory.Order
 public import Mathlib.Basic.Real.Basic
 
@@ -48,6 +49,26 @@ private theorem interpret_natPow {E : Type u} [Zero E] [One E] [Add E] [Mul E]
 
 namespace RadicalCert
 
+/-- These two polynomial identities preserve the entire real root set.
+The core need not be squarefree; accepted Sturm domains check that separately. -/
+theorem roots_of_identities (product core quotient cofactor : Polynomial ℝ)
+    (exponent : Nat) (first : product = core * quotient)
+    (second : core ^ (exponent + 1) = quotient * cofactor) (x : ℝ) :
+    core.IsRoot x ↔ product.IsRoot x := by
+  have first := congrArg (Polynomial.eval x) first
+  have second := congrArg (Polynomial.eval x) second
+  simp only [Polynomial.eval_mul, Polynomial.eval_pow] at first second
+  simp only [Polynomial.IsRoot]
+  constructor
+  · intro hc
+    rw [first, hc, zero_mul]
+  · intro hp
+    rw [first] at hp
+    rcases mul_eq_zero.mp hp with hc | hq
+    · exact hc
+    · rw [hq, zero_mul] at second
+      exact (pow_eq_zero_iff (Nat.succ_ne_zero exponent)).mp second
+
 /-- Both checked identities imply equality of the real root sets. This theorem
 does not assume that the core is squarefree; the Sturm domain checker verifies
 that independently before any root counts or sign queries are accepted. -/
@@ -67,19 +88,71 @@ theorem roots {E : Type u} {Ctx : Type v} [Zero E] [One E] [Add E] [Sub E] [Mul 
     (DensePoly.natPow cert.core (cert.exponent + 1))
     (cert.quotient * cert.cofactor)).mp hsecond
   rw [interpret_natPow f hz h1 ha hm, interpret_mul f hz ha hm] at hsecond
-  have hfirstx := congrArg (Polynomial.eval x) hfirst
-  have hsecondx := congrArg (Polynomial.eval x) hsecond
-  simp only [Polynomial.eval_mul, Polynomial.eval_pow] at hfirstx hsecondx
-  simp only [Polynomial.IsRoot]
-  constructor
-  · intro hc
-    rw [hfirstx, hc, zero_mul]
-  · intro hp
-    rw [hfirstx] at hp
-    rcases mul_eq_zero.mp hp with hc | hq
-    · exact hc
-    · rw [hq, zero_mul] at hsecondx
-      exact (pow_eq_zero_iff (Nat.succ_ne_zero cert.exponent)).mp hsecondx
+  exact roots_of_identities _ _ _ _ cert.exponent hfirst hsecond x
+
+/-- The root identities also transport through a noninjective interpretation.
+Only preservation of the arithmetic actually used is needed. -/
+theorem roots_transport {E : Type u} {Ctx : Type v}
+    [Zero E] [One E] [Add E] [Sub E] [Mul E] [DecidableEq E] [DecidableEq Ctx]
+    (f : E → ℝ) (h0 : f 0 = 0) (h1 : f 1 = 1)
+    (ha : ∀ a b, f (a + b) = f a + f b)
+    (hs : ∀ a b, f (a - b) = f a - f b)
+    (hm : ∀ a b, f (a * b) = f a * f b)
+    (context : Ctx) (product : DensePoly E) (cert : RadicalCert E Ctx)
+    (accepted : cert.check context product = true) (x : ℝ) :
+    (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
+      (Hex.RealClosure.Transport.polynomial f cert.core)).IsRoot x ↔
+    (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
+      (Hex.RealClosure.Transport.polynomial f product)).IsRoot x := by
+  let read := Hex.RealClosure.Transport.polynomial f
+  have mul (a b : DensePoly E) : read (a * b) = read a * read b :=
+    Hex.RealClosure.Transport.Ring.polynomial_mul f h0 a b
+      (fun _ _ _ _ => hm _ _) (fun _ _ _ _ => ha _ _)
+  have powData (a : DensePoly E) (n : Nat) :
+      Hex.RealClosure.Transport.PowerData f a n := by
+    induction n using Nat.strongRecOn generalizing a with
+    | ind n ih =>
+      rw [Hex.RealClosure.Transport.PowerData]
+      split
+      · trivial
+      · split
+        · trivial
+        · refine ⟨⟨fun _ _ _ _ => hm _ _, fun _ _ _ _ => ha _ _⟩,
+            ih (n / 2) (by omega) (a * a), ?_⟩
+          split
+          · trivial
+          · exact ⟨fun _ _ _ _ => hm _ _, fun _ _ _ _ => ha _ _⟩
+  have power (a : DensePoly E) (n : Nat) : read (a.natPow n) = (read a).natPow n :=
+    Hex.RealClosure.Transport.polynomial_natPow f h0 h1 a n (powData a n)
+  have identity (a b : DensePoly E) (zero : (a - b).isZero = true) : read a = read b := by
+    have same : a - b = 0 :=
+      (DensePoly.size_eq_zero_iff _).mp ((DensePoly.isZero_eq_true_iff _).mp zero)
+    have mapped := Hex.RealClosure.Transport.Ring.polynomial_sub f h0 a b (fun _ _ => hs _ _)
+    have empty : read (0 : DensePoly E) = 0 := by
+      apply DensePoly.ext_coeff
+      intro i
+      simp only [read, Hex.RealClosure.Transport.polynomial_coeff f h0, DensePoly.coeff_zero, h0]
+    dsimp only [read] at empty
+    rw [same, empty] at mapped
+    apply DensePoly.ext_coeff
+    intro i
+    have coeff := congrArg (fun q : DensePoly ℝ => q.coeff i) mapped
+    rw [DensePoly.coeff_zero, DensePoly.coeff_sub _ _ i (sub_self (0 : ℝ))] at coeff
+    exact sub_eq_zero.mp coeff.symm
+  obtain ⟨first, second, _⟩ := cert.check_identities context product accepted
+  have first := identity _ _ first
+  have second := identity _ _ second
+  rw [mul] at first
+  rw [power, mul] at second
+  let into := interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
+  have first := congrArg into first
+  have second := congrArg into second
+  dsimp only [into] at first second
+  rw [interpret_mul (fun x : ℝ => x) (fun _ => Iff.rfl) (fun _ _ => rfl) (fun _ _ => rfl)] at first
+  rw [interpret_natPow (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
+    (fun _ _ => rfl) (fun _ _ => rfl),
+    interpret_mul (fun x : ℝ => x) (fun _ => Iff.rfl) (fun _ _ => rfl) (fun _ _ => rfl)] at second
+  exact roots_of_identities _ _ _ _ cert.exponent first second x
 
 /-- The chosen real embedding reflects zero. -/
 theorem zero_iff (a : RealAlgebraicNumber) : a.toReal = 0 ↔ a = 0 := by

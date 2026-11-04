@@ -7,6 +7,7 @@ module
 
 public import HexRealFormulaTheory.Semantics
 public import HexPolyTheory.Interpret
+public import HexRealClosureTheory.TransportRing
 
 public section
 namespace Hex.RCF.RealCoefficients.RepresentationSpecialize
@@ -126,6 +127,52 @@ private theorem coefficient_value (values : Fin n → E) (x : K)
   exact mul_assoc _ _ _
 
 include h1 ha hm hn hneg in
+/-- Specialization commutes with a zero-preserving arithmetic map even when
+nonzero stored coefficients can become zero. The target polynomial is normalized
+after interpretation; degree preservation requires a separate leading guard. -/
+theorem polynomial_map (zero : f 0 = 0) (values : Fin n → E)
+    (q : RealFormula.Poly (n + 1)) :
+    Hex.RealClosure.Transport.polynomial f (polynomial values q) =
+      polynomial (fun i => f (values i)) q := by
+  have coefficient_map (m : Mono (n + 1)) (c : Int) :
+      f (coefficient values m c) = coefficient (fun i => f (values i)) m c := by
+    have source := coefficient_value f h1 hm hn hneg values (1 : K) m c
+    have target := coefficient_value (fun a : K => a) rfl (fun _ _ => rfl)
+      (fun _ => rfl) (fun _ => rfl) (fun i => f (values i)) (1 : K) m c
+    simp only [one_pow, mul_one] at source target
+    exact source.trans target.symm
+  have monomial (k : Nat) (c : E) :
+      Hex.RealClosure.Transport.polynomial f (DensePoly.monomial k c) =
+        DensePoly.monomial k (f c) := by
+    apply DensePoly.ext_coeff
+    intro i
+    rw [Hex.RealClosure.Transport.polynomial_coeff f zero,
+      DensePoly.coeff_monomial, DensePoly.coeff_monomial]
+    by_cases at_degree : i = k
+    · rw [ite_eq_left at_degree, ite_eq_left at_degree]
+    · rw [ite_eq_right at_degree, ite_eq_right at_degree]
+      exact zero
+  have fold (terms : List (Mono (n + 1) × Int)) (acc : DensePoly E) :
+      Hex.RealClosure.Transport.polynomial f
+        (terms.foldl (fun acc term => acc +
+          DensePoly.monomial term.1[Fin.last n] (coefficient values term.1 term.2)) acc) =
+      terms.foldl (fun acc term => acc + DensePoly.monomial term.1[Fin.last n]
+        (coefficient (fun i => f (values i)) term.1 term.2))
+        (Hex.RealClosure.Transport.polynomial f acc) := by
+    induction terms generalizing acc with
+    | nil => rfl
+    | cons term rest ih =>
+        rw [List.foldl_cons, ih,
+          Hex.RealClosure.Transport.Ring.polynomial_add f zero _ _ (fun i _ => ha _ _),
+          monomial, coefficient_map]
+        rfl
+  have empty : Hex.RealClosure.Transport.polynomial f (0 : DensePoly E) = 0 := by
+    apply DensePoly.ext_coeff
+    intro i
+    simp only [Hex.RealClosure.Transport.polynomial_coeff f zero, DensePoly.coeff_zero, zero]
+  simpa only [polynomial, empty] using fold q.termsList 0
+
+include h1 ha hm hn hneg in
 /-- All-valuation specialization at the fixed authenticated representation map.
 Only zero reflection and preservation of actual operations are needed. -/
 theorem polynomial_eval₂ (values : Fin n → E) (q : RealFormula.Poly (n + 1)) (x : K) :
@@ -173,6 +220,18 @@ theorem polynomial_eval (values : Fin n → E) (q : RealFormula.Poly (n + 1)) (x
     rfl
   simpa only [RealFormula.Poly.eval, same] using
     polynomial_eval₂ f hz h1 ha hm hn hneg values q x
+
+include h1 ha hm hn hneg in
+/-- A zero-preserving source map suffices for exact real specialization.
+No zero reflection or degree claim about the source representation is assumed. -/
+theorem map_eval (zero : f 0 = 0) (values : Fin n → E)
+    (q : RealFormula.Poly (n + 1)) (x : ℝ) :
+    (HexPolyTheory.Interpret.interpret (fun a : ℝ => a) (fun _ => Iff.rfl)
+      (Hex.RealClosure.Transport.polynomial f (polynomial values q))).eval x =
+      q.eval (append (fun j => f (values j)) x) := by
+  rw [polynomial_map f h1 ha hm hn hneg zero]
+  exact polynomial_eval (fun a : ℝ => a) (fun _ => Iff.rfl) rfl (fun _ _ => rfl)
+    (fun _ _ => rfl) (fun _ => rfl) (fun _ => rfl) (fun j => f (values j)) q x
 
 include h1 ha hm hn hneg in
 /-- Every prepared atom has its original value; guards are not stripped. -/

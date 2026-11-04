@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.RepresentationSpecialize
+public import HexRealClosureTheory.TransportPower
 
 public section
 namespace Hex.RCF.RealCoefficients.RepresentationCarrier
@@ -14,6 +15,61 @@ variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Mul E]
 /-- Product before squarefree preparation; zero atoms are omitted. -/
 @[expose] def product (ps : List (DensePoly E)) : DensePoly E :=
   (ps.filter (fun p => !p.isZero)).foldr (· * ·) 1
+
+/-- Omitting structurally zero factors preserves root coverage even when the
+interpretation is noninjective. A retained factor that maps to zero makes
+the product zero; callers must separately check any required degree guards. -/
+theorem atom_roots_transport (f : E → ℝ) (h0 : f 0 = 0) (h1 : f 1 = 1)
+    (ha : ∀ a b, f (a + b) = f a + f b)
+    (hm : ∀ a b, f (a * b) = f a * f b)
+    (ps : List (DensePoly E)) (p : DensePoly E) (member : p ∈ ps) :
+    interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
+        (Hex.RealClosure.Transport.polynomial f p) = 0 ∨
+      ∀ x, (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
+        (Hex.RealClosure.Transport.polynomial f p)).IsRoot x →
+      (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
+        (Hex.RealClosure.Transport.polynomial f (product ps))).IsRoot x := by
+  let mapped (q : DensePoly E) := interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
+    (Hex.RealClosure.Transport.polynomial f q)
+  have zero : mapped 0 = 0 := by
+    ext i
+    simp only [mapped, coeff_interpret, Hex.RealClosure.Transport.polynomial_coeff f h0,
+      DensePoly.coeff_zero, Polynomial.coeff_zero, h0]
+  have unit : mapped 1 = 1 := by
+    dsimp only [mapped]
+    rw [Hex.RealClosure.Transport.polynomial_one f h0 h1]
+    exact interpret_one (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
+  have mul (a b : DensePoly E) : mapped (a * b) = mapped a * mapped b := by
+    dsimp only [mapped]
+    rw [Hex.RealClosure.Transport.Ring.polynomial_mul f h0 a b
+      (fun _ _ _ _ => hm _ _) (fun _ _ _ _ => ha _ _)]
+    exact interpret_mul (fun x : ℝ => x) (fun _ => Iff.rfl)
+      (fun _ _ => rfl) (fun _ _ => rfl) _ _
+  have fold (qs : List (DensePoly E)) :
+      mapped (qs.foldr (· * ·) 1) = (qs.map mapped).prod := by
+    induction qs with
+    | nil => exact unit
+    | cons q qs ih => simp only [List.foldr_cons, List.map_cons, List.prod_cons, mul, ih]
+  by_cases empty : p.isZero = true
+  · have literal : p = 0 :=
+      (DensePoly.size_eq_zero_iff _).mp ((DensePoly.isZero_eq_true_iff _).mp empty)
+    exact Or.inl (literal ▸ zero)
+  · right
+    intro x root
+    have retained : mapped p ∈ (ps.filter (fun p => !p.isZero)).map mapped := by
+      apply List.mem_map.mpr
+      exact ⟨p, List.mem_filter.mpr ⟨member, by simpa using empty⟩, rfl⟩
+    change (mapped (product ps)).eval x = 0
+    rw [product, fold]
+    generalize (ps.filter (fun p => !p.isZero)).map mapped = qs at *
+    induction qs with
+    | nil => simp at retained
+    | cons q qs ih =>
+      rw [List.prod_cons, Polynomial.eval_mul]
+      rcases List.mem_cons.mp retained with rfl | rest
+      · simp only [Polynomial.IsRoot] at root
+        rw [root, zero_mul]
+      · rw [ih rest, mul_zero]
 
 variable {K : Type v} [Field K] [DecidableEq K]
 variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)

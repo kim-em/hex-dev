@@ -862,7 +862,10 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.IsolationAssembly, `HexRCF.RealCoefficients.IsolationProgress,
     `HexRCF.RealCoefficients.RadicalCheck, `HexRCF.RealCoefficients.Radical,
     `HexRCF.RealCoefficients.RadicalBuild, `HexRCF.RealCoefficients.RadicalProgress,
-    `HexRCF.RealCoefficients.FieldDecision, `HexRCF.RealCoefficients.FieldIsolate,
+    `HexRCF.RealCoefficients.Decision, `HexRCF.RealCoefficients.FieldTransport,
+    `HexRCF.RealCoefficients.FieldQuery, `HexRCF.RealCoefficients.FieldIsolation, `HexRCF.RealCoefficients.FieldCells,
+    `HexRCF.RealCoefficients.FieldDecision,
+    `HexRCF.RealCoefficients.FieldIsolate,
     `HexRCF.RealCoefficients.FieldBuild, `HexRCF.RealCoefficients.FieldSignProgress,
     `HexRCF.RealCoefficients.FieldBuildProgress,
     `HexRCF.RealCoefficients.FieldRoots,
@@ -1515,6 +1518,8 @@ lean_lib HexConformance where
       `HexRCF.ProofPaths
     ].map Glob.one
 
+    ++ #[`HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
+      `HexRCF.FiniteFieldSource, `HexRCF.FiniteFieldGuards, `HexRCF.FiniteFieldProofs].map Glob.one
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
       `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicTheory.FieldSignConformance].map Glob.one
