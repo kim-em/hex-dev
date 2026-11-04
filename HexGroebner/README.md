@@ -251,7 +251,12 @@ reference work and `2^28` packing/scalar/word visits. The private bitmap stores
 at most the lesser of the row and column counts in pivot rows, plus one
 accumulator. Each pivot also stores its length, final column and sugar in a
 private 16-byte metadata record, avoiding repeated object traversal during word
-updates. The bitmap and metadata payload fits the remaining packed-byte allowance
+updates. Frames with at least 64 columns, four known reducers and 64 targets
+first project every target through the known reducers in column order, then
+eliminate by target pivots in their original order. Private target bitmaps and
+last-column/sugar records preserve the reference scan extent and labels. Their
+initialization, copies and reduction visits are included in the physical bound.
+The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
 identical; the private buffers never escape the call. Sparse wide pivots toggle
 their explicit entries, while denser pivots use exact word XOR. Word scans and

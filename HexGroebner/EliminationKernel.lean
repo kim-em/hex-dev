@@ -281,20 +281,28 @@ def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
 def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
   if binaryEnabled field limits then 2^32 else 2^20
 
-/-- Private pivot rows, one accumulator and 16 metadata bytes per pivot,
+/-- Large F2 frames project targets through known reducers in column order. -/
+def binaryProject (columns reducers targets : Nat) : Bool :=
+  columns ≥ 64 && reducers ≥ 4 && targets ≥ 64
+
+/-- Private pivot rows, accumulator, metadata and optional projected targets,
 reserved against the parent peak. -/
-def binaryBytes (columns rows : Nat) : Nat :=
-  let capacity := min rows columns
-  (capacity+1)*((columns+63)/64)*8+16*capacity
+def binaryBytes (columns reducers targets : Nat) : Nat :=
+  let capacity := min (reducers+targets) columns
+  let words := (columns+63)/64
+  (capacity+1)*words*8+16*capacity+
+    if binaryProject columns reducers targets then targets*(words*8+16) else 0
 
 /-- Word XORs, packing, validation and scalar scanning have this conservative
 shape bound, including metadata packing. A pivot is visited at most once
-for each target. -/
+for each target. Projected frames additionally bound target-buffer initialization,
+copies, metadata and known-head visits. -/
 def binaryBound (columns reducers targets entries : Nat) : Nat :=
   let rows := reducers+targets
   let words := (columns+63)/64
   rows*(words+8)+3*entries+4*targets*columns+5*columns+
-    targets*(rows*words+64)+columns
+    targets*(rows*words+64)+columns+
+    if binaryProject columns reducers targets then targets*(columns+2*words+8) else 0
 
 /-- Known reducers have distinct leading columns. The conservative work bound
 uses `65 * rows` for row visits and inversion products, `2 * entries` for
@@ -348,7 +356,7 @@ def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     let result := reference field limits columns reducers targets sugars independent
     if result.result.isOk && result.stats.work ≤ frameQuantum field limits &&
         (!binaryEnabled field limits || result.stats.packedBytes+
-          binaryBytes columns (reducers.size+targets.size) ≤ limits.packedBytes) then some result else none
+          binaryBytes columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
 
 /-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
 column count, row arrays and sugars are borrowed Lean objects, and `independent`

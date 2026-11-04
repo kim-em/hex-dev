@@ -292,6 +292,38 @@ def binaryQuantum : Bool := Id.run do
   return (Elimination.attemptPortable field limits 3904 #[] refused #[] false).isNone &&
     (Elimination.attempt field limits 3904 #[] refused #[] false).isNone
 
+
+/-- Known reducers are unsorted and cross target-pivot columns. Projection
+must preserve all factors, sugar maxima, independent rows and exact budgets. -/
+def binaryProjectChecks (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let heads := #[16,0,32,4]
+  let some reducers := heads.mapM fun head => SparseRow.ofEntries field 129
+      ((Array.range 129).filterMap fun j =>
+        if j == head || (j > head && (j*7+head+seed)%11 < 5) then some (j,(1:UInt64)) else none)
+    | return false
+  let some targets := (Array.range 64).mapM fun i => SparseRow.ofEntries field 129
+      ((Array.range 129).filterMap fun j =>
+        if i%13 != 0 && (j*13+i*17+seed)%23 < 11 then some (j,(1:UInt64)) else none)
+    | return false
+  let sugars := (Array.range 68).map fun i => 2^40+i*17+seed
+  for independent in [false,true] do
+    let some expected := Elimination.attemptPortable field limits 129 reducers targets sugars independent
+      | return false
+    let some actual := Elimination.attempt field limits 129 reducers targets sugars independent
+      | return false
+    if !same actual expected then return false
+    let packed := expected.stats.packedBytes+Elimination.binaryBytes 129 4 64
+    for bounded in [{ limits with packedBytes := packed },
+        { limits with packedBytes := packed-1 },
+        { limits with work := expected.stats.work },
+        { limits with work := expected.stats.work-1 }] do
+      if !sameAttempt (Elimination.attempt field bounded 129 reducers targets sugars independent)
+          (Elimination.attemptPortable field bounded 129 reducers targets sugars independent) then return false
+  return true
+
 @[noinline] private def binaryWorkRows (nonce : Nat) : Option (Array SparseRow) :=
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let tail := 1024+nonce%7
@@ -376,7 +408,7 @@ def binaryChecks (seed : Nat) : Bool := Id.run do
       let some actual := Elimination.attempt field { binaryPivots := true } columns ar actualTargets #[1,2,3,4,5] independent
         | return false
       if !same actual expected || !sameRows ar er || !sameRows actualTargets et then return false
-      let scratch := Elimination.binaryBytes columns (er.size+et.size)
+      let scratch := Elimination.binaryBytes columns er.size et.size
       let tight : MatrixLimits := { binaryPivots := true,packedBytes := expected.stats.packedBytes+scratch }
       if !(Elimination.attempt field tight columns ar actualTargets #[1,2,3,4,5] independent).isSome then return false
       for limits in ([{ binaryPivots := true,work := expected.stats.work-1 },
