@@ -145,4 +145,41 @@ private def missingColumns : Bool := Id.run do
 
 #guard missingColumns
 
+/-- In one variable, closing x^k under x-1 has exactly degrees k down to0.
+Unrelated arena entries and newly interned lower powers cross bitmap bytes. -/
+private def bitmapClosure (padding k : Nat) (seeded native : Bool) : Bool := Id.run do
+  let context : Context := ⟨field,1,.lex⟩
+  let limits : Limits := { nativeRows := native,nativeMonomials := native }
+  let action : Computation Bool := do
+    for i in [:padding] do
+      let _ ← Polynomial.normalize context limits 0 #[⟨#[1000+i],1⟩]
+    let g ← Polynomial.normalize context limits 0 #[⟨#[1],1⟩,⟨#[0],6⟩]
+    let target ← Polynomial.normalize context limits 0 #[⟨#[k],1⟩]
+    let basis := #[BasisElement.mk g 1]
+    let index ← ReducerIndex.build context limits basis
+    let unit ← intern limits #[0]
+    let initial := if seeded then #[SymbolicReducer.mk 0 unit g 1] else #[]
+    let matrix ← SymbolicMatrix.prepareWith context limits index basis #[⟨target,k⟩] .empty initial
+    let table := (← get).table
+    if matrix.columns.map table.degree != (Array.range (k+1)).reverse ||
+        matrix.reducers.size != k then return false
+    let degrees := matrix.reducers.map fun r => table.degree (r.polynomial.monomial 0)
+    return degrees.qsort (· ≤ ·) == (Array.range k).map (·+1)
+  match action.run { table := { arity := 1 } } with
+  | (.ok value,_) => value
+  | _ => false
+
+#guard bitmapClosure 7 8 false false
+#guard bitmapClosure 8 9 true false
+
+/-- Compiled native/scalar coverage of arena padding and growth within and
+across bitmap bytes, with and without preselected reducers. -/
+def bitmapChecks (seed : Nat) : Bool := Id.run do
+  for padding in [0,1,7,8,9,63,64,65] do
+    for k in [1,7,8,9,63,64,65,129] do
+      for seeded in [false,true] do
+        if !bitmapClosure (padding+seed%2) k seeded false ||
+            !bitmapClosure (padding+seed%2) k seeded true then return false
+  return true
+
 end Hex.Groebner.PairRowsConformance

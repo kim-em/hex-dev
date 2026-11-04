@@ -36,6 +36,37 @@ structure SymbolicMatrix where
 
 namespace SymbolicMatrix
 
+/-- Queue each arena identifier once. The bitmap grows with the current
+arena, including products interned during preprocessing; initialization and
+payload growth count against the parent allowances. Pending order is unchanged. -/
+private def queueSupport (limits : Limits) (p : Polynomial) (bits : ByteArray)
+    (pending : Array Nat) : Computation (ByteArray × Array Nat) := do
+  if p.size == 0 then return (bits,pending)
+  let count := (← get).table.count
+  let size := (count+7)/8
+  if size ≥ USize.size then throw (.representation .address)
+  let mut bits := bits
+  if bits.size < size then
+    let extra := size-bits.size
+    spend limits extra
+    allocate limits extra
+    for chunk in [:(extra+4095)/4096] do
+      let amount := min 4096 (extra-chunk*4096)
+      let some next := if limits.nativeMonomials then Native.Columns.zeros bits amount
+        else Native.Columns.zerosPortable bits amount | throw (.representation .address)
+      bits := next
+  let mut pending := pending
+  for i in [:p.size] do
+    let id := p.monomial i
+    if id ≥ count then throw (.representation .index)
+    let pos := id/8
+    let mask : UInt8 := 1 <<< (id%8).toUInt8
+    let value := bits[pos]!
+    if value &&& mask == 0 then
+      bits := bits.set! pos (value ||| mask)
+      pending := pending.push id
+  return (bits,pending)
+
 /-- Close every selected term under the required reducers. A monomial is queued
 once and has at most one chosen reducer. Multiplication can extend the arena and
 trigger checked exponent widening, without invalidating any existing identifier.
@@ -49,7 +80,7 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     (cache : ReducerCache := .empty) (initial : Array SymbolicReducer := #[]) :
     Computation SymbolicMatrix := do
   let mut cache := cache
-  let mut support : Std.HashSet Nat := {}
+  let mut support : ByteArray := {}
   let mut pending : Array Nat := #[]
   let mut closed : Std.HashSet Nat := {}
   let seeded := !initial.isEmpty
@@ -58,19 +89,15 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     if p.size == 0 || closed.contains (p.monomial 0) then throw (.matrix .dimensions)
     closed := closed.insert (p.monomial 0)
     spend limits (p.size + 1)
-    for i in [:p.size] do
-      let id := p.monomial i
-      if !support.contains id then
-        support := support.insert id
-        pending := pending.push id
+    let (next, queued) ← queueSupport limits p support pending
+    support := next
+    pending := queued
   for target in targets do
     let p := target.polynomial
     spend limits p.size
-    for i in [:p.size] do
-      let id := p.monomial i
-      if !support.contains id then
-        support := support.insert id
-        pending := pending.push id
+    let (next, queued) ← queueSupport limits p support pending
+    support := next
+    pending := queued
   let mut cursor := 0
   let mut reducers := initial
   for _ in [:limits.monomials] do
@@ -86,11 +113,9 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
       reducers := reducers.push ⟨reducer, multiplier, p,
         basis[reducer]!.sugar + (← get).table.degree multiplier⟩
       spend limits p.size
-      for i in [:p.size] do
-        let id := p.monomial i
-        if !support.contains id then
-          support := support.insert id
-          pending := pending.push id
+      let (next, queued) ← queueSupport limits p support pending
+      support := next
+      pending := queued
   if cursor < pending.size then throw (.exhausted .monomials)
   let columns ← sort context limits pending
   return ⟨columns, reducers, targets, cache⟩

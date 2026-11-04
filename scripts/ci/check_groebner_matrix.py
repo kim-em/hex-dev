@@ -987,6 +987,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+import HexGroebner.PairRowsConformance
 import HexGroebner.SampledConformance
 import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
@@ -1106,6 +1107,9 @@ def checkMersenne : IO UInt64 := do
   return mersenne
 
 private def checkBinary (seed : Nat) : IO Unit := do
+  let symbolicSeed ← Hex.Groebner.NativeChecks.readSeed
+  if !Hex.Groebner.PairRowsConformance.bitmapChecks symbolicSeed then
+    throw (IO.userError "symbolic support bitmap closure mismatch")
   let allocationBefore ← binaryCounts
   let targetBefore ← binaryPaths
   let targetSeed ← Hex.Groebner.NativeChecks.readSeed
