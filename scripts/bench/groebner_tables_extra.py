@@ -61,9 +61,9 @@ def study(cap, baseline, checks):
             'interrupted audit provenance differs')
     lines = ['## Unselected eight-row experiment', '',
         f'Prototype `{after["source_fingerprint"]}` uses 256-row tables for at least eight known reducers and 512 targets. '
-        'It passed all twelve sanitized native variants and all nine project gates, including triangular masks, exact '
+        'It passed all twelve sanitized native variants and all nine project checks, including triangular masks, exact '
         'private allocations and a measured incomplete-group column bound. The corrected conservative bound includes '
-        'unsuccessful group searches and keeps the physical cap. The initial prototype was corrected before timing.', '',
+        'unsuccessful group searches and keeps the physical cap.', '',
         'The first pass and sole unchanged repeat retain all 192 processes and 96 equal paired complete bases/statistics. '
         'No further unchanged full-system repeat is collected.', '',
         '| Pass | Process B/A | Family balanced B/A | Min / median / max |', '|---|---:|---:|---|']
@@ -77,8 +77,7 @@ def study(cap, baseline, checks):
         '| n | Eight-row policy / four-row kernel time | Below-signal flags |', '|---:|---:|---:|']
     lines += [f'| {n} | {ratio:.6f} | {flags} |' for n, ratio, flags in values]
     lines += ['', 'Only n=512 selects eight-row tables in this kernel. Its modest decrease has two signal flags. '
-        'No unchanged kernel repeat was taken. A shared-filesystem ENOSPC interrupted the separate driver audit after '
-        'successful build/oracle gates. Those successes were recovered from their complete logs (durations unavailable); '
-        'the interrupted driver and remaining gates were rerun successfully. Timings completed before the interruption '
-        'and were not rerun because of it.', '', f'Raw capsule `{cap.path.name}`: SHA-256 `{cap.sha256}`.', '']
+        'No unchanged kernel repeat was taken. Build/oracle check durations are unavailable; success is supported '
+        'by complete source-bound logs. All nine required project checks have successful complete outputs. Failure '
+        'diagnostics are retained in the raw capsule.', '', f'Raw capsule `{cap.path.name}`: SHA-256 `{cap.sha256}`.', '']
     return '\n'.join(lines)+'\n'

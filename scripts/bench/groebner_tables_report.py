@@ -11,6 +11,7 @@ from scripts.bench.groebner_binary_guards import blobs
 from scripts.bench.groebner_binary_report import sweep
 from scripts.bench.groebner_capsule import Capsule
 from scripts.bench.groebner_tables_extra import study
+from scripts.bench.groebner_tables_review import validate
 from scripts.bench.groebner_checks import source_identity
 from scripts.bench.groebner_retirement_report import listing
 from scripts.bench.groebner_trie_report import mean, require, source
@@ -82,12 +83,13 @@ def kernels(cap, manifest, identity):
                 len({p['result_hash'] for p in ps.values()}) == 1, 'complete kernel outputs differ')
         out.append((n, mean([ps[b, 'B']['per_call_nanos']/ps[b, 'A']['per_call_nanos'] for b in [0, 1]]),
                     sum(p['below_signal_floor'] for p in ps.values())))
+    require(all(flags == 0 for _, _, flags in out), "unflagged kernel contains a signal flag")
     return out, status
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    for name in ['archive', 'bench', 'eight', 'report']:
+    for name in ['archive', 'bench', 'eight', 'review', 'report']:
         p.add_argument('--' + name, type=Path, required=True)
     p.add_argument('--check', action='store_true')
     p.add_argument('--current', action='store_true')
@@ -103,9 +105,11 @@ def main():
     require(all(after['binary_sha256'][k] == latest['binary_sha256'][k] for k in ['compute', 'compute-reference']) and
             before['compilers'] == after['compilers'] == latest['compilers'] and
             before['native_options'] == after['native_options'] == latest['native_options'], 'driver/compiler binding differs')
+    review = Capsule(args.review)
+    review_text, final_id = validate(review, latest, bench, checks)
     if args.current:
         current = source_identity()
-        require(all(current[k] == latest_id[k] for k in ['source_fingerprint', 'source_manifest_sha256',
+        require(all(current[k] == final_id[k] for k in ['source_fingerprint', 'source_manifest_sha256',
                     'checks_fingerprint', 'checks_manifest_sha256']), 'current source/checks differ')
     records = []
     for label, count, flag in [('f2-false', 10, 'true'), ('f2-false-repeat', 10, 'true'),
@@ -124,6 +128,9 @@ def main():
     extra = study(eight, latest, checks)
     text = render(cap, bench, before, after, latest, records, values, status)
     text = text.replace("## Verification and reproduction", extra+"## Verification and reproduction", 1)
+    text = text.replace("## Known-pivot benchmark", review_text+"## Packed versus sparse reference", 1)
+    text = text.replace("  --report reports/bench-results/hexgroebner-tables.md",
+                        "  --review reports/bench-results/raw/"+review.path.name+" \\\n  --report reports/bench-results/hexgroebner-tables.md", 1)
     text = text.replace("  --report reports/bench-results/hexgroebner-tables.md",
                         "  --eight reports/bench-results/raw/"+eight.path.name+" \\\n  --report reports/bench-results/hexgroebner-tables.md", 1)
     if args.check:
@@ -135,8 +142,9 @@ def main():
 
 def render(cap, bench, before, after, latest, records, values, status):
     lines = ['# Packed F₂ known-pivot projection', '',
-        'The four-row XOR table kernel improves the measured known-pivot workload. Full-system results are mixed; '
-        'these observations establish neither an overall F4 speedup nor the fastest-open-source milestone. Issue #10987 remains open.', '',
+        'The selected provider uses four-row known-pivot projection. Direct packed-before/after and packed-versus-sparse '
+        'comparisons are reported separately. Full-system results are mixed and do not establish overall performance leadership. '
+        '[Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.', '',
         'Projection visits known pivots in column order before target-pivot installation. Groups of four dense known pivots '
         'use sixteen exact XOR combinations. Triangular pivot decisions retain the sparse provider’s source charges, reduction counts '
         'and maximum source sugar even when combinations cancel. Sparse pivots interrupt groups. Ordinary F₂ polynomial semantics apply.', '',
@@ -148,7 +156,7 @@ def render(cap, bench, before, after, latest, records, values, status):
         'pairs on one leased CPU with one algorithm thread. The repeat is the sole unchanged repeat. F₂ uses binary pivots in both arms; '
         'prime controls disable them in both arms (p = 32003 and 2147483647). All use degree scheduling and grevlex. '
         'Every one of the 192 processes completed; all 96 paired complete reduced bases and every logical statistic agree. '
-        'Candidate production yields unchecked candidates. Certification, independent verification and kernel replay are separate correctness gates, '
+        'Candidate production yields unchecked candidates. Certification, independent verification and kernel replay are separate correctness checks, '
         'and are excluded from these timing ratios.', '',
         '| Pass | CPU | Process B/A | Family balanced B/A | Candidate B/A | Min / median / max | Peak RSS A / B (KiB) |',
         '|---|---:|---:|---:|---:|---|---|']
@@ -157,20 +165,29 @@ def render(cap, bench, before, after, latest, records, values, status):
         lines.append(f'| {label} | {r["meta"]["cpu"]} | {a["geomean"]:.6f} | {a["family_balanced_geomean"]:.6f} | '
                      f'{r["candidate"]:.6f} | {a["minimum"]:.6f} / {a["median"]:.6f} / {a["maximum"]:.6f} | '
                      f'{a["peak_rss_kib"]["A"]} / {a["peak_rss_kib"]["B"]} |')
-    lines += ['', '| Family | F₂ first / repeat process B/A | Prime first / repeat process B/A |', '|---|---|---|']
+    first, repeat = [r['recorded'] for _, r in records[:2]]
+    lines += ['', f'Whole-process F₂ peak RSS is {100*(first["peak_rss_kib"]["B"]/first["peak_rss_kib"]["A"]-1):.2f}% and '
+        f'{100*(repeat["peak_rss_kib"]["B"]/repeat["peak_rss_kib"]["A"]-1):.2f}% higher in these two passes. '
+        'These observations include runtime/allocator memory and do not isolate the private buffers. '
+        'The unchanged prime-route aggregate ratios also vary between '
+        f'{records[2][1]["recorded"]["geomean"]:.6f} and {records[3][1]["recorded"]["geomean"]:.6f}; '
+        'the F₂ results do not establish an overall speedup.', '',
+        '| Family | F₂ first / repeat process B/A | Prime first / repeat process B/A |', '|---|---|---|']
     data = [r['recorded']['per_family'] for _, r in records]
     for family in data[0]:
         prime = f'{data[2][family]:.6f} / {data[3][family]:.6f}' if family in data[2] else 'not in prime suite'
         lines.append(f'| {family} | {data[0][family]:.6f} / {data[1][family]:.6f} | {prime} |')
-    lines += ['', 'Startup outliers, host activity, all completed samples and RSS records are retained. The MQ family improves in both passes, '
+    lines += ['', 'Startup outliers, host activity, all completed samples and RSS records are retained. The MQ family ratios are below one in both passes, '
         'while the family-balanced first pass regresses. The small opt-in suite is diagnostic, not the SPEC’s leadership acceptance suite.', '',
         '## Known-pivot benchmark', '',
         f'Benchmark snapshot `{latest["source_fingerprint"]}` adds exactly three benchmark/registration files to the tested runtime. '
-        'Both computation executables are byte-identical to the full-system snapshot. Native compiler Clang 21.1.8, generated-C toolchain '
-        'Lean 4.35.0-rc3, native options and compiler digests match both full-system arms. Exact compiler, host and ISA context is in the manifests.', '',
+        'Both computation executables are byte-identical to the full-system snapshot. '
+        f'Native compiler {latest["compilers"]["native"]["version"].splitlines()[0]}, Lean toolchain {latest["toolchain"]}, '
+        'native options and compiler digests match both full-system arms. Exact compiler, host and ISA context is in the manifests.', '',
         'For n known rows in 2n columns, the leading block is the identity and tails are deterministic dense vectors. Each of n targets '
         'is the sum of the known rows plus a distinct free-column unit. The projected targets are therefore independently known. '
-        'Preparation is excluded; validation, table construction, elimination, independent unit checks and complete row/sugar/counter hashing are included. '
+        'Every target selects every known head: this is a deliberately favorable table workload. Preparation is excluded; '
+        'validation, table construction, elimination, independent unit checks and complete row/sugar/counter hashing are included. '
         'The sparse comparison uses the reference provider with bounded native phases; it is not a fully portable executable.', '',
         f'One CPU lease (CPU {status["samples"][0]["cpu"]}), one thread, four-second inner targets, three fixed trial-major complexity trials '
         'and adjacent matched AB/BA comparisons. No below-signal flags occurred in matched samples.', '',
@@ -180,10 +197,13 @@ def render(cap, bench, before, after, latest, records, values, status):
     lines += ['', 'Independent compiled checks also cover 64/65, 128/129, 256/257 and 512/513, including known rank, '
         'all independent target units, pivot flags, sugars and all eight counters. All complete benchmark result hashes agree between providers.', '',
         '## Verification and reproduction', '',
-        'The runtime snapshot passed all twelve Clang/GCC ASan/UBSan native variants and all nine project gates: build, '
-        'independent oracles, driver checks, benchmark smoke, DAG, phase 4, release manifest, headers and line counts. '
+        'The most recent published [msolve comparisons](hexgroebner-binary.md) concern an earlier packed runtime: '
+        'Hex/msolve family-balanced process ratios were 2.199843 and 1.907506. The present runtime has not demonstrated '
+        'the SPEC’s fastest-open-source milestone. Ratios from these different campaigns cannot be chained.', '',
+        'The runtime snapshot passed all twelve Clang/GCC ASan/UBSan native variants and all nine required project checks: build, '
+        'independent oracles, driver checks, fast benchmark check, DAG, phase 4, release manifest, headers and line counts. '
         'Oracles compare 567 bases each with SymPy and Singular, with driver and downstream kernel replay/axiom checks in the retained logs. '
-        'The later benchmark-only snapshot passed six benchmark/source gates and the independent compiled checks; its runtime/check source and computation ELF bindings are verified separately.', '',
+        'The later benchmark-only snapshot passed six benchmark/source checks and the independent compiled checks; its runtime/check source and computation ELF bindings are verified separately.', '',
         'Raw capsules contain source/check blobs, per-file SHA-256 manifests, commands, all samples and retained failures. '
         'Frozen executables and perf data stay in the local measurement store; executable hashes are retained in the capsules.', '',
         f'- `{cap.path.name}`: SHA-256 `{cap.sha256}`.',
