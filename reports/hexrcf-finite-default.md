@@ -1,0 +1,34 @@
+# Automatic algebraic goals through finite replay
+
+The optional `HexRCF.RealCoefficients` import enables ordinary `by rcf` on the mixed selected-quartic/√2 goals in [FiniteDefault](../conformance/HexRCF/FiniteDefault.lean). Let α be the specified selected real root of X⁴+4X³−X²−7X−2. The tactic proves positivity of x²+α+√2, the implication `(x−α)(x−√2)<0 → 1<x∧x<2`, and positivity of x²+√(α+√2). These exercise independently constructed coefficient fields, root sections/sectors and a nested algebraic coefficient.
+
+Native production uses the actual checked number field. Accepted finite proofs use ring-preserving transport, checked signs, nonzero leading coefficients, complete root/cell evidence and exact source identities. They quote no new irreducibility certificate for the combined degree-eight or nested degree-sixteen presentation. Original input constructors retain their own certificates. The [finite interface](../adapters/HexRCF/RealCoefficients/FiniteLiteral.lean) reuses the existing producer, shared formula syntax and cell laws.
+
+[Guarded compilation](../adapters/HexRCF/RealCoefficients/FieldCompile.lean) checks each proposed quotient by a frozen multiplication identity and a proof that its original denominator is nonzero. Original divisors survive cancellation, zero multiplication and empty domains. [Coordinates](../adapters/HexRCF/RealCoefficients/Preparation.lean) separates authenticated source data from legacy Environment's global irreducibility proof; existing editable Environment APIs retain independent validation. Nested root proposals reuse the existing owner root algorithm over the known base field; selected equations/enclosures still authenticate their interpretation.
+
+[FiniteIndex](../adapters/HexRCF/RealCoefficients/FiniteIndex.lean) proves equal Boolean acceptance for linear and indexed retrieval for every supplied packet. Malformed routes, degenerate comparators, missing/corrupt signs and swapped contexts are covered. Indexing does not omit retained repeated rows or imply shared validation of repeated arithmetic evidence.
+
+[Fresh ordinary-import audits](../conformance/HexRCF/FiniteDefaultProofs.lean) recheck ten actual exported/retained bodies for five default/nested source proofs and follow 19,691 project declarations. Their complete axiom closures are exactly propext, Classical.choice and Quot.sound. Producer/global inverse/zero-reflection dependencies and new common degree-eight/degree-sixteen class quotation are excluded. Cached arithmetic auxiliaries were checked when emitted; the composition rechecks do not recompute those auxiliaries. The class-provider scan explicitly covers literal/reducible aliases and closed named providers, not arbitrary opaque equivalences or bound provider applications.
+
+The migrated existing root/maximal-coefficient audits require the actual finite-cell soundness laws. The explicit multi-prime irreducibility API retains a separate kernel-checked certificate regression. The former common-octic tactic refusal is an unconditional proved success. Default controls retain rational and fourth-root success; false, deliberately exhausted and cancelled-zero-divisor calls leave the original goal unassigned and no temporary declarations.
+
+## Fixed-input lookup comparison
+
+The [paired build-only probe](../scripts/bench/rcf_finite_signs.py) asks whether indexed retrieval reduces full tactic proof-construction cost for the same quartic/√2 between-roots sentence. Both arms have identical imports, source, limits and settings except rcf.algebraic.indexSigns. The problem has a degree-eight coefficient field, quadratic source atom, three comparisons and four carrier roots. The existing sampler uses one automatically leased CPU, four fixed adjacent AB/BA rounds, retains all completed arms and records host activity rather than filtering samples. Timings include source preparation, native production, quotation and ordinary-kernel acceptance. They are not Mathlib-importing executable measurements or a scaling law.
+
+The [complete source-bound report](bench-results/hex-rcf-finite-signs-ef471a8cb3c7-chungus2.json) and [all eight completed arms](bench-results/hex-rcf-finite-signs-ef471a8cb3c7-chungus2.json.samples.jsonl) bind commit `ef471a8cb3c7b16600e672d5037370eef7349237` and 1,135 source hashes on chungus2, CPU 55. Both repository and dependency checkouts were clean; the sampler reports complete/release-quality with no validity exceptions. No completed arm was discarded or rerun.
+
+| Mode | Median fresh build s | Median peak RSS KiB | Private proof artifact bytes |
+| --- | ---: | ---: | ---: |
+| Linear | 54.622 | 8679766 | 1075720 |
+| Indexed | 50.213 | 7827830 | 1106992 |
+
+All four signed paired wall-time changes favor indexing: -3.426, -4.194, -4.866, -5.058 seconds. The median paired change is -4.530 seconds. This is a fixed-input observation, not the earlier proposed general 2–4× gain. The harness records `resolution=no-comparable-control`; no independent null-control separation is claimed. Host activity and all accounting remain in the raw data. Indexed quotation adds 31,272 private artifact bytes; this does not demonstrate shared arithmetic validation or reduced expanded evidence work. All eight actual theorem axiom inventories contain only the standard three.
+
+The fixed schedule completes in 7min8.161s with aggregate peak 5.9GiB and no swap under the hard 32GiB cap. RSS above is the timed child metric, rather than the systemd charged-memory metric. Existing carrier/sign defaults remain: monic core and interval signs enabled, direct reduced construction and generator refinement disabled. This measurement changes no setting.
+
+The affected 16-target integration passes 14,444 Lake jobs, including the full manual, in 3min33.309s with peak 3.8GiB. The separate full-source importing audit passes 1,192 theorem/202 definition body rechecks with 1,352 nonempty traces in 3min21.328s/2.1GiB. The large existing source quotation separately completes in 783 seconds with 9,337,150 charged nodes, within its explicit 24M-node/60M-heartbeat test limits. These are operational observations with cached dependencies, not additional matched comparisons.
+
+## Scope
+
+This is automatic finite algebraic integration, not full #10358 completion. The public prepare entry point still returns legacy Environment; prepareCoordinates exposes the finite route. Full public build/check alignment, accepted algebraic production progress, general-context/registered-constant/realization integration and remaining evidence/conformance stay open. Finite certified successes require neither convergence nor transcendence. Conditional total named towers still require the appropriate shrinking and relative-transcendence laws, and symbolic infinitesimals are never used as real witnesses.
