@@ -20,7 +20,7 @@ private def canonical (field : PrimeField) (raw : RawPolynomial) : Certificate.P
 private def compare (a b : Sampled.Result) : Bool := match a,b with
   | .candidate a sa ra,.candidate b sb rb =>
     a.polynomials == b.polynomials && a.randomState == b.randomState && sa == sb && ra == rb &&
-    a.initialRandom == b.initialRandom && a.config == b.config &&
+    a.initialRandom == b.initialRandom && a.config == b.config && a.minimumTargets == b.minimumTargets &&
     a.monomials == b.monomials && a.monomialBytes == b.monomialBytes
   | _,_ => false
 
@@ -71,7 +71,7 @@ private def bounded (limits : Limits) (state : Sampled.State) : Bool :=
 private def sameValue (a b : Sampled.Result) : Bool := match a,b with
   | .candidate a _ ra,.candidate b _ rb =>
     a.polynomials == b.polynomials && a.randomState == b.randomState && ra == rb &&
-    a.initialRandom == b.initialRandom && a.config == b.config
+    a.initialRandom == b.initialRandom && a.config == b.config && a.minimumTargets == b.minimumTargets
   | _,_ => false
 
 /-- Cold admission covers every parent resource. Atomic F4 stages may repeat
@@ -218,7 +218,139 @@ def fresh (seed : Nat) : Option UInt64 := do
     some (hash (value.polynomials.map (fun p => p.map (fun t => (t.exponents,t.coefficient))),
       stats.work,samples.randomWords,value.randomState))
 
+/-- A high cutoff uses no random words; mixed cutoffs retain the sealed policy
+and advanced state across scheduling suspension and parent-work exhaustion. -/
+def hybridChecks : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  for c in (F4Fixtures.cases field).extract 0 5 do
+    let context : Context := ⟨field,c.variables,.grevlex⟩
+    let limits : Limits := {}
+    let .candidate expected expectedStats := Hex.Groebner.computeWith context limits c.generators | return false
+    for cutoff in [0,1,8,1000000] do
+      let direct := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 10987)
+        (minimumTargets := cutoff)
+      let .candidate candidate stats samples := direct | return false
+      if candidate.polynomials != expected.polynomials || candidate.minimumTargets != cutoff then return false
+      if cutoff == 1000000 && (samples.calls != 0 || samples.randomWords != 0 ||
+          candidate.randomState != 10987 || stats != expectedStats) then return false
+      let mut result := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 10987) {} 1 cutoff
+      for _ in [:scheduleBound limits] do
+        match result with
+        | .suspended state =>
+          if state.minimumTargets != cutoff then return false
+          result := Sampled.resumeWith limits state 1
+        | _ => break
+      if !compare direct result then return false
+      let stopped := Sampled.computeWith context { limits with work := 0 } c.generators
+        (Hex.Rand.ofSeed 10987) (minimumTargets := cutoff)
+      let .exhausted .work state := stopped | return false
+      if state.minimumTargets != cutoff || state.random != Hex.Rand.ofSeed 10987 then return false
+      if !sameValue direct (Sampled.resumeWith limits state) then return false
+  return true
+
+#guard hybridChecks
+
+/-- Exhaust after symbolic selection, inside a deterministic matrix call.
+Atomic retries retain the checkpoint and charge repeated
+work, while the random generator and sampling statistics stay unchanged. -/
+def hybridBudgets (native : Bool) : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  let some c := (F4Fixtures.cases field)[4]? | return false
+  let context : Context := ⟨field,c.variables,.grevlex⟩
+  let limits : Limits := { nativeRows := native }
+  let cutoff := 1000000
+  let expected := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 10987)
+    (minimumTargets := cutoff)
+  let mut result := Sampled.computeWith context limits c.generators (Hex.Rand.ofSeed 10987) {} 1 cutoff
+  for _ in [:1000] do
+    let .suspended state := result | break
+    if state.checkpoint.phase == .pairs && state.pending.isNone then
+      let (prepared,workspace) := (Sampled.prepare context limits state.checkpoint
+        state.random state.config cutoff).run state.workspace
+      let .ok (_,none) := prepared | return false
+      let start := state.workspace.statistics.work
+      let stop := workspace.statistics.work
+      for offset in [1:stop-start] do
+        let cap := { limits with work := start+offset }
+        if let .exhausted .work saved := Sampled.resumeWith cap state 1 then
+          if saved.workspace.statistics.matrixCalls == state.workspace.statistics.matrixCalls then continue
+          if saved.random != state.random || saved.statistics != state.statistics ||
+              saved.minimumTargets != cutoff || saved.pending.isSome || !bounded cap saved ||
+              saved.workspace.statistics.work <= start ||
+              saved.checkpoint.phase != state.checkpoint.phase ||
+              saved.checkpoint.basis.size != state.checkpoint.basis.size ||
+              saved.checkpoint.queue.heap.size != state.checkpoint.queue.heap.size ||
+              !sameValue expected (Sampled.resumeWith limits saved) then return false
+          return true
+    result := Sampled.resumeWith limits state 1
+  return false
+
+#guard hybridBudgets false
+#guard hybridBudgets true
+
+/-- Resume both kinds of batch after the other kind has already run. -/
+private def mixedResume (context : Context) (generators : Array RawPolynomial)
+    (cutoff : Nat) (native : Bool) : Option Bool := Id.run do
+  let limits : Limits := { nativeRows := native }
+  let expected := Sampled.computeWith context limits generators (Hex.Rand.ofSeed 10987)
+    (minimumTargets := cutoff)
+  let mut result := Sampled.computeWith context limits generators (Hex.Rand.ofSeed 10987) {} 1 cutoff
+  let mut deterministic := false
+  let mut stoppedDeterministic := false
+  let mut stoppedSampled := false
+  for _ in [:10000] do
+    let .suspended state := result | break
+    if state.pending.isNone && state.checkpoint.phase == .pairs then
+      let (prepared,workspace) := (Sampled.prepare context limits state.checkpoint
+        state.random state.config cutoff).run state.workspace
+      if let .ok (_,none) := prepared then
+        if workspace.statistics.matrixCalls > state.workspace.statistics.matrixCalls then
+          deterministic := true
+          if state.statistics.randomWords > 0 && !stoppedDeterministic then
+            let cap := { limits with work := workspace.statistics.work-1 }
+            let .exhausted .work saved := Sampled.resumeWith cap state 1 | return some false
+            if saved.random != state.random || saved.statistics != state.statistics ||
+                saved.workspace.statistics.matrixCalls <= state.workspace.statistics.matrixCalls ||
+                saved.checkpoint.phase != state.checkpoint.phase || saved.pending.isSome ||
+                !bounded cap saved || !sameValue expected (Sampled.resumeWith limits saved) then return some false
+            stoppedDeterministic := true
+    if let some round := state.pending then
+      if deterministic && !stoppedSampled && round.matrix.phase == .scan then
+        let cap := { limits with work := state.workspace.statistics.work }
+        let mut stopped := Sampled.resumeWith cap state 1 1
+        for _ in [:10000] do
+          if let .suspended next := stopped then stopped := Sampled.resumeWith cap next 1 1 else break
+        let .exhausted .work saved := stopped | return some false
+        if !bounded cap saved || !compare expected (Sampled.resumeWith limits saved) then return some false
+        stoppedSampled := true
+    result := Sampled.resumeWith limits state 1 1
+  if !compare expected result then return some false
+  return if stoppedDeterministic && stoppedSampled then some true else none
+
+/-- At least one fixture must exercise both paths within the same run. -/
+def hybridMixed : Bool := Id.run do
+  let some field := Fixtures.fields[6]? | return false
+  for c in (F4Fixtures.cases field).extract 9 27 do
+    let context : Context := ⟨field,c.variables,.grevlex⟩
+    let .candidate baseline _ allSamples := Sampled.computeWith context {} c.generators
+      (Hex.Rand.ofSeed 10987) | return false
+    for cutoff in [2,4,8] do
+      let .candidate mixed _ samples := Sampled.computeWith context {} c.generators
+        (Hex.Rand.ofSeed 10987) (minimumTargets := cutoff) | return false
+      if samples.calls > 0 && samples.calls < allSamples.calls &&
+          mixed.polynomials == baseline.polynomials then
+        let portable := mixedResume context c.generators cutoff false
+        let native := mixedResume context c.generators cutoff true
+        if portable == some false || native == some false then return false
+        if portable == some true && native == some true then return true
+  return false
+
+#guard hybridMixed
+
 def run : IO Unit := do
+  if !hybridChecks then throw (IO.userError "hybrid sampling policy/resumption mismatch")
+  if !(hybridBudgets false && hybridBudgets true && hybridMixed) then
+    throw (IO.userError "hybrid deterministic-batch budgets/mixed policy mismatch")
   let some field := Fixtures.fields[6]? | throw (IO.userError "missing field")
   let some c := (F4Fixtures.cases field)[4]? | throw (IO.userError "missing system")
   let context : Context := ⟨field,c.variables,.grevlex⟩

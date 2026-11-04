@@ -6,7 +6,7 @@ from scripts.bench.groebner_trie_report import source,require,mean
 from scripts.oracle.groebner_singular import polynomial,canonical
 
 
-def msolve(capsule,source_label,*,expected_families=None,moduli=None):
+def msolve(capsule,source_label,*,expected_families=None,moduli=None,candidate_key="compute"):
     if expected_families is not None:
         require(all(isinstance(n,int)and n>0 for n in expected_families.values())and
                 sum(expected_families.values())%2==0,'invalid expected family counts')
@@ -15,7 +15,7 @@ def msolve(capsule,source_label,*,expected_families=None,moduli=None):
     manifest=source(capsule,source_label)
     require(meta['source_fingerprint']==manifest['source_fingerprint'] and
             meta['source_manifest']==manifest['source_manifest'] and meta['source_unchanged'],'msolve source differs')
-    require(meta['binary_sha256']['A']==manifest['binary_sha256']['compute'] and
+    require(meta['binary_sha256']['A']==manifest['binary_sha256'][candidate_key] and
             meta['binary_sha256']['B']==meta['msolve_cli_sha256'],'comparator executable binding differs')
     require(meta['msolve_build']['commit']==meta['msolve_commit'] and
             meta['msolve_build']['tracked_status']=='','comparator source state differs')

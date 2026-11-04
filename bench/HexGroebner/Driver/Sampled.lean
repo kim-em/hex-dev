@@ -15,23 +15,24 @@ public section
 namespace Hex.Groebner.Driver.Sampled
 open Lean
 
-private def usage := "hexgroebner_sample [--seed N] [--block-rows N] [--zero-tests N] [ordinary hexgroebner_compute options] input.json"
+private def usage := "hexgroebner_sample [--seed N] [--block-rows N] [--zero-tests N] [--min-targets N] [ordinary hexgroebner_compute options] input.json"
 
-private def options : List String → Nat → Sampling.Config → List String →
-    Except String (String × Limits × Nat × Sampling.Config)
-  | [filename],seed,config,ordinary => do
+private def options : List String → Nat → Sampling.Config → Nat → List String →
+    Except String (String × Limits × Nat × Sampling.Config × Nat)
+  | [filename],seed,config,minimumTargets,ordinary => do
     let (filename,limits) ← Driver.options (ordinary.reverse++[filename]) {}
-    return (filename,limits,seed,config)
-  | key::value::rest,seed,config,ordinary => do
-    if key == "--seed" || key == "--block-rows" || key == "--zero-tests" then
+    return (filename,limits,seed,config,minimumTargets)
+  | key::value::rest,seed,config,minimumTargets,ordinary => do
+    if key == "--seed" || key == "--block-rows" || key == "--zero-tests" || key == "--min-targets" then
       let some n := value.toNat? | throw s!"{key}: expected a natural number"
       if key == "--seed" then
         if n ≥ 2^64 then throw "seed must fit UInt64"
-        options rest n config ordinary
-      else if key == "--block-rows" then options rest seed { config with blockRows := n } ordinary
-      else options rest seed { config with zeroTests := n } ordinary
-    else options rest seed config (value::key::ordinary)
-  | _,_,_,_ => .error usage
+        options rest n config minimumTargets ordinary
+      else if key == "--block-rows" then options rest seed { config with blockRows := n } minimumTargets ordinary
+      else if key == "--zero-tests" then options rest seed { config with zeroTests := n } minimumTargets ordinary
+      else options rest seed config n ordinary
+    else options rest seed config minimumTargets (value::key::ordinary)
+  | _,_,_,_,_ => .error usage
 
 private def sampling (s : Hex.Groebner.Sampled.Statistics) : Json := Json.mkObj [
   ("calls",toJson s.calls),("inputTargets",toJson s.inputTargets),("randomWords",toJson s.randomWords),
@@ -58,8 +59,8 @@ def complete (limits : Limits) (initial : Hex.Groebner.Sampled.Result) : IO Hex.
 successful sampled elimination produces an unchecked candidate. -/
 def run (args : List String) : IO UInt32 := do
   if args == ["--help"] then IO.println usage; return 0
-  let parsed := options args 0 {} []
-  let .ok (filename,limits,seed,config) := parsed | do
+  let parsed := options args 0 {} 0 []
+  let .ok (filename,limits,seed,config,minimumTargets) := parsed | do
     let .error message := parsed | return 2
     IO.println (error "invalid_input" message (Hex.Rand.ofSeed 0))
     return 2
@@ -73,7 +74,7 @@ def run (args : List String) : IO UInt32 := do
     IO.println (error "invalid_input" message random)
     return 2
   let start ← IO.monoNanosNow
-  let result ← complete limits (Hex.Groebner.Sampled.computeWith context limits generators random config)
+  let result ← complete limits (Hex.Groebner.Sampled.computeWith context limits generators random config (minimumTargets := minimumTargets))
   let response ← match result with
     | .candidate value stats samples => do
       let stop ← IO.monoNanosNow
@@ -83,7 +84,7 @@ def run (args : List String) : IO UInt32 := do
         ("p",toJson context.field.modulus.toNat),("variables",toJson context.variables),
         ("order",toJson order),("statistics",Driver.statistics stats),("sampling",sampling samples),
         ("seed",toJson value.initialRandom.state.toNat),("randomState",toJson value.randomState.toNat),
-        ("blockRows",toJson value.config.blockRows),("totalZeroTests",toJson value.config.zeroTests),
+        ("blockRows",toJson value.config.blockRows),("minimumTargets",toJson value.minimumTargets),("totalZeroTests",toJson value.config.zeroTests),
         ("samplingModel",toJson "SplitMix64 full-field rejection draws; no probability bound"),
         ("candidateNanos",toJson (stop-start)),("batchSize",toJson value.batchSize),
         ("scheduling",toJson (match value.scheduling with | .degree => "degree" | .sugar => "sugar"))]).compress
