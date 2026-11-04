@@ -48,7 +48,7 @@ chunks with identical rows, provenance and counters. Untraced native 64-bit call
 try a complete frame bounded by 4096 columns, 1024 reducers, 64 targets and
 `2^20` work. Explicit `binaryPivots` over F2 permits 16384 columns, 16384
 reducers and 1024 targets, bounded by `2^32` logical work and `2^28` physical
-visits. Private bitmap bytes additionally fit the packed-byte allowance.
+visits. Private bitmap and metadata bytes additionally fit the packed-byte allowance.
 Declined frames with at most 65536 columns and total input rows
 continue in bounded native phases. Larger frames retain the reference route
 with bounded native scan/gather kernels.

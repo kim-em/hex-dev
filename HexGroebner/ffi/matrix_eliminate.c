@@ -17,6 +17,15 @@
 #define MATRIX_QUANTUM UINT64_C(1048576)
 #define BINARY_LOGICAL_QUANTUM (UINT64_C(1)<<32)
 #define BINARY_WORD_QUANTUM (UINT64_C(1)<<28)
+#ifndef HEX_GROEBNER_BINARY_GROUPS
+#define HEX_GROEBNER_BINARY_GROUPS(n) ((void)(n))
+#endif
+#ifndef HEX_GROEBNER_BINARY_TABLE_USED
+#define HEX_GROEBNER_BINARY_TABLE_USED() ((void)0)
+#endif
+#ifndef HEX_GROEBNER_BINARY_PROJECT_USED
+#define HEX_GROEBNER_BINARY_PROJECT_USED() ((void)0)
+#endif
 #ifndef HEX_GROEBNER_BINARY_SCAN_USED
 #define HEX_GROEBNER_BINARY_SCAN_USED() ((void)0)
 #endif
@@ -31,10 +40,10 @@
 #endif
 
 typedef struct {
-    uint64_t limits[7],stats[8],p,columns,quantum,scratch,words,capacity;
+    uint64_t limits[7],stats[8],p,columns,quantum,scratch,words,capacity,physical;
     unsigned width;
-    uint8_t cache,binary;
-    lean_object *dense,*slots,*pivots,*native_pivots,*remainders,*binary_rows;
+    uint8_t cache,binary,project;
+    lean_object *dense,*slots,*pivots,*native_pivots,*remainders,*binary_rows,*binary_meta,*project_rows,*project_meta,*project_table;
     uint64_t rank;
 } matrix_context;
 
@@ -91,6 +100,10 @@ static int matrix_inverse(matrix_context *c,uint64_t a,uint64_t *inverse) {
     *inverse=value;return 1;
 }
 static void matrix_cleanup(matrix_context *c) {
+    if(c->project_table) lean_dec(c->project_table);
+    if(c->project_meta) lean_dec(c->project_meta);
+    if(c->project_rows) lean_dec(c->project_rows);
+    if(c->binary_meta) lean_dec(c->binary_meta);
     if(c->binary_rows) lean_dec(c->binary_rows);
     if(c->dense) lean_dec(c->dense);
     if(c->slots) lean_dec(c->slots);
@@ -121,10 +134,18 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         if(id>=c->capacity) {lean_dec(row);return 0;}
         uint8_t *packed=lean_sarray_cptr(c->binary_rows)+(size_t)id*c->words*8;
         lean_object *ids=lean_ctor_get(row,0);
-        for(size_t i=0;i<lean_sarray_size(ids)/4;++i) {
+        size_t n=lean_sarray_size(ids)/4;
+        if(!n || n>c->columns) {lean_dec(row);return 0;}
+        for(size_t i=0;i<n;++i) {
             uint64_t col=matrix_read(lean_sarray_cptr(ids)+4*i,4);
             packed[col>>3]|=(uint8_t)(1u<<(col&7));
         }
+        /* Private little-endian (entry count, final column, sugar) records.
+           Canonical nonempty rows have at most columns <= 16384 entries. */
+        uint8_t *meta=lean_sarray_cptr(c->binary_meta)+id*16;
+        matrix_write(meta,4,n);
+        matrix_write(meta+4,4,matrix_read(lean_sarray_cptr(ids)+(n-1)*4,4));
+        for(unsigned b=0;b<8;++b) meta[8+b]=(uint8_t)(sugar>>(8*b));
     }
     lean_object *native=lean_alloc_ctor(0,3,0);
     lean_ctor_set(native,0,matrix_take(row,0));
@@ -191,6 +212,155 @@ static void matrix_binary_xor(uint8_t *restrict data,const uint8_t *restrict row
         a^=b;memcpy(data+(size_t)i*8,&a,8);
     }
 }
+/* Only known pivots have been installed at this point. This counts the
+   same dense runs as matrix_project_table without new private storage. */
+static uint64_t matrix_binary_groups(matrix_context *c) {
+    uint64_t run=0,groups=0;
+    for(uint64_t col=0;col<c->columns;++col) {
+        uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
+        if(!slot) continue;
+        const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
+        uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
+        if(n>(end>>6)-(col>>6)+1) {
+            if(++run==4) {++groups;run=0;}
+        } else run=0;
+    }
+    return groups;
+}
+/* Four consecutive dense known reducers admit a 16-row XOR table. The
+   incoming head pattern is triangular, not necessarily the identity: simulate
+   those four pivot decisions before choosing a combination. Cost, support end
+   and sugar summarize every selected source, including cancelled tails. */
+static int matrix_project_table(matrix_context *c,uint64_t first,uint64_t nt,
+        uint64_t *through) {
+    uint64_t heads[4],ids[4],sizes[4],ends[4],labels[4],found=0;
+    for(uint64_t col=first;col<c->columns && found<4;++col) {
+        uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
+        if(!slot) continue;
+        const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
+        uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
+        if(n<=(end>>6)-(col>>6)+1) return 0;
+        heads[found]=col;ids[found]=slot-1;sizes[found]=n;ends[found]=end;
+        labels[found]=matrix_binary_load(meta+8);++found;
+    }
+    if(found!=4) return 0;
+    uint8_t pattern[4]={0},selection[16]={0};
+    for(unsigned k=0;k<4;++k) {
+        const uint8_t *row=lean_sarray_cptr(c->binary_rows)+(size_t)ids[k]*c->words*8;
+        for(unsigned j=0;j<4;++j)
+            if(row[heads[j]>>3]&(1u<<(heads[j]&7))) pattern[k]|=(uint8_t)(1u<<j);
+    }
+    for(unsigned mask=0;mask<16;++mask) {
+        unsigned bits=mask,selected=0;
+        for(unsigned k=0;k<4;++k) if(bits&(1u<<k)) {
+            selected|=1u<<k;bits^=pattern[k];
+        }
+        selection[mask]=(uint8_t)selected;
+    }
+    uint64_t cost[16]={0},last[16]={0},sugar[16]={0},count[16]={0};
+    uint8_t *table=lean_sarray_cptr(c->project_table);
+    memset(table,0,(size_t)c->words*8);
+    for(unsigned mask=1;mask<16;++mask) {
+        unsigned k=matrix_binary_ctz(mask),prev=mask&(mask-1);
+        const uint8_t *row=lean_sarray_cptr(c->binary_rows)+(size_t)ids[k]*c->words*8;
+        const uint8_t *before=table+(size_t)prev*c->words*8;
+        uint8_t *out=table+(size_t)mask*c->words*8;
+        HEX_GROEBNER_BINARY_WORD_USED(ids[k]);
+        for(uint64_t w=0;w<c->words;++w) {
+            uint64_t a,b;memcpy(&a,before+w*8,8);memcpy(&b,row+w*8,8);
+            a^=b;memcpy(out+w*8,&a,8);
+        }
+        cost[mask]=cost[prev]+sizes[k];count[mask]=count[prev]+1;
+        last[mask]=last[prev]>ends[k]?last[prev]:ends[k];
+        sugar[mask]=sugar[prev]>labels[k]?sugar[prev]:labels[k];
+    }
+    for(uint64_t t=0;t<nt;++t) {
+        uint8_t *data=lean_sarray_cptr(c->project_rows)+(size_t)t*c->words*8;
+        unsigned bits=0;
+        for(unsigned k=0;k<4;++k)
+            if(data[heads[k]>>3]&(1u<<(heads[k]&7))) bits|=1u<<k;
+        unsigned mask=selection[bits];
+        if(!mask) continue;
+        HEX_GROEBNER_BINARY_TABLE_USED();
+        if(!matrix_work(c,cost[mask])) return -1;
+        matrix_binary_xor(data,table+(size_t)mask*c->words*8,first>>6,last[mask]>>6);
+        uint8_t *meta=lean_sarray_cptr(c->project_meta)+t*16;
+        uint64_t end=matrix_binary_load(meta),label=matrix_binary_load(meta+8);
+        if(last[mask]>end) end=last[mask];
+        if(sugar[mask]>label) label=sugar[mask];
+        for(unsigned b=0;b<8;++b) {meta[b]=(uint8_t)(end>>(8*b));meta[8+b]=(uint8_t)(label>>(8*b));}
+        c->stats[6]+=count[mask];
+    }
+    *through=heads[3];return 1;
+}
+/* Each target pivot has zero coefficients at every known leading column.
+   Projecting through all known reducers first therefore preserves both the
+   later target-pivot factors and the exact sparse reference row. Last/sugar
+   retain maxima over the original support and every used reducer, even when
+   combined tails cancel. Partial attempts never expose reordered charges. */
+static int matrix_project_binary(matrix_context *c,lean_obj_arg targets,
+        lean_obj_arg sugars,uint64_t nr,uint64_t nt,uint64_t ns) {
+    HEX_GROEBNER_BINARY_PROJECT_USED();
+    uint8_t *rows=lean_sarray_cptr(c->project_rows);
+    uint8_t *labels=lean_sarray_cptr(c->project_meta);
+    for(uint64_t t=0;t<nt;++t) {
+        lean_object *row=lean_array_cptr(targets)[t];
+        lean_object *cs=lean_ctor_get(row,0);
+        uint64_t n=lean_sarray_size(cs)/4;
+        if(!matrix_work(c,n)) return 0;
+        uint8_t *data=rows+(size_t)t*c->words*8;
+        for(uint64_t j=0;j<n;++j) {
+            uint64_t col=matrix_read(lean_sarray_cptr(cs)+j*4,4);
+            data[col>>3]|=(uint8_t)(1u<<(col&7));
+        }
+        uint64_t last=n?matrix_read(lean_sarray_cptr(cs)+(n-1)*4,4):0;
+        uint64_t sugar=ns?lean_unbox(lean_array_cptr(sugars)[nr+t]):0;
+        for(unsigned b=0;b<8;++b) {
+            labels[t*16+b]=(uint8_t)(last>>(8*b));
+            labels[t*16+8+b]=(uint8_t)(sugar>>(8*b));
+        }
+    }
+    for(uint64_t col=0;col<c->columns;++col) {
+        uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
+        if(!slot) continue;
+        uint64_t through=col;
+        int grouped=matrix_project_table(c,col,nt,&through);
+        if(grouped<0) return 0;
+        if(grouped) {col=through;continue;}
+        const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
+        uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
+        uint64_t sugar=matrix_binary_load(meta+8);
+        const uint8_t *packed=lean_sarray_cptr(c->binary_rows)+(size_t)(slot-1)*c->words*8;
+        uint64_t span=(end>>6)-(col>>6)+1;
+        for(uint64_t t=0;t<nt;++t) {
+            uint8_t *data=rows+(size_t)t*c->words*8;
+            if(!(data[col>>3]&(1u<<(col&7)))) continue;
+            if(!matrix_work(c,n)) return 0;
+            if(n<=span) {
+                HEX_GROEBNER_BINARY_SPARSE_USED();
+                lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
+                const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
+                for(uint64_t j=0;j<n;++j) {
+                    uint64_t k=matrix_read(ids+j*4,4);
+                    data[k>>3]^=(uint8_t)(1u<<(k&7));
+                }
+            } else {
+                HEX_GROEBNER_BINARY_WORD_USED(slot-1);
+                matrix_binary_xor(data,packed,col>>6,end>>6);
+            }
+            uint64_t last=matrix_binary_load(labels+t*16);
+            uint64_t label=matrix_binary_load(labels+t*16+8);
+            if(end>last) last=end;
+            if(sugar>label) label=sugar;
+            for(unsigned b=0;b<8;++b) {
+                labels[t*16+b]=(uint8_t)(last>>(8*b));
+                labels[t*16+8+b]=(uint8_t)(label>>(8*b));
+            }
+            ++c->stats[6];
+        }
+    }
+    return 1;
+}
 static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
         uint64_t *leading,uint64_t *sugar) {
     HEX_GROEBNER_BINARY_SCAN_USED();
@@ -210,17 +380,17 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
         if(!(data[col>>3]&(1u<<(col&7)))) {++col;continue;}
         uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
         if(!slot) {if(!*leading) *leading=col+1;++col;continue;}
-        lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
-        const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
-        uint64_t n=lean_sarray_size(lean_ctor_get(pivot,0))/4;
-        uint64_t end=matrix_read(ids+(n-1)*4,4);
+        const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
+        uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
         if(end>*last) *last=end;
-        uint64_t label=lean_unbox(lean_ctor_get(pivot,2));
+        uint64_t label=matrix_binary_load(meta+8);
         if(label>*sugar) *sugar=label;
         if(!matrix_work(c,n)) return 0;
         uint64_t span=(end>>6)-(col>>6)+1;
         if(n<=span) {
             HEX_GROEBNER_BINARY_SPARSE_USED();
+            lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
+            const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
             for(uint64_t i=0;i<n;++i) {
                 uint64_t j=matrix_read(ids+i*4,4);
                 data[j>>3]^=(uint8_t)(1u<<(j&7));
@@ -340,8 +510,10 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    Ordinary 64-bit frames admit <=4096 columns/1024 reducers/64 targets.
    Opt-in F2 frames admit <=16384/16384/1024, with <=2^32 logical work,
    <=2^28 packing/scalar/word visits, and the complete private payload reserved
-   against the parent peak. Distinct reducer leading columns and work bounds are
-   checked before allocation; canonical row validation precedes elimination.
+   against the parent peak. Distinct reducer heads and logical bounds are checked
+   before private allocation. A physical floor bounds validation/installation;
+   the table bound is refined after known installation, before target reduction.
+   Canonical row validation precedes elimination.
    Dense workspace is owned; inputs, including overlapping arrays, are immutable.
    Some(Result(Except.ok(Prod(Echelon(rows,rank,emptyTrace),remainders)),stats))
    contains exact reference rows and eight Nat counters, using the layouts in
@@ -376,7 +548,9 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     }
     if(c.columns>c.limits[0] || rows>c.limits[1]) goto defer;
     c.words=(c.columns+63)/64;c.capacity=rows<c.columns?rows:c.columns;
-    if(c.binary) c.scratch=(c.capacity+1)*c.words*8;
+    c.project=c.binary && c.columns>=64 && nr>=4 && nt>=64;
+    if(c.binary) c.scratch=(c.capacity+1)*c.words*8+16*c.capacity;
+    if(c.project) c.scratch+=nt*(c.words*8+16)+16*c.words*8;
     if(c.scratch>c.limits[4]) goto defer;
     for(size_t i=0;i<ns;++i) if(!lean_is_scalar(lean_array_cptr(sugars)[i])) goto defer;
     uint64_t workspace=c.columns*(c.width+4);
@@ -395,9 +569,13 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         nt*(entries+(nt+3)*c.columns+64)+c.columns;
     if(bound>c.quantum) goto defer;
     if(c.binary) {
-        uint64_t physical=rows*c.words+3*entries+4*nt*c.columns+5*c.columns+
+        c.physical=rows*(c.words+8)+3*entries+4*nt*c.columns+5*c.columns+
             nt*(rows*c.words+64)+c.columns;
-        if(physical>BINARY_WORD_QUANTUM) goto defer;
+        if(c.project) c.physical+=nt*(c.columns+2*c.words+8)+((nr+3)/4)*(16*c.words+512)+8*nt*nr+5*c.columns;
+        /* Even maximal table savings cannot remove validation, workspace or
+           installation costs. Bound that prefix before doing charged work. */
+        uint64_t floor=c.physical-(c.project?nt*nr*c.words:0);
+        if(floor>BINARY_WORD_QUANTUM) goto defer;
     }
     uint8_t seen[2048]={0};
     for(size_t i=0;i<nr;++i) {
@@ -425,13 +603,26 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     }
     if(!matrix_bytes(&c,workspace) || !matrix_work(&c,workspace)) goto defer;
     if(c.binary) {
-        c.binary_rows=matrix_zeros((size_t)c.scratch);
+        c.binary_rows=matrix_zeros((size_t)(c.capacity+1)*c.words*8);
+        c.binary_meta=matrix_zeros((size_t)c.capacity*16);
+        if(c.project) {
+            c.project_rows=matrix_zeros((size_t)nt*c.words*8);
+            c.project_meta=matrix_zeros((size_t)nt*16);
+            c.project_table=matrix_zeros((size_t)16*c.words*8);
+        }
         HEX_GROEBNER_BINARY_PIVOTS_USED(c.scratch);
     }
     c.dense=matrix_zeros(c.binary?0:(size_t)c.columns*c.width);
     c.slots=matrix_zeros((size_t)c.columns*4);
     c.pivots=matrix_empty();c.native_pivots=matrix_empty();c.remainders=matrix_empty();
     for(size_t i=0;i<rows;++i) {
+        if(c.project && i==nr) {
+            uint64_t groups=matrix_binary_groups(&c);
+            HEX_GROEBNER_BINARY_GROUPS(groups);
+            uint64_t saved=3*c.words*nt*groups;
+            if(c.physical-saved>BINARY_WORD_QUANTUM) goto defer;
+            if(!matrix_project_binary(&c,targets,sugars,nr,nt,ns)) goto defer;
+        }
         uint8_t target=i>=nr;
         lean_object *row=lean_array_cptr(target?targets:reducers)[target?i-nr:i];
         lean_object *cs=lean_ctor_get(row,0),*vs=lean_ctor_get(row,1);
@@ -462,14 +653,21 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
             }
             if(!matrix_install(&c,output,first,inverse,sugar,0)) goto defer;
         } else {
-            if(!matrix_work(&c,n)) goto defer;
-            for(size_t j=0;j<n;++j) {
+            if(!c.project && !matrix_work(&c,n)) goto defer;
+            for(size_t j=0;!c.project && j<n;++j) {
                 uint64_t col=matrix_read(lean_sarray_cptr(cs)+j*4,4);
                 if(c.binary) matrix_binary_dense(&c)[col>>3]|=(uint8_t)(1u<<(col&7));
                 else matrix_write(lean_sarray_cptr(c.dense)+(size_t)col*c.width,c.width,
                     matrix_read(lean_sarray_cptr(vs)+j*c.width,c.width));
             }
             uint64_t last=matrix_read(lean_sarray_cptr(cs)+(n-1)*4,4),leading=0;
+            if(c.project) {
+                uint64_t t=i-nr;
+                memcpy(matrix_binary_dense(&c),lean_sarray_cptr(c.project_rows)+(size_t)t*c.words*8,
+                    (size_t)c.words*8);
+                last=matrix_binary_load(lean_sarray_cptr(c.project_meta)+t*16);
+                sugar=matrix_binary_load(lean_sarray_cptr(c.project_meta)+t*16+8);
+            }
             if(!matrix_scan(&c,first,&last,&leading,&sugar)) goto defer;
             if(leading) {
                 uint64_t col=leading-1,inverse=1;

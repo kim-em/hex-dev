@@ -237,15 +237,23 @@ def binaryLargeChecks (seed : Nat) : Bool := Id.run do
       (Elimination.attemptPortable other limits 8192 #[] #[] #[] false).isSome then return false
   if !sameAttempt (Elimination.attempt field limits 0 #[] #[{}] #[] true)
       (Elimination.attemptPortable field limits 0 #[] #[{}] #[] true) then return false
-  if Elimination.binaryBound 16384 16321 62 14976 != 2^28 ||
-      Elimination.binaryBound 16384 16321 62 14977 != 2^28+3 then return false
-  for entries in [14976,14977] do
+  let some reducer := SparseRow.ofEntries field 129 #[(0,1),(128,1)] | return false
+  let some target := SparseRow.ofEntries field 129 #[(0,1),(64,1)] | return false
+  for sugar in [2^32+7,2^40+1,USize.size/2-1] do
+    let some expected := Elimination.attemptPortable field limits 129 #[reducer] #[target] #[sugar,0] false
+      | return false
+    let some actual := Elimination.attempt field limits 129 #[reducer] #[target] #[sugar,0] false
+      | return false
+    if !same actual expected then return false
+  if Elimination.binaryBound 16384 16313 62 14317 != 2^28-1 ||
+      Elimination.binaryBound 16384 16313 62 14318 != 2^28+2 then return false
+  for entries in [14317,14318] do
     let some row := SparseRow.ofEntries field 16384 ((Array.range entries).map (·,(1:UInt64))) | return false
-    let reducers := (Array.replicate 16321 ({} : SparseRow)).set! 0 row
+    let reducers := (Array.replicate 16313 ({} : SparseRow)).set! 0 row
     let targets := Array.replicate 62 ({} : SparseRow)
     let expected := Elimination.attemptPortable field limits 16384 reducers targets #[] false
     let actual := Elimination.attempt field limits 16384 reducers targets #[] false
-    if expected.isSome != (entries == 14976) || !sameAttempt actual expected then return false
+    if expected.isSome != (entries == 14317) || !sameAttempt actual expected then return false
   return true
 
 /-- A target-built dense pivot is reused by an aliased target. The returned
@@ -261,12 +269,12 @@ def binaryTargetChecks (seed : Nat) : Option Nat := do
     let some expected := Elimination.attemptPortable field limits 257 #[] targets sugars false | none
     let some actual := Elimination.attempt field limits 257 #[] targets sugars false | none
     if !same actual expected then none
-    allocated := allocated+Elimination.binaryBytes 257 count
+    allocated := allocated+Elimination.binaryBytes 257 0 count
   return allocated
 
 /-- The logical quantum is attained with 1024 nonempty targets while the
 independent physical bound remains below its cap. One more entry is declined. -/
-def binaryQuantum : Bool := Id.run do
+def binaryQuantum (seed : Nat) : Bool := Id.run do
   if USize.size != 2^64 then return true
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let limits : MatrixLimits := { binaryPivots := true }
@@ -275,14 +283,196 @@ def binaryQuantum : Bool := Id.run do
   if bound 184384 != 2^32 || bound 184385 != 2^32+1026 ||
       Elimination.binaryBound 3904 0 1024 184385 > 2^28 then return false
   let some targets := (Array.range 1024).mapM fun i => SparseRow.ofEntries field 3904
-      ((Array.range (if i < 64 then 181 else 180)).map (·,(1:UInt64))) | return false
+      ((Array.range (if i < 64 then 181 else 180)).map (fun j => (j+seed%64,(1:UInt64)))) | return false
   let some expected := Elimination.attemptPortable field limits 3904 #[] targets #[] false | return false
   let some actual := Elimination.attempt field limits 3904 #[] targets #[] false | return false
   if !same actual expected then return false
-  let some extra := SparseRow.ofEntries field 3904 ((Array.range 182).map (·,(1:UInt64))) | return false
+  let some extra := SparseRow.ofEntries field 3904 ((Array.range 182).map (fun j => (j+seed%64,(1:UInt64)))) | return false
   let refused := targets.set! 0 extra
   return (Elimination.attemptPortable field limits 3904 #[] refused #[] false).isNone &&
     (Elimination.attempt field limits 3904 #[] refused #[] false).isNone
+
+
+/-- All five private buffers are live in these two projected frames. Return
+exact logical payload bytes for the compiled allocation counter assertion. -/
+def binaryAllocationChecks (seed : Nat) : Option Nat := do
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let some reducers := (Array.range 4).mapM fun head => SparseRow.ofEntries field 128
+      ((Array.range (128-head)).map fun j => (head+j,(1:UInt64))) | none
+  let some row := SparseRow.ofEntries field 128
+      ((Array.range 128).filterMap fun j => if (j+seed)%3 != 0 then some (j,(1:UInt64)) else none) | none
+  let targets := Array.replicate 64 row
+  let sugars := (Array.range 68).map fun i => 2^40+seed%17+i
+  for independent in [false,true] do
+    let some expected := Elimination.attemptPortable field limits 128 reducers targets sugars independent | none
+    let some actual := Elimination.attempt field limits 128 reducers targets sugars independent | none
+    if !same actual expected then none
+  return 2*Elimination.binaryBytes 128 4 64
+
+#guard (binaryAllocationChecks 0).isSome
+
+/-- Known reducers are unsorted and cross target-pivot columns. Projection
+must preserve all factors, sugar maxima, independent rows and exact budgets. -/
+def binaryProjectChecks (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let heads := #[16,0,32,4]
+  let some reducers := heads.mapM fun head => SparseRow.ofEntries field 129
+      ((Array.range 129).filterMap fun j =>
+        if j == head || (j > head && (j*7+head+seed)%11 < 5) then some (j,(1:UInt64)) else none)
+    | return false
+  let some targets := (Array.range 64).mapM fun i => SparseRow.ofEntries field 129
+      ((Array.range 129).filterMap fun j =>
+        if i%13 != 0 && (j*13+i*17+seed)%23 < 11 then some (j,(1:UInt64)) else none)
+    | return false
+  let sugars := (Array.range 68).map fun i => 2^40+i*17+seed
+  for independent in [false,true] do
+    let some expected := Elimination.attemptPortable field limits 129 reducers targets sugars independent
+      | return false
+    let some actual := Elimination.attempt field limits 129 reducers targets sugars independent
+      | return false
+    if !same actual expected then return false
+    let packed := expected.stats.packedBytes+Elimination.binaryBytes 129 4 64
+    for bounded in [{ limits with packedBytes := packed },
+        { limits with packedBytes := packed-1 },
+        { limits with work := expected.stats.work },
+        { limits with work := expected.stats.work-1 }] do
+      if !sameAttempt (Elimination.attempt field bounded 129 reducers targets sugars independent)
+          (Elimination.attemptPortable field bounded 129 reducers targets sugars independent) then return false
+  return true
+
+/-- All triangular four-pivot patterns and every incoming head mask, with
+common tails that cancel while reference charges and sugar maxima persist. -/
+def binaryTableChecks (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let heads := #[0,3,7,11]
+  for pattern in [:64] do
+    let some rows := (Array.range 4).mapM fun k => SparseRow.ofEntries field 129
+        ((Array.range 129).filterMap fun j =>
+          let bit := if k == 0 then (if j == 3 then 0 else if j == 7 then 1 else 2)
+            else if k == 1 then (if j == 7 then 3 else 4) else 5
+          if j == heads[k]! || (64 ≤ j && j < 96) ||
+              (j > heads[k]! && heads.contains j && (pattern/2^bit)%2 == 1) then
+            some (j,(1:UInt64)) else none)
+      | return false
+    -- Reversing the supplied reducers must not change column-order projection.
+    let reducers := rows.reverse
+    let some targets := (Array.range 64).mapM fun i => SparseRow.ofEntries field 129
+        ((Array.range 129).filterMap fun j =>
+          let bit := if j == 0 then 0 else if j == 3 then 1 else if j == 7 then 2 else 3
+          if (heads.contains j && (i/2^bit)%2 == 1) ||
+              (j == 1 && i/16%2 == 1) || (j == 5 && i/32 == 1) ||
+              (j == 100+seed%7 && i/32 == 1) then some (j,(1:UInt64)) else none)
+      | return false
+    let sugars := (Array.range 68).map fun i =>
+      if i < 4 then 2^40+1000+(3*i+seed)%4 else seed%17+i-4
+    for independent in [false,true] do
+      let some expected := Elimination.attemptPortable field limits 129 reducers targets sugars independent
+        | return false
+      let some actual := Elimination.attempt field limits 129 reducers targets sugars independent
+        | return false
+      if !same actual expected then return false
+  return true
+
+/-- Unsorted dense runs and sparse interruptions preserve reducer labels
+above target labels. Targets ending at the heads expose single-pivot extensions. -/
+def binaryGroupChecks (seed : Nat) : Option Nat := do
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let some rows := (#[0,3,7,11,65,68,72,76] : Array Nat).mapM fun head =>
+      SparseRow.ofEntries field 129 (#[ (head,(1:UInt64)) ] ++
+        (Array.range 33).map fun j => (96+j,(1:UInt64))) | none
+  let some gap := SparseRow.ofEntries field 129 #[(5,1),(127,1)] | none
+  let some gap' := SparseRow.ofEntries field 129 #[(66,1)] | none
+  let specs : Array (Array Nat) := #[#[0],#[5],#[66],#[0,3,7,11,65,68,72,76]]
+  let some targets := (Array.range 64).mapM fun i =>
+      SparseRow.ofEntries field 129 (specs[i%4]!.map (·,(1:UInt64))) | none
+  let tail := (Array.range 33).map (fun j => (96+j,(1:UInt64)))
+  let cases := #[(rows.reverse.push {},2),((rows.push gap).reverse,1),
+    ((rows.push gap |>.push gap').reverse,0)]
+  let mut total := 0
+  for (reducers,groups) in cases do
+    if Elimination.binaryGroups 129 reducers != groups then none
+    let labels := (Array.range reducers.size).map fun i => 2^40+1000+(7*i+seed)%reducers.size
+    let sugars := labels ++ (Array.range 64).map (seed%17+·)
+    let label := fun head => (Array.range reducers.size).foldl (fun value i =>
+      if reducers[i]!.size != 0 && (Packed.read .u32 reducers[i]!.columns 0).toNat == head then
+        labels[i]! else value) 0
+    for independent in [false,true] do
+      let some expected := Elimination.attemptPortable field limits 129 reducers targets sugars independent | none
+      let some actual := Elimination.attempt field limits 129 reducers targets sugars independent | none
+      if !same actual expected then none
+      let .ok (echelon,remainders) := actual.result | none
+      if independent then
+        if remainders.size != 64 || remainders[0]!.row.entries field != tail ||
+            remainders[0]!.sugar != label 0 then none
+        if groups < 2 && (remainders[1]!.row.entries field != #[(127,1)] ||
+            remainders[1]!.sugar != label 5) then none
+        if groups == 0 && (remainders[2]!.row.size != 0 ||
+            remainders[2]!.sugar != label 66) then none
+      else if !(echelon.rows.any fun pivot => pivot.fromTarget &&
+          pivot.row.entries field == tail && pivot.sugar == label 0) then none
+      total := total+groups
+  return total
+
+/-- Seeded wide matrices mix sparse interruptions, triangular known heads,
+empty targets, non-monotone source labels and absent label arrays. -/
+def binaryRandomChecks (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  for trial in [:8] do
+    for columns in [193,1031] do
+      let some rows := (Array.range 40).mapM fun i => SparseRow.ofEntries field columns
+          ((Array.range columns).filterMap fun j =>
+            if j == 3*i || (i%5 != 0 && j > 3*i &&
+                ((i+3)*(j+7)+13*i*i+trial*17+seed)%29 < 13) then
+              some (j,(1:UInt64)) else none) | return false
+      let reducers := rows.reverse
+      let count := 64+16*(trial%3)
+      let some targets := (Array.range count).mapM fun i => SparseRow.ofEntries field columns
+          ((Array.range columns).filterMap fun j =>
+            if i%17 != 0 && ((j+1)*(i+5)+trial*29+seed)%31 < 8 then
+              some (j,(1:UInt64)) else none) | return false
+      let labels := (Array.range (40+count)).map fun i =>
+        if i < 40 then 2^40+1000+(17*i+seed+trial)%40 else seed%17+i-40
+      for sugars in [#[],labels] do
+        for independent in [false,true] do
+          let some expected := Elimination.attemptPortable field limits columns reducers targets sugars independent
+            | return false
+          let some actual := Elimination.attempt field limits columns reducers targets sugars independent
+            | return false
+          if !same actual expected then return false
+  return true
+
+/-- A nonempty 154-table frame is two visits below the physical cap; one
+additional input entry exceeds it. Few nonempty targets keep replay bounded. -/
+def binaryTableBoundary (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let some reducers := (Array.range 3472).mapM fun i => SparseRow.ofEntries field 4559
+      (#[ (i,(1:UInt64)) ] ++ if i < 616 then
+        (Array.range 73).map (fun j => (4486+j,(1:UInt64))) else #[]) | return false
+  let some full := SparseRow.ofEntries field 4559 ((Array.range 4559).map (·,(1:UInt64))) | return false
+  let some fragment := SparseRow.ofEntries field 4559 ((Array.range 986).map (·,(1:UInt64))) | return false
+  let targets := (Array.replicate 810 ({} : SparseRow)).mapIdx fun i empty =>
+    if i < 185 then full else if i == 185 then fragment else empty
+  if Elimination.binaryGroups 4559 reducers != 154 ||
+      Elimination.binaryCost 4559 reducers targets 892841 != 2^28-2 then return false
+  let sugars := (Array.range (3472+810)).map (fun i => seed+i%7)
+  let some expected := Elimination.attemptPortable field limits 4559 reducers targets sugars false | return false
+  let some actual := Elimination.attempt field limits 4559 reducers targets sugars false | return false
+  if !same actual expected then return false
+  let some extra := SparseRow.ofEntries field 4559 ((Array.range 987).map (·,(1:UInt64))) | return false
+  let rejected := targets.set! 185 extra
+  if Elimination.binaryCost 4559 reducers rejected 892842 != 2^28+1 then return false
+  return (Elimination.attemptPortable field limits 4559 reducers rejected sugars false).isNone &&
+    (Elimination.attempt field limits 4559 reducers rejected sugars false).isNone
 
 @[noinline] private def binaryWorkRows (nonce : Nat) : Option (Array SparseRow) :=
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
@@ -368,7 +558,7 @@ def binaryChecks (seed : Nat) : Bool := Id.run do
       let some actual := Elimination.attempt field { binaryPivots := true } columns ar actualTargets #[1,2,3,4,5] independent
         | return false
       if !same actual expected || !sameRows ar er || !sameRows actualTargets et then return false
-      let scratch := Elimination.binaryBytes columns (er.size+et.size)
+      let scratch := Elimination.binaryBytes columns er.size et.size
       let tight : MatrixLimits := { binaryPivots := true,packedBytes := expected.stats.packedBytes+scratch }
       if !(Elimination.attempt field tight columns ar actualTargets #[1,2,3,4,5] independent).isSome then return false
       for limits in ([{ binaryPivots := true,work := expected.stats.work-1 },
