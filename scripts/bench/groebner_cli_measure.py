@@ -37,6 +37,8 @@ def main():
     parser.add_argument("--hex-scheduling", choices=["degree", "sugar"])
     parser.add_argument("--hex-dense-pivots", choices=["true", "false"])
     parser.add_argument("--baseline-dense-pivots", choices=["true", "false"])
+    parser.add_argument("--hex-binary-pivots", choices=["true", "false"])
+    parser.add_argument("--baseline-binary-pivots", choices=["true", "false"])
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--baseline-sampled", action="store_true")
@@ -71,6 +73,10 @@ def main():
         parser.error("--baseline-scheduling requires --baseline")
     if args.baseline_dense_pivots is not None and not args.baseline:
         parser.error("--baseline-dense-pivots requires --baseline")
+    if args.baseline_binary_pivots is not None and not args.baseline:
+        parser.error("--baseline-binary-pivots requires --baseline")
+    if args.sampled and (args.hex_binary_pivots is not None or args.baseline_binary_pivots is not None):
+        parser.error("binary pivot controls require the deterministic driver")
     if args.sampled and (args.hex_dense_pivots is not None or args.baseline_dense_pivots is not None):
         parser.error("dense pivot controls require the deterministic driver")
     if args.msolve and not args.msolve_source:
@@ -190,6 +196,10 @@ def main():
         "A": args.hex_dense_pivots if mode or not args.baseline else args.baseline_dense_pivots,
         "B": None if mode else args.hex_dense_pivots,
     }
+    binary_pivots = {
+        "A": args.hex_binary_pivots if mode or not args.baseline else args.baseline_binary_pivots,
+        "B": None if mode else args.hex_binary_pivots,
+    }
     if mode:
         library_path = str(args.msolve_source.resolve() / "src/neogb/.libs")
         inherited = environments["B"].get("LD_LIBRARY_PATH", "")
@@ -202,6 +212,7 @@ def main():
         "threads": 1,
         "requested_scheduling": scheduling,
         "requested_dense_pivots": dense_pivots,
+        "requested_binary_pivots": binary_pivots,
         "host": os.uname().nodename,
         "load_start": os.getloadavg(),
         "suite_sha256": sha(args.suite),
@@ -345,6 +356,7 @@ def main():
                                 else []
                             ),
                             *(["--dense-pivots",dense_pivots[arm]] if dense_pivots[arm] is not None else []),
+                            *(["--binary-pivots",binary_pivots[arm]] if binary_pivots[arm] is not None else []),
                             str(root / (case["name"] + ".json")),
                         ]
                     )
@@ -443,6 +455,10 @@ def main():
                                 elif args.sampled:
                                     assert payload["randomState"] == 0
                                 record["scheduling"] = selected
+                                if binary_pivots[arm] is not None:
+                                    assert payload["binaryPivots"] == (binary_pivots[arm] == "true"), "requested binary pivot control was ignored"
+                                elif "binaryPivots" in payload:
+                                    assert payload["binaryPivots"] is False, "unexpected binary pivot policy"
                                 bases[arm] = canonical(payload["basis"])
                                 results[arm] = {
                                     k: v
@@ -454,6 +470,7 @@ def main():
                                             "candidateNanos",
                                             "statistics",
                                             "scheduling",
+                                            "binaryPivots",
                                         ]
                                         if args.baseline
                                         else ["basis", "candidateNanos"]

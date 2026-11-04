@@ -110,6 +110,7 @@ def run (args : List String) : IO UInt32 := do
       let metadata := (Json.mkObj [("kind",toJson "unchecked_candidate"),
         ("p",toJson context.field.modulus.toNat),("variables",toJson context.variables),
         ("order",toJson order),
+        ("binaryPivots",toJson limits.binaryPivots),
         ("statistics",Driver.statistics stats),("candidateNanos",toJson (stop-start)),
         ("scheduling",toJson (match candidate.scheduling with | .degree => "degree" | .sugar => "sugar")),
         ("batchSize",toJson candidate.batchSize),("randomState",toJson candidate.randomState.toNat)]).compress
