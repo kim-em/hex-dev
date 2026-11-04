@@ -15,7 +15,7 @@ Manual shared-host observations use one algorithm thread, runtime auxiliary thre
 | cutoff128-prime-repeat | 0.928597 | 0.873034 | 0.928597 | 0.647311–1.238331 | 76 | 82052/73860 |
 | cutoff128-f2 | 0.989180 | 0.924603 | 0.965167 | 0.788268–1.361416 | 22 | 77956/77892 |
 
-The first five rows compare sampled B against deterministic A. They retain a 2×2 prime-field comparison (block sizes 32/128 and one/three total zero tests) plus the F2 default. The final three rows compare cutoff 128 against cutoff zero within the same sampled executable: one zero test on prime fields, three on F2. Every complete reduced basis agrees. No sampling independence or probability bound is claimed for SplitMix64.
+The first five rows compare sampled B against deterministic A on the parent runtime `ddde8c89c095`. They retain a 2×2 prime-field comparison (block sizes 32/128 and one/three total zero tests) plus the F2 default. The final three rows compare cutoff 128 against cutoff zero within the same sampled executable: one zero test on prime fields, three on F2. These are separate campaigns on different binaries and leased CPUs: multiplying their ratios does not establish a hybrid-versus-deterministic speedup. No direct adjacent comparison of the hybrid with deterministic F4 was collected. Every complete reduced basis agrees. No sampling independence or probability bound is claimed for SplitMix64.
 
 | Family | Prime cutoff first | Prime cutoff repeat | F2 cutoff |
 |---|---:|---:|---:|
@@ -28,7 +28,7 @@ The first five rows compare sampled B against deterministic A. They retain a 2×
 | dense-quadratic | 0.959708 | 0.924603 | 0.878537 |
 | mq | — | — | 1.091354 |
 
-The prime cutoff reduces observed time primarily on Noon and Reimer. The F2 MQ inputs regress, so the cutoff remains explicit and no default change is selected. The diagnostic suites are development inputs, not a balanced acceptance suite or held-out evaluation.
+The prime cutoff reduces observed time primarily on Noon and Reimer. The F2 MQ inputs regress, so the cutoff remains explicit and no default change is selected. The cutoff 128 was selected using these development inputs; it has no held-out validation or demonstrated optimality. The diagnostic suites are development inputs, not a balanced acceptance suite or held-out evaluation. Sampling counters describe sampled batches only; there is no direct counter of deterministic fallback batches.
 
 The current msolve comparison uses commit `3672113ee2c696a2ac9c637636e0f7214f500ba1`, Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. All 56 processes complete with 28 equal complete bases. Hex/msolve process geometric mean is 1.571857, range 0.706782–2.308362. Compiler/tuning differences are part of this observed gap. Candidate production, certificate generation, independent native verification and kernel checking remain separate; only candidate/process times are measured here. No fastest-open-source milestone is demonstrated.
 
@@ -42,10 +42,10 @@ The current msolve comparison uses commit `3672113ee2c696a2ac9c637636e0f7214f500
 | minrank | 0.979925 |
 | dense-quadratic | 1.474157 |
 
-Both initial and final checks pass all twelve Clang/GCC ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Cutoff tests cover deterministic-only/no-draw operation, default and mixed policies, scheduling suspension, exhausted parent work and resumed policy identity. Twelve CLI checks cover both initializers, default/zero/huge cutoffs, repeated flags and malformed values. Full initialization is the same native arithmetic, not a portable arithmetic timing.
+Both initial and final checks pass all twelve Clang/GCC ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Cutoff tests cover deterministic-only/no-draw operation with identical ordinary statistics, a run with strictly fewer but nonzero sampled calls, scheduling suspension, exhaustion after symbolic preprocessing has submitted a deterministic matrix, exhausted parent work and resumed policy identity. Twelve CLI checks cover both initializers, default/zero/huge cutoffs, repeated flags and malformed values. A failed deterministic batch is selected again on retry: changing the resumed batch-size cap can change whether it crosses the cutoff. A pending sampled matrix retains its original selection. Full initialization is the same native arithmetic, not a portable arithmetic timing.
 
 The retained diagnostic profiles comprise four completed Eco processes, one MQ process exhausted under an accidentally omitted larger matrix-entry limit, and four corrected MQ processes. The failed command/output is retained. Profiles explain costs and are not timing comparisons. Raw trace hashes and reports are archived; raw perf data remain in the measurement workspace.
 
-Runtime `81e8adae40cd`; initial checks `d80557ce8396`; final checks `1391d0dd95e7`. `f4-sampler-hybrid-81e8adae40cd.tar.xz`: SHA-256 `fa886aa8dd6b211ad877929f899149486cfd5aa53adf70ee45f799edeabba957`. `f4-sampler-hybrid-checks-1391d0dd95e7.tar.xz`: SHA-256 `90722cf141d91b74b024c846b7fccaae68b832e8ef427ad99c99d57653434fd7`.
+Runtime `81e8adae40cd`; initial checks `d80557ce8396`; final checks `332b0af770f9`. `f4-sampler-hybrid-81e8adae40cd.tar.xz`: SHA-256 `fa886aa8dd6b211ad877929f899149486cfd5aa53adf70ee45f799edeabba957`. `f4-sampler-hybrid-checks-332b0af770f9.tar.xz`: SHA-256 `08b5415f628e1573c760466b83e206e17b0eed4951bab357fc6f113030be79f0`.
 
-Regenerate with `python3 scripts/bench/groebner_hybrid_report.py --capsule reports/bench-results/raw/f4-sampler-hybrid-81e8adae40cd.tar.xz --guards reports/bench-results/raw/f4-sampler-hybrid-checks-1391d0dd95e7.tar.xz --report reports/bench-results/hexgroebner-hybrid.md --check`. Add `--current` to bind the checkout.
+Regenerate with `python3 scripts/bench/groebner_hybrid_report.py --capsule reports/bench-results/raw/f4-sampler-hybrid-81e8adae40cd.tar.xz --guards reports/bench-results/raw/f4-sampler-hybrid-checks-332b0af770f9.tar.xz --report reports/bench-results/hexgroebner-hybrid.md --check`. Add `--current` to bind the checkout.
