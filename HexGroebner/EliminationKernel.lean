@@ -273,6 +273,25 @@ def reference (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (eliminate field limits columns reducers targets false sugars true independent).run {}
   ⟨result, stats⟩
 
+/-- A private bit matrix is used only by explicitly requested F2 frames. -/
+def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
+  limits.binaryPivots && field.modulus == 2
+
+/-- Logical reference work cap, distinct from the physical word-operation cap. -/
+def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
+  if binaryEnabled field limits then 2^32 else 2^20
+
+/-- Private pivot rows plus one accumulator, reserved against the parent peak. -/
+def binaryBytes (columns rows : Nat) : Nat := (min rows columns+1)*((columns+63)/64)*8
+
+/-- Word XORs, packing, validation and scalar scanning have this conservative
+shape bound. A pivot is visited at most once for each target. -/
+def binaryBound (columns reducers targets entries : Nat) : Nat :=
+  let rows := reducers+targets
+  let words := (columns+63)/64
+  rows*words+3*entries+4*targets*columns+5*columns+
+    targets*(rows*words+64)+columns
+
 /-- Known reducers have distinct leading columns. The conservative work bound
 uses `65 * rows` for row visits and inversion products, `2 * entries` for
 validation, sparse scaling and scattering, and `columns * (width + 4)` for
@@ -282,12 +301,17 @@ and normalization, and 64 allows inversion. A pivot is used at most once per
 target because scanning advances through its leading column. The final
 `columns` covers pivot ordering. These deliberately overlapping bounds cover
 the sparse computation. Optional dense preparation adds separately charged work;
-`attemptPortable` also checks the final total against `2^20`. -/
+`attemptPortable` also checks the final total against the selected frame quantum.
+Opt-in F2 frames additionally bound packing, scanning and word updates by `2^28`
+visits and reserve their complete temporary payload against the packed-byte allowance. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
   let rows := reducers.size + targets.size
   if USize.size != 2^64 then return false
-  if columns > 4096 || reducers.size > 1024 || targets.size > 64 ||
+  let binary := binaryEnabled field limits
+  if columns > (if binary then 16384 else 4096) ||
+      reducers.size > (if binary then 16384 else 1024) ||
+      targets.size > (if binary then 1024 else 64) ||
       columns > limits.columns || rows > limits.rows ||
       (!sugars.isEmpty && sugars.size != rows) then return false
   if !(sugars.all (· < USize.size / 2)) then return false
@@ -301,7 +325,8 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
       entries := entries + row.size
   let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
     targets.size * (entries + (targets.size + 3) * columns + 64) + columns
-  if bound > 2^20 then return false
+  if bound > frameQuantum field limits then return false
+  if binary && binaryBound columns reducers.size targets.size entries > 2^28 then return false
   let mut seen := Array.replicate columns false
   for row in reducers do
     if row.size != 0 then
@@ -317,23 +342,31 @@ def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     Option Result :=
   if !(fits field limits columns reducers targets sugars) then none else
     let result := reference field limits columns reducers targets sugars independent
-    if result.result.isOk && result.stats.work ≤ 2^20 then some result else none
+    if result.result.isOk && result.stats.work ≤ frameQuantum field limits &&
+        (!binaryEnabled field limits || result.stats.packedBytes+
+          binaryBytes columns (reducers.size+targets.size) ≤ limits.packedBytes) then some result else none
 
 /-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
 column count, row arrays and sugars are borrowed Lean objects, and `independent`
 is an unboxed Boolean. `Result` holds an `Except` matrix/remainder pair and eight
 `Nat` counters. Native code returns `some` only for a complete successful
 reference result, including exact rows, aliases, sugars and counters. It admits
-at most 4096 columns, 1024 known reducers and 64 targets, with distinct known
-leading columns and at most `2^20` charged work. Large limits saturate above all
+ordinary frames with at most 4096 columns, 1024 known reducers, 64 targets and
+`2^20` charged work. Opt-in F2 frames admit at most 16384 columns, 16384 reducers
+and 1024 targets, with a `2^32` logical-work bound and a separate `2^28` bound
+on packing/scalar/word visits. Their private pivot/accumulator bytes must fit
+the packed-byte allowance in addition to the complete reference payload. Known leading
+columns are distinct. Large limits saturate above all
 possible accepted totals; non-machine-size sugars use checked Lean arithmetic.
 
 The matrix owns its dense workspace; all inputs remain immutable, including
 shared reducer/target arrays. Unsupported shapes return `none` without changing
 inputs, and a reference-equivalent continuation runs after the native frame. A declined
-attempt's physical work is unreported but bounded by the remaining allowance
-and `2^20`. Without dense preparation, the shape bound makes a charged decline
-imply reference failure. With dense preparation, a successful reference may
+attempt's physical work is unreported; the continuation retains the reference counters. Ordinary-frame
+speculation is bounded by the remaining logical allowance and `2^20`; opt-in
+F2 packing and word visits have their separate shape bound. Without dense
+preparation or private F2 payload, the shape bound makes a charged decline imply
+reference failure. F2 payload admission can decline a successful reference. With dense preparation, a successful reference may
 exceed the frame quantum and continue outside the frame. Such a declined
 prefix costs less than that frame's reference work; this can occur on multiple
 matrices, so the overhead bound is per frame rather than per computation. -/

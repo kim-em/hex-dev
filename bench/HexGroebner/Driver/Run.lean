@@ -14,7 +14,7 @@ open Lean
 
 namespace Hex.Groebner.Driver
 
-private def usage := "hexgroebner_compute [--scheduling degree|sugar] [--dense-pivots true|false] [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] [--basis N] [--variables N] input.json"
+private def usage := "hexgroebner_compute [--scheduling degree|sugar] [--dense-pivots true|false] [--binary-pivots true|false] [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] [--basis N] [--variables N] input.json"
 
 private def options : List String → Limits → Except String (String × Limits)
   | [filename], limits =>
@@ -25,6 +25,12 @@ private def options : List String → Limits → Except String (String × Limits
       | "sugar" => pure Scheduling.sugar
       | _ => throw s!"unknown scheduling strategy {value}; {usage}"
     options rest { limits with scheduling }
+  | "--binary-pivots"::value::rest, limits => do
+    let enabled ← match value with
+      | "true" => pure true
+      | "false" => pure false
+      | _ => throw "--binary-pivots expects true or false"
+    options rest { limits with binaryPivots := enabled }
   | "--dense-pivots"::value::rest, limits => do
     let enabled ← match value with
       | "true" => pure true
@@ -104,6 +110,7 @@ def run (args : List String) : IO UInt32 := do
       let metadata := (Json.mkObj [("kind",toJson "unchecked_candidate"),
         ("p",toJson context.field.modulus.toNat),("variables",toJson context.variables),
         ("order",toJson order),
+        ("binaryPivots",toJson limits.binaryPivots),
         ("statistics",Driver.statistics stats),("candidateNanos",toJson (stop-start)),
         ("scheduling",toJson (match candidate.scheduling with | .degree => "degree" | .sugar => "sugar")),
         ("batchSize",toJson candidate.batchSize),("randomState",toJson candidate.randomState.toNat)]).compress

@@ -67,6 +67,8 @@ def run() -> None:
         # The included source gets private names; only our counted wrappers use --wrap.
         source = ROOT / "HexGroebner/ffi/matrix_scan.c"
         (directory / "probe.c").write_text('''#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include RUNTIME_HEADER
 #define lean_hex_groebner_subtract_row hex_test_unused_subtract
 #define lean_hex_groebner_remap_columns hex_test_remap
@@ -551,6 +553,12 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
 }
 
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
+static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
+static uint64_t binary_sparse=0,binary_words=0,binary_high_words=0;
+#define HEX_GROEBNER_BINARY_SCAN_USED() (++binary_scans)
+#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=lean_sarray_size(c.binary_rows))
+#define HEX_GROEBNER_BINARY_SPARSE_USED() (++binary_sparse)
+#define HEX_GROEBNER_BINARY_WORD_USED(id) (++binary_words,(id)>=1024?++binary_high_words:0)
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
@@ -692,6 +700,18 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_zeros(b_lean_obj_arg size) {
  }
  return result;
 }
+LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
+ (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(binary_scans));lean_ctor_set(tail,1,lean_box_uint64(binary_bytes));
+ lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
+}
+LEAN_EXPORT lean_obj_res hex_test_binary_paths(lean_obj_arg world) {
+ (void)world;lean_object *out=lean_alloc_ctor(0,2,0),*tail=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(binary_words));lean_ctor_set(tail,1,lean_box_uint64(binary_high_words));
+ lean_ctor_set(out,0,lean_box_uint64(binary_sparse));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
+}
 LEAN_EXPORT lean_obj_res hex_test_matrix_primitives(lean_obj_arg world) {
  (void)world;lean_object *pair=lean_alloc_ctor(0,2,0);
  lean_ctor_set(pair,0,lean_box_uint64(primitive_validations));
@@ -768,7 +788,35 @@ __typeof__(hex_test_whole) __wrap_lean_hex_groebner_eliminate_matrix;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_eliminate_matrix(uint64_t p,
  b_lean_obj_arg limits,b_lean_obj_arg columns,b_lean_obj_arg reducers,
  b_lean_obj_arg targets,b_lean_obj_arg sugars,uint8_t independent) {
- return hex_test_whole(p,limits,columns,reducers,targets,sugars,independent);
+ lean_object *result=hex_test_whole(p,limits,columns,reducers,targets,sugars,independent);
+ const char *path=getenv("HEX_GROEBNER_FRAME_LOG");
+ if(path && p==2 && lean_ctor_get_uint8(limits,7*sizeof(void*)+1) && lean_is_scalar(columns)) {
+  uint64_t nc=lean_unbox(columns),nr=lean_array_size(reducers),nt=lean_array_size(targets),entries=0;
+  for(uint64_t i=0;i<nr+nt;++i) {
+   lean_object *row=lean_array_cptr(i<nr?reducers:targets)[i<nr?i:i-nr];
+   entries+=lean_sarray_size(lean_ctor_get(row,0))/4;
+  }
+  uint64_t words=(nc+63)/64,rows=nr+nt;
+  uint64_t logical=rows*65+2*entries+nc*5+nt*(entries+(nt+3)*nc+64)+nc;
+  uint64_t physical=rows*words+3*entries+4*nt*nc+6*nc+nt*(rows*words+64);
+  uint64_t scratch=((rows<nc?rows:nc)+1)*words*8;
+  /* A loose upper bound includes all inputs, normalized reducers, maximal
+     target output, headers and both workspaces. Below it, bytes cannot refuse. */
+  uint64_t byte_upper=scratch+20*entries+128*rows+25*nt*nc+10*nc;
+  lean_object *cap=lean_ctor_get(limits,4);
+  uint64_t allowance=lean_is_scalar(cap)?lean_unbox(cap):UINT64_MAX/2;
+  int accepted=!lean_is_scalar(result);
+  const char *reason=accepted?"accepted":nc>16384||nr>16384||nt>1024?"shape":
+    logical>(UINT64_C(1)<<32)?"logical":physical>(UINT64_C(1)<<28)?"physical":
+    byte_upper<=allowance?"other_without_byte_refusal":"other_possible_byte_refusal";
+  FILE *stream=fopen(path,"a");
+  if(!stream) abort();
+  fprintf(stream,"%llu,%llu,%llu,%llu,%s,%llu,%llu\\n",
+   (unsigned long long)nc,(unsigned long long)nr,(unsigned long long)nt,
+   (unsigned long long)entries,reason,(unsigned long long)byte_upper,(unsigned long long)allowance);
+  if(fclose(stream)) abort();
+ }
+ return result;
 }
 LEAN_EXPORT lean_obj_res hex_test_whole_modes(lean_obj_arg world) {
  (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
@@ -950,6 +998,8 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_batch_deferrals"] opaque batchDeferrals : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_batch_insertions"] opaque batchInsertions : IO UInt64
+@[extern "hex_test_binary_counts"] opaque binaryCounts : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_binary_paths"] opaque binaryPaths : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
@@ -1055,6 +1105,40 @@ def checkMersenne : IO UInt64 := do
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   return mersenne
 
+private def checkBinary (seed : Nat) : IO Unit := do
+  let allocationBefore ← binaryCounts
+  let targetBefore ← binaryPaths
+  let targetSeed ← Hex.Groebner.NativeChecks.readSeed
+  let some allocated := Hex.Groebner.EliminationConformance.binaryTargetChecks targetSeed |
+    throw (IO.userError "target-built packed word pivot/reference mismatch")
+  let allocationAfter ← binaryCounts
+  let targetAfter ← binaryPaths
+  if allocationAfter.1 != allocationBefore.1+2 ||
+      allocationAfter.2.2 != allocationBefore.2.2+allocated.toUInt64 ||
+      targetAfter.2.1 ≤ targetBefore.2.1 then
+    throw (IO.userError "actual private allocation or target-built word pivot unused")
+  if !Hex.Groebner.EliminationConformance.binaryQuantum then
+    throw (IO.userError "F2 logical quantum or maximum target boundary mismatch")
+  let before ← binaryCounts
+  let pathsBefore ← binaryPaths
+  if !Hex.Groebner.EliminationConformance.binaryChecks seed ||
+      !Hex.Groebner.EliminationConformance.binaryLargeChecks seed ||
+      !Hex.Groebner.EliminationConformance.binaryWorkChecks seed then
+    throw (IO.userError "private packed F2 frame/reference mismatch")
+  let after ← binaryCounts
+  let pathsAfter ← binaryPaths
+  if pathsAfter.1 ≤ pathsBefore.1 || pathsAfter.2.1 ≤ pathsBefore.2.1 ||
+      pathsAfter.2.2 ≤ pathsBefore.2.2 then
+    throw (IO.userError "private F2 sparse or word pivot update unused")
+  if after.1 ≤ before.1 || after.2.1 ≤ before.2.1 || after.2.2 ≤ before.2.2 then
+    throw (IO.userError "private F2 pivots or word scan unused")
+  IO.println s!"private F2 frames/scans/bytes: {after}"
+  let f4Before ← binaryCounts
+  if !Hex.Groebner.EliminationConformance.binaryFresh seed then
+    throw (IO.userError "packed F2 complete F4/reference mismatch")
+  let f4After ← binaryCounts
+  if f4After.1 ≤ f4Before.1 then throw (IO.userError "packed F2 policy unused by complete F4")
+
 private def checkOwnership : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
   if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
@@ -1075,6 +1159,7 @@ def main : IO Unit := do
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
+  checkBinary primitiveSeed
   let beforeBatchInsertions ← batchInsertions
   if !Hex.Groebner.ProductBatchConformance.insertionChecks primitiveSeed then
     throw (IO.userError "monomial batch insertion/reference state mismatch")

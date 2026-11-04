@@ -46,7 +46,10 @@ packed dense accumulation, monic output, stable columns and optional provenance.
 `native := false` retains scalar Lean updates; the default uses bounded native
 chunks with identical rows, provenance and counters. Untraced native 64-bit calls first
 try a complete frame bounded by 4096 columns, 1024 reducers, 64 targets and
-`2^20` work. Declined frames with at most 65536 columns and total input rows
+`2^20` work. Explicit `binaryPivots` over F2 permits 16384 columns, 16384
+reducers and 1024 targets, bounded by `2^32` logical work and `2^28` physical
+visits. Private bitmap bytes additionally fit the packed-byte allowance.
+Declined frames with at most 65536 columns and total input rows
 continue in bounded native phases. Larger frames retain the reference route
 with bounded native scan/gather kernels.
 Cancellation is observed between calls. Input rows must be canonical
@@ -63,7 +66,7 @@ def eliminateWith (field : PrimeField) (limits : MatrixLimits)
 /-- Reduce each target by the same reducer echelon space, preserving its scalar
 and input position. Targets never reduce each other. Validation, sparse reducer
 installation, bounded native updates and allowances are shared with elimination.
-Untraced native 64-bit calls use the same optional `2^20`-work matrix frame and shape
+Untraced native 64-bit calls use the same optional matrix frames and field-specific
 caps as `eliminateWith`; other untraced native calls within the continuation
 shape limits use bounded phases. Larger frames and provenance calls retain
 the reference scan/gather chunks.
