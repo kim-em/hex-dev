@@ -208,7 +208,8 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_remap_index(
 }
 __typeof__(hex_test_append_zeros) __wrap_lean_hex_groebner_append_zeros;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_append_zeros(lean_obj_arg output,b_lean_obj_arg count) {
- ++zero_calls;return hex_test_append_zeros(output,count);
+ ++zero_calls;if(lean_sarray_size(output) && !lean_is_exclusive(output))++support_copies;
+ return hex_test_append_zeros(output,count);
 }
 LEAN_EXPORT lean_obj_res hex_test_index_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(index_calls));
@@ -1173,6 +1174,18 @@ def checkMersenne : IO UInt64 := do
 @[extern "hex_test_support_copies"] opaque supportCopies : IO UInt64
 @[extern "hex_test_support_clears"] opaque supportClears : IO UInt64
 
+private def checkSupportSystems : IO Unit := do
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  for route in [:3] do
+    let before ← supportCount
+    let clears ← supportClears
+    let copies ← supportCopies
+    if !Hex.Groebner.PairRowsConformance.systemChecks seed route then
+      throw (IO.userError s!"support whole-system route {route} mismatch")
+    if (← supportCount) ≤ before || (← supportClears) ≤ clears || (← supportCopies) != copies then
+      throw (IO.userError s!"support whole-system route {route} copies={(← supportCopies)-copies}, calls={(← supportCount)-before}, clears={(← supportClears)-clears}")
+    IO.println s!"support system {route} calls/clears/copies: {(← supportCount)-before}/{(← supportClears)-clears}/{(← supportCopies)-copies}"
+
 private def checkSupport : IO Unit := do
   if !(← supportAliases) then throw (IO.userError "support queue ownership mismatch")
   let before ← supportCount
@@ -1196,9 +1209,10 @@ private def checkSupport : IO Unit := do
       throw (IO.userError "production support chunks or separate-tail allocation mismatch")
   if (← supportCopies) != copiesBefore || (← supportCount) ≤ queuesBefore ||
       (← supportClears) ≤ clearsBefore then
-    throw (IO.userError "production support loop copied scratch or native chunks were unused")
+    throw (IO.userError s!"production support loop copies={(← supportCopies)-copiesBefore}, calls={(← supportCount)-queuesBefore}, clears={(← supportClears)-clearsBefore}")
   IO.println s!"production support calls/clears/copies: {(← supportCount)-queuesBefore}/{(← supportClears)-clearsBefore}/{(← supportCopies)-copiesBefore}"
   IO.println s!"native support queue calls: {(← supportCount)-before}"
+  checkSupportSystems
 
 private def checkBinary (seed : Nat) : IO Unit := do
   let allocationBefore ← binaryCounts

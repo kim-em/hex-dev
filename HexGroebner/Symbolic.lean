@@ -79,7 +79,7 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
       spend limits p.size
       queueSupport limits p.support
   if cursor < (← get).support.queue.size then throw (.exhausted .monomials)
-  let columns ← sort context limits (← get).support.queue
+  let columns ← sortSupport context limits
   return ⟨columns, reducers, targets, cache⟩
 
 /-- Build a basis-specific reducer index and close the selected supports.

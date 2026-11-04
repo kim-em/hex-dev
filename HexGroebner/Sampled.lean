@@ -124,7 +124,9 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000)
   for _ in [:min slices 1000000] do
     if let some round := state.pending then
       if round.matrix.phase == .done && round.matrix.failure.isNone then
-        let (result,workspace) := (finish state.context limits state.checkpoint round).run state.workspace
+        let workspace := state.workspace
+        state := { state with workspace := { table := { arity := state.context.variables } } }
+        let (result,workspace) := (finish state.context limits state.checkpoint round).run workspace
         state := { state with workspace }
         match result with
         | .error error => return failure state error
@@ -141,14 +143,18 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000)
         state := account state previous frame matrix
         if let some error := failed then return failure state (matrixError error)
     else if state.checkpoint.phase == .complete then
-      let (result,workspace) := (decode state limits).run state.workspace
+      let workspace := state.workspace
+      state := { state with workspace := { table := { arity := state.context.variables } } }
+      let (result,workspace) := (decode state limits).run workspace
       state := { state with workspace }
       match result with
       | .ok candidate => return .candidate candidate workspace.statistics state.statistics
       | .error error => return failure state error
     else if state.checkpoint.phase == .pairs then
+      let workspace := state.workspace
+      state := { state with workspace := { table := { arity := state.context.variables } } }
       let (result,workspace) :=
-        (prepare state.context limits state.checkpoint state.random state.config state.minimumTargets).run state.workspace
+        (prepare state.context limits state.checkpoint state.random state.config state.minimumTargets).run workspace
       state := { state with workspace }
       match result with
       | .error error => return failure state error
@@ -158,7 +164,9 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000)
           statistics.calls := state.statistics.calls+(if pending.isSome then 1 else 0),
           statistics.inputTargets := state.statistics.inputTargets+(pending.map (·.matrix.targets.size)).getD 0 }
     else
-      let (result,workspace) := (F4.step state.context limits state.generators state.checkpoint).run state.workspace
+      let workspace := state.workspace
+      state := { state with workspace := { table := { arity := state.context.variables } } }
+      let (result,workspace) := (F4.step state.context limits state.generators state.checkpoint).run workspace
       state := { state with workspace }
       match result with
       | .error error => return failure state error

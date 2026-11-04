@@ -464,6 +464,19 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_append_zeros(lean_obj_arg output,b_le
     result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
 }
 
+/* Queueing/clearing does not grow the bitmap. Shared copies need precisely
+   its logical size; explicit borrowed aliases preserve the linear mark. */
+static lean_object *support_own(lean_obj_arg bits,int alias) {
+    if(!alias && lean_is_exclusive(bits)) return bits;
+    size_t size=lean_sarray_size(bits);
+    if(alias) {
+        int linear=lean_sarray_is_marked_linear(bits);
+        bits=lean_copy_sarray(bits,size);
+        if(linear)lean_sarray_mark_linear_core(bits);
+    } else bits=lean_copy_sarray_nonlinear(bits,size);
+    return bits;
+}
+
 /* Native.Support.queuePortable. Validate the entire bounded slice before any
    writes; retain a borrowed alias while copy-on-write replaces the bitmap. */
 LEAN_EXPORT lean_obj_res lean_hex_groebner_queue_support(uint64_t count,
@@ -480,7 +493,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_queue_support(uint64_t count,
         if(read_le(source+(start+i)*4,4)>=count) goto invalid_support;
     if(terms) {
         if(bits==ids) {alias=bits;lean_inc(alias);}
-        bits=remap_reserve(bits,bit_bytes,alias!=NULL);
+        bits=support_own(bits,alias!=NULL);
         uint8_t *target=lean_sarray_cptr(bits);
         for(size_t i=0;i<terms;++i) {
             uint64_t id=read_le(source+(start+i)*4,4);
@@ -517,7 +530,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_clear_support(lean_obj_arg bits,
     }
     lean_dec(max_id);
     if(terms) {
-        bits=remap_reserve(bits,bytes,0);
+        bits=support_own(bits,0);
         uint8_t *target=lean_sarray_cptr(bits);
         for(size_t i=0;i<terms;++i) {
             uint64_t id=lean_uint64_of_nat(lean_array_cptr(queue)[start+i]);

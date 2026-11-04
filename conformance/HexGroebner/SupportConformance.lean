@@ -39,6 +39,11 @@ def queueChecks (seed : Nat) : Bool := Id.run do
   let ids := packed #[8,0,8,7,9,7,1]
   let some (bits,queued) := Native.Support.queue 10 ids 0 7 (zeroes 2) #[999] | return false
   if bits != ⟨#[131,3]⟩ || queued != #[999,8,0,7,9,1] then return false
+  -- Reused scratch may exceed the current arena's required prefix.
+  let wide : ByteArray := ⟨#[0,0,173,91]⟩
+  let expected := Native.Support.queuePortable 10 ids 0 7 wide #[999]
+  let some (actual,queued) := Native.Support.queue 10 ids 0 7 wide #[999] | return false
+  if some (actual,queued) != expected || actual[2]! != 173 || actual[3]! != 91 then return false
   -- Maximum slice is accepted; the next term is rejected rather than truncated.
   let ids := packed ((Array.range 4097).map fun i => (i+seed)%65)
   let expected := Native.Support.queuePortable 65 ids 0 4096 (zeroes 9) #[]

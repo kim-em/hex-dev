@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexGroebner
 import HexGroebner.PairRows
 
 namespace Hex.Groebner.PairRowsConformance
@@ -206,8 +207,10 @@ def chunkChecks (seed : Nat) (native : Bool) : Bool := Id.run do
         second.support != p.support || second.coefficients != p.coefficients then return false
     if middle.allocatedBytes-before.allocatedBytes != after.allocatedBytes-middle.allocatedBytes+5000 then
       return false
-    let scratch := (← get).support
-    return scratch.bits.size == 5000 && scratch.queue.size == 4200
+    if (← get).support.bits.size != 5000 || (← get).support.queue.size != 4200 then return false
+    let beforeClear := (← get).statistics.work
+    resetSupport limits
+    return (← get).statistics.work == beforeClear+4200 && (← get).support.queue.isEmpty
   match action.run { table := { arity := 1 } } with
   | (.ok value,_) => value
   | _ => false
@@ -242,5 +245,35 @@ def scratchChecks (native : Bool) : Bool := Id.run do
 
 #guard scratchChecks false
 #guard scratchChecks true
+
+
+private def canonical (raw : RawPolynomial) : Certificate.Polynomial :=
+  raw.foldl (fun f term => if term.coefficient == 0 then f else
+    Hex.MvPoly.Kernel.addMod 7 f [(term.exponents.toList,term.coefficient.toNat)]) []
+
+/-- Exercise the public deterministic, sampled and certificate-producing outer
+loops. Every route performs multiple rounds; counters surround these calls in
+IO so a direct exclusive-workspace test cannot substitute for this coverage. -/
+def systemChecks (seed route : Nat) : Bool := Id.run do
+  let context : Context := ⟨field,2,.grevlex⟩
+  let raw : Array RawPolynomial := #[#[⟨#[2,0],1⟩,⟨#[0,1],6⟩],
+    #[⟨#[1,1],1⟩,⟨#[0,0],(1+seed%6).toUInt64⟩]]
+  let .candidate expected _ := computeWith context { nativeMonomials := false,nativeRows := false } raw |
+    return false
+  match route with
+  | 0 =>
+    let .candidate actual stats := computeWith context {} raw seed.toUInt64 | return false
+    return stats.rounds ≥ 2 && actual.polynomials == expected.polynomials && actual.randomState == seed.toUInt64
+  | 1 =>
+    let .candidate actual stats _ := Sampled.computeWith context {} raw (Hex.Rand.ofSeed seed) | return false
+    return stats.rounds ≥ 2 && actual.polynomials == expected.polynomials
+  | 2 =>
+    let .candidate actual stats := Producer.computeWith context {} 1000000 raw | return false
+    return stats.rounds ≥ 2 && actual.polynomials == expected.polynomials.map canonical
+  | _ => return false
+
+#guard systemChecks 0 0
+#guard systemChecks 0 1
+#guard systemChecks 0 2
 
 end Hex.Groebner.PairRowsConformance

@@ -195,7 +195,9 @@ def allocate (limits : Limits) (amount : Nat) : Computation Unit := do
   set { s with statistics.allocatedBytes := allocated }
 
 /-- Move scratch buffers out of the state before calling an owned operation.
-Invalid internal geometry discards scratch only; charged state is preserved. -/
+Invalid internal geometry discards scratch only; charged state is preserved.
+A later raw retry after that representation error must reserve fresh payload;
+ordinary allowance exhaustion preserves the existing scratch. -/
 private def supportStep (operation : ByteArray → Array Nat → Option (ByteArray × Array Nat)) :
     Computation Unit := ExceptT.mk fun state =>
   let bits := state.support.bits
@@ -310,9 +312,7 @@ def inverse (field : PrimeField) (limits : Limits) (a : UInt64) : Computation UI
 
 /-- Bottom-up stable merge sort of identifiers. Reserves the worst-case number
 of exponent comparisons before sorting; it never allocates exponent vectors. -/
-def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (Array Nat) := do
-  let table := (← get).table
-  spend limits (ids.size * (ids.size.log2 + 1) * (context.variables + 1))
+private def sortIds (table : MonomialTable) (order : TermOrder) (ids : Array Nat) : Array Nat := Id.run do
   let mut source := ids
   let mut destination := Array.replicate ids.size 0
   let mut width := 1
@@ -325,7 +325,7 @@ def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (
       let mut left := start
       let mut right := middle
       for out in [start:stop] do
-        if left < middle && (right ≥ stop || table.compare context.order source[left]! source[right]! != .lt) then
+        if left < middle && (right ≥ stop || table.compare order source[left]! source[right]! != .lt) then
           destination := destination.set! out source[left]!
           left := left + 1
         else
@@ -336,6 +336,22 @@ def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (
     destination := old
     width := width * 2
   return source
+
+
+/-- Reserve comparisons before moving identifiers into the stable sort. -/
+def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (Array Nat) := do
+  let table := (← get).table
+  spend limits (ids.size * (ids.size.log2 + 1) * (context.variables + 1))
+  return sortIds table context.order ids
+
+/-- Sort the owned visited queue and retain the resulting columns for clearing.
+This avoids holding a second owner of the unsorted ping-pong buffer. -/
+def sortSupport (context : Context) (limits : Limits) : Computation (Array Nat) := do
+  let count := (← get).support.queue.size
+  spend limits (count * (count.log2 + 1) * (context.variables + 1))
+  let table := (← get).table
+  supportStep fun bits queue => some (bits,sortIds table context.order queue)
+  return (← get).support.queue
 
 end Computation
 end Hex.Groebner
