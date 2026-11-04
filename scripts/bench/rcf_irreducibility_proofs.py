@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Compare reconstruction and imported reuse of one supplied RCF proof.
 
-Both fresh modules prove the same degree-eight common-field sentence with
+Both fresh modules use explicit legacy Coefficients.prepare/Environment.prove
+to prove the same degree-eight common-field sentence with
 matched imports, including the owner's private executable factorizer closure.
-Only the reference reconstructs its irreducibility theorem. This diagnoses
+Only the reference reconstructs its irreducibility theorem. Automatic finite
+replay is independent of this instance and is not measured here. This diagnoses
 construction cost; it is neither automatic-certification evidence nor a
 comparison of the ordinary-import consumer's smaller dependency cone.
 """

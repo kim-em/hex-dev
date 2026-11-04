@@ -6,6 +6,7 @@ Authors: Kim Morrison
 import HexRCF.FiniteCoordinates
 import HexRCF.FiniteSourceTactic
 import HexRCF.ProofEvidence
+import HexRCF.FiniteEvidence
 import Lean
 open Lean Meta
 set_option maxHeartbeats 8000000
@@ -30,18 +31,17 @@ run_meta withoutExporting do
       ``Hex.RCF.RealCoefficients.FieldIsolate.propose?,
       ``Hex.Sturm.queryPrepared, ``Hex.QAdjoin.common] do
     if dependencies.contains name then throwError "forbidden finite source dependency: {name}"
-  let type := (← getConstInfo ``Hex.RCF.FiniteCoordinates.values).type
-  let some presentation := type.find? (·.isAppOfArity ``Hex.RCF.RealCoefficients.Field.literalRep 4) |
-    throwError "missing literal common presentation"
-  let common := presentation.getAppArgs[0]!
-  if ← Hex.RCF.ProofEvidence.quotesClass dependencies ``Hex.ZPoly.CheckedIrreducible common then
-    throwError "finite source proof quotes irreducibility of the new common presentation"
+  let sources := #[Hex.RCF.CertificationInputs.polynomial,
+    Hex.RCF.RealCoefficients.SquareTwo.polynomial]
+  let mut presentations : Nat := 0
   let fourth := ``Hex.RCF.FiniteSourceTactic.fourthRoot
   let fourthDependencies ← Hex.RCF.ProofEvidence.projectDependencies #[fourth]
   if fourthDependencies.contains ``Hex.ZPoly.CheckedIrreducible then
     throwError "finite fourth-root source proof quotes whole-field irreducibility"
   let mut bodies : Nat := 0
   for root in roots.push fourth do
+    let required := if root == fourth then #[2] else #[8]
+    presentations := presentations + (← Hex.RCF.FiniteEvidence.checkClasses root sources required)
     let axioms ← collectAxioms root
     unless axioms.toList.mergeSort Name.quickLt ==
         [``propext, ``Classical.choice, ``Quot.sound].mergeSort Name.quickLt do
@@ -57,4 +57,4 @@ run_meta withoutExporting do
         declaration none (doCheck := true)
       bodies := bodies+1
   unless bodies == 16 do throwError "missing source body rechecks"
-  logInfo m!"FRESH_FINITE_SOURCE: roots=8; bodies={bodies}; dependencies={dependencies.size}; fourth_dependencies={fourthDependencies.size}; standard_axioms_only"
+  logInfo m!"FRESH_FINITE_SOURCE: roots=8; bodies={bodies}; dependencies={dependencies.size}; fourth_dependencies={fourthDependencies.size}; presentations={presentations}; standard_axioms_only"

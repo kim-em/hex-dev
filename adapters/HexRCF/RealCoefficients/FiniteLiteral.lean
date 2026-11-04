@@ -15,7 +15,7 @@ open Hex Lean Meta Qq
 used only to produce the frozen candidate; its proof is never quoted here.
 The expected quantified formula is constructed independently of the candidate.
 The caller authenticates the original source and divisor proofs. -/
-meta def prove {p : ZPoly} {s : DyadicSquare}
+private meta def proveCore {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
     (pExpr rootExpr valuesExpr formulaExpr : Expr)
@@ -47,12 +47,19 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
   let candidate ← mkFreshExprMVar (← mkEq check q(true))
   let lemmas ← FieldLiteral.evidenceLemmas
   let checker := mkIdent checkName
-  let remaining ← profileitM Exception "rcf finite literal replay" (← getOptions) do
-    Elab.runTactic' candidate.mvarId! (← `(tactic|
+  let script ← if FieldLiteral.rcf.algebraic.singleReplay.get (← getOptions) then
+    `(tactic|
+      (simp only [$checker:ident,FieldIsolation.check,FieldQuery.check,FieldQuery.covered,
+        FieldRootSigns.Table.checkTransport,FieldRootSigns.Table.checkRows,
+        FieldTransport.leadingCheck,$lemmas,*]; try (decide +kernel)))
+  else
+    `(tactic|
       (simp only [$checker:ident,FieldIsolation.check,FieldQuery.check,FieldQuery.covered,
         FieldRootSigns.Table.checkTransport,FieldRootSigns.Table.checkRows,
         FieldTransport.leadingCheck,$lemmas,*,Bool.and_eq_true];
-       repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel))))
+       repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
+  let remaining ← profileitM Exception "rcf finite literal replay" (← getOptions) do
+    Elab.runTactic' candidate.mvarId! script
   unless remaining.isEmpty do throwError "rcf: finite real-cell replay left unproved obligations"
   let accepted ← instantiateMVars candidate
   let accepted ← if indexed then do
@@ -95,5 +102,23 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
     | .forallReal => mkForallFVars #[x] body
     | .existsReal => mkAppM ``Exists #[← mkLambdaFVars #[x] body]
   Hex.RCF.checkProof `Hex.RCF.RealCoefficients.FiniteLiteral.prove expected proof
+
+/-- Produce and quote finite evidence with ordinary kernel checking enabled.
+Failure restores caller state. The caller separately authenticates the original
+source identities and every original divisor before invoking this fixed-formula
+interface. Both replay modes have the same envelope and soundness theorem. -/
+meta def prove {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) : MetaM Expr := do
+  let saved ← saveState
+  let (proof, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
+    proveCore pExpr rootExpr valuesExpr formulaExpr values formula quantifier extraSignKeys)
+    (fun result => unless result.isSome do saved.restore)
+  return proof
 
 end Hex.RCF.RealCoefficients.FiniteLiteral

@@ -875,7 +875,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.FieldReplay,
     `HexRCF.RealCoefficients.FieldRefinement,
     `HexRCF.RealCoefficients.FieldLiteral,
-      `HexRCF.RealCoefficients.FiniteLiteral, `HexRCF.RealCoefficients.FiniteIndex,
+    `HexRCF.RealCoefficients.FiniteLiteral, `HexRCF.RealCoefficients.FiniteIndex,
     `HexRCF.RealCoefficients.FieldRuntime,
     `HexRCF.RealCoefficients.Preparation,
     `HexRCF.RealCoefficients.FiniteReplay, `HexRCF.RealCoefficients.FiniteSigns,
@@ -1528,7 +1528,7 @@ lean_lib HexConformance where
       `HexRCF.FiniteCoordinates, `HexRCF.FiniteSourceTactic,
       `HexRCF.FiniteSourceProofs, `HexRCF.FiniteIndexChecks,
       `HexRCF.FiniteNestedSources, `HexRCF.FiniteDefault,
-      `HexRCF.FiniteDefaultProofs].map Glob.one
+      `HexRCF.FiniteDefaultProofs, `HexRCF.FiniteEvidence].map Glob.one
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
       `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicTheory.FieldSignConformance].map Glob.one

@@ -31,6 +31,33 @@ private meta def checked {p : ZPoly} {root : SimpleRoot p}
     throwError "rcf: fixed-field arithmetic proof has the wrong source"
   return result
 
+/-- Share checked nonvanishing proofs within one fixed interpretation.
+Native coordinate equality only selects a candidate: different quoted forms
+are identified again by an ordinary-kernel coordinate equality proof. The
+caller still retains every original source divisor and its identity. -/
+meta def memoNonzero {p : ZPoly} {root : SimpleRoot p}
+    (rep : Expr) (prove : Result p root → MetaM Expr) :
+    MetaM (Result p root → MetaM Expr) := do
+  let cache ← IO.mkRef (#[] : Array (Result p root × Expr))
+  return fun value => do
+    for (previous, proof) in ← cache.get do
+      if previous.value = value.value then
+        if previous.expression == value.expression then return proof
+        let equality ← mkDecideProof (← mkEq value.expression previous.expression)
+        let interpretation ← withLocalDeclD `a (← inferType value.expression) fun a => do
+          mkLambdaFVars #[a] (← mkAppM ``Field.value #[rep,a])
+        let same ← mkAppM ``congrArg #[interpretation,equality]
+        let left : Q(ℝ) ← mkAppM ``Field.value #[rep,value.expression]
+        let right : Q(ℝ) ← mkAppM ``Field.value #[rep,previous.expression]
+        let same : Q($left = $right) ← pure same
+        let guard : Q($right ≠ 0) ← pure proof
+        return q(fun zero : $left = 0 => $guard (Eq.trans (Eq.symm $same) zero))
+    let interpreted : Q(ℝ) ← mkAppM ``Field.value #[rep,value.expression]
+    let proof ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.FieldCompile.memoNonzero
+      q($interpreted ≠ 0) (← prove value)
+    cache.modify (·.push (value,proof))
+    return proof
+
 private meta def quotient {p : ZPoly} {root : SimpleRoot p}
     [ZPoly.CheckedIrreducible p] (pExpr rootExpr rep hrep hr : Expr)
     (a b : Result p root) (source : Expr) : MetaM (Result p root) := do

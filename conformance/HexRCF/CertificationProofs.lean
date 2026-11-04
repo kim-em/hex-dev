@@ -169,6 +169,24 @@ set_option maxHeartbeats 5000000 in
 theorem common_positive : ∀ x : ℝ,
     x ^ 2 + realAlgebraic.toReal + quadraticRoot.toReal > 0 := by rcf
 
+-- The editable legacy environment still requests a whole-field certificate;
+-- its refusal remains distinct from automatic finite replay's success above.
+set_option maxRecDepth 32768 in
+open Lean Meta Qq in
+run_meta do
+  let before := (← getEnv).constants.map₂.toList.length
+  let rejected ← try
+    let _ ← Coefficients.prepare q(∀ x : ℝ,
+      x^2 + realAlgebraic.toReal + quadraticRoot.toReal > 0)
+    pure none
+  catch error => pure (some (← error.toMessageData.toString))
+  let some message := rejected | throwError "legacy preparation unexpectedly accepted the octic"
+  unless message.startsWith "rcf: no checked irreducibility witness for this common field" &&
+      (message.splitOn "CheckedIrreducible").length > 1 do
+    throwError "unexpected legacy preparation refusal: {message}"
+  unless (← getEnv).constants.map₂.toList.length == before do
+    throwError "legacy refusal retained temporary declarations"
+
 end Hex.RCF.CertificationProofs
 
 /-- info: 'Hex.RCF.CertificationProofs.compound_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/

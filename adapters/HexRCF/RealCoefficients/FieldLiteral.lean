@@ -435,9 +435,9 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
-    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) (preview : Bool := true) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
-  checkPreview values formula quantifier extraSignKeys validate data
+  if preview then checkPreview values formula quantifier extraSignKeys validate data
   let certificate ← profileitM Exception "rcf literal quotation" (← getOptions) do
     resultExpr pExpr rootExpr formulaExpr formula data
   let indexed := rcf.algebraic.indexSigns.get (← getOptions)
@@ -607,8 +607,10 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
   let data ← produceRefining values formula quantifier extraSignKeys validate
+  -- The exact returned data has just passed the producer's final preview.
+  -- Supplied frozen results still use quoteCertificate's mandatory default.
   quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
-    quantifier extraSignKeys (fun _ => pure ()) data
+    quantifier extraSignKeys (fun _ => pure ()) data (preview := false)
 
 /-- Construct the checked fixed-field proof when no additional sign queries
 are needed by an enclosing coefficient-presentation checker. -/

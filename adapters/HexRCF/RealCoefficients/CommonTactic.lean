@@ -528,151 +528,151 @@ private meta def coordinates (source : Reify.Source) (leafSources : Array Expr)
         extras := extras ++ [CommonPresentation.discSlack square (anchorCoordinates i)]
       -- The actual native generator supplies field operations for search.
       -- Source identities and finite guards do not quote this instance.
-      letI : ZPoly.CheckedIrreducible p := common.generator.checked
-      do
-        let sourcePolyRuntime : Fin n → DensePoly Rat := fun i =>
-          (sourcePolys[i.val]?).getD (DensePoly.ofList [])
-        let sourceSquareRuntime : Fin n → DyadicSquare := fun i =>
-          (sourceSquares[i.val]?).getD s
-        let some table := FieldBuild.buildTable p s hw hp extras |
-          throwError "rcf: common-field source sign search failed"
-        unless CommonPresentation.checkPresentation hw hp table
-            sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
-          throwError "rcf: common-field source presentation rejected"
+      let _ : ZPoly.CheckedIrreducible p := common.generator.checked
+      let sourcePolyRuntime : Fin n → DensePoly Rat := fun i =>
+        (sourcePolys[i.val]?).getD (DensePoly.ofList [])
+      let sourceSquareRuntime : Fin n → DyadicSquare := fun i =>
+        (sourceSquares[i.val]?).getD s
+      let some table := FieldBuild.buildTable p s hw hp extras |
+        throwError "rcf: common-field source sign search failed"
+      unless CommonPresentation.checkPresentation hw hp table
+          sourcePolyRuntime sourceSquareRuntime anchorCoordinates do
+        throwError "rcf: common-field source presentation rejected"
+      let table ← FieldLiteral.prepareSigns table
+      let signTable ← FieldLiteral.signTableExpr pExpr rootExpr table
+      let checked ← mkAppM ``CommonPresentation.checkPresentation
+        #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr]
+      let checkedGoal ← mkAppM ``Eq #[checked, mkConst ``Bool.true]
+      let checkedProof ← kernelDecide checkedGoal
+      let sourceValues ← FieldLiteral.finiteExpr (mkConst ``Real) leafSources leafSources[0]!
+      let finType := mkApp (mkConst ``Fin) (mkNatLit n)
+      let anchorReals := plans.map (·.anchorReal)
+      let anchorValues ← FieldLiteral.finiteExpr (mkConst ``Real)
+        anchorReals anchorReals[0]!
+      let hwGoal ← withLocalDeclD `i finType fun i => do
+        let pAt := mkApp sourcePFn i
+        let sAt := mkApp sourceSquareFn i
+        mkForallFVars #[i] (← mkAppM ``atomWitness #[pAt, sAt])
+      let hpGoal ← withLocalDeclD `i finType fun i => do
+        let pAt : Q(ZPoly) := mkApp sourcePFn i
+        let sAt : Q(DyadicSquare) := mkApp sourceSquareFn i
+        let body : Q(Prop) := q((mahlerPrec $pAt : Int) ≤ ($sAt).prec)
+        mkForallFVars #[i] body
+      let hwProof ← FieldLiteral.proveFinCases hwGoal sourceWitnesses
+      let hpProof ← FieldLiteral.proveFinCases hpGoal sourcePrecisions
+      let hpolyProof ← withLocalDeclD `i finType fun i => do
+        let pAt := mkApp sourcePFn i
+        let body ← mkAppM ``ZPoly.toRatPoly #[pAt]
+        let eq ← mkEqRefl body
+        mkLambdaFVars #[i] eq
+      let hselectedGoal ← withLocalDeclD `i finType fun i => do
+        let pAt := mkApp sourcePFn i
+        let sAt := mkApp sourceSquareFn i
+        let hwAt := mkApp hwProof i
+        let hpAt := mkApp hpProof i
+        let rep ← mkAppM ``Field.literalRep #[pAt, sAt, hwAt, hpAt]
+        let root ← mkAppM ``HexRootsTheory.RefinedIsolation.root #[rep]
+        let realPart ← mkAppM ``Complex.re #[root]
+        let valueAt := mkApp anchorValues i
+        let body ← mkAppM ``Eq #[realPart, valueAt]
+        mkForallFVars #[i] body
+      let hselectedProof ← FieldLiteral.proveFinCases hselectedGoal selectedProofs
+      let hvalueGoal ← withLocalDeclD `i finType fun i => do
+        let fieldAt := mkApp fieldFn i
+        let anchorAt := mkApp anchorValues i
+        let polynomial ← mkAppM ``LiteralSign.realPoly #[fieldAt]
+        let evaluated ← mkAppM ``Polynomial.eval #[anchorAt, polynomial]
+        let body ← mkAppM ``Eq #[evaluated, mkApp sourceValues i]
+        mkForallFVars #[i] body
+      let hvalueProof ← FieldLiteral.proveFinCases hvalueGoal
+        (plans.map (·.sourceProof))
+      let eqVal ← mkAppM ``CommonPresentation.checkPolynomials_sound
+        #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr,
+          sourcePFn, hwProof, hpProof, hpolyProof, anchorValues,
+          hselectedProof, fieldFn, sourceValues, hvalueProof, checkedProof]
+      let leaf (e : Expr) : MetaM (Option (FieldCompile.Result p
+          (SimpleRoot.ofSquare p s hw hp))) := do
+        let some index := leafSources.idxOf? e | return none
+        if hindex : index < n then
+          let indexExpr ← mkAppM ``Fin.mk #[mkNatLit index,
+            ← mkDecideProof (← mkAppM ``LT.lt #[mkNatLit index, mkNatLit n])]
+          let proof ← mkAppM ``congrFun #[eqVal, indexExpr]
+          return some ⟨values ⟨index, hindex⟩, mkApp valuesExpr indexExpr, proof⟩
+        else throwError "rcf: source leaf index exceeds common coordinates"
+      let repExpr ← mkAppM ``Field.literalRep #[pExpr, sExpr, hwExpr, hpExpr]
+      let hrepExpr ← mkAppM ``Field.literalRep_mk #[pExpr, sExpr, hwExpr, hpExpr]
+      let hrealExpr ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
+      let hrExpr ← mkAppM ``Field.literalRep_real
+        #[pExpr, sExpr, hwExpr, hpExpr, hrealExpr]
+      let nonzero (value : FieldCompile.Result p (SimpleRoot.ofSquare p s hw hp)) :
+          MetaM Expr := do
+        let some table := FieldBuild.buildTable p s hw hp [value.value] |
+          throwError "rcf: original divisor sign production failed"
+        let some observed := table.lookup? value.value |
+          throwError "rcf: original divisor sign is missing"
+        if observed == 0 then throwError "rcf: original closed divisor is zero"
         let table ← FieldLiteral.prepareSigns table
-        let signTable ← FieldLiteral.signTableExpr pExpr rootExpr table
-        let checked ← mkAppM ``CommonPresentation.checkPresentation
-          #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr]
-        let checkedGoal ← mkAppM ``Eq #[checked, mkConst ``Bool.true]
-        let checkedProof ← kernelDecide checkedGoal
-        let sourceValues ← FieldLiteral.finiteExpr (mkConst ``Real) leafSources leafSources[0]!
-        let finType := mkApp (mkConst ``Fin) (mkNatLit n)
-        let anchorReals := plans.map (·.anchorReal)
-        let anchorValues ← FieldLiteral.finiteExpr (mkConst ``Real)
-          anchorReals anchorReals[0]!
-        let hwGoal ← withLocalDeclD `i finType fun i => do
-          let pAt := mkApp sourcePFn i
-          let sAt := mkApp sourceSquareFn i
-          mkForallFVars #[i] (← mkAppM ``atomWitness #[pAt, sAt])
-        let hpGoal ← withLocalDeclD `i finType fun i => do
-          let pAt : Q(ZPoly) := mkApp sourcePFn i
-          let sAt : Q(DyadicSquare) := mkApp sourceSquareFn i
-          let body : Q(Prop) := q((mahlerPrec $pAt : Int) ≤ ($sAt).prec)
-          mkForallFVars #[i] body
-        let hwProof ← FieldLiteral.proveFinCases hwGoal sourceWitnesses
-        let hpProof ← FieldLiteral.proveFinCases hpGoal sourcePrecisions
-        let hpolyProof ← withLocalDeclD `i finType fun i => do
-          let pAt := mkApp sourcePFn i
-          let body ← mkAppM ``ZPoly.toRatPoly #[pAt]
-          let eq ← mkEqRefl body
-          mkLambdaFVars #[i] eq
-        let hselectedGoal ← withLocalDeclD `i finType fun i => do
-          let pAt := mkApp sourcePFn i
-          let sAt := mkApp sourceSquareFn i
-          let hwAt := mkApp hwProof i
-          let hpAt := mkApp hpProof i
-          let rep ← mkAppM ``Field.literalRep #[pAt, sAt, hwAt, hpAt]
-          let root ← mkAppM ``HexRootsTheory.RefinedIsolation.root #[rep]
-          let realPart ← mkAppM ``Complex.re #[root]
-          let valueAt := mkApp anchorValues i
-          let body ← mkAppM ``Eq #[realPart, valueAt]
-          mkForallFVars #[i] body
-        let hselectedProof ← FieldLiteral.proveFinCases hselectedGoal selectedProofs
-        let hvalueGoal ← withLocalDeclD `i finType fun i => do
-          let fieldAt := mkApp fieldFn i
-          let anchorAt := mkApp anchorValues i
-          let polynomial ← mkAppM ``LiteralSign.realPoly #[fieldAt]
-          let evaluated ← mkAppM ``Polynomial.eval #[anchorAt, polynomial]
-          let body ← mkAppM ``Eq #[evaluated, mkApp sourceValues i]
-          mkForallFVars #[i] body
-        let hvalueProof ← FieldLiteral.proveFinCases hvalueGoal
-          (plans.map (·.sourceProof))
-        let eqVal ← mkAppM ``CommonPresentation.checkPolynomials_sound
-          #[hwExpr, hpExpr, signTable, sourcePolyFn, sourceSquareFn, anchorExpr,
-            sourcePFn, hwProof, hpProof, hpolyProof, anchorValues,
-            hselectedProof, fieldFn, sourceValues, hvalueProof, checkedProof]
-        let leaf (e : Expr) : MetaM (Option (FieldCompile.Result p
-            (SimpleRoot.ofSquare p s hw hp))) := do
-          let some index := leafSources.idxOf? e | return none
-          if hindex : index < n then
-            let indexExpr ← mkAppM ``Fin.mk #[mkNatLit index,
-              ← mkDecideProof (← mkAppM ``LT.lt #[mkNatLit index, mkNatLit n])]
-            let proof ← mkAppM ``congrFun #[eqVal, indexExpr]
-            return some ⟨values ⟨index, hindex⟩, mkApp valuesExpr indexExpr, proof⟩
-          else throwError "rcf: source leaf index exceeds common coordinates"
-        let repExpr ← mkAppM ``Field.literalRep #[pExpr, sExpr, hwExpr, hpExpr]
-        let hrepExpr ← mkAppM ``Field.literalRep_mk #[pExpr, sExpr, hwExpr, hpExpr]
-        let hrealExpr ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
-        let hrExpr ← mkAppM ``Field.literalRep_real
-          #[pExpr, sExpr, hwExpr, hpExpr, hrealExpr]
-        let nonzero (value : FieldCompile.Result p (SimpleRoot.ofSquare p s hw hp)) :
-            MetaM Expr := do
-          let some table := FieldBuild.buildTable p s hw hp [value.value] |
-            throwError "rcf: original divisor sign production failed"
-          let some observed := table.lookup? value.value |
-            throwError "rcf: original divisor sign is missing"
-          if observed == 0 then throwError "rcf: original closed divisor is zero"
-          let table ← FieldLiteral.prepareSigns table
-          let tableExpr ← FieldLiteral.signTableExpr pExpr rootExpr table
-          let check ← mkAppM ``Field.checkSignTable
-            #[pExpr, sExpr, hwExpr, hpExpr, tableExpr]
-          let checked ← kernelDecide (← mkEq check q(true))
-          let lookup ← mkAppM ``LiteralSign.Table.lookup? #[tableExpr, value.expression]
-          let hit ← mkDecideProof (← mkEq lookup (← mkAppM ``Option.some #[mkIntLit observed]))
-          let hn ← mkDecideProof (← mkAppM ``Ne #[mkIntLit observed, mkIntLit 0])
-          mkAppM ``FieldTransport.nonzero
-            #[tableExpr, checked, value.expression, mkIntLit observed, hit, hn]
-        let mut divisorProofs : Array Expr := #[]
-        let mut divisorValues := []
-        let mut divisorExpressions : Array Expr := #[]
-        let mut divisorIdentities : Array Expr := #[]
-        for divisor in source.divisors do
-          let (lowered, equality) ← Reify.lowerWithProof #[] divisor
-          let compiled ← FieldCompile.compileGuarded pExpr rootExpr repExpr hrepExpr hrExpr leaf nonzero lowered
-          let originalProof ← mkEqTrans compiled.proof (← mkEqSymm equality)
-          let coordinateValue : Q(ℝ) ← mkAppM ``Field.value #[repExpr, compiled.expression]
-          let divisorQ : Q(ℝ) ← pure divisor
-          let equality : Q($coordinateValue = $divisorQ) ← pure originalProof
-          let nonvanishing : Q($coordinateValue ≠ 0) ← nonzero compiled
-          let proof := q(fun h : $divisorQ = 0 => $nonvanishing (Eq.trans $equality h))
-          divisorProofs := divisorProofs.push proof
-          divisorValues := divisorValues ++ [compiled.value]
-          divisorExpressions := divisorExpressions.push compiled.expression
-          divisorIdentities := divisorIdentities.push originalProof
-        let mut compiled : Array (FieldCompile.Result p
-            (SimpleRoot.ofSquare p s hw hp)) := #[]
-        for coefficient in source.coefficients do
-          compiled := compiled.push (← FieldCompile.compileGuarded pExpr rootExpr repExpr hrepExpr hrExpr
-            leaf nonzero coefficient)
-        let m := compiled.size
-        let targetValues : Fin m → PolyQuot p (SimpleRoot.ofSquare p s hw hp) :=
-          fun i => compiled[i.val].value
-        let targetEntries := compiled.map (·.expression)
-        let fieldType ← mkAppM ``PolyQuot #[pExpr, rootExpr]
-        let zeroExpr := mkApp3 (mkConst ``PolyQuot.ofRat) pExpr rootExpr q((0 : Rat))
-        let targetExpr ← FieldLiteral.finiteExpr fieldType targetEntries zeroExpr
-        let formula ← FieldRuntime.evalFormula m source.formula
-        let some (quantifier, qf) := oneQuantifier formula |
-          throwError "rcf: expected one real quantifier over a matrix"
-        let formulaWhnf ← whnf source.formula
-        let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
-        let qfExpr := matrixExpr.getAppArgs.back!
-        let targetFin := mkApp (mkConst ``Fin) (mkNatLit m)
-        let targetEqGoal ← withLocalDeclD `i targetFin fun i => do
-          let interpreted ← mkAppM ``Field.value #[repExpr, mkApp targetExpr i]
-          mkForallFVars #[i] (← mkEq interpreted (mkApp source.valuation i))
-        let pointwise ← FieldLiteral.proveFinCases targetEqGoal (compiled.map (·.proof))
-        let eqVal ← mkAppM ``funext #[pointwise]
-        let close (expression : Expr) : MetaM Expr := do
-          instantiateMVars expression
-        return {
-          source, polynomial := p, square := s, witness := hw, precision := hp,
-          checked := common.generator.checked, arity := m, values := targetValues,
-          formula := qf, quantifier, polynomialExpr := pExpr, rootExpr,
-          valuesExpr := ← close targetExpr, formulaExpr := qfExpr,
-          valuationProof := ← close eqVal, divisorProofs,
-          divisors := divisorValues, divisorExpressions, divisorIdentities
-        }
+        let tableExpr ← FieldLiteral.signTableExpr pExpr rootExpr table
+        let check ← mkAppM ``Field.checkSignTable
+          #[pExpr, sExpr, hwExpr, hpExpr, tableExpr]
+        let checked ← kernelDecide (← mkEq check q(true))
+        let lookup ← mkAppM ``LiteralSign.Table.lookup? #[tableExpr, value.expression]
+        let hit ← mkDecideProof (← mkEq lookup (← mkAppM ``Option.some #[mkIntLit observed]))
+        let hn ← mkDecideProof (← mkAppM ``Ne #[mkIntLit observed, mkIntLit 0])
+        mkAppM ``FieldTransport.nonzero
+          #[tableExpr, checked, value.expression, mkIntLit observed, hit, hn]
+      let nonzero ← FieldCompile.memoNonzero repExpr nonzero
+      let mut divisorProofs : Array Expr := #[]
+      let mut divisorValues := []
+      let mut divisorExpressions : Array Expr := #[]
+      let mut divisorIdentities : Array Expr := #[]
+      for divisor in source.divisors do
+        let (lowered, equality) ← Reify.lowerWithProof #[] divisor
+        let compiled ← FieldCompile.compileGuarded pExpr rootExpr repExpr hrepExpr hrExpr leaf nonzero lowered
+        let originalProof ← mkEqTrans compiled.proof (← mkEqSymm equality)
+        let coordinateValue : Q(ℝ) ← mkAppM ``Field.value #[repExpr, compiled.expression]
+        let divisorQ : Q(ℝ) ← pure divisor
+        let equality : Q($coordinateValue = $divisorQ) ← pure originalProof
+        let nonvanishing : Q($coordinateValue ≠ 0) ← nonzero compiled
+        let proof := q(fun h : $divisorQ = 0 => $nonvanishing (Eq.trans $equality h))
+        divisorProofs := divisorProofs.push proof
+        divisorValues := divisorValues ++ [compiled.value]
+        divisorExpressions := divisorExpressions.push compiled.expression
+        divisorIdentities := divisorIdentities.push originalProof
+      let mut compiled : Array (FieldCompile.Result p
+          (SimpleRoot.ofSquare p s hw hp)) := #[]
+      for coefficient in source.coefficients do
+        compiled := compiled.push (← FieldCompile.compileGuarded pExpr rootExpr repExpr hrepExpr hrExpr
+          leaf nonzero coefficient)
+      let m := compiled.size
+      let targetValues : Fin m → PolyQuot p (SimpleRoot.ofSquare p s hw hp) :=
+        fun i => compiled[i.val].value
+      let targetEntries := compiled.map (·.expression)
+      let fieldType ← mkAppM ``PolyQuot #[pExpr, rootExpr]
+      let zeroExpr := mkApp3 (mkConst ``PolyQuot.ofRat) pExpr rootExpr q((0 : Rat))
+      let targetExpr ← FieldLiteral.finiteExpr fieldType targetEntries zeroExpr
+      let formula ← FieldRuntime.evalFormula m source.formula
+      let some (quantifier, qf) := oneQuantifier formula |
+        throwError "rcf: expected one real quantifier over a matrix"
+      let formulaWhnf ← whnf source.formula
+      let matrixExpr ← whnf formulaWhnf.getAppArgs.back!
+      let qfExpr := matrixExpr.getAppArgs.back!
+      let targetFin := mkApp (mkConst ``Fin) (mkNatLit m)
+      let targetEqGoal ← withLocalDeclD `i targetFin fun i => do
+        let interpreted ← mkAppM ``Field.value #[repExpr, mkApp targetExpr i]
+        mkForallFVars #[i] (← mkEq interpreted (mkApp source.valuation i))
+      let pointwise ← FieldLiteral.proveFinCases targetEqGoal (compiled.map (·.proof))
+      let eqVal ← mkAppM ``funext #[pointwise]
+      let close (expression : Expr) : MetaM Expr := do
+        instantiateMVars expression
+      return {
+        source, polynomial := p, square := s, witness := hw, precision := hp,
+        checked := common.generator.checked, arity := m, values := targetValues,
+        formula := qf, quantifier, polynomialExpr := pExpr, rootExpr,
+        valuesExpr := ← close targetExpr, formulaExpr := qfExpr,
+        valuationProof := ← close eqVal, divisorProofs,
+        divisors := divisorValues, divisorExpressions, divisorIdentities
+      }
     else throwError "rcf: common square has insufficient precision"
   else throwError "rcf: common square failed its root witness"
 
@@ -726,7 +726,7 @@ private meta def proveFresh (prepared : Coefficients.Coordinates) : MetaM Expr :
     let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked
     let fixed ← FiniteLiteral.prove prepared.polynomialExpr prepared.rootExpr
       prepared.valuesExpr prepared.formulaExpr prepared.values prepared.formula
-      prepared.quantifier prepared.divisors
+      prepared.quantifier
     let congr ← withLocalDeclD `ρ (← inferType prepared.source.valuation) fun ρ => do
       let body ← mkAppM ``RealFormula.Prenex.toProp #[prepared.source.formula, ρ]
       mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, prepared.valuationProof]

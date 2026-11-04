@@ -663,8 +663,8 @@ Field signs first try exact rational Horner bounds on the authenticated
 generator interval. A strictly separated bound proves its sign; exactly
 `[0,0]` proves zero. Other zero-containing bounds retain a full rational Sturm
 query. Replay checks the recorded branch, and never rescues malformed query
-evidence with interval evaluation. The complete algebraic producer still
-succeeds on its proved input surface. Indexed sign retrieval below reduces
+evidence with interval evaluation. The separate exact-field producer retains its proved progress laws; the
+automatic finite handler remains bounded. Indexed sign retrieval below reduces
 fresh-module build time on the recorded examples.
 
 A four-round matched comparison on the further-root, reciprocal-root and cubic
@@ -771,40 +771,39 @@ kernel replay does not repeat inverse search. When all source coordinates use
 one selected generator, the adapter retains that generator and its existing
 power basis; it does not run general common-field search. Polynomial and
 isolation-square checks still authenticate every proposed source coordinate.
-If the common defining polynomial exactly matches an authenticated source's
-polynomial, quotation reuses its supplied `CheckedIrreducible` proof. The
-kernel proves equality of the original and literal polynomials and transports
-the source instance along that equality; runtime equality alone is insufficient.
-This supports source proofs beyond the frontend's
-single-witness and quadratic-norm search languages, including a checked real
-quartic with a multi-prime certificate. The fresh goal proofs use ordinary
-imports, including certificate construction and replay through the owner's
-public API.
+The automatic common-field handler checks the finite polynomial identities,
+signs and nonzero leading coefficients used by the answer. These checks
+transport complete root and cell evidence to the selected real interpretation;
+they do not require quotation of a new whole-field irreducibility certificate.
+The original algebraic constructors retain their own source certificates.
+Every original divisor is proved nonzero before producing a verdict, including
+a divisor removed by cancellation. A proposed quotient is checked by its
+multiplication identity, without quoting a global inverse law for the common
+coordinate presentation.
 
-For a new common polynomial, the frontend first checks for an existing
-`CheckedIrreducible` instance for its exact quoted `DensePoly.ofCoeffs` literal.
-It binds that literal to the runtime polynomial and checks the supplied proof's
-type, axiom dependencies and ordinary-kernel validity. A rejected proof or an
-instance-search resource failure is terminal. If no certificate language succeeds,
-the diagnostic prints the exact instance target. An instance written using
-`DensePoly.ofList` need not match instance search's transparency.
+The [automatic degree-eight and nested degree-sixteen examples](../../conformance/HexRCF/FiniteDefault.lean)
+combine the selected quartic with √2 and a further square root. Their actual
+source proofs are rechecked in a fresh module. Native common-field construction
+uses its actual checked number field, while the final proof uses the finite
+replay interface described in the checked-cell chapter.
 
-The [degree-eight regression](../../conformance/HexRCF/SuppliedIrreducibleProofs.lean)
-uses one previously proved instance for the compositum of the selected quartic
-and √2, enabled with `open scoped Hex.RCF.SuppliedIrreducible`;
-its kernel irreducibility check reuses that theorem. Common-field
-construction still runs the normal native algorithm during search.
+The explicit legacy `Coefficients.prepare` entry point returns an editable
+`Coefficients.Environment` containing a checked whole-field irreducibility
+proof. It independently validates that proof and can use a matching supplied
+`CheckedIrreducible` instance, or the available certificate languages. A rejected
+instance or a resource failure remains terminal. If those languages cannot
+certify a new common polynomial, this explicit API reports its exact instance
+target. The automatic finite handler does not have that extra requirement.
+`Coefficients.prepareCoordinates` exposes authenticated source preparation for
+the finite interface.
 
-The [matched construction-cost report](../../reports/hexrcf-irreducibility-cost.md)
-compares rebuilding this proof with importing it for the same degree-eight goal
-and private executable imports; it records shared-host running times and memory,
-without a general scaling or automatic-certification claim.
+The [supplied-instance regression](../../conformance/HexRCF/SuppliedIrreducibleProofs.lean)
+checks scoped instance visibility and explicit certification, while requiring
+its automatic goal proof to use finite replay independently of that instance.
+The [construction-cost report](../../reports/hexrcf-irreducibility-cost.md)
+is bound to the earlier whole-field proof route and its recorded source.
+It does not measure the current automatic finite handler.
 
-Without such an instance, the frontend tries quadratic-norm and free
-witness certificates, then the owner's multi-prime certificate producer and
-ordinary-kernel quotation. These certificate languages do not cover every
-irreducible common defining polynomial. Increasing a search bound need not
-resolve a refusal, and their failure does not imply reducibility.
 The cubic example below verifies
 `x / α = (α² − 1) * x` at the selected positive root of `X³ − X − 1`.
 The same example also uses the ordinary `QAdjoin.toAlgebraicNumber`
@@ -829,9 +828,9 @@ For multiple sources, the tactic checks a defining polynomial and selected
 real root for the common field, then verifies that every original coefficient
 has the proposed value there. The higher-degree example below combines the
 selected real root of `X³ − 2` with `Real.sqrt 2`.
-Some larger combinations still decline with an irreducibility-witness
-diagnostic: the current certificate search does not cover every polynomial
-that can define a common field.
+Automatic search remains bounded by its degree, isolation and elaboration
+limits. An exhausted search or failed replay is terminal; bounded success
+does not establish accepted production for every algebraic input.
 
 ```lean
 open Hex.RCF.RealCoefficients

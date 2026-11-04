@@ -7,6 +7,7 @@ import HexRCF.FiniteDefault
 import HexRCF.FiniteNestedSources
 import HexRCF.FiniteCoordinates
 import HexRCF.ProofEvidence
+import HexRCF.FiniteEvidence
 import Lean
 open Lean Meta
 set_option maxHeartbeats 8000000
@@ -33,26 +34,15 @@ run_meta withoutExporting do
       ``Hex.RCF.RealCoefficients.FiniteLiteral.prove,
       ``Hex.RCF.RealCoefficients.CommonTactic.prepareCoordinates] do
     if dependencies.contains name then throwError "forbidden default proof dependency: {name}"
-  let type := (← getConstInfo ``Hex.RCF.FiniteCoordinates.values).type
-  let some presentation := type.find? (·.isAppOfArity ``Hex.RCF.RealCoefficients.Field.literalRep 4) |
-    throwError "missing common octic in the prepared target"
-  let octic := presentation.getAppArgs[0]!
-  let nested := ``Hex.RCF.FiniteDefault.nested
-  let nestedDependencies ← Hex.RCF.ProofEvidence.projectDependencies #[nested]
-  let mut degree16 : Option Expr := none
-  for name in nestedDependencies.toArray do
-    let info ← getConstInfo name
-    let expressions := #[info.type] ++ (info.value? (allowOpaque := true)).toArray
-    for expression in expressions do
-      if let some app := expression.find? (·.isAppOfArity ``Hex.RCF.RealCoefficients.Field.literalRep 4) then
-        let polynomial := app.getAppArgs[0]!
-        if !polynomial.hasLooseBVars && !polynomial.hasFVar && !polynomial.hasMVar then
-          if (← Hex.RCF.RealCoefficients.FieldRuntime.evalZPoly polynomial).natDegree == 16 then
-            degree16 := some polynomial
-  let some nestedPolynomial := degree16 | throwError "missing actual nested degree16 presentation"
-  for polynomial in #[octic,nestedPolynomial] do
-    if ← Hex.RCF.ProofEvidence.quotesClass dependencies ``Hex.ZPoly.CheckedIrreducible polynomial then
-      throwError "default proof quotes new common-field irreducibility"
+  let sources := #[Hex.RCF.CertificationInputs.polynomial,
+    Hex.RCF.RealCoefficients.SquareTwo.polynomial]
+  let mut presentations : Nat := 0
+  for root in roots do
+    let required := if root == ``Hex.RCF.FiniteDefault.positive ||
+        root == ``Hex.RCF.FiniteDefault.betweenRoots then #[8]
+      else if root == ``Hex.RCF.FiniteNestedSources.guardedBase then #[4]
+      else #[8,16]
+    presentations := presentations + (← Hex.RCF.FiniteEvidence.checkClasses root sources required)
   let mut bodies : Nat := 0
   for root in roots do
     let axioms ← collectAxioms root
@@ -70,4 +60,4 @@ run_meta withoutExporting do
         declaration none (doCheck := true)
       bodies := bodies+1
   unless bodies == 10 do throwError "missing default body rechecks"
-  logInfo m!"FRESH_FINITE_DEFAULT: roots=5; bodies={bodies}; dependencies={dependencies.size}; standard_axioms_only"
+  logInfo m!"FRESH_FINITE_DEFAULT: roots=5; bodies={bodies}; dependencies={dependencies.size}; presentations={presentations}; standard_axioms_only"

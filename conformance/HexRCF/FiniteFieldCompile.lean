@@ -63,6 +63,22 @@ run_meta do
     let proof ← Hex.RCF.checkProof name expected result.proof
     addDecl (.thmDecl {name,levelParams:=[],type:=expected,value:=proof})
     logInfo m!"GUARDED_COMPILE {name}: checked, guards={expectedCalls}"
+  count.set 0
+  let cached ← FieldCompile.memoNonzero rep nonzero
+  for (name,source) in #[
+      (`Hex.RCF.FiniteFieldCompile.memoLeft,q(1 / ($scalar+1))),
+      (`Hex.RCF.FiniteFieldCompile.memoRight,q(1 / (1+$scalar)))] do
+    let result ← FieldCompile.compileGuarded pExpr rootExpr rep hrep hreal leaf cached source
+    let expected ← mkEq (← mkAppM ``Field.value #[rep,result.expression]) source
+    let proof ← Hex.RCF.checkProof name expected result.proof
+    addDecl (.thmDecl {name,levelParams:=[],type:=expected,value:=proof})
+  let _ ← FieldCompile.compileGuarded pExpr rootExpr rep hrep hreal leaf cached q(1 / ($scalar+1))
+  unless (← count.get) == 1 do
+    throwError "equal denominator coordinates did not share their checked sign"
+  let fresh ← FieldCompile.memoNonzero rep nonzero
+  let _ ← FieldCompile.compileGuarded pExpr rootExpr rep hrep hreal leaf fresh q(1 / ($scalar+1))
+  unless (← count.get) == 2 do throwError "nonzero memo escaped its preparation"
+  logInfo "GUARDED_MEMO: three reads/two quoted forms share one checked sign; fresh preparation rechecks"
   for source in #[q((0 : ℝ) / ($scalar-$scalar)),q(0 * (1 / ($scalar-$scalar)))] do
     let saved ← saveState
     let rejected ← try
@@ -82,3 +98,5 @@ run_meta do
 #print axioms Hex.RCF.FiniteFieldCompile.division
 #print axioms Hex.RCF.FiniteFieldCompile.inverse
 #print axioms Hex.RCF.FiniteFieldCompile.nested
+#print axioms Hex.RCF.FiniteFieldCompile.memoLeft
+#print axioms Hex.RCF.FiniteFieldCompile.memoRight

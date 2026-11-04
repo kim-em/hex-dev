@@ -233,7 +233,7 @@ meta def prove (prepared : Coordinates) : MetaM Expr := restoreOnFailure do
   let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked
   let fixed ← FiniteLiteral.prove prepared.polynomialExpr prepared.rootExpr
     prepared.valuesExpr prepared.formulaExpr prepared.values prepared.formula
-    prepared.quantifier prepared.divisors
+    prepared.quantifier
   prepared.compose fixed
 
 end Coordinates

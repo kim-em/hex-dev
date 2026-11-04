@@ -13,7 +13,8 @@ set_option maxHeartbeats 4000000
 -- of recomputing arithmetic auxiliaries already checked when they were emitted.
 run_meta withoutExporting do
   let roots := #[``Hex.RCF.FiniteFieldCompile.division,
-    ``Hex.RCF.FiniteFieldCompile.inverse, ``Hex.RCF.FiniteFieldCompile.nested]
+    ``Hex.RCF.FiniteFieldCompile.inverse, ``Hex.RCF.FiniteFieldCompile.nested,
+    ``Hex.RCF.FiniteFieldCompile.memoLeft, ``Hex.RCF.FiniteFieldCompile.memoRight]
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
   for name in #[``Hex.ZPoly.CheckedIrreducible,
       ``Hex.RCF.RealCoefficients.Field.value_eq_zero,

@@ -7,12 +7,13 @@ module
 public import HexRCF.SuppliedIrreducible
 public import HexRCF.RealCoefficients
 public import HexRCF.CertificationInputs
--- Import the legacy refusal controls too: with both modules imported, the
--- supplied fixture must still leave its scoped instance inactive.
+-- The explicit certificate API still needs the scoped instance. Automatic
+-- finite replay must remain independent of that extra common-field proof.
 public import HexRCF.CertificationProofs
 public meta import HexRCF.CertificationInputs
 public meta import HexRCF.RealCoefficients
 public meta import HexRCF.ProofEvidence
+public meta import HexRCF.FiniteEvidence
 public meta import Lean.Elab.Command
 public section
 open Hex Hex.RCF Hex.RCF.RealCoefficients Lean Meta Qq
@@ -35,9 +36,32 @@ theorem positive : ∀ x : ℝ,
 #guard_msgs in
 #print axioms positive
 run_meta do
+  if ← Hex.RCF.ProofEvidence.contains ``positive
+      (fun e => e.isConstOf ``Hex.RCF.SuppliedIrreducible.supplied) then
+    throwError "finite replay quoted the supplied common-field instance"
   unless ← Hex.RCF.ProofEvidence.contains ``positive
-      (fun e => e.isConstOf ``Hex.RCF.SuppliedIrreducible.supplied) do
-    throwError "proof did not consume supplied common-field irreducibility"
+      (fun e => e.isConstOf ``FieldCells.forall_formula) do
+    throwError "automatic proof omitted finite cell replay"
+
+set_option maxHeartbeats 8000000 in
+run_meta do
+  let target := (← getConstInfo ``positive).type
+  let .ok prepared ← Coefficients.prepare target |
+    throwError "explicit legacy preparation declined its supplied instance"
+  let proof ← prepared.prove
+  addDecl (.thmDecl {
+    name := `Hex.RCF.SuppliedIrreducibleProofs.legacyPositive
+    levelParams := [], type := target, value := proof })
+  let rejected ← try
+    let _ ← FiniteEvidence.checkClasses `Hex.RCF.SuppliedIrreducibleProofs.legacyPositive
+      #[CertificationInputs.polynomial,SquareTwo.polynomial] #[8]
+    pure none
+  catch error => pure (some (← error.toMessageData.toString))
+  unless rejected.any (fun message =>
+      (message.splitOn "quotes irreducibility of a non-source presentation").length > 1) do
+    throwError "the own-presentation audit missed the explicit common-field class: {rejected}"
+
+#print axioms Hex.RCF.SuppliedIrreducibleProofs.legacyPositive
 
 run_meta do
   let p : ZPoly := DensePoly.ofList [-2,-24,169,70,-127,-70,6,8,1]
