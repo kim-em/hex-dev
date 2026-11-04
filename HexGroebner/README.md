@@ -31,13 +31,20 @@ returns. Multiplied polynomial supports use slices of at most 64 identifiers,
 reduced to `max(1, floor(4096/(3*arity+4)))` as arity grows, leaving room
 for extra collision-chain headers. A one-term slice retains the scalar loop
 to reuse its workspace; this starts at arity 682.
-A native batch can complete existing-product lookups within 4096 total charged
-visits, returning the complete final workspace and table work. Misses, insertion,
-errors and unsupported geometry defer the unchanged table to scalar operations.
+A native batch can complete product lookups and same-width, same-capacity
+insertions within 4096 total charged work units, returning stable identifiers
+and the complete final workspace and table work. Errors, widening, index growth
+and unsupported geometry defer the unchanged table to scalar operations.
 Every slice uses the remaining parent allowances. Conformance compares the
 complete slice loop with the original scalar failure prefixes.
 `productsWith_spec` proves the pure wrapper equal to its scalar model;
 conformance checks the C provider's result and exact admission decisions.
+Explicit borrowed-support aliases use controlled copies that preserve the linear
+mark, including when the table is shared. Other arena sharing retains Lean's
+nonlinearity diagnostics. The private exponent plan uses the conservative
+4096-coordinate scratch bound; successful insertion bytes are at most 5460,
+since `terms*(3*arity+1) ≤ 4096` and each coordinate uses at most four bytes.
+The complete private plan remains below 32 KiB.
 Shared and aliased buffers retain their original contents. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
 hit checks the complete base polynomial, comparing at most 4096 bytes per native

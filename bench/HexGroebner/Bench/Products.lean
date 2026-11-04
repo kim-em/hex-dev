@@ -79,7 +79,7 @@ def productWide (input : ProductInput) := consumeProducts input true
 /-- The same wider monomials through per-term native lookup. -/
 def productWideReference (input : ProductInput) := consumeProducts input false
 
-/-- Last-term misses include deferred prefix work and scalar insertion fallback.
+/-- Last-term insertions use bounded batches, with scalar fallback when refused.
 Every mutated support, arena, metadata, workspace and index byte is consumed. -/
 def productMisses (input : ProductInput) := consumeProductMisses input true
 
