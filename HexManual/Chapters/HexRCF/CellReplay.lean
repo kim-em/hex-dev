@@ -107,3 +107,43 @@ establish general algebraic production, accepted completeness, automatic
 common-field construction or a strict compiled checker with arbitrary missing
 predecessor records. Nested contexts still require their checked arithmetic
 and full source authentication. This interface adds no tactic handler.
+
+
+# Finite replay at a selected algebraic generator
+
+{name Hex.RCF.RealCoefficients.FieldCells.check}`FieldCells.check` validates a
+complete root and cell certificate over rational coordinates at a selected real
+algebraic generator. The enclosing check authenticates the finite sign table
+once, then checks the carrier identities, complete root counts, every atom at
+every root, and every ordinary sector sample. The ordered root-row inventory
+must match the source atoms; every retained repeated row is checked separately.
+
+The native producer computes in a proved number field using its actual checked
+irreducibility instance. Finite replay checks the selected presentation without
+quoting that instance into the accepted proof. A presentation with a semantically
+zero leading coefficient is rejected; this interface does not trim it using a
+zero certificate.
+
+The interpretation preserves arithmetic even when two stored coordinates have
+the same real value. Each nonempty specialized atom and remainder polynomial needs an
+explicit checked nonzero sign for its leading coefficient. A missing sign or a
+leading coefficient that becomes zero rejects the certificate. The proof uses
+the family's finite polynomial transport theorems and ordinary real root
+coverage, without a whole-field irreducibility certificate for this coordinate
+presentation.
+
+{name Hex.RCF.RealCoefficients.FieldCells.specialize}`FieldCells.specialize`
+proves the evaluation law for the shared grouped polynomial compiler.
+{name Hex.RCF.RealCoefficients.FieldCells.forall_formula}`forall_formula` and
+{name Hex.RCF.RealCoefficients.FieldCells.exists_formula}`exists_formula`
+compose accepted evidence with the shared strict Boolean folds. Source
+identities still bind each coordinate to its original selected coefficient;
+{name Hex.RCF.RealCoefficients.CommonPresentation.checkEntry_sound_of_selected}`checkEntry_sound_of_selected`
+checks both its polynomial equation and its selected enclosure. Original
+divisor guards remain a frontend obligation before applying these formula laws.
+
+These operations form an explicit certificate interface. The automatic
+common-field handler uses its separate irreducibility-based proof path.
+These explicit APIs require source preparation, divisor authentication and
+ordinary-kernel quotation; they add no automatic source syntax or algebraic
+decision completeness claim.

@@ -44,3 +44,7 @@ fi
 echo "$lean_dir/bin" >> "$GITHUB_PATH"
 echo "$lean_output"
 "$lean_dir/bin/lake" --version
+
+# The verified installation is complete; its compressed download is not used
+# by Lake or subsequent cache restores and competes with native build outputs.
+rm -f -- "$RUNNER_TEMP/$lean_archive"

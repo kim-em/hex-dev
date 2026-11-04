@@ -102,6 +102,7 @@ meta def evidenceLemmas : MetaM (TSyntaxArray ``Parser.Tactic.simpLemma) := do
     ← `(Parser.Tactic.simpLemma| LiteralSign.Entry.check),
     ← `(Parser.Tactic.simpLemma| RadicalCert.check),
     ← `(Parser.Tactic.simpLemma| FieldRootSigns.Table.check),
+    ← `(Parser.Tactic.simpLemma| FieldRootSigns.Table.checkWith),
     ← `(Parser.Tactic.simpLemma| IsolationReplay.check),
     ← `(Parser.Tactic.simpLemma| Sturm.check),
     ← `(Parser.Tactic.simpLemma| TarskiCertificate.check_eq),
@@ -230,6 +231,8 @@ private def chainExpr {E : Type} [Zero E] [DecidableEq E]
       ← stepExpr elem chain.initial, arrayLit stepTy steps,
       optionLit pairTy terminal]
 
+/-- Quote supplied finite query data without invoking its producer. The caller
+must separately check the exact subject and the resulting literal certificate. -/
 private def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : TarskiCertificate E E Unit) : MetaM Expr := do
   let ty ← inferType (← elem (0 : E))
@@ -243,6 +246,7 @@ private def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
       mkNatLit cert.lowerVariations, mkNatLit cert.upperVariations,
       mkIntLit cert.value]
 
+/-- Quote the proposed intervals and their stored root-count certificates. -/
 private def isolationExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : IsolationReplay E Unit) : MetaM Expr := do
   let intervals ← cert.isolations.intervals.toList.mapM intervalExpr

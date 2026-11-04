@@ -46,21 +46,42 @@ rejects this case for every atom used in the formula. -/
     (atom : RealFormula.Poly n) : Int :=
   (table.evidence fallback i atom).value
 
+/-- Traverse the actual formula atoms and every root. Missing rows reject
+before the supplied query validator is called. -/
+@[expose] def checkWith (table : Table E Ctx n roots) (formula : QF n)
+    (accept : RealFormula.Poly n → Fin roots → TarskiCertificate E E Ctx → Bool) : Bool :=
+  formula.polys.all fun atom =>
+    match table.entries.find? (sameAtom atom) with
+    | none => false
+    | some row => (List.finRange roots).all fun i => accept atom i row.evidence[i]
+
+omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx] in
+/-- Acceptance supplies a checked query for each actual atom at each root.
+The fallback cannot be used to accept an absent row. -/
+theorem query_checkedWith (table : Table E Ctx n roots) (formula : QF n)
+    (accept : RealFormula.Poly n → Fin roots → TarskiCertificate E E Ctx → Bool)
+    (h : table.checkWith formula accept = true)
+    (i : Fin roots) (atom : RealFormula.Poly n) (ha : atom ∈ formula.polys)
+    (fallback : TarskiCertificate E E Ctx) :
+    accept atom i (table.evidence fallback i atom) = true := by
+  have hrow := List.all_eq_true.mp h atom ha
+  cases hfind : table.entries.find? (sameAtom atom) with
+  | none => simp [hfind] at hrow
+  | some row =>
+      simp only [hfind] at hrow
+      have hi := List.all_eq_true.mp hrow i (List.mem_finRange i)
+      simpa only [evidence, hfind, Option.map_some, Option.getD_some] using hi
+
 /-- Check every actual atom on every isolated root against its own original
 polynomial and exact dyadic interval. Missing rows fail closed. -/
 @[expose] def check (table : Table E Ctx n roots) (sign : E → Int)
     (point : Dyadic → E) (context : Ctx) (head : DensePoly E)
     (intervals : Vector DyadicInterval roots)
     (query : RealFormula.Poly n → DensePoly E) (formula : QF n) : Bool :=
-  formula.polys.all fun atom =>
-    match table.entries.find? (sameAtom atom) with
-    | none => false
-    | some row =>
-        (List.finRange roots).all fun i =>
-          let interval := intervals[i]
-          Sturm.check sign context head (query atom)
-            (.finite (point interval.lower)) (.finite (point interval.upper))
-            row.evidence[i].value row.evidence[i]
+  table.checkWith formula fun atom i cert =>
+    let interval := intervals[i]
+    Sturm.check sign context head (query atom)
+      (.finite (point interval.lower)) (.finite (point interval.upper)) cert.value cert
 
 /-- A successful full check supplies the exact query required for any source
 atom at any root; copied rows still fail the shared binding checker. -/
@@ -73,15 +94,8 @@ theorem query_checked (table : Table E Ctx n roots) (sign : E → Int)
     (fallback : TarskiCertificate E E Ctx) :
     Sturm.check sign context head (query atom)
       (.finite (point intervals[i].lower)) (.finite (point intervals[i].upper))
-      (table.value fallback i atom) (table.evidence fallback i atom) = true := by
-  unfold check at h
-  have hrow := List.all_eq_true.mp h atom ha
-  cases hfind : table.entries.find? (sameAtom atom) with
-  | none => simp [hfind] at hrow
-  | some row =>
-      simp only [hfind] at hrow
-      have hi := List.all_eq_true.mp hrow i (List.mem_finRange i)
-      simpa only [evidence, value, hfind, Option.map_some, Option.getD_some] using hi
+      (table.value fallback i atom) (table.evidence fallback i atom) = true :=
+  table.query_checkedWith formula _ h i atom ha fallback
 
 /-- Produce one literal query per formula atom and root cell. Successful
 construction returns only a table accepted by the same checker used in replay. -/
@@ -114,4 +128,5 @@ theorem build_checked [Neg E] [Inv E] (sign : E → Int) (point : Dyadic → E)
   · simp at h
 
 end Table
+
 end Hex.RCF.RealCoefficients.FieldRootSigns

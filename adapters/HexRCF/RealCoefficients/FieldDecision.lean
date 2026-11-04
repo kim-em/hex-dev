@@ -10,6 +10,7 @@ public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.Radical
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.CellFormula
+public import HexRCF.RealCoefficients.Decision
 
 public section
 
@@ -22,10 +23,6 @@ open Hex.RealFormula HexPolyTheory.Interpret HexRealRootsTheory
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 variable {Ctx : Type u} [DecidableEq Ctx]
 
-private theorem sign_cast_sign (y : ℝ) :
-    SignType.sign (((SignType.sign y : Int) : ℝ)) = SignType.sign y := by
-  cases h : SignType.sign y <;> simp
-
 /-- Rational dyadic samples in the existing reduced-coordinate field. -/
 @[expose] def point (d : Dyadic) : PolyQuot p root := PolyQuot.ofRat d.toRat
 
@@ -37,12 +34,7 @@ from separate Tarski queries and open signs from the listed sample. -/
     (rootValue : Fin cert.isolations.intervals.size → RealFormula.Poly (n + 1) → Int)
     (cell : Cell cert.isolations.intervals.size)
     (atom : RealFormula.Poly (n + 1)) : Option Sign :=
-  match cell with
-  | .open cut =>
-      some <| Sign.ofInt <| sign <|
-        (FieldSpecialize.literalPolynomial values atom).eval
-          (point (cert.isolations.openPoint cut))
-  | .root i => some <| Sign.ofInt (rootValue i atom)
+  Decision.cellSign sign point (FieldSpecialize.literalPolynomial values) cert rootValue cell atom
 
 /-- Every accepted atom sign agrees with its source formula at every point of
 its cell. A copied root query cannot inherit another cell's sign. -/
@@ -79,20 +71,13 @@ theorem cellSign_spec (rep : RefinedIsolation p)
     intro d
     simpa [f, point, HexRealRootsTheory.toReal_eq_cast_toRat] using
       FieldSpecialize.value_ofRat rep hrep hr d.toRat
-  obtain ⟨roots, hroots, hmono, hcomplete, hsample⟩ :=
-    cert.check_roots f (Field.value_eq_zero rep hrep hr)
-      (Field.value_one rep hrep hr) (Field.value_add rep hrep hr)
-      (Field.value_sub rep hrep hr) (Field.value_mul rep hrep hr)
-      (Field.value_natCast rep hrep hr) sign hsign point hpoint
-      context radical.core hisolation
-  refine ⟨roots, hmono, ?_⟩
-  intro cell x hx atom hatom
-  have hatomRoots :
+  have covered : ∀ atom ∈ formula.polys,
       interpret f (Field.value_eq_zero rep hrep hr)
         (FieldSpecialize.literalPolynomial values atom) = 0 ∨
-      (∀ y, (interpret f (Field.value_eq_zero rep hrep hr)
-          (FieldSpecialize.literalPolynomial values atom)).IsRoot y →
-        (interpret f (Field.value_eq_zero rep hrep hr) radical.core).IsRoot y) := by
+      ∀ y, (interpret f (Field.value_eq_zero rep hrep hr)
+        (FieldSpecialize.literalPolynomial values atom)).IsRoot y →
+        (interpret f (Field.value_eq_zero rep hrep hr) radical.core).IsRoot y := by
+    intro atom hatom
     rcases FieldCarrier.atom_roots rep hrep hr values formula atom hatom with hz | hcover
     · exact Or.inl hz
     · right
@@ -101,35 +86,15 @@ theorem cellSign_spec (rep : RefinedIsolation p)
         (Field.value_one rep hrep hr) (Field.value_add rep hrep hr)
         (Field.value_sub rep hrep hr) (Field.value_mul rep hrep hr)
         context (FieldCarrier.product values formula) hradical y).mpr (hcover y hy)
-  cases cell with
-  | «open» cut =>
-      let q := FieldSpecialize.literalPolynomial values atom
-      let observed := sign (q.eval (point (cert.isolations.openPoint cut)))
-      refine ⟨Sign.ofInt observed, rfl, ?_⟩
-      rw [Sign.ofInt_spec]
-      have hs := cert.open_sign f (Field.value_eq_zero rep hrep hr)
-        (Field.value_add rep hrep hr) (Field.value_mul rep hrep hr)
-        sign hsign point hpoint radical.core q roots hmono hcomplete cut
-        (hsample cut) hatomRoots x hx
-      change observed = (SignType.sign ((interpret f
-        (Field.value_eq_zero rep hrep hr) q).eval x) : Int) at hs
-      rw [hs, FieldCarrier.atom_eval rep hrep hr values atom x]
-      exact sign_cast_sign _
-  | root i =>
-      have hxi : x = roots i := hx
-      subst x
-      refine ⟨Sign.ofInt (rootValue i atom), rfl, ?_⟩
-      rw [Sign.ofInt_spec]
-      have hs := cert.check_sign f (Field.value_eq_zero rep hrep hr)
-        (Field.value_one rep hrep hr) (Field.value_add rep hrep hr)
-        (Field.value_sub rep hrep hr) (Field.value_mul rep hrep hr)
-        (Field.value_natCast rep hrep hr) sign hsign point hpoint
-        context radical.core hisolation i
-        (FieldSpecialize.literalPolynomial values atom)
-        (rootValue i atom) (evidence i atom) (hquery i atom hatom)
-        (roots i) (hroots i).1 (hroots i).2.1 (hroots i).2.2
-      rw [hs, FieldCarrier.atom_eval rep hrep hr values atom (roots i)]
-      exact sign_cast_sign _
+  have result := Decision.cellSign_spec f (Field.value_eq_zero rep hrep hr)
+    (Field.value_one rep hrep hr) (Field.value_add rep hrep hr)
+    (Field.value_sub rep hrep hr) (Field.value_mul rep hrep hr)
+    (Field.value_natCast rep hrep hr) sign hsign point hpoint
+    formula (fun x => append (fun j => f (values j)) x)
+    (FieldSpecialize.literalPolynomial values)
+    (FieldCarrier.atom_eval rep hrep hr values) context radical.core cert hisolation
+    covered rootValue evidence hquery
+  simpa only [cellSign, f] using result
 
 /-- The checked fixed-field cells decide a universal source formula. -/
 theorem forall_cells (rep : RefinedIsolation p)
