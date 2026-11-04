@@ -68,6 +68,15 @@ theorem reductions_encode (value : ValueCodec E) (reductions : Array (Option (Re
         Codec.poly value r.result])) reductions := by
   rw [Codec.reduction_fn, Codec.reductionStep_fn, Codec.remainder_fn]
 
+/-- Terminal and preparation payloads rewrite without deciding either option. -/
+theorem optional_encode (value : ValueCodec E) (terminal : Option (E × DensePoly E))
+    (preparation : Option (QueryReduction E)) :
+    (Codec.option (Codec.terminal value) terminal,
+      Codec.option (Codec.preparation value) preparation) =
+    (Codec.option (fun t => Codec.Json.arr #[value.encode t.1, Codec.poly value t.2]) terminal,
+      Codec.option (fun r => Codec.list (Codec.reductionStep value) r.steps) preparation) := by
+  rw [Codec.terminal_fn, Codec.preparation_fn]
+
 /-- info: 'Hex.SignDet.Codec.graph_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Codec.graph_eq
@@ -348,6 +357,18 @@ theorem graph_wrong_endpoints :
 /-- info: 'Hex.SignDet.PublicCodec.reductions_encode' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms reductions_encode
+
+/-- info: 'Hex.SignDet.Codec.terminal_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.terminal_fn
+
+/-- info: 'Hex.SignDet.Codec.preparation_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.preparation_fn
+
+/-- info: 'Hex.SignDet.PublicCodec.optional_encode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms optional_encode
 
 /-- info: 'Hex.SignDet.PublicCodec.graph_nested_literal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

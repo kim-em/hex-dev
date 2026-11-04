@@ -56,10 +56,11 @@ rewrites the encoder as a function, including inside `Codec.array` maps.
 are equations for arbitrary raw records, without structural or arithmetic
 acceptance premises. The reference encoder bodies remain hidden across imports;
 consumers use the public equations rather than private imports. Function forms
-`tarski_fn`, `remainder_fn`, `reductionStep_fn` and `reduction_fn` also rewrite
-partially applied encoders beneath arbitrary arrays, lists and optional payloads.
-The `moments_encode` and `reductions_encode` public-import consumers check this
-without fixing lengths or entries. `moments_encode` additionally requires that
+`tarski_fn`, `remainder_fn`, `reductionStep_fn`, `reduction_fn`, `terminal_fn`
+and `preparation_fn` also rewrite partially applied encoders beneath arbitrary
+arrays, lists and optional payloads. The `moments_encode`, `reductions_encode`
+and `optional_encode` public-import consumers check this without fixing lengths,
+entries or option constructors. `moments_encode` additionally requires that
 reflexivity alone cannot open the hidden Tarski encoder.
 
 The ordinary-import `PublicCodec` consumer composes these equations to identify
@@ -71,7 +72,7 @@ query preparation and a 1×1 system. The deliberately zero scales and system
 denominator are literal data, not a claim of arithmetic acceptance. Its basis
 has rank zero; the existing conformance retains positive-rank coverage.
 
-The nested equation and general array-consumer guards require exactly
+The nested equation and general array/option-consumer guards require exactly
 `propext`; the composed numerical graph proof requires exactly `propext`,
 `Classical.choice` and `Quot.sound`. The reference equations are proved by
 reflexivity, and no global simplification attributes or executable bodies change.

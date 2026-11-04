@@ -41,6 +41,11 @@ def terminal (value : ValueCodec E) (t : E × DensePoly E) : Json :=
 theorem terminal_eq (value : ValueCodec E) (t : E × DensePoly E) :
     terminal value t = .arr #[value.encode t.1, poly value t.2] := (rfl)
 
+/-- The terminal encoder as a function, for arbitrary optional payloads. -/
+theorem terminal_fn (value : ValueCodec E) :
+    (terminal value : E × DensePoly E → Json) = fun t =>
+      .arr #[value.encode t.1, poly value t.2] := (rfl)
+
 /-- Read both terminal fields without asserting terminal correctness. -/
 @[expose] def readTerminal (value : ValueCodec E) (j : Json) : Except String (E × DensePoly E) := do
   let a ← tuple 2 j
@@ -147,6 +152,11 @@ def preparation (value : ValueCodec E) (r : QueryReduction E) : Json :=
 /-- Preparation encoding retains every original-query step in order. -/
 theorem preparation_eq (value : ValueCodec E) (r : QueryReduction E) :
     preparation value r = list (reductionStep value) r.steps := (rfl)
+
+/-- The preparation encoder as a function, for arbitrary optional payloads. -/
+theorem preparation_fn (value : ValueCodec E) :
+    (preparation value : QueryReduction E → Json) = fun r =>
+      list (reductionStep value) r.steps := (rfl)
 
 /-- Read every preprocessing step against the supplied query arity. -/
 @[expose] def readPreparation (value : ValueCodec E) (arity : Nat) (j : Json) :

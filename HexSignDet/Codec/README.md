@@ -2,10 +2,11 @@
 
 `Codec.readGraph` and its supporting structured readers expose their definitions
 through ordinary public imports for kernel reduction on concrete inputs.
-Reader bodies are kernel-facing APIs: runtime optimizations should use a proved
+Reader bodies and the exposed encoders `array`, `list`, `poly`, `endpoint` and
+`descriptor` are kernel-facing APIs: runtime optimizations should use a proved
 `@[csimp]` implementation twin while preserving the reference definitions.
-Encoders keep their bodies hidden; their public contracts are the field-equation
-statements, which an optimized implementation must keep provable.
+The record encoders described by public field equations keep their bodies hidden;
+those equation statements must remain provable by an optimized implementation.
 Reading constructs raw graph data; successful decoding still needs independent
 replay before it supplies mathematical evidence. The
 [public-reader audit](../../reports/sign-det-public-codec.md) records the scope
@@ -121,9 +122,10 @@ stored system, basis and matrix fields. The nested equations `tarski_eq`,
 `chain_eq`, `remainder_eq`, `terminal_eq`, `reductionStep_eq`, `reduction_eq`
 and `preparation_eq` expose every stored certificate field while keeping the
 encoder bodies hidden across imports.
-The function forms `tarski_fn`, `remainder_fn`, `reductionStep_fn` and
-`reduction_fn` rewrite partially applied encoders beneath arrays, lists and
-optional payloads without requiring concrete entries or lengths.
+The function forms `tarski_fn`, `remainder_fn`, `reductionStep_fn`,
+`reduction_fn`, `terminal_fn` and `preparation_fn` rewrite partially applied
+encoders beneath arrays, lists and optional payloads without requiring concrete
+entries, lengths or option constructors.
 
 The ordinary-import `PublicCodec` consumer composes these equations to identify
 both a size-zero graph and a size-one numerical graph with nonempty moment and
