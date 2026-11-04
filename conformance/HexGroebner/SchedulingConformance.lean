@@ -40,7 +40,7 @@ private def batches : Bool := Id.run do
         if degree != 3 || pair.priority != (if scheduling == .degree then degree else pair.sugar) then
           return false
       return true
-    match trial.run ⟨{ arity := 2 },{}⟩ with
+    match trial.run { table := { arity := 2 }, statistics := {} } with
     | (.ok true,_) => pure ()
     | _ => return false
   return true
@@ -61,7 +61,7 @@ private def heap : Bool := Id.run do
       if (pair.left,pair.right) != endpoints then return false
       queue := next
     return queue.heap.isEmpty && saved.heap.size == 3
-  match trial.run ⟨{ arity := 0 },{}⟩ with
+  match trial.run { table := { arity := 0 }, statistics := {} } with
   | (.ok true,_) => return true
   | _ => return false
 

@@ -279,12 +279,15 @@ def resumeWith (limits : Limits) (initial : ResumeState) : ComputeResult := Id.r
   if state.context.variables > limits.variables then return fail state (.exhausted .variables)
   if state.workspace.table.count > limits.monomials then return fail state (.exhausted .monomials)
   for _ in [:limits.rounds + 4] do
+    -- Move the mutable workspace out before retaining the immutable identity.
+    let workspace := state.workspace
+    state := { state with workspace := { table := { arity := state.context.variables } } }
     if state.checkpoint.phase == .complete then
-      let (result, workspace) := (decode state limits).run state.workspace
+      let (result, workspace) := (decode state limits).run workspace
       match result with
       | .ok candidate => return .candidate candidate workspace.statistics
       | .error error => return fail { state with workspace } error
-    let (result, workspace) := (F4.step state.context limits state.generators state.checkpoint).run state.workspace
+    let (result, workspace) := (F4.step state.context limits state.generators state.checkpoint).run workspace
     match result with
     | .ok checkpoint => state := { state with workspace, checkpoint }
     | .error error => return fail { state with workspace } error
@@ -296,7 +299,7 @@ interreduction. Success is explicitly an unchecked candidate. Deterministic
 execution consumes no random samples and returns the supplied state unchanged. -/
 def computeWith (context : Context) (limits : Limits) (generators : Array RawPolynomial)
     (randomState : UInt64 := 0) : ComputeResult :=
-  resumeWith limits ⟨context, generators, ⟨{ arity := context.variables }, {}⟩, {}, randomState,
+  resumeWith limits ⟨context, generators, { table := { arity := context.variables }, statistics := {} }, {}, randomState,
     limits.scheduling⟩
 
 end Hex.Groebner

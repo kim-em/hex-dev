@@ -47,6 +47,7 @@ private def cacheChecks (seed : Nat) : Bool := Id.run do
     if first.reducers.size != second.reducers.size then return false
     for (a,b) in first.reducers.zip second.reducers do
       if a.polynomial.support != b.polynomial.support || a.polynomial.coefficients != b.polynomial.coefficients then return false
+    -- Cache hits also reuse the workspace bitmap without a new payload charge.
     if after.allocatedBytes != before.allocatedBytes then return false
     -- Re-encoding the exponent arena must preserve cached polynomial IDs.
     let _ ← intern limits #[65536,0]

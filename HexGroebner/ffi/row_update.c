@@ -463,4 +463,83 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_append_zeros(lean_obj_arg output,b_le
     }
     result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
 }
+
+/* Queueing/clearing does not grow the bitmap. Shared copies need precisely
+   its logical size; explicit borrowed aliases preserve the linear mark. */
+static lean_object *support_own(lean_obj_arg bits,int alias) {
+    if(!alias && lean_is_exclusive(bits)) return bits;
+    size_t size=lean_sarray_size(bits);
+    if(alias) {
+        int linear=lean_sarray_is_marked_linear(bits);
+        bits=lean_copy_sarray(bits,size);
+        if(linear)lean_sarray_mark_linear_core(bits);
+    } else bits=lean_copy_sarray_nonlinear(bits,size);
+    return bits;
+}
+
+/* Native.Support.queuePortable. Validate the entire bounded slice before any
+   writes; retain a borrowed alias while copy-on-write replaces the bitmap. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_queue_support(uint64_t count,
+        b_lean_obj_arg ids,b_lean_obj_arg start_arg,b_lean_obj_arg terms_arg,
+        lean_obj_arg bits,lean_obj_arg pending) {
+    size_t start,terms,bytes=lean_sarray_size(ids),bit_bytes=lean_sarray_size(bits);
+    const uint8_t *source=lean_sarray_cptr(ids);
+    lean_object *alias=NULL,*pair,*result;
+    if(count>UINT64_C(4294967296) || (count+7)/8>bit_bytes || bytes%4 ||
+       !lean_is_scalar(start_arg) || !lean_is_scalar(terms_arg)) goto invalid_support;
+    start=lean_unbox(start_arg);terms=lean_unbox(terms_arg);
+    if(terms>4096 || start>bytes/4 || terms>bytes/4-start) goto invalid_support;
+    for(size_t i=0;i<terms;++i)
+        if(read_le(source+(start+i)*4,4)>=count) goto invalid_support;
+    if(terms) {
+        if(bits==ids) {alias=bits;lean_inc(alias);}
+        bits=support_own(bits,alias!=NULL);
+        uint8_t *target=lean_sarray_cptr(bits);
+        for(size_t i=0;i<terms;++i) {
+            uint64_t id=read_le(source+(start+i)*4,4);
+            uint8_t mask=(uint8_t)(1u<<(id%8));
+            if(!(target[id/8]&mask)) {
+                target[id/8]|=mask;
+                pending=lean_array_push(pending,lean_unsigned_to_nat((unsigned)id));
+            }
+        }
+    }
+    if(alias) lean_dec(alias);
+    pair=lean_alloc_ctor(0,2,0);lean_ctor_set(pair,0,bits);lean_ctor_set(pair,1,pending);
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,pair);return result;
+invalid_support:
+    lean_dec(bits);lean_dec(pending);return lean_box(0);
+}
+
+
+/* Clear a bounded visited-ID slice. Nat conversion is exact after the u32
+   check, including boxed u32 values on 32-bit hosts. Validate before writes. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_clear_support(lean_obj_arg bits,
+        b_lean_obj_arg queue,b_lean_obj_arg start_arg,b_lean_obj_arg terms_arg) {
+    size_t start,terms,n=lean_array_size(queue),bytes=lean_sarray_size(bits);
+    lean_object *max_id,*result;
+    if(!lean_is_scalar(start_arg) || !lean_is_scalar(terms_arg)) goto invalid_clear;
+    start=lean_unbox(start_arg);terms=lean_unbox(terms_arg);
+    if(terms>4096 || start>n || terms>n-start) goto invalid_clear;
+    max_id=lean_unsigned_to_nat(UINT32_MAX);
+    for(size_t i=0;i<terms;++i) {
+        lean_object *id=lean_array_cptr(queue)[start+i];
+        if(!lean_nat_dec_le(id,max_id) || lean_uint64_of_nat(id)/8>=bytes) {
+            lean_dec(max_id);goto invalid_clear;
+        }
+    }
+    lean_dec(max_id);
+    if(terms) {
+        bits=support_own(bits,0);
+        uint8_t *target=lean_sarray_cptr(bits);
+        for(size_t i=0;i<terms;++i) {
+            uint64_t id=lean_uint64_of_nat(lean_array_cptr(queue)[start+i]);
+            target[id/8]&=(uint8_t)~(1u<<(id%8));
+        }
+    }
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,bits);return result;
+invalid_clear:
+    lean_dec(bits);return lean_box(0);
+}
+
 #endif

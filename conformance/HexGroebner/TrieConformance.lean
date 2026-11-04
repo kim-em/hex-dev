@@ -55,7 +55,7 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
                 monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 32768).toUInt64
               if a.status == 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
         return true
-      match trial.run ⟨{arity := n},{}⟩ with
+      match trial.run { table := { arity := n }, statistics := {} } with
       | (.ok true,_) => pure ()
       | _ => return false
   return true
@@ -108,7 +108,7 @@ def boundaryChecks : Bool := Id.run do
         arena state.table.metadata 4096
       if a.status != 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
     return true
-  match trial.run ⟨{arity := 2047},{}⟩ with
+  match trial.run { table := { arity := 2047 }, statistics := {} } with
   | (.ok true,_) => return true
   | _ => return false
 
@@ -147,7 +147,7 @@ def largeChecks : Bool := Id.run do
         if !equal actual expected || next.statistics.work != work then return false
         if allowance ≥ 100000 && !equal actual (.ok (some query)) then return false
     return true
-  match trial.run ⟨{arity := 1},{}⟩ with
+  match trial.run { table := { arity := 1 }, statistics := {} } with
   | (.ok true,_) => return true
   | _ => return false
 
@@ -180,7 +180,7 @@ def maximumChecks : Bool := Id.run do
       let (actual,next) := (index.find context budget basis monomial).run state
       if !equal actual expected || next.statistics.work != work then return false
     return true
-  match trial.run ⟨{arity := 1},{}⟩ with
+  match trial.run { table := { arity := 1 }, statistics := {} } with
   | (.ok true,_) => return true
   | _ => return false
 
@@ -243,7 +243,7 @@ def policyChecks : Bool := Id.run do
           let (value, next) := (index.find context budget basis monomial).run state
           if !equal value reference || next.statistics.work != work then return false
       return true
-    match trial.run ⟨{ arity := 2 },{}⟩ with
+    match trial.run { table := { arity := 2 }, statistics := {} } with
     | (.ok true,_) => pure ()
     | _ => return false
   return true

@@ -76,7 +76,8 @@ inductive Scheduling where
 
 /-- Absolute cumulative allowances, also used when resuming a computation.
 `packedBytes` counts monomial arenas and a common workspace reservation plus cumulative polynomial/matrix packed
-payload, including eight logical bytes per reducer-cache insertion and
+payload, plus growth of the reusable symbolic support bitmap, including eight
+logical bytes per reducer-cache insertion and
 64 logical bytes per recorded row-derivation operation.
 It excludes other object headers and allocator capacity. Pair attempts bound
 pair metadata, including attempts in retried stages. The basis limit bounds
@@ -155,10 +156,22 @@ Input payload is already live; only workspace/output bytes are newly allocated. 
   peakMatrixRows := max s.peakMatrixRows rows
   peakMatrixEntries := max s.peakMatrixEntries (stats.inputEntries + stats.outputEntries) }
 
+/-- Reusable symbolic membership storage. Only the computation operations can
+construct nonempty scratch, preserving that every marked bit has a queued ID. -/
+structure SupportWorkspace where
+  private mk ::
+  bits : ByteArray
+  queue : Array Nat
+
+/-- Empty scratch can be supplied to any fresh or reset workspace. -/
+def SupportWorkspace.empty : SupportWorkspace := ⟨{},#[]⟩
+
 /-- Mutable logical workspace, separate from the immutable computation identity. -/
 structure Workspace where
   table : MonomialTable
   statistics : Statistics := {}
+  /-- Scratch survives checkpoints; its payload is charged only on growth. -/
+  support : SupportWorkspace := .empty
 
 /-- The shared bounded computation monad. -/
 abbrev Computation := ExceptT ComputeError (StateM Workspace)
@@ -181,6 +194,59 @@ def allocate (limits : Limits) (amount : Nat) : Computation Unit := do
   if amount ≥ USize.size then throw (.representation .address)
   set { s with statistics.allocatedBytes := allocated }
 
+/-- Move scratch buffers out of the state before calling an owned operation.
+Invalid internal geometry discards scratch only; charged state is preserved.
+A later raw retry after that representation error must reserve fresh payload;
+ordinary allowance exhaustion preserves the existing scratch. -/
+private def supportStep (operation : ByteArray → Array Nat → Option (ByteArray × Array Nat)) :
+    Computation Unit := ExceptT.mk fun state =>
+  let bits := state.support.bits
+  let queue := state.support.queue
+  let state := { state with support := .empty }
+  match operation bits queue with
+  | some (bits,queue) => (.ok (),{ state with support := ⟨bits,queue⟩ })
+  | none => (.error (.representation .index),state)
+
+/-- Reset only the previous preparation's visited IDs. An exhausted attempt
+retains both scratch buffers, so resumption reuses their paid-for payload. -/
+def resetSupport (limits : Limits) : Computation Unit := do
+  let count := (← get).support.queue.size
+  spend limits count
+  for chunk in [:(count+4095)/4096] do
+    let start := chunk*4096
+    let terms := min 4096 (count-start)
+    supportStep fun bits queue => do
+      let bits ← if limits.nativeMonomials then Native.Support.clear bits queue start terms
+        else Native.Support.clearPortable bits queue start terms
+      return (bits,queue)
+  modify fun state => { state with support := ⟨state.support.bits,#[]⟩ }
+
+/-- Queue each arena identifier once, growing the reusable bitmap only when
+necessary. Growth and clearing work count against the parent allowances. -/
+def queueSupport (limits : Limits) (support : ByteArray) : Computation Unit := do
+  if support.size%4 != 0 then throw (.representation .index)
+  if support.isEmpty then return
+  let count := (← get).table.count
+  let size := (count+7)/8
+  if size ≥ USize.size then throw (.representation .address)
+  let oldSize := (← get).support.bits.size
+  if oldSize < size then
+    let extra := size-oldSize
+    spend limits extra
+    allocate limits extra
+    for chunk in [:(extra+4095)/4096] do
+      let amount := min 4096 (extra-chunk*4096)
+      supportStep fun bits queue => do
+        let bits ← if limits.nativeMonomials then Native.Columns.zeros bits amount
+          else Native.Columns.zerosPortable bits amount
+        return (bits,queue)
+  for chunk in [:((support.size/4)+4095)/4096] do
+    let start := chunk*4096
+    let terms := min 4096 ((support.size/4)-start)
+    supportStep fun bits queue => if limits.nativeMonomials then
+        Native.Support.queue count.toUInt64 support start terms bits queue
+      else Native.Support.queuePortable count.toUInt64 support start terms bits queue
+
 @[inline] private def tableError : MonomialError → ComputeError
   | .work => .exhausted .work
   | .monomials => .exhausted .monomials
@@ -196,10 +262,10 @@ private def tableResult (limits : Limits)
       (limits.packedBytes - statistics.allocatedBytes) limits.work
     match outcome.result with
     | .ok id =>
-      (.ok id, ⟨outcome.table, { statistics with work := outcome.table.work }⟩)
+      (.ok id, { state with table := outcome.table, statistics := { statistics with work := outcome.table.work } })
     | .error failure =>
       let error := tableError failure.error
-      (.error error, ⟨outcome.table, { statistics with work := failure.work }⟩)
+      (.error error, { state with table := outcome.table, statistics := { statistics with work := failure.work } })
 
 /-- Multiply one support slice against the remaining parent allowance. Batch
 failures retain the scalar table prefix and its separately charged failure work.
@@ -213,10 +279,10 @@ def products (limits : Limits) (support : ByteArray) (monomial start count : Nat
       (limits.packedBytes-statistics.allocatedBytes) limits.work limits.nativeMonomials
     match outcome.result with
     | .ok support =>
-      (.ok support, ⟨outcome.table,{ statistics with work := outcome.table.work }⟩)
+      (.ok support, { state with table := outcome.table, statistics := { statistics with work := outcome.table.work } })
     | .error failure =>
       let error := tableError failure.error
-      (.error error, ⟨outcome.table,{ statistics with work := failure.work }⟩)
+      (.error error, { state with table := outcome.table, statistics := { statistics with work := failure.work } })
 
 /-- Intern a raw monomial using the remaining shared allowance. -/
 def intern (limits : Limits) (values : Array UInt64) : Computation Nat :=
@@ -246,9 +312,7 @@ def inverse (field : PrimeField) (limits : Limits) (a : UInt64) : Computation UI
 
 /-- Bottom-up stable merge sort of identifiers. Reserves the worst-case number
 of exponent comparisons before sorting; it never allocates exponent vectors. -/
-def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (Array Nat) := do
-  let table := (← get).table
-  spend limits (ids.size * (ids.size.log2 + 1) * (context.variables + 1))
+private def sortIds (table : MonomialTable) (order : TermOrder) (ids : Array Nat) : Array Nat := Id.run do
   let mut source := ids
   let mut destination := Array.replicate ids.size 0
   let mut width := 1
@@ -261,7 +325,7 @@ def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (
       let mut left := start
       let mut right := middle
       for out in [start:stop] do
-        if left < middle && (right ≥ stop || table.compare context.order source[left]! source[right]! != .lt) then
+        if left < middle && (right ≥ stop || table.compare order source[left]! source[right]! != .lt) then
           destination := destination.set! out source[left]!
           left := left + 1
         else
@@ -272,6 +336,22 @@ def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (
     destination := old
     width := width * 2
   return source
+
+
+/-- Reserve comparisons before moving identifiers into the stable sort. -/
+def sort (context : Context) (limits : Limits) (ids : Array Nat) : Computation (Array Nat) := do
+  let table := (← get).table
+  spend limits (ids.size * (ids.size.log2 + 1) * (context.variables + 1))
+  return sortIds table context.order ids
+
+/-- Sort the owned visited queue and retain the resulting columns for clearing.
+This avoids holding a second owner of the unsorted ping-pong buffer. -/
+def sortSupport (context : Context) (limits : Limits) : Computation (Array Nat) := do
+  let count := (← get).support.queue.size
+  spend limits (count * (count.log2 + 1) * (context.variables + 1))
+  let table := (← get).table
+  supportStep fun bits queue => some (bits,sortIds table context.order queue)
+  return (← get).support.queue
 
 end Computation
 end Hex.Groebner

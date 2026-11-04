@@ -49,12 +49,12 @@ private def counts (s : Statistics) : Bool :=
 
 private def matrixCounts (native : Bool) : Bool := Id.run do
   let limits : Limits := { nativeRows := native }
-  let (result, workspace) := (countMatrix limits).run ⟨{ arity := 2 },{}⟩
+  let (result, workspace) := (countMatrix limits).run { table := { arity := 2 }, statistics := {} }
   if !result.isOk || !counts workspace.statistics then return false
   -- Final pivot ordering charges two columns, followed by one support-translation unit.
   -- Leave only one ordering unit: the completed reduction/zero prefix survives.
   let capped := { limits with work := workspace.statistics.work-2 }
-  let (result, failed) := (countMatrix capped).run ⟨{ arity := 2 },{}⟩
+  let (result, failed) := (countMatrix capped).run { table := { arity := 2 }, statistics := {} }
   return match result with
     | .error (.exhausted .work) => counts failed.statistics &&
         failed.statistics.work == workspace.statistics.work-3
@@ -137,7 +137,7 @@ private def result (context : Context) (input : Array RawPolynomial) :
     let p ← Polynomial.normalize context {} 1 #[⟨#[2, 0], 3⟩, ⟨#[0, 1], 2⟩]
     let r ← Polynomial.remainder context {} #[⟨divisor, 1⟩] p
     return r.toRaw field (← get).table
-  match calculation.run ⟨{ arity := 2 }, {}⟩ with
+  match calculation.run { table := { arity := 2 }, statistics := {} } with
   | (.ok r, _) => r == #[⟨#[0, 1], 2⟩, ⟨#[0, 0], 3⟩]
   | _ => false
 
@@ -243,7 +243,7 @@ private def queueAgreement : Bool := Id.run do
         if (pair.sugar, pair.left, pair.right) != key then return false
     return queue.heap.isEmpty && saved.heap.size == 300 &&
       saved.heap.first?.any (fun p => (p.sugar, p.left, p.right) == expected[0]!)
-  match calculation.run ⟨{ arity := 0 }, {}⟩ with
+  match calculation.run { table := { arity := 0 }, statistics := {} } with
   | (.ok ok, _) => ok
   | _ => false
 
@@ -299,7 +299,7 @@ private def reducerLookup : Bool := Id.run do
             if q.size < p.size || (q.size == p.size && table.degree (q.monomial 0) > table.degree (p.monomial 0)) then
               return false
       return true
-    match trial.run ⟨{ arity := variables }, {}⟩ with
+    match trial.run { table := { arity := variables }, statistics := {} } with
     | (.ok true, _) => pure ()
     | _ => return false
   return true
@@ -365,7 +365,7 @@ private def pairCriteria (scheduling : Scheduling) : Bool := Id.run do
       (← get).statistics.gmPairs == 1 && (← get).statistics.pairs == 4 &&
       queue.active == #[3] && queue.frontier == 4
   for trial in [proper, equal, product, dominated, multiple] do
-    match trial.run ⟨{ arity := 2 }, {}⟩ with
+    match trial.run { table := { arity := 2 }, statistics := {} } with
     | (.ok true, _) => pure ()
     | _ => return false
   return true
@@ -408,7 +408,7 @@ private def retirementPairs : Bool := Id.run do
       keys := keys.push (PairQueue.key pair.left pair.right)
     return keys.contains (0,1) && keys.contains (1,2) && keys.contains (2,3) &&
       !keys.contains (0,3) && !keys.contains (1,3) && queue.resolved.isEmpty
-  match trial.run ⟨{ arity := 2 }, {}⟩ with
+  match trial.run { table := { arity := 2 }, statistics := {} } with
   | (.ok answer, _) => answer
   | _ => false
 
@@ -422,7 +422,7 @@ private def retirementChain : Bool := Id.run do
     #[⟨#[1,3],1⟩,⟨#[0,0],1⟩], #[⟨#[1,2],1⟩,⟨#[1,0],1⟩],
     #[⟨#[1,1],1⟩,⟨#[0,1],1⟩], #[⟨#[0,3],1⟩,⟨#[0,0],1⟩]]
   for scheduling in [Scheduling.degree,.sugar] do
-    match (F4.step context { scheduling } generators {}).run ⟨{ arity := 2 }, {}⟩ with
+    match (F4.step context { scheduling } generators {}).run { table := { arity := 2 }, statistics := {} } with
     | (.ok initial, workspace) =>
       if initial.basis.map (fun g => g.polynomial.toRaw context.field workspace.table) != generators ||
           initial.queue.active != #[2,3] || initial.queue.frontier != 4 ||

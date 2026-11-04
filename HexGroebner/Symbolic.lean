@@ -49,8 +49,7 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     (cache : ReducerCache := .empty) (initial : Array SymbolicReducer := #[]) :
     Computation SymbolicMatrix := do
   let mut cache := cache
-  let mut support : Std.HashSet Nat := {}
-  let mut pending : Array Nat := #[]
+  resetSupport limits
   let mut closed : Std.HashSet Nat := {}
   let seeded := !initial.isEmpty
   for reducer in initial do
@@ -58,24 +57,16 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     if p.size == 0 || closed.contains (p.monomial 0) then throw (.matrix .dimensions)
     closed := closed.insert (p.monomial 0)
     spend limits (p.size + 1)
-    for i in [:p.size] do
-      let id := p.monomial i
-      if !support.contains id then
-        support := support.insert id
-        pending := pending.push id
+    queueSupport limits p.support
   for target in targets do
     let p := target.polynomial
     spend limits p.size
-    for i in [:p.size] do
-      let id := p.monomial i
-      if !support.contains id then
-        support := support.insert id
-        pending := pending.push id
+    queueSupport limits p.support
   let mut cursor := 0
   let mut reducers := initial
   for _ in [:limits.monomials] do
-    if cursor ≥ pending.size then break
-    let monomial := pending[cursor]!
+    if cursor ≥ (← get).support.queue.size then break
+    let monomial := (← get).support.queue[cursor]!
     cursor := cursor + 1
     if seeded && closed.contains monomial then continue
     if let some reducer ← index.find context limits basis monomial then
@@ -86,13 +77,9 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
       reducers := reducers.push ⟨reducer, multiplier, p,
         basis[reducer]!.sugar + (← get).table.degree multiplier⟩
       spend limits p.size
-      for i in [:p.size] do
-        let id := p.monomial i
-        if !support.contains id then
-          support := support.insert id
-          pending := pending.push id
-  if cursor < pending.size then throw (.exhausted .monomials)
-  let columns ← sort context limits pending
+      queueSupport limits p.support
+  if cursor < (← get).support.queue.size then throw (.exhausted .monomials)
+  let columns ← sortSupport context limits
   return ⟨columns, reducers, targets, cache⟩
 
 /-- Build a basis-specific reducer index and close the selected supports.
