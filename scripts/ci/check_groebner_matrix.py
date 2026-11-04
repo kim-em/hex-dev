@@ -1268,11 +1268,11 @@ private def checkBinary (seed : Nat) : IO Unit := do
   if !Hex.Groebner.EliminationConformance.binaryTableBoundary seed then
     throw (IO.userError "former physical-work boundary replay mismatch")
   let boundaryBefore ← binaryGroups
-  let some boundaryGroups := Hex.Groebner.EliminationConformance.binaryGroupBoundary |
+  let some boundaryGroups := Hex.Groebner.EliminationConformance.binaryGroupBoundary groupSeed |
     throw (IO.userError "current grouped physical-work boundary mismatch")
   if (← binaryGroups) != boundaryBefore+boundaryGroups.toUInt64 then
     throw (IO.userError "current physical boundary missed table-saving admission")
-  if !Hex.Groebner.EliminationConformance.binaryHighChecks then
+  if !Hex.Groebner.EliminationConformance.binaryHighChecks groupSeed then
     throw (IO.userError "highest-word dense projection/reference mismatch")
   let tableBefore ← binaryTables
   if !Hex.Groebner.EliminationConformance.binaryTableChecks seed then
