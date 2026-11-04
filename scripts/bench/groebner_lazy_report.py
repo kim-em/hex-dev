@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Replay lazy packed-pivot comparisons and their verification snapshots."""
 import argparse
+import hashlib
 from pathlib import Path
 import sys
 
@@ -54,11 +55,40 @@ def audited(cap, measured, measured_cap):
     return current, checks(cap, current, True)
 
 
+DOC_OLD = 'chunks with identical rows, provenance and counters. Untraced native 64-bit calls first\ntry a complete frame bounded by 4096 columns, 1024 reducers, 64 targets and\n`2^20` work. Explicit `binaryPivots` over F2 permits 16384 columns, 16384\nreducers and 1024 targets, bounded by `2^32` logical work and `2^28` physical\nvisits. Private bitmap and metadata bytes additionally fit the packed-byte allowance.'
+DOC_NEW = 'chunks with identical rows, provenance and counters. Untraced native 64-bit calls first\ntry a complete frame under `Elimination.fits`, which specifies separate dimension\nceilings and joint work bounds for ordinary and explicitly requested packed F2\nframes. Private bitmap and metadata bytes additionally fit the packed-byte allowance.'
+
+
+def documented(cap, before, before_cap):
+    current = source(cap, 'documentation')
+    a, b = listing(before['source_manifest']), listing(current['source_manifest'])
+    path = 'HexGroebner/Elimination.lean'
+    require(set(a) == set(b) and {p for p in a if a[p] != b[p]} == {path},
+            'documentation audit changed more than the entry-point source')
+    prior = before_cap.text('audit/root-sources/'+path)
+    require(prior.count(DOC_OLD) == 1 and
+            cap.text('documentation/root-sources/'+path) == prior.replace(DOC_OLD, DOC_NEW, 1),
+            'entry-point change is not exactly the bounds documentation')
+    require(current['binary_sha256'] == before['binary_sha256'] and
+            current['compilers'] == before['compilers'] and
+            current['native_options'] == before['native_options'],
+            'documentation changed executable bytes or compiler controls')
+    identity = cap.json('identity.json')
+    require(cap.text('checks.manifest') == before_cap.text('checks.manifest') and
+            identity['source_fingerprint'] == current['source_fingerprint'] and
+            identity['source_manifest_sha256'] == hashlib.sha256(current['source_manifest'].encode()).hexdigest() and
+            identity['checks_manifest_sha256'] == hashlib.sha256(cap.read('checks.manifest')).hexdigest() and
+            identity['checks_fingerprint'] == identity['checks_manifest_sha256'][:12],
+            'documentation identity or unchanged checks differ')
+    return current, identity
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ['archive', 'initial', 'report']:
         parser.add_argument('--'+name, type=Path, required=True)
     parser.add_argument('--audit', type=Path)
+    parser.add_argument('--docs', type=Path)
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--current', action='store_true')
     args = parser.parse_args()
@@ -73,6 +103,10 @@ def main():
     current_manifest = after
     if audit:
         current_manifest, identity = audited(audit, after, final)
+    docs = Capsule(args.docs) if args.docs else None
+    if docs:
+        require(audit is not None, 'documentation audit requires the configuration audit')
+        current_manifest, identity = documented(docs, current_manifest, audit)
     if args.current:
         current = source_identity()
         require(all(current[k] == identity[k] for k in ['source_fingerprint', 'source_manifest_sha256',
@@ -140,7 +174,7 @@ def main():
         '[Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.', '']
     if audit:
         section = ['', '## Current configuration audit', '',
-            f'Current runtime `{current_manifest["source_fingerprint"]}` changes only the Lake '
+            f'Configuration-audited runtime `{source(audit, "audit")["source_fingerprint"]}` changes only the Lake '
             'registrations for unrelated RCF modules relative to the measured final snapshot. '
             'The only verification-manifest change is CI disk reclamation. All three freshly '
             'frozen compute/reference/bench executables have exactly the measured SHA-256 hashes; '
@@ -153,6 +187,18 @@ def main():
         lines[pos:pos] = section
         pos = lines.index('  --report reports/bench-results/hexgroebner-lazy-pivots.md --check')
         lines.insert(pos, f'  --audit reports/bench-results/raw/{audit.path.name} '+chr(92))
+    if docs:
+        section = ['', '## Public documentation audit', '',
+            f'Documentation-audited runtime `{current_manifest["source_fingerprint"]}` changes only '
+            'the public elimination comment to refer to `Elimination.fits`. The exact comment '
+            'replacement is checked; all executable definitions and verification sources are '
+            'unchanged. A fresh isolated build produces the same three executable SHA-256 hashes. '
+            'No timing or test result is replaced or relabelled.', '',
+            f'Documentation capsule `{docs.path.name}`: SHA-256 `{docs.sha256}`.', '']
+        pos = lines.index('```bash')
+        lines[pos:pos] = section
+        pos = lines.index('  --report reports/bench-results/hexgroebner-lazy-pivots.md --check')
+        lines.insert(pos, f'  --docs reports/bench-results/raw/{docs.path.name} '+chr(92))
     text = '\n'.join(lines)
     if args.check:
         require(args.report.read_text() == text, 'report differs; regenerate it')

@@ -35,15 +35,23 @@ Initial capsule `f4-lazy-pivots-176673354ffa.tar.xz`: SHA-256 `3ba260bc18e651e4a
 
 ## Current configuration audit
 
-Current runtime `8861aaf91c08` changes only the Lake registrations for unrelated RCF modules relative to the measured final snapshot. The only verification-manifest change is CI disk reclamation. All three freshly frozen compute/reference/bench executables have exactly the measured SHA-256 hashes; compiler controls match. All twelve native sanitizer variants and all nine project gates pass on this current snapshot.
+Configuration-audited runtime `8861aaf91c08` changes only the Lake registrations for unrelated RCF modules relative to the measured final snapshot. The only verification-manifest change is CI disk reclamation. All three freshly frozen compute/reference/bench executables have exactly the measured SHA-256 hashes; compiler controls match. All twelve native sanitizer variants and all nine project gates pass on this current snapshot.
 
 Audit capsule `f4-lazy-config-audit-8861aaf91c08.tar.xz`: SHA-256 `b88fe9fd87361718f1c7940d531ddb10155fc3a8674a29f93637216b55add463`. No timing sample is replaced or inferred from the configuration update.
+
+
+## Public documentation audit
+
+Documentation-audited runtime `a2a159e27d63` changes only the public elimination comment to refer to `Elimination.fits`. The exact comment replacement is checked; all executable definitions and verification sources are unchanged. A fresh isolated build produces the same three executable SHA-256 hashes. No timing or test result is replaced or relabelled.
+
+Documentation capsule `f4-public-doc-audit-a2a159e27d63.tar.xz`: SHA-256 `b88e79d63e5bb1e8fa00f468971b751a3c1bdb79152caa31b478f654987f0b1a`.
 
 ```bash
 python3 scripts/bench/groebner_lazy_report.py \
   --initial reports/bench-results/raw/f4-lazy-pivots-176673354ffa.tar.xz \
   --archive reports/bench-results/raw/f4-lazy-pivots-4fb747423df0.tar.xz \
   --audit reports/bench-results/raw/f4-lazy-config-audit-8861aaf91c08.tar.xz \
+  --docs reports/bench-results/raw/f4-public-doc-audit-a2a159e27d63.tar.xz \
   --report reports/bench-results/hexgroebner-lazy-pivots.md --check
 ```
 
