@@ -38,10 +38,15 @@ The existing compiled conformance covers shared input snapshots, sparse and word
 
 Raw capsule `f4-binary-pivot-headers-15b52d43cb71.tar.xz`: SHA-256 `d0ffac2364aba71402a8aa42ddb165be93fc7122cb93900da15f6c50206bdf93`.
 
+Final verification source `1339a120fa06`, checks `7d58ad68596e`, passes another twelve sanitizer variants and nine project checks, including the fixed-corpus CI checks. Its only runtime-manifest change is the collector’s explicit resource policy. Fresh builds reproduce all three measured executable hashes byte for byte. The audit binds both manifests and actual executable hashes; the policy change receives no additional unchanged timing repeat.
+
+Final audit capsule `f4-pivot-corpus-checks-1339a120fa06.tar.xz`: SHA-256 `7937698d31ea432ba24344d24e0a27024a1b06fd7718478ca2e5928f9bc75973`.
+
 ```bash
 python3 scripts/bench/groebner_pivot_report.py \
   --archive reports/bench-results/raw/f4-binary-pivot-headers-15b52d43cb71.tar.xz \
+  --audit reports/bench-results/raw/f4-pivot-corpus-checks-1339a120fa06.tar.xz \
   --report reports/bench-results/hexgroebner-pivots.md --check
 ```
 
-Add `--current` when replaying against the measured runtime/check source snapshot. [Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.
+Add `--current` to bind the verification source snapshot (the final audit when supplied). [Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.

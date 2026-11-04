@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Verify the retained packed F2 pivot allocation experiment."""
 import argparse
+import hashlib
 from pathlib import Path
 import sys
 
@@ -18,6 +19,7 @@ from scripts.bench.groebner_trie_report import require, source
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--archive', type=Path, required=True)
+    p.add_argument('--audit', type=Path)
     p.add_argument('--report', type=Path, required=True)
     p.add_argument('--check', action='store_true')
     p.add_argument('--current', action='store_true')
@@ -31,6 +33,24 @@ def main():
     require(before['compilers'] == after['compilers'] and
             before['native_options'] == after['native_options'], 'compiler controls differ')
     identity = checks(cap, after, True)
+    audit = None
+    if args.audit:
+        audit = Capsule(args.audit)
+        latest = source(audit, 'candidate')
+        identity = checks(audit, latest, True)
+        bridge = audit.json('runtime-bridge.json')
+        require(audit.read('timed/manifest.json') == cap.read('candidate/manifest.json') and
+                bridge['identity'] == identity and bridge['old_manifest_sha256'] ==
+                hashlib.sha256(cap.read('candidate/manifest.json')).hexdigest() and
+                bridge['new_manifest_sha256'] == hashlib.sha256(audit.read('candidate/manifest.json')).hexdigest(),
+                'final audit manifest binding differs')
+        old, new = listing(after['source_manifest']), listing(latest['source_manifest'])
+        require(set(old) == set(new) and {n for n in old if old[n] != new[n]} ==
+                {'scripts/bench/groebner_cli_measure.py'} and
+                latest['compilers'] == after['compilers'] and latest['native_options'] == after['native_options'] and
+                bridge['binary_sha256'] == latest['binary_sha256'] == after['binary_sha256'] and
+                bridge['all_actual_executable_hashes_equal'] is True and
+                bridge['compiler_and_native_options_equal'] is True, 'final executable bridge differs')
     if args.current:
         current = source_identity()
         require(all(current[k] == identity[k] for k in ['source_fingerprint', 'source_manifest_sha256',
@@ -89,11 +109,21 @@ def main():
         'sparse reads borrow that row without retaining another wrapper. Source/check '
         'manifests, complete logs, collector programs and every raw sample are bound by '
         'per-file SHA-256 hashes.', '',
-        f'Raw capsule `{cap.path.name}`: SHA-256 `{cap.sha256}`.', '', '```bash',
+        f'Raw capsule `{cap.path.name}`: SHA-256 `{cap.sha256}`.', '']
+    if audit:
+        lines += [f'Final verification source `{identity["source_fingerprint"]}`, checks '
+            f'`{identity["checks_fingerprint"]}`, passes another twelve sanitizer variants and nine '
+            'project checks, including the fixed-corpus CI checks. Its only runtime-manifest change '
+            'is the collector’s explicit resource policy. Fresh builds reproduce all three measured '
+            'executable hashes byte for byte. The audit binds both manifests and actual executable '
+            'hashes; the policy change receives no additional unchanged timing repeat.', '',
+            f'Final audit capsule `{audit.path.name}`: SHA-256 `{audit.sha256}`.', '']
+    lines += ['```bash',
         'python3 scripts/bench/groebner_pivot_report.py \\',
         f'  --archive reports/bench-results/raw/{cap.path.name} \\',
+        *([f'  --audit reports/bench-results/raw/{audit.path.name} \\'] if audit else []),
         '  --report reports/bench-results/hexgroebner-pivots.md --check', '```', '',
-        'Add `--current` when replaying against the measured runtime/check source snapshot. '
+        'Add `--current` to bind the verification source snapshot (the final audit when supplied). '
         '[Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.', '']
     text = '\n'.join(lines)
     if args.check:
