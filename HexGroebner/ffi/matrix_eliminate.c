@@ -136,9 +136,15 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         lean_object *ids=lean_ctor_get(row,0);
         size_t n=lean_sarray_size(ids)/4;
         if(!n || n>c->columns) {lean_dec(row);return 0;}
-        for(size_t i=0;i<n;++i) {
-            uint64_t col=matrix_read(lean_sarray_cptr(ids)+4*i,4);
-            packed[col>>3]|=(uint8_t)(1u<<(col&7));
+        uint64_t last=matrix_read(lean_sarray_cptr(ids)+(n-1)*4,4);
+        /* Sparse pivots are read through their immutable column list. Only
+           dense pivots and table members ever read the private packed row. */
+        if(n>(last>>6)-(column>>6)+1) {
+            memset(packed,0,(size_t)c->words*8);
+            for(size_t i=0;i<n;++i) {
+                uint64_t col=matrix_read(lean_sarray_cptr(ids)+4*i,4);
+                packed[col>>3]|=(uint8_t)(1u<<(col&7));
+            }
         }
         /* Private little-endian (entry count, final column, sugar) records.
            Canonical nonempty rows have at most columns <= 131072 entries. */
@@ -610,7 +616,15 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     }
     if(!matrix_bytes(&c,workspace) || !matrix_work(&c,workspace)) goto defer;
     if(c.binary) {
-        c.binary_rows=matrix_zeros((size_t)(c.capacity+1)*c.words*8);
+        size_t bytes=(size_t)(c.capacity+1)*c.words*8;
+        c.binary_rows=lean_alloc_sarray(1,bytes,bytes);
+#ifdef HEX_GROEBNER_BINARY_POISON
+        /* Conformance makes accidental sparse-row reads deterministic. */
+        memset(lean_sarray_cptr(c.binary_rows),0xa5,bytes);
+#endif
+        /* The accumulator is always readable; pivot rows initialize on demand.
+           The full virtual payload remains reserved against the parent budget. */
+        memset(matrix_binary_dense(&c),0,(size_t)c.words*8);
         c.binary_meta=matrix_zeros((size_t)c.capacity*16);
         if(c.project) {
             c.project_rows=matrix_zeros((size_t)nt*c.words*8);

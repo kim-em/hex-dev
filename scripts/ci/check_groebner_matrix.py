@@ -629,6 +629,7 @@ static uint64_t binary_sparse=0,binary_words=0,binary_high_words=0;
 #define HEX_GROEBNER_BINARY_WORD_USED(id) (++binary_words,(id)>=1024?++binary_high_words:0)
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
+#define HEX_GROEBNER_BINARY_POISON 1
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
 static uint64_t continuation_phases[8]={0},continuation_successes=0;
 /* cont_counts can leave its scalar cache partial for arbitrary Nat counters.
