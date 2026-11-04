@@ -36,15 +36,17 @@ theorem linear_split : ∃ x : ℝ,
 
 run_meta do
   for (name, route) in [(`Hex.RCF.ReplayModes.universal,
-      ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound),
+      ``Hex.RCF.RealCoefficients.FieldCells.forall_formula),
       (`Hex.RCF.ReplayModes.existential,
         ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound),
       (`Hex.RCF.ReplayModes.linear_split,
         ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound)] do
     unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf route) do
-      throwError "linear replay fixture {name} did not use its original soundness theorem"
+      throwError "linear replay fixture {name} did not use its expected soundness theorem"
     for indexed in [``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForallIndex_eq,
-        ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExistsIndex_eq] do
+        ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExistsIndex_eq,
+        ``Hex.RCF.RealCoefficients.FieldCells.checkIndex_eq,
+        ``Hex.RCF.RealCoefficients.FieldQuery.cachedIndex_eq] do
       if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf indexed) then
         throwError "linear replay fixture used indexed replay"
 

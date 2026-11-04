@@ -357,6 +357,8 @@ run_meta do
       `Hex.RCF.MixedConstants.pi_guarded_root, `Hex.RCF.MixedConstants.pi_nested_divisor] do
     unless ← Hex.RCF.ProofEvidence.contains name
         (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
+          e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+          e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula ||
           e.isConstOf ``Hex.RCF.RealCoefficients.Replay.check_sound) do
       throwError "mixed constant proof did not use algebraic literal replay"
     for forbidden in [``Hex.RCF.RealCoefficients.rootInterval,

@@ -47,8 +47,9 @@ run_meta do
     #[``Hex.RCF.RealCoefficients.MaximalCoefficientsTests.metadataBare]
   unless direct.contains ``Hex.RCF.RealCoefficients.SquareTwo.valuation do
     throwError "metadata proof omitted the direct algebraic handler"
-  -- Both frontends use FieldBuild's soundness theorem. SquareTwo.valuation
-  -- is emitted only by the direct frontend and distinguishes this route.
+  -- The direct generator frontend retains FieldBuild's checker, while
+  -- compound coefficients use finite cell replay. Both need checked source
+  -- identities; SquareTwo.valuation additionally identifies the direct route.
   unless direct.contains ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound do
     throwError "metadata proof omitted the shared ordinary field checker"
   for name in #[``Hex.RCF.MaximalCoefficientsConformance.multiple_positive,
@@ -57,6 +58,8 @@ run_meta do
     let common ← Hex.RCF.ProofEvidence.projectDependencies #[name]
     unless common.contains ``Hex.RCF.RealCoefficients.CommonPresentation.checkPolynomials_sound do
       throwError "compound proof omitted the common-presentation checker"
+    unless common.contains ``Hex.RCF.RealCoefficients.FieldCells.forall_formula do
+      throwError "compound proof omitted finite cell replay soundness"
     if common.contains ``Hex.RCF.RealCoefficients.SquareTwo.valuation then
       throwError "compound proof unexpectedly used the bare-generator valuation"
   for name in #[``Hex.RCF.RegisteredConstants.notNegative,
