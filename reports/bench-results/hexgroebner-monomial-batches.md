@@ -1,8 +1,8 @@
 # Bounded monomial batch insertion
 
-Product slices preflight up to 64 terms and 4096 charged work units in a private virtual table. Successful slices publish stable monomial identifiers, collision links, metadata and the final workspace together. Widening, rehashing, malformed representations and exhausted allowances defer the unchanged table. The portable contract and its scalar-equivalence theorem cover the expanded admission. Explicit borrowed aliases retain their contents; marked-linear copies preserve their mark.
+Product slices preflight up to 64 terms and 4096 charged work units in a private virtual table. Successful slices publish stable monomial identifiers, collision links, metadata and the final workspace together. Widening, rehashing, malformed representations and exhausted allowances defer the unchanged table. The portable wrapper retains its scalar-equivalence theorem; native admission and complete output parity are tested independently. Explicit borrowed aliases retain their contents; marked-linear copies preserve their mark.
 
-Manual shared-host measurements use one algorithm thread, leased CPUs and adjacent AB followed by BA. Native C uses clang version 21.1.8; Lean-generated C uses SDK clang version 23.1.0. Production AVX-512 is disabled. All completed samples, variability, memory and failures are retained. Each inconclusive unchanged full-system campaign has at most one repeat. The revised source has separate observations after the alias fix.
+Manual shared-host measurements use one algorithm thread, leased CPUs and adjacent AB followed by BA. Native C uses clang version 21.1.8; Lean-generated C uses SDK clang version 23.1.0. Production AVX-512 is disabled. All completed samples, variability, memory and failures are retained. Each full-system campaign has at most one retained unchanged repeat. The initial and revised sources have separate observations.
 
 | Source | Comparison | Process B/A | Candidate B/A | Equal-family B/A | Pair range | CPU | Peak RSS A/B KiB |
 |---|---|---:|---:|---:|---:|---:|---:|
@@ -89,7 +89,9 @@ All full-system pairs return equal complete reduced bases with no failures or ti
 | ddde8c89c095 | productWide | 1.007155 | 0.987831–1.013549 | 1 |
 | ddde8c89c095 | productMisses | 0.280868 | 0.276911–0.286784 | 0 |
 
-Each kernel experiment retains six fixed trial-major complexity invocations and sixty adjacent matched invocations over sizes 256–4096. Every matched complete-data hash agrees. Matched flags and outliers remain in the aggregates; the complexity runs and their flags are retained separately. The missing-product kernel improves; lookup-only overhead and full-system variability limit the conclusion.
+The same revised binary against `productMissesReference` (per-term native operations) gives B/A 0.347310, pair range 0.341509–0.354015, with 6 matched below-signal-floor flags. Its separate experiment retains two complexity invocations and twenty matched invocations; all complete-data hashes agree.
+
+Each comparison of the two source versions retains six fixed trial-major complexity invocations and sixty adjacent matched invocations over sizes 256–4096. Every matched complete-data hash agrees. Matched flags and outliers remain in the aggregates; the complexity runs and their flags are retained separately. The missing-product kernel improves against the earlier lookup-only batch, which discards a successful prefix before scalar insertion. The kernel rows for the two source versions include the removed prefix waste; the separate comparison within one executable uses the per-term reference. No robust full-system speedup is established; lookup-only overhead and variability limit the conclusion.
 
 | Source | Comparator suite | Hex/msolve | Equal-family | Pair range | CPU | Peak RSS Hex/msolve KiB |
 |---|---|---:|---:|---:|---:|---:|
@@ -131,11 +133,44 @@ Each kernel experiment retains six fixed trial-major complexity invocations and 
 | ddde8c89c095 / msolve-prime | minrank | 1.003967 |
 | ddde8c89c095 / msolve-prime | dense-quadratic | 1.240454 |
 
-msolve commit `3672113ee2c696a2ac9c637636e0f7214f500ba1` uses Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. Compiler and tuning differences are part of the observed gap. Hex remains behind msolve overall on these inputs. No fastest-open-source milestone or language-impossibility claim follows. Candidate production, certificate generation, independent native verification and kernel checking remain separate; only candidate/process performance is timed here.
+msolve commit `3672113ee2c696a2ac9c637636e0f7214f500ba1` uses Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. Both Hex/msolve suites force Hex dense-pivot caches off (`--dense-pivots false`); the prime A/B sweeps use default dispatch. Compiler, tuning and explicit controls are part of the observed gap. Hex remains behind msolve overall on these inputs. No fastest-open-source milestone or language-impossibility claim follows. Candidate production, certificate generation, independent native verification and kernel checking remain separate; only candidate/process performance is timed here.
 
-Both source versions pass all twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Revised tests construct RC=1 tables directly, compare all output arenas, cover spare-capacity growth, every borrowed arena alias, marked-linear buffers, intra-table aliases and malformed forward/cyclic links. The `compute-reference` executable uses full initialization of the same native arithmetic; it is not a portable-arithmetic timing.
+The F2 peak-RSS reduction is unexplained. It is retained as a memory observation, without a causal claim.
+
+Both source versions pass all twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Revised tests construct RC=1 tables directly, compare all output arenas, cover spare-capacity growth, every borrowed arena alias, marked-linear buffers, intra-table aliases, exact-size workspace reuse, multi-slot insertions, lookup-only exclusive commits and malformed forward/cyclic links. The `compute-reference` executable uses full initialization of the same native arithmetic; it is not a portable-arithmetic timing.
+
+| Diagnostic input | Accepted batches | Inserted monomials | Deferred batches | Deferred terms | Deferred work |
+|---|---:|---:|---:|---:|---:|
+| cyclic7-f2 | 11464 | 4220 | 5 | 106 | 1233 |
+| kat8-f2 | 4 | 0 | 0 | 0 | 0 |
+| eco11-f2 | 5920 | 1867 | 1 | 14 | 198 |
+| noon5-f2 | 0 | 0 | 0 | 0 | 0 |
+| reimer6-f2 | 0 | 0 | 0 | 0 | 0 |
+| minrank_d_2_p_2_q_4_r_2-f2 | 52 | 14 | 0 | 0 | 0 |
+| quadratic6-f2 | 360 | 138 | 1 | 11 | 31 |
+| mq8-f2 | 4507 | 1602 | 5 | 239 | 2013 |
+| mq9-f2 | 28082 | 9375 | 4 | 176 | 1804 |
+| mq10-f2 | 39604 | 4304 | 4 | 129 | 1919 |
+| cyclic7-15 | 21876 | 4818 | 6 | 172 | 1341 |
+| cyclic7-31 | 21876 | 4818 | 6 | 172 | 1341 |
+| kat8-15 | 1824 | 695 | 2 | 13 | 157 |
+| kat8-31 | 1824 | 695 | 2 | 13 | 157 |
+| eco11-15 | 31794 | 6033 | 2 | 82 | 1696 |
+| eco11-31 | 31794 | 6033 | 2 | 82 | 1696 |
+| noon5-15 | 1194 | 912 | 4 | 38 | 144 |
+| noon5-31 | 1194 | 912 | 4 | 38 | 144 |
+| reimer6-15 | 7329 | 2224 | 5 | 178 | 1811 |
+| reimer6-31 | 7329 | 2224 | 5 | 178 | 1811 |
+| minrank_d_2_p_2_q_4_r_2-15 | 52 | 21 | 0 | 0 | 0 |
+| minrank_d_2_p_2_q_4_r_2-31 | 52 | 21 | 0 | 0 | 0 |
+| quadratic6-15 | 365 | 184 | 1 | 22 | 50 |
+| quadratic6-31 | 365 | 184 | 1 | 22 | 50 |
+
+These are untimed per-process counters from the sanitized Native probe, with AVX-512 enabled for odd fields. Complete bases and all logical counters agree with the frozen production observations. Degenerate systems with no batch calls are retained. The diagnostic does not classify individual refusal reasons; malformed, growth, width and allowance boundaries are covered by conformance tests.
 
 Runtime `5943f8f79f43`; checks `7cc6296af1b8`. `f4-monomial-batches-initial-5943f8f79f43.tar.xz`: SHA-256 `eb418bb63572d823b98d1fe276557bc59bb2b1a94e164d05c1ee73cc161ab3e8`.
 Runtime `ddde8c89c095`; checks `ffc4836b7d74`. `f4-monomial-batches-ddde8c89c095.tar.xz`: SHA-256 `576afda14cf8582687805439fe9346593fa9dc331459c7343f4620ebec974d85`.
 
-Regenerate with `python3 scripts/bench/groebner_batch_report.py --initial reports/bench-results/raw/f4-monomial-batches-initial-5943f8f79f43.tar.xz --capsule reports/bench-results/raw/f4-monomial-batches-ddde8c89c095.tar.xz --report reports/bench-results/hexgroebner-monomial-batches.md --check`. Add `--current` to bind the checkout.
+Expanded ownership checks `c0731baaec38`: `f4-monomial-batch-checks-c0731baaec38.tar.xz`, SHA-256 `8af1e04f147dd37f01eedd81e8e860fb1e3f08bbf542fdd165a5f2602ea95d7e`. The production runtime is unchanged.
+
+Regenerate with `python3 scripts/bench/groebner_batch_report.py --initial reports/bench-results/raw/f4-monomial-batches-initial-5943f8f79f43.tar.xz --capsule reports/bench-results/raw/f4-monomial-batches-ddde8c89c095.tar.xz --guards reports/bench-results/raw/f4-monomial-batch-checks-c0731baaec38.tar.xz --report reports/bench-results/hexgroebner-monomial-batches.md --check`. Add `--current` to bind the checkout.
