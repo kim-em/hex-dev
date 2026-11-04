@@ -495,6 +495,47 @@ def binaryTableBoundary (seed : Nat) : Bool := Id.run do
     SparseRow.ofEntries field 2055 (#[ (i,(1:UInt64)) ] ++
       (Array.range 1024).map fun j => (tail+j,(1:UInt64)))
 
+/-- Nonzero four-row table savings at adjacent sides of the current physical cap.
+Empty targets keep the accepted portable replay small. -/
+def binaryGroupBoundary : Option Nat := do
+  if USize.size != 2^64 then return 0
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let some dense := (Array.range 4).mapM fun i =>
+    SparseRow.ofEntries field 16384 #[(2*i,1),(2*i+1,1)] | none
+  let targets := Array.replicate 4059 ({} : SparseRow)
+  for entries in [3226,3227] do
+    let some tail := SparseRow.ofEntries field 16384
+        ((Array.range (entries-8)).map fun i => (64+i,(1:UInt64))) | none
+    let reducers := dense ++ #[tail] ++ Array.replicate 11765 ({} : SparseRow)
+    if Elimination.binaryGroups 16384 reducers != 1 ||
+        Elimination.binaryCost 16384 reducers targets entries != 2^34-2+3*(entries-3226) then none
+    let expected := Elimination.attemptPortable field limits 16384 reducers targets #[] false
+    let actual := Elimination.attempt field limits 16384 reducers targets #[] false
+    if expected.isSome != (entries == 3226) || !sameAttempt actual expected then none
+  return 2
+
+/-- Dense updates, four-row tables and projection in the highest packed word,
+including a partially occupied final word and shared targets. -/
+def binaryHighChecks : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  for columns in [131071,131072] do
+    let some reducers := (Array.range 4).mapM fun i =>
+        SparseRow.ofEntries field columns #[(columns-8+2*i,1),(columns-7+2*i,1)] | return false
+    let first := (columns-1)/64*64
+    let some row := SparseRow.ofEntries field columns
+        ((Array.range (columns-first)).map fun i => (first+i,(1:UInt64))) | return false
+    let targets := (Array.replicate 64 ({} : SparseRow)).set! 0 row |>.set! 63 row
+    for independent in [false,true] do
+      let some expected := Elimination.attemptPortable field limits columns reducers targets #[] independent
+        | return false
+      let some actual := Elimination.attempt field limits columns reducers targets #[] independent
+        | return false
+      if !same actual expected then return false
+  return true
+
 /-- Expanded shape caps and adjacent sides of the physical-work guard, plus
 malformed rows and arbitrary natural-number limits in the packed F2 route. -/
 def binaryBounds : Bool := Id.run do
@@ -545,6 +586,8 @@ def binaryBounds : Bool := Id.run do
 
 #guard binaryQuantum 0
 #guard binaryBounds
+#guard binaryGroupBoundary == some (if USize.size == 2^64 then 2 else 0)
+#guard binaryHighChecks
 
 /-- A successful F2 frame with actual charged work above the old quantum and
 an aliased target reduced by a packed known pivot. Runs in compiled conformance. -/

@@ -46,7 +46,7 @@ def main():
             require(cap.json('candidate/'+label+'/'+name)['batchSize'] == 1024,
                     'batch size differs from the library default')
     lines = ['# Larger packed F₂ matrix frames', '',
-        'The optional packed F₂ route admits 131072 columns, 131072 known reducers and 4096 targets. '
+        'The optional packed F₂ route has separate ceilings of 131072 columns, 131072 known reducers and 4096 targets, subject to joint work and byte bounds. '
         'The previous limits were 16384/16384/1024. Its conservative logical-work limit is 2³⁸ '
         'and its packing/scalar/word-visit limit is 2³⁴, previously 2³² and 2²⁸. Complete private '
         'bit rows, metadata, projected targets and the reusable sixteen-row table must fit the '
@@ -62,7 +62,7 @@ def main():
         '## Matched observations', '',
         'Each campaign leases one CPU, uses one algorithm thread and runs adjacent AB then BA pairs. '
         'All use degree scheduling, grevlex, batch size 1024, complete reduced output and explicit '
-        'binary-pivot controls. Every completed sample, outlier, failure and RSS observation is retained. '
+        'binary-pivot controls. Binary pivots are enabled in both F₂ arms; the historical `f2-false` cohort label does not describe that policy. The library defaults this option to `false`, so default users see no change. Every completed sample, outlier, failure and RSS observation is retained. '
         'No unchanged repeat is included. These comparisons measure candidate production through '
         'final interreduction and output. Parsing, launch and initialization are included in process '
         'time; certificate generation, independent native verification and kernel checking are separate.', '',
@@ -80,16 +80,17 @@ def main():
         f'{100*(1-h["geomean"]):.1f}% reduction on these two pairs. Peak RSS rises from '
         f'{h["peak_rss_kib"]["A"]} to {h["peak_rss_kib"]["B"]} KiB '
         f'({h["peak_rss_kib"]["B"]/h["peak_rss_kib"]["A"]:.2f}×). '
-        'The additional private packing trades memory for elimination speed. The moderate F₂ and '
+        'Additional private packing is a plausible source of the higher memory usage, rather than a measured attribution. The moderate F₂ and '
         'prime-control observations do not establish a broad speedup.', '',
         '| Development family | F₂ process B/A | Prime-control process B/A |', '|---|---:|---:|']
     for family, value in records[0][1]['recorded']['per_family'].items():
         prime = records[1][1]['recorded']['per_family'].get(family)
         lines.append(f'| {family} | {value:.6f} | '+(f'{prime:.6f}' if prime else 'not in prime suite')+' |')
     lines += ['', 'The Cyclic-9 focus addresses a public hard case with matrices beyond the former '
-        'native geometry. It is reported separately from the development suites. These observations '
+        'native geometry and motivated the cap selection. It is an in-sample case also present in the primary fixed corpus. It is reported separately from the development suites. These observations '
         'are not a completed fixed-corpus evaluation, a held-out result or an external-comparator '
         'leadership claim. Ratios from different implementation stages are not multiplied.', '',
+        'The moderate cohorts use a 16 GiB packed-payload allowance. The focused Cyclic-9 run uses 2⁵⁰ bytes, under the common 8 GiB process address-space limit. These are benchmark limits, rather than the library default of 256 MiB; large frames may decline and continue portably at that default. The two focused pairs do not establish default-budget performance.', '',
         '## Correctness and replay', '',
         'All twelve Clang/GCC ASan/UBSan variants and all nine project gates pass, including '
         'the executable/theory build, 567 independent SymPy and 567 Singular reduced-basis comparisons, '

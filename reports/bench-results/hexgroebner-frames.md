@@ -1,6 +1,6 @@
 # Larger bounded ordinary prime-field matrix frames
 
-This unselected experiment expands ordinary native elimination to 16384 columns, 16384 known reducers, 1024 targets and 2²⁸ charged scalar work. The former limits were 4096 columns, 1024 reducers, 64 targets and 2²⁰ work. The exact portable result, logical counters, ownership, parent budgets and refusal/fallback contracts are unchanged. Packed F₂ retains its separate 2³² logical and 2²⁸ physical-work bounds. The production limits remain unchanged because the matched observations do not show a gain.
+This unselected experiment expands ordinary native elimination to 16384 columns, 16384 known reducers, 1024 targets and 2²⁸ charged scalar work. The former limits were 4096 columns, 1024 reducers, 64 targets and 2²⁰ work. The exact portable result, logical counters, ownership, parent budgets and refusal/fallback contracts are unchanged. In this measured snapshot, packed F₂ retains its separate 2³² logical and 2²⁸ physical-work bounds. The production limits remain unchanged because the matched observations do not show a gain.
 
 Baseline `7812aa2db75b`; candidate `9d150346fe62`. Only the Lean admission limits and their C implementation change in the runtime manifest. Native compiler `clang version 21.1.8`, generated-C compiler `clang version 23.1.0` (SDK), native flags and benchmark inputs match between arms.
 

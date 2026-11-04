@@ -259,7 +259,8 @@ in untraced ordinary F2 matrix frames. It defaults to `false`; the deterministic
 driver accepts `--binary-pivots true|false` and records the requested policy.
 This preserves ordinary polynomial semantics, including distinct monomials
 `x` and `x²`. Other fields retain their existing route. Admission permits at
-most 131072 columns, 131072 reducers and 4096 targets, with bounds of `2^38`
+most 131072 columns, 131072 reducers and 4096 targets as separate dimension
+ceilings, subject to joint bounds of `2^38`
 reference work and `2^34` packing/scalar/word visits. The private bitmap stores
 at most the lesser of the row and column counts in pivot rows, plus one
 accumulator. Each pivot also stores its length, final column and sugar in a
@@ -289,6 +290,8 @@ before the reference continuation succeeds. Speculation is bounded per frame;
 multiple matrix calls can incur it. The reservation is conservative: reference workspace charges coexist with the
 private accumulator allowance, and empty or sparse-only pivots still reserve
 bitmap rows. The certificate producer leaves this low-level policy disabled.
+A call has no cancellation point inside the native frame; the `2^34` visit
+ceiling is a finite work bound, not a wall-clock latency guarantee.
 This policy has no fastest-open-source claim.
 
 The packed-payload allowance is not a process-memory limit: it excludes

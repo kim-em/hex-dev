@@ -95,6 +95,8 @@ def generated(family, n, p, seed):
 
 
 def main():
+    if not __debug__:
+        raise SystemExit("corpus validation requires Python without -O")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--gamba', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)

@@ -1266,7 +1266,14 @@ private def checkBinary (seed : Nat) : IO Unit := do
   if (← binaryGroups) != groupsBefore+expectedGroups.toUInt64 then
     throw (IO.userError "native known-pivot group count differs")
   if !Hex.Groebner.EliminationConformance.binaryTableBoundary seed then
-    throw (IO.userError "refined physical-work boundary mismatch")
+    throw (IO.userError "former physical-work boundary replay mismatch")
+  let boundaryBefore ← binaryGroups
+  let some boundaryGroups := Hex.Groebner.EliminationConformance.binaryGroupBoundary |
+    throw (IO.userError "current grouped physical-work boundary mismatch")
+  if (← binaryGroups) != boundaryBefore+boundaryGroups.toUInt64 then
+    throw (IO.userError "current physical boundary missed table-saving admission")
+  if !Hex.Groebner.EliminationConformance.binaryHighChecks then
+    throw (IO.userError "highest-word dense projection/reference mismatch")
   let tableBefore ← binaryTables
   if !Hex.Groebner.EliminationConformance.binaryTableChecks seed then
     throw (IO.userError "known-pivot XOR table/reference mismatch")

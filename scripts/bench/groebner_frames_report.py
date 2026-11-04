@@ -42,7 +42,7 @@ def main():
         'This unselected experiment expands ordinary native elimination to 16384 columns, 16384 known reducers, '
         '1024 targets and 2²⁸ charged scalar work. The former limits were 4096 columns, '
         '1024 reducers, 64 targets and 2²⁰ work. The exact portable result, logical counters, '
-        'ownership, parent budgets and refusal/fallback contracts are unchanged. Packed F₂ '
+        'ownership, parent budgets and refusal/fallback contracts are unchanged. In this measured snapshot, packed F₂ '
         'retains its separate 2³² logical and 2²⁸ physical-work bounds. The production '
         'limits remain unchanged because the matched observations do not show a gain.', '',
         f'Baseline `{before["source_fingerprint"]}`; candidate `{after["source_fingerprint"]}`. '
