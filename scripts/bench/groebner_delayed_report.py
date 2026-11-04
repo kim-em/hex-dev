@@ -96,7 +96,7 @@ def systems(cap,prefix,manifest):
     return ratios,outputs
 
 
-def kernels(cap,prefix,manifest,signal):
+def kernels(cap,prefix,manifest,signal,sizes=(128,256,512)):
     meta=cap.json(prefix+'/metadata.json')
     require(meta['manifest']['binary_sha256']['bench']==manifest['binary_sha256']['bench'],
             'kernel executable differs')
@@ -109,7 +109,7 @@ def kernels(cap,prefix,manifest,signal):
             require(len(item['points'])==9,'complexity trials missing')
             if signal:require(all(not p['below_signal_floor']for p in item['points']),
                               'complexity point below signal floor')
-        for n in [128,256,512]:
+        for n in sizes:
             hashes=set();values={a:[]for a in ['A','B']}
             for block in [0,1]:
                 for arm in ['A','B']:
