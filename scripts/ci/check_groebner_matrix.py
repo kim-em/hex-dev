@@ -616,10 +616,10 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
  return lean_io_result_mk_ok(out);
 }
 
-static uint64_t delayed_frames=0,delayed_updates=0,delayed_overflows=0;
+static uint64_t delayed_frames=0,delayed_updates=0,delayed_overflows=0,delayed_vectors=0;
 static int delayed_offset_enabled=0;
 #define HEX_GROEBNER_DELAYED_FRAME() (++delayed_frames)
-#define HEX_GROEBNER_DELAYED_UPDATE(vectorized) (++delayed_updates)
+#define HEX_GROEBNER_DELAYED_UPDATE(vectorized) (++delayed_updates,delayed_vectors+=(vectorized))
 #define HEX_GROEBNER_DELAYED_TARGET(context) do { \
  if(delayed_offset_enabled) { \
   matrix_context *ctx=(context); \
@@ -808,6 +808,59 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
  return lean_io_result_mk_ok(out);
 }
+#include <sys/mman.h>
+#include <unistd.h>
+
+/* Put each borrowed array's final byte immediately before a protected page.
+   The private kernel must read exactly four coefficients/indices per packet. */
+static int delayed_guard_test(void) {
+#if HEX_GROEBNER_AVX2
+ if(!hex_avx2_available()) return 1;
+ size_t page=(size_t)sysconf(_SC_PAGESIZE);
+ for(unsigned width=1;width<=2;++width) for(unsigned stride=1;stride<=6;stride+=5)
+  for(unsigned n=1;n<=10;++n) {
+   uint8_t *cm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+   uint8_t *vm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+   if(cm==MAP_FAILED || vm==MAP_FAILED) return 0;
+   if(mprotect(cm+page,page,PROT_NONE)||mprotect(vm+page,page,PROT_NONE)) return 0;
+   uint8_t *cols=cm+page-n*4,*vals=vm+page-n*width;
+   matrix_context ctx={0};ctx.columns=64;ctx.width=width;ctx.p=width==1?251:65521;
+   ctx.dense=matrix_zeros(64*8);
+   uint64_t expected[64],factor=ctx.p-1;
+   for(unsigned col=0;col<64;++col) {
+    expected[col]=UINT64_MAX-(UINT64_C(1)<<40)+col;
+    delayed_write(&ctx,col,expected[col]);
+   }
+   for(unsigned j=0;j<n;++j) {
+    matrix_write(cols+j*4,4,j*stride);
+    matrix_write(vals+j*width,width,ctx.p-1-j);
+    if(j) expected[j*stride]+=factor*(ctx.p-1-j);
+   }
+   uint8_t cb[40],vb[20];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
+   delayed_pivot pivot={cols,vals,n,(n-1)*stride,0};
+   delayed_update_avx2(&ctx,&pivot,factor);
+   for(unsigned col=0;col<64;++col) if(delayed_read(&ctx,col)!=expected[col]) return 0;
+   if(memcmp(cb,cols,n*4)||memcmp(vb,vals,n*width)) return 0;
+   lean_dec(ctx.dense);munmap(cm,page*2);munmap(vm,page*2);
+  }
+#endif
+ return 1;
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_guard(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box(delayed_guard_test()));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_vectors(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(delayed_vectors));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_available(lean_obj_arg world) {
+ (void)world;
+#if HEX_GROEBNER_AVX2
+ return lean_io_result_mk_ok(lean_box(hex_avx2_available()));
+#else
+ return lean_io_result_mk_ok(lean_box(0));
+#endif
+}
+
 LEAN_EXPORT lean_obj_res hex_test_delayed_counts(lean_obj_arg world) {
  (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
  lean_ctor_set(tail,0,lean_box_uint64(delayed_updates));lean_ctor_set(tail,1,lean_box_uint64(delayed_overflows));
@@ -1129,6 +1182,9 @@ import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
 import HexGroebner.DelayedConformance
 @[extern "hex_test_delayed_counts"] opaque delayedCounts : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_delayed_guard"] opaque delayedGuard : IO Bool
+@[extern "hex_test_delayed_vectors"] opaque delayedVectors : IO UInt64
+@[extern "hex_test_delayed_available"] opaque delayedAvailable : IO Bool
 @[extern "hex_test_delayed_offsets"] opaque delayedOffsets (enabled : Bool) : IO Unit
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
@@ -1295,6 +1351,8 @@ private def checkSupport : IO Unit := do
   checkSupportSystems
 
 private def checkBinaryBuffers : IO Unit := do
+  if !(← delayedGuard) then throw (IO.userError "delayed exact packet/guard-page test failed")
+  let vectorsBefore ← delayedVectors
   let delayedBefore ← delayedCounts
   let delayedSeed ← Hex.Groebner.NativeChecks.readSeed
   for offsets in [false,true] do
@@ -1306,6 +1364,11 @@ private def checkBinaryBuffers : IO Unit := do
       !Hex.Groebner.DelayedConformance.producerChecks delayedSeed then
     throw (IO.userError "delayed high columns or full producer differs")
   let delayedAfter ← delayedCounts
+  let vectorsAfter ← delayedVectors
+  if (← delayedAvailable) then
+    if vectorsAfter ≤ vectorsBefore then throw (IO.userError "delayed AVX2 packet unused")
+  else if vectorsAfter != vectorsBefore then
+    throw (IO.userError "delayed unavailable AVX2 packet executed")
   if delayedAfter.1 ≤ delayedBefore.1 || delayedAfter.2.1 ≤ delayedBefore.2.1 ||
       delayedAfter.2.2 ≤ delayedBefore.2.2 then
     throw (IO.userError "delayed frames, row updates or near-overflow controls unused")

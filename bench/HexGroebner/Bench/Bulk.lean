@@ -32,9 +32,9 @@ def prepareBulk (field : PrimeField) (n : Nat) : Input := Id.run do
   return ⟨n,reducers,Array.replicate 8 target⟩
 
 /-- Validation, installation, elimination and every output entry/counter are timed. -/
-def bulkOver (field : PrimeField) (input : Input) (native : Bool := true) :
+def bulkOver (field : PrimeField) (input : Input) (native : Bool := true) (delayed : Bool := false) :
     Bool × Array (Array (Nat × UInt64) × Bool × UInt64 × Nat) × Array Nat :=
-  let limits : MatrixLimits := { work := 1000000000 }
+  let limits : MatrixLimits := { work := 1000000000,delayedReduction := delayed }
   let result := if native then
       Elimination.run field limits input.columns input.reducers input.targets false #[] true false
     else Elimination.reference field limits input.columns input.reducers input.targets #[] false
@@ -56,12 +56,17 @@ def bulkByte (input : Input) := bulkOver bytePrime input
 def bulkShort (input : Input) := bulkOver shortPrime input
 def bulkWord (input : Input) := bulkOver wordPrime input
 
+def bulkDelayedByte (input : Input) := bulkOver bytePrime input true true
+def bulkDelayedShort (input : Input) := bulkOver shortPrime input true true
+def bulkDelayedWord (input : Input) := bulkOver wordPrime input true true
+
 #guard ([bytePrime,shortPrime,wordPrime].all fun field =>
   #[128,256,512].all fun n =>
     let input := prepareBulk field n
     let actual := bulkOver field input
     Elimination.fits field { work := 1000000000 } n input.reducers input.targets #[] &&
-      actual.1 && actual == bulkOver field input false)
+      actual.1 && actual == bulkOver field input false &&
+      actual == bulkOver field input true true)
 
 -- There are n/2 known rows with n/2+1 entries, and eight targets. Sparse
 -- updates, input validation, installation and complete output hashing are O(n²).
@@ -88,6 +93,39 @@ setup_benchmark bulkShort n => n*n
 -- Four-byte coefficients likewise require eight*(n/2)*(n/2+1) sparse updates,
 -- plus O(n²) input validation, installation and complete output hashing.
 setup_benchmark bulkWord n => n*n
+  with prep := prepareBulkWord
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128,256,512]
+    targetInnerNanos := 4000000000
+  }
+
+-- Eight targets each visit n/2 known tails of length n/2+1. Validation,
+-- elimination and complete row/counter hashing all require O(n²) work.
+setup_benchmark bulkDelayedByte n => n*n
+  with prep := prepareBulkByte
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128,256,512]
+    targetInnerNanos := 4000000000
+  }
+
+-- Eight targets each visit n/2 known tails of length n/2+1. Validation,
+-- elimination and complete row/counter hashing all require O(n²) work.
+setup_benchmark bulkDelayedShort n => n*n
+  with prep := prepareBulkShort
+  where {
+    paramFloor := 128
+    paramCeiling := 512
+    paramSchedule := .custom #[128,256,512]
+    targetInnerNanos := 4000000000
+  }
+
+-- Eight targets each visit n/2 known tails of length n/2+1. Validation,
+-- elimination and complete row/counter hashing all require O(n²) work.
+setup_benchmark bulkDelayedWord n => n*n
   with prep := prepareBulkWord
   where {
     paramFloor := 128

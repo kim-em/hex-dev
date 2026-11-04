@@ -357,7 +357,12 @@ target because scanning advances through its leading column. The final
 the sparse computation. Optional dense preparation adds separately charged work;
 `attemptPortable` also checks the final total against the selected frame quantum.
 Opt-in F2 frames additionally bound packing, scanning and word updates by `2^34`
-visits and reserve their complete temporary payload against the packed-byte allowance. -/
+visits and reserve their complete temporary payload against the packed-byte allowance.
+Opt-in delayed frames over primes below `2^16` use these same dimension ceilings
+and a `2^38` conservative admission bound; successful reference work is at most
+`2^34`. Each accumulator cell receives at most one product per column, so it
+stays below `(p-1)+columns*(p-1)^2 < 2^50`. Private UInt64 accumulation and
+forty-byte pivot descriptors are reserved against the parent payload. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
   let rows := reducers.size + targets.size
@@ -422,7 +427,10 @@ shared reducer/target arrays. Unsupported shapes return `none` without changing
 inputs, and a reference-equivalent continuation runs after the native frame. A declined
 attempt's physical work is unreported; the continuation retains the reference counters. Ordinary-frame
 speculation is bounded by the remaining logical allowance and `2^20`; opt-in
-F2 packing and word visits have their separate shape bound. Without dense
+F2 packing and word visits have their separate shape bound. Delayed frames
+have a `2^34` logical-work cap and an additional at-most `targets*columns`
+accumulator-clear bound. Their UInt64 accumulator and flat pivot metadata can
+also cause a late byte refusal, followed by the reference-equivalent continuation. Without dense
 preparation or private F2 payload, the shape bound makes a charged decline imply
 reference failure. F2 payload admission can decline a successful reference. With dense preparation, a successful reference may
 exceed the frame quantum and continue outside the frame. Such a declined
