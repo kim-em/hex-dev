@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import math
+import re
 import statistics
 from collections import Counter
 from pathlib import Path
@@ -34,7 +35,7 @@ def campaign(cap,label,manifest,*,sampled_baseline,block,zeros,minimum=0,count=1
     samples=meta['samples'];order=[r['case']for r in samples if r['block']==0 and r['arm']=='A']
     require(len(order)==len(set(order))==count and len(samples)==4*count and
             [(r['case'],r['block'],r['arm'])for r in samples]==[(case,round,arm)for round in [0,1]for case in order for arm in (['A','B']if round==0 else['B','A'])],'AB/BA schedule differs')
-    index={(r['case'],r['block'],r['arm']):r for r in samples};ratios=[];candidate=[];families={};sampling={}
+    index={(r['case'],r['block'],r['arm']):r for r in samples};ratios=[];candidate=[];families={};sampling={};candidate_families={};sampled_b={};null_pairs=[];outputs_by_case={}
     for case in order:
         inp=cap.json(label+'/inputs/'+case+'.json')
         for round in [0,1]:
@@ -52,9 +53,16 @@ def campaign(cap,label,manifest,*,sampled_baseline,block,zeros,minimum=0,count=1
                     require(value['randomState']==(10987+value['sampling']['randomWords']*0x9e3779b97f4a7c15)%2**64,'advanced random state differs')
                 else:require(value['randomState']==0,'deterministic random state differs')
                 outputs.append(value)
+            outputs_by_case[case,round]=outputs
+            if sampled_baseline and outputs[0]['sampling']['calls']==outputs[1]['sampling']['calls']==0:
+                require(outputs[0]['statistics']==outputs[1]['statistics'],'inactive cutoff changed ordinary statistics');null_pairs.append(pair[1]['wall_nanos']/pair[0]['wall_nanos'])
+            if not sampled_baseline and minimum and outputs[1]['sampling']['calls']==0:
+                require(outputs[0]['statistics']==outputs[1]['statistics'],'deterministic-only hybrid changed ordinary statistics')
             require(outputs[0]['basis']==outputs[1]['basis'] and outputs[0]['batchSize']==outputs[1]['batchSize'],'complete bases/contract differ')
             ratios.append(pair[1]['wall_nanos']/pair[0]['wall_nanos']);candidate.append(outputs[1]['candidateNanos']/outputs[0]['candidateNanos'])
             families.setdefault(pair[0]['family'],[]).append(ratios[-1])
+            candidate_families.setdefault(pair[0]['family'],[]).append(candidate[-1])
+            sampled_b[pair[0]['family']]=sampled_b.get(pair[0]['family'],0)+outputs[1]['sampling']['calls']
             if sampled_baseline:
                 counters=sampling.setdefault(pair[0]['family'],{'callsA':0,'callsB':0,'wordsA':0,'wordsB':0})
                 for arm,value in zip(['A','B'],outputs):
@@ -70,7 +78,7 @@ def campaign(cap,label,manifest,*,sampled_baseline,block,zeros,minimum=0,count=1
     require(rss==rec['peak_rss_kib'],'peak RSS differs')
     if sampled_baseline and minimum:
         require(sum(v['callsB']for v in sampling.values())<sum(v['callsA']for v in sampling.values()),'cutoff did not reduce sampled calls')
-    return dict(rec=rec,meta=meta,candidate=mean(candidate),rss=rss,sampling=sampling)
+    return dict(rec=rec,meta=meta,candidate=mean(candidate),rss=rss,sampling=sampling,null_pairs=null_pairs,outputs=outputs_by_case,candidate_families={k:mean(v)for k,v in candidate_families.items()},sampled_b=sampled_b)
 
 
 class Comparator:
@@ -99,7 +107,7 @@ def main():
     if args.current:
         current=source_identity();require(all(current[k]==v for k,v in identity.items()if k!='source_commit'),'current source differs')
     retained=[]
-    for snapshot in ['1391d0dd95e7','332b0af770f9']:
+    for snapshot in ['1391d0dd95e7','332b0af770f9','776e84e4758c']:
         path=args.guards.parent/('f4-sampler-hybrid-checks-'+snapshot+'.tar.xz')
         old=Capsule(path);old_manifest=source(old,'hybrid');require(old_manifest==hybrid,'retained guard runtime differs');old_identity=verify_checks(old,old_manifest)
         require(old_identity['checks_fingerprint']==snapshot,'retained guard identity differs');retained.append((path.name,old.sha256))
@@ -114,6 +122,13 @@ def main():
     for name in ['hybrid-versus-deterministic-prime','hybrid-versus-deterministic-prime-repeat']:
         direct.append((name,campaign(direct_cap,'hybrid/'+name,hybrid,sampled_baseline=False,block=32,zeros=1,minimum=128)))
     require(policies[0][1]['meta']['input_sha256']==policies[1][1]['meta']['input_sha256'],'unchanged repeat input differs')
+    def schedule(row):return [(r['case'],r['block'],r['arm'])for r in row['meta']['samples']]
+    require(direct[0][1]['meta']['input_sha256']==direct[1][1]['meta']['input_sha256']==policies[0][1]['meta']['input_sha256'],'direct repeat/policy inputs differ')
+    require(schedule(direct[0][1])==schedule(direct[1][1])==schedule(policies[0][1]),'direct repeat/policy schedules differ')
+    for _,row in direct:
+        for key,values in row['outputs'].items():
+            policy=policies[0][1]['outputs'][key][1];value=values[1]
+            require(all(value[k]==policy[k]for k in value if k!='candidateNanos'),'direct hybrid differs from policy campaign')
     comparison,meta=msolve(Comparator(cap),'hybrid',candidate_key='sample',moduli={32003,2147483647})
     require(meta['sampled']and meta['sampling_controls']=={'seed':10987,'block_rows':32,'total_zero_tests':1,'minimum_targets':128},'comparator policy differs')
     for row in meta['samples']:
@@ -121,6 +136,20 @@ def main():
             value=cap.json(f"hybrid/msolve-prime/{row['case']}-b{row['block']}-A.stdout")
             require(value['minimumTargets']==128 and value['totalZeroTests']==1 and value['blockRows']==32 and value['seed']==10987 and
                     value['randomState']==(10987+value['sampling']['randomWords']*0x9e3779b97f4a7c15)%2**64,'comparator random policy differs')
+    profile=guards.json('diagnostics/direct-noon/metadata.json')
+    require(profile['identity']==identity and profile['manifest']==hybrid and profile['threads']==1,'profile source/threads differ')
+    require([r['name']for r in profile['records']]==[f'noon5-31-{i}-{arm}'for i,arm in enumerate(['A','B','B','A'])],'profile schedule differs')
+    profile_outputs=[];sample_counts=[]
+    for row in profile['records']:
+        name=row['name'];key='compute'if name.endswith('A')else'sample'
+        require(row['exit_code']==0 and row['binary_sha256']==hybrid['binary_sha256'][key] and row['input_sha256']==hashlib.sha256(guards.read('diagnostics/direct-noon/noon5-31.json')).hexdigest(),'profile executable/input differs')
+        require(re.fullmatch('[0-9a-f]{64}',row['trace_sha256'])is not None,'profile trace hash absent')
+        report=guards.text('diagnostics/direct-noon/'+name+'.report')
+        match=re.search(r'# Samples:\s+(\d+)\s+of event',report)
+        require(match and '# Total Lost Samples: 0'in report,'profile sample accounting differs');sample_counts.append(int(match[1]))
+        output=guards.json('diagnostics/direct-noon/'+name+'.stdout');profile_outputs.append(output)
+        if key=='sample':require(output['minimumTargets']==128 and output['sampling']['calls']==output['sampling']['randomWords']==0,'profile policy was not deterministic-only')
+    require(all(v['basis']==profile_outputs[0]['basis']and v['statistics']==profile_outputs[0]['statistics']for v in profile_outputs),'profile work/output differs')
     cli=cap.json('hybrid/cli/status.json');require(len(cli)==12 and all(r['exit_code']==(2 if r['minimum_targets']is None else 0)for r in cli),'CLI boundary result differs')
     lines=['# Deterministic elimination below a sampling cutoff','',
         'The sampled candidate producer accepts an explicit minimum target count. Pair matrices below it use deterministic elimination after shared selection and symbolic preprocessing. The sealed continuation retains the cutoff and advanced random state. Deterministic batches consume parent allowances and no random words. The default cutoff is zero, preserving the existing policy; ordinary deterministic driver executables are byte-identical. Every output remains an unchecked candidate requiring independent complete-basis certification.','',
@@ -133,19 +162,31 @@ def main():
     for family in policies[-1][1]['rec']['per_family']:
         lines.append('| '+family+' | '+' | '.join(f"{row['rec']['per_family'][family]:.6f}"if family in row['rec']['per_family']else'—'for _,row in policies)+' |')
     for label,row in policies:
-        improved=', '.join(k for k,v in row['rec']['per_family'].items()if v<1)
-        regressed=', '.join(k for k,v in row['rec']['per_family'].items()if v>1)
-        lines+=['',f'{label}: observed lower time in {improved}; observed higher time in {regressed}.']
+        inactive=[k for k,v in row['sampling'].items()if v['callsA']==v['callsB']==0]
+        improved=', '.join(k for k,v in row['rec']['per_family'].items()if v<1 and k not in inactive)
+        regressed=', '.join(k for k,v in row['rec']['per_family'].items()if v>1 and k not in inactive)
+        lines+=['',f'{label}: among families with a policy difference, observed lower time in {improved}; observed higher time in {regressed}.']
+        if inactive:
+            lines+=['',f"{label}: {', '.join(inactive)} have no sampled pair batches in either arm and are unchanged-computation controls. Their ordinary statistics match exactly; individual process B/A spans {min(row['null_pairs']):.6f}–{max(row['null_pairs']):.6f}. These fluctuations are not attributed to the cutoff."]
     lines+=['','| Family | First sampled calls A/B | Repeat sampled calls A/B | F2 sampled calls A/B |',
         '|---|---:|---:|---:|']
     for family in policies[-1][1]['sampling']:
         lines.append('| '+family+' | '+' | '.join(f"{row['sampling'][family]['callsA']}/{row['sampling'][family]['callsB']}"if family in row['sampling']else'—'for _,row in policies)+' |')
-    lines+=['',f"The direct hybrid-versus-deterministic comparison is inconclusive: first process B/A {direct[0][1]['rec']['geomean']:.6f}, unchanged repeat {direct[1][1]['rec']['geomean']:.6f}. The opposite directions and broad pair ranges do not establish a speedup."]
-    lines+=['','The call totals verify that the cutoff actually reduced sampling; they include all completed processes. The prime cutoff reduces observed time primarily on Noon and Reimer. The F2 MQ inputs regress, so the cutoff remains explicit and no default change is selected. The cutoff 128 was selected using these development inputs; it has no held-out validation or demonstrated optimality. The cutoff comparison contains only zero and 128; it is not a sweep establishing an optimal threshold. The diagnostic suites are development inputs, not a balanced acceptance suite or held-out evaluation. Sampling counters describe sampled batches only; there is no direct counter of deterministic fallback batches.','',
+    lines+=['','| Family | Direct process first/repeat | Direct candidate first/repeat | Sampled calls B |',
+        '|---|---:|---:|---:|']
+    for family in direct[0][1]['rec']['per_family']:
+        first,repeat=[row for _,row in direct]
+        require(first['sampled_b'][family]==repeat['sampled_b'][family],'direct sampling counts differ')
+        lines.append(f"| {family} | {first['rec']['per_family'][family]:.6f}/{repeat['rec']['per_family'][family]:.6f} | {first['candidate_families'][family]:.6f}/{repeat['candidate_families'][family]:.6f} | {first['sampled_b'][family]} |")
+    inactive=[k for k,v in direct[0][1]['sampled_b'].items()if v==0]
+    lines+=['',f"In the direct comparison, {', '.join(inactive)} execute only deterministic pair batches. Their ordinary statistics agree exactly with deterministic F4. The producer uses both policies only in {', '.join(k for k,v in direct[0][1]['sampled_b'].items()if v>0)}."]
+    lines+=['',f"The direct hybrid-versus-deterministic comparison is inconclusive: first process B/A {direct[0][1]['rec']['geomean']:.6f}, unchanged repeat {direct[1][1]['rec']['geomean']:.6f}. The opposite process-time directions and broad pair ranges do not establish a process-time speedup. Candidate time is lower in both campaigns; this difference is unexplained, including cases where both drivers perform the same deterministic work."]
+    lines+=['','The call totals verify that the cutoff actually reduced sampling; they include all completed processes. In the prime policy comparison, Noon and Reimer become fully deterministic (zero sampled calls in B), removing sampling overhead. The F2 MQ inputs regress, so the cutoff remains explicit and no default change is selected. The cutoff 128 was selected using these development inputs; it has no held-out validation or demonstrated optimality. The cutoff comparison contains only zero and 128; it is not a sweep establishing an optimal threshold. The diagnostic suites are development inputs, not a balanced acceptance suite or held-out evaluation. Sampling counters describe sampled batches only; there is no direct counter of deterministic fallback batches.','',
         f"The current msolve comparison uses commit `{meta['msolve_commit']}`, Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. All 56 processes complete with 28 equal complete bases. Hex/msolve process geometric mean is {comparison['geomean']:.6f}, range {comparison['minimum']:.6f}–{comparison['maximum']:.6f}. Compiler/tuning differences are part of this observed gap. Candidate production, certificate generation, independent native verification and kernel checking remain separate; only candidate/process times are measured here. No fastest-open-source milestone is demonstrated.",'',
         '| Family | Hybrid Hex/msolve |','|---|---:|']
     for family,ratio in comparison['per_family'].items():lines.append(f'| {family} | {ratio:.6f} |')
-    lines+=['','Both initial and final checks pass all twelve Clang/GCC ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Cutoff tests cover deterministic-only/no-draw operation with identical ordinary statistics, a run with strictly fewer but nonzero sampled calls, mixed one-slice resumption, deterministic-batch exhaustion after random draws, sampled-matrix exhaustion after deterministic commit, scheduling suspension, exhaustion after symbolic preprocessing has submitted a deterministic matrix, exhausted parent work and resumed policy identity. Twelve archived CLI checks cover both initializers, default/zero/huge cutoffs, repeated flags and malformed values. The existing CI runner also checks zero/two huge cutoffs and malformed values on both initializers. A failed deterministic batch is selected again on retry: changing the resumed batch-size cap can change whether it crosses the cutoff. A pending sampled matrix retains its original selection. Full initialization is the same native arithmetic, not a portable arithmetic timing.','',
+    lines+=['','Both initial and final checks pass all twelve Clang/GCC ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Cutoff tests cover deterministic-only/no-draw operation with identical ordinary statistics, a run with strictly fewer but nonzero sampled calls, mixed one-slice resumption, deterministic-batch exhaustion after random draws, sampled-matrix exhaustion after deterministic commit, scheduling suspension, exhaustion after symbolic preprocessing has submitted a deterministic matrix, exhausted parent work and resumed policy identity. Twelve archived CLI checks cover both initializers, default/zero/huge cutoffs, repeated flags and malformed values. The existing CI runner also checks zero/two huge cutoffs, a genuinely mixed fixture, repeated flags and malformed values on both initializers, plus deterministic-only basis/statistics agreement with the deterministic driver. A failed deterministic batch is selected again on retry: changing the resumed batch-size cap can change whether it crosses the cutoff. A pending sampled matrix retains its original selection. Full initialization is the same native arithmetic, not a portable arithmetic timing.','',
+        f"Four additional Noon profiles use the direct-comparison executables with equal complete bases and ordinary statistics and no sampled calls. They contain {', '.join(map(str,sample_counts))} user-cycle samples, with no recorded sample loss. These coarse whole-process profiles do not explain the candidate-time difference or establish a fine-grained attribution. Their metadata, outputs, reports and trace hashes are in the final-checks capsule; raw perf data remain in the measurement workspace.",'',
         'The retained diagnostic profiles comprise four completed Eco processes, one MQ process exhausted under an accidentally omitted larger matrix-entry limit, and four corrected MQ processes. The failed command/output is retained. Profiles explain costs and are not timing comparisons. Raw trace hashes and reports are archived; raw perf data remain in the measurement workspace.','',
         f"Earlier checks remain retained and verified separately: {', '.join('`'+name+'` (SHA-256 `'+digest+'`)'for name,digest in retained)}. They are superseded by the final checks below. Direct comparison capsule `{args.direct.name}`: SHA-256 `{direct_cap.sha256}`.",'',
         f"Runtime `{hybrid['source_fingerprint']}`; initial checks `{initial_identity['checks_fingerprint']}`; final checks `{identity['checks_fingerprint']}`. `{args.capsule.name}`: SHA-256 `{cap.sha256}`. `{args.guards.name}`: SHA-256 `{guards.sha256}`.",'',
