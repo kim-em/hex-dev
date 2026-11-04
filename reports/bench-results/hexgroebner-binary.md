@@ -29,7 +29,7 @@ The word cursor variant is retained as an experiment. The selected zero-block sc
 | dense-quadratic | 0.992520/0.996309 | 0.942402/1.026255 | 1.138554/1.373117 |
 | mq | 0.709808/0.708062 | 1.065547/1.063745 | 0.904061/0.936463 |
 
-The two MQ ratios are below one, but effects this size are not established against the variability observed across campaigns. Several small-family ratios also vary substantially. These observations do not establish a full-system improvement, justify a universal default or assert overall performance leadership.
+The two MQ ratios in the zero-blocks column are below one, but effects this size are not established against the variability observed across campaigns. Several small-family ratios also vary substantially. These observations do not establish a full-system improvement, justify a universal default or assert overall performance leadership.
 
 The registered `binaryEliminate` and `binaryEliminateSparse` kernels use identical prepared F2 matrices with known reducers and dense targets. Timed work includes validation, workspace construction, elimination, complete decoded rows and counters, and structural hashing. Preparation is outside timing. Both arms use the same executable; complete result hashes agree.
 
@@ -41,7 +41,7 @@ The registered `binaryEliminate` and `binaryEliminateSparse` kernels use identic
 | 256 | 0.310990 | 4 | 0.319109 | 1 |
 | 512 | 0.194602 | 4 | 0.225609 | 0 |
 
-The initial pass targets 0.5 seconds of inner work; its matched rows are below the measured signal threshold. One longer matched pass targets 16 seconds. Its remaining flagged row is retained and does not independently justify a timing claim. No further unchanged kernel pass is collected. The short pass also retains the fixed trial-major complexity runs. The sparse arm admits whole frames at parameters 32 and 64, and uses the phased continuation from 128 upward. The packed cost model is O(n³/64+n²) at fixed word width; scans, decoding and hashing may dominate these finite sizes. These ratios compare those complete providers at the stated sizes and do not establish a full-system speedup of the same size.
+The initial pass targets 0.5 seconds of inner work; its matched rows are below the measured signal threshold. One longer matched pass targets 16 seconds. Its remaining flagged row is retained and does not independently justify a timing claim. No further unchanged kernel pass is collected. The short pass also retains the fixed trial-major complexity runs. The sparse arm can admit whole frames at parameters 32 and 64; from 128 upward its target count necessarily exceeds the ordinary frame cap and it uses the phased continuation. The packed cost model is O(n³/64+n²) at fixed word width; scans, decoding and hashing may dominate these finite sizes. These ratios compare those complete providers at the stated sizes and do not establish a full-system speedup of the same size.
 
 The independent msolve comparison uses the canonical F2 suite, one thread, full reduced grevlex output, commit `3672113ee2c696a2ac9c637636e0f7214f500ba1`, Clang 23.1.3 and `-O3 -march=native`. Hex native C uses Clang 21.1.8 and generated C uses SDK Clang 23.1.0; compiler/tuning differences remain part of this observed gap. Every comparison has 40 completed processes and 20 equal complete bases. Inputs and every Hex logical counter agree across these variants. All samples and outliers remain retained; no further unchanged comparator repeat is collected.
 
@@ -59,7 +59,9 @@ Coverage includes nonempty frames beyond the old dimensions, high-index packed p
 
 Native runtime `e02434ca3804`; documented runtime `586b40821cab`; checks `687b436b9355`.
 
-The combined tree after the scheduling-policy merge has runtime `e5f7b7d0de7e` and checks `f2899eb5dd80`. Its separate twelve sanitizer variants, nine project gates and twenty CLI policy checks pass. Its computation executables are byte-identical to the measured carrier. The benchmark executable changes through the sampled-policy dependency; the packed runtime and kernel definitions are unchanged. Kernel timings remain bound to the original benchmark executable; no additional timing repeat is used.
+The combined tree after the scheduling-policy merge has runtime `545c62af5b66` and checks `6aaf1938b886`. Its separate twelve sanitizer variants, nine project gates and twenty CLI policy checks pass. Its computation executables are byte-identical to the measured carrier. The benchmark executable changes through the sampled-policy dependency; the packed runtime and kernel definitions are unchanged. Kernel timings remain bound to the original benchmark executable; no additional timing repeat is used.
+
+The final validation snapshot has runtime `e5f7b7d0de7e` and checks `f2899eb5dd80`. The admission archive is named by its checks fingerprint and uses that same final runtime/check snapshot.
 
 The separate non-timed admission audit uses the exact ten timed F₂ inputs and flags. Its instrumented Clang 23 executable reproduces every complete basis and logical counter. All 108 attempted frames are accepted; shape, logical-work, physical-work and byte refusals are zero in this audit. Larger shapes can still decline under the documented caps. Counts are cumulative row visits, not distinct basis polynomials. Admission confirms path activity without establishing a timing effect.
 
@@ -74,7 +76,9 @@ The separate non-timed admission audit uses the exact ten timed F₂ inputs and 
 | dense-quadratic | 1 | 11 / 11 | 562 | 213 |
 | mq | 3 | 33 / 33 | 70906 | 6613 |
 
-The final validation adds measured buffer-size totals, target-built word-pivot reuse, 1024-target admission, and the exact logical-work boundary plus one entry. The retained initial diagnostic-probe compile failure is corrected by adding standard I/O declarations. The production elimination code and timed computation executables are unchanged.
+The final validation adds measured buffer-size totals, target-built word-pivot reuse, 1024-target admission, and the exact logical-work boundary plus one entry. The retained initial diagnostic-probe compile failure is corrected by adding standard I/O declarations. The test measures byte-array payload lengths, excluding allocator headers, padding and RSS. The production elimination code and timed computation executables are unchanged.
+
+A separate non-timed replay of the exact Clang sanitizer test executable exercises all diagnostic classifier branches: accepted=83, logical=2, other_possible_byte_refusal=34, other_without_byte_refusal=75, physical=2, shape=3. It includes a forced byte refusal with an allowance smaller than the required private buffer. The two other categories distinguish whether the conservative byte upper bound excludes a byte refusal; they do not identify every internal failure cause.
 
 `f4-binary-pivots-initial-86ad4e3f842f.tar.xz`: SHA-256 `c637818a14b1754bc9ae6a4fb036482fc931a1f39c4c9800846bb044c0706029`.
 `f4-binary-words-f3525392a594.tar.xz`: SHA-256 `922f2311a836e0eaea33995e5f56922a8693e7a71dbcc4e0660648e197beba7b`.
@@ -83,5 +87,6 @@ The final validation adds measured buffer-size totals, target-built word-pivot r
 `f4-binary-combined-545c62af5b66.tar.xz`: SHA-256 `7abae21344382843e9addfddf24702f298cdf33965ca78d86eaa6ffce3ccb928`.
 `f4-binary-final-e5f7b7d0de7e.tar.xz`: SHA-256 `f7b8f3c9b406ac81a188dc9cd3b5c4dddfe2a04a509415424ae13e05925e51f4`.
 `f4-binary-admission-f2899eb5dd80.tar.xz`: SHA-256 `164efe7210a899ac0a7086246a531c7d9974a16a7ad95c0fa5dcb8d916b0e152`.
+`f4-binary-refusals-f2899eb5dd80.tar.xz`: SHA-256 `cb669baa92a5df4b58df0f5f86bf142e2a4f2b10841086ce43085d2b769c9f92`.
 
-Regenerate with `python3 scripts/bench/groebner_binary_report.py --initial reports/bench-results/raw/f4-binary-pivots-initial-86ad4e3f842f.tar.xz --word reports/bench-results/raw/f4-binary-words-f3525392a594.tar.xz --blocked reports/bench-results/raw/f4-binary-blocks-a45acb9da3a9.tar.xz --selected reports/bench-results/raw/f4-binary-selected-586b40821cab.tar.xz --rebased reports/bench-results/raw/f4-binary-combined-545c62af5b66.tar.xz --guards reports/bench-results/raw/f4-binary-final-e5f7b7d0de7e.tar.xz --admission reports/bench-results/raw/f4-binary-admission-f2899eb5dd80.tar.xz --report reports/bench-results/hexgroebner-binary.md --check`. Add `--current` to bind the checkout.
+Regenerate with `python3 scripts/bench/groebner_binary_report.py --initial reports/bench-results/raw/f4-binary-pivots-initial-86ad4e3f842f.tar.xz --word reports/bench-results/raw/f4-binary-words-f3525392a594.tar.xz --blocked reports/bench-results/raw/f4-binary-blocks-a45acb9da3a9.tar.xz --selected reports/bench-results/raw/f4-binary-selected-586b40821cab.tar.xz --rebased reports/bench-results/raw/f4-binary-combined-545c62af5b66.tar.xz --guards reports/bench-results/raw/f4-binary-final-e5f7b7d0de7e.tar.xz --admission reports/bench-results/raw/f4-binary-admission-f2899eb5dd80.tar.xz --refusals reports/bench-results/raw/f4-binary-refusals-f2899eb5dd80.tar.xz --report reports/bench-results/hexgroebner-binary.md --check`. Add `--current` to bind the checkout.

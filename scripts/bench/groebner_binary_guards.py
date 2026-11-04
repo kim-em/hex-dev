@@ -12,9 +12,18 @@ def blobs(cap, manifest, prefix):
 
 
 
-def combined(rebased, selected, selected_manifest):
+def combined(rebased, selected, selected_manifest, final=False):
     combined = source(rebased, "pivots")
     documented = rebased.json("identity.json")
+    require("clang version 23.1.3" in rebased.text("native-clang.log") and
+            "16.2.0" in rebased.text("native-gcc.log"), "combined sanitizer compilers differ")
+    if final:
+        require("initial-admission-probe-failure.log" in rebased.payloads, "missing diagnostic probe failure record")
+    if "initial-admission-probe-failure.log" in rebased.payloads:
+        failure = rebased.json("initial-admission-probe-failure-status.json")
+        require(failure[0]["name"] == "clang" and failure[0]["exit_code"] != 0 and
+                "requires inclusion of the header <stdio.h>" in rebased.text("initial-admission-probe-failure.log"),
+                "diagnostic probe failure record differs")
     require(documented["source_fingerprint"] == combined["source_fingerprint"] and
             documented["source_manifest_sha256"] == hashlib.sha256(
                 combined["source_manifest"].encode()).hexdigest(), "combined runtime differs")
@@ -152,3 +161,33 @@ def admission(cap, guard, timed):
     require(sum(v["attempted"] for v in families.values()) == 108 and
             sum(v["accepted"] for v in families.values()) == 108, "admission totals differ")
     return families
+
+
+def refusals(cap, guard):
+    """The same tested executable exercises every diagnostic reason branch."""
+    import csv
+    from collections import Counter
+    status = cap.json("status.json")
+    require(status["exit_code"] == 0 and status["binary_sha256"] ==
+            guard.json("native-executables.json")["clang"]["checkNative"],
+            "forced refusal executable differs")
+    fields = ["columns", "reducers", "targets", "entries", "reason", "byteUpper", "byteAllowance"]
+    require(status["fields"] == fields, "forced refusal schema differs")
+    frames = list(csv.DictReader(cap.text("frames.csv").splitlines(), fieldnames=fields))
+    counts = Counter(f["reason"] for f in frames)
+    require(len(frames) == status["frames"] and counts == status["counts"] and set(counts) ==
+            {"accepted", "shape", "logical", "physical", "other_without_byte_refusal", "other_possible_byte_refusal"},
+            "forced refusal coverage differs")
+    byte_refused = False
+    for f in frames:
+        nc, nr, nt, entries = [int(f[k]) for k in ["columns", "reducers", "targets", "entries"]]
+        words, rows = (nc+63)//64, nr+nt
+        logical = rows*65+2*entries+nc*5+nt*(entries+(nt+3)*nc+64)+nc
+        physical = rows*words+3*entries+4*nt*nc+6*nc+nt*(rows*words+64)
+        if f["reason"] == "shape": require(nc > 16384 or nr > 16384 or nt > 1024, "shape refusal differs")
+        if f["reason"] == "logical": require(logical > 2**32, "logical refusal differs")
+        if f["reason"] == "physical": require(logical <= 2**32 and physical > 2**28, "physical refusal differs")
+        if f["reason"] == "other_possible_byte_refusal" and int(f["byteAllowance"]) < (min(rows,nc)+1)*words*8:
+            byte_refused = True
+    require(byte_refused, "private byte refusal not exercised")
+    return counts
