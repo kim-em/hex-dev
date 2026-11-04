@@ -276,6 +276,18 @@ The result retains both the original request and the checked conversions.
 Its {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciled?_shared` law
 identifies the actual successful owner gather used by the live collection.
 
+For a returned {name}`Hex.RealClosure.Tower.Live.Collection`, the original
+request position determines the retained owner map.
+{name}`Hex.RealClosure.Tower.Live.Collection.frame_transport` identifies the
+transported frame at that same position;
+{name}`Hex.RealClosure.Tower.Live.Collection.frame_values` and
+{name}`Hex.RealClosure.Tower.Live.Collection.frame_polynomials` identify its
+mapped values and polynomials.
+{name}`Hex.RealClosure.Tower.Live.Collection.frame_descriptors` retains the
+complete raw descriptors through that map, including heads, bounds,
+derivative positions and signs. These equations concern the actual returned
+collection. They do not construct an ordinary-real interpretation of its data.
+
 This route permits different orders of registered provider keys. It preserves
 the existing ordered conversion when one is available; otherwise it uses the
 checked provider reconciliation. Key coverage and infinitesimal depth are
@@ -426,6 +438,13 @@ Context-bound serialization records the ordered base signature, selected
 descriptors and recursively encoded coefficients. This is reconstructible
 data, not a decimal approximation of the selected root.
 
+For a full signature,
+{name}`Hex.RealClosure.Tower.Signature.codec_encode` identifies the encoded
+structured literal and
+{name}`Hex.RealClosure.Tower.Signature.codec_literal` restores the original
+signature from that literal. This proves identity decoding, separately from
+validation of the context and its selected roots.
+
 {name}`Hex.RealClosure.Tower.Context.write` and
 {name}`Hex.RealClosure.Tower.Context.read` use the exact whole-context binding.
 {name}`Hex.RealClosure.Tower.Context.read_write` proves the value roundtrip;
@@ -475,6 +494,26 @@ laws excluding each of these fallbacks. Cell membership,
 coverage and sign constancy belong to the companion's family theorems;
 a sample data structure alone does not prove these claims. This interface
 does not provide full CAD or multivariate coverings.
+
+# Original infinitesimal comparisons
+
+The existing native `BasicConformance` examples cover all seven comparisons
+from the recovered paper's `ex2.py`. For the first positive infinitesimal `ε`
+they check `1 / ε > 10^28` and `(1 + ε) / (1 - ε) > 1`. For the selected
+cube root `a` of `ε`, both `a > ε` and `a² > ε` hold, whereas `a⁴ > ε` is
+false. A second positive infinitesimal `δ` satisfies `δ < ε` and `δ < ε^10`.
+
+Adding `δ` enlarges the actual context containing the cube root. The example
+retains the earlier square-root descriptor in the enlarged context. It
+transports all seven computed cubic values, including the cube root, then
+checks the transported equation and signs. The
+[comparison record](https://github.com/kim-em/hex-dev/blob/main/reports/real-closure-original-ex2/README.md)
+links the existing emitter, exact Z3 oracle and mutation controls. The original
+`10^28` comparison is separate from the retained `10^27` regression.
+These are conformance examples for native infinitesimal computation. They
+neither assert the inequalities for every positive real choice of `ε` and `δ`
+nor supply computational scaling evidence. The paper's introductory cases
+using π still require their caller-supplied provider.
 
 # The Mathlib correspondence
 
@@ -550,3 +589,38 @@ Z3/python-flint oracles separately check the emitted arithmetic and root
 fixtures. Retained tower and clean/eager
 measurements supply computational evidence; these examples and theorem
 applications do not replace it.
+
+# Joint ordinary-real witnesses for a finite tower
+
+A finite set of guards can hold at chosen real coordinates even though a
+positive infinitesimal field has no order-preserving embedding into the reals.
+The interpretation and coordinates must work together for the original
+coefficient data, selected roots and arithmetic records.
+
+The existing nested fixture starts over two successive infinitesimals `ε`
+and `δ`. It selects a root `α` of `X - (ε + δ)`, then the positive selected
+root of `Y² - α`. Its exported theorem `GuardJointPublic.exists_points` gives
+one interpretation of the requested coefficient data and two real coordinates.
+The coefficient interpretation is a ring homomorphism on a subring containing
+the required finite inventory.
+At those same witnesses it retains the ordered coefficient agreement,
+inherited provider values, both packing/sign/inverse inventories, every
+original guard and the computed native product.
+
+The ordinary-import consumer
+[`GuardJointUse.coordinates`](https://github.com/kim-em/hex-dev/blob/main/experiments/KernelReplay/GuardJointUse.lean)
+extracts those witnesses and proves both original defining-polynomial equations
+and the native square equation at them. See that checked consumer and its
+[joint realization record](https://github.com/kim-em/hex-dev/blob/main/reports/real-closure-joint-replay.md)
+links the full proposition and the independent body/dependency audit. The audit
+checks the permitted standard-three axiom closure and excludes the older
+cached operand and whole-field reference construction.
+
+This experiment-tree fixture is checked locally. Routine CI builds its shared
+auditor and small controls, and the fixture is not part of a published library.
+
+This is a fixed two-level example. The general recursive exporter for
+arbitrary interleaved live collections, direct `Sample.realizeReplay`, strict
+compiled rejection of missing inventories and the specified tower performance
+evidence remain separate requirements. The ordinary-real tactic interface and
+its examples remain in the {ref "hex-rcf"}[real-coefficient `rcf` manual].
