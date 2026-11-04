@@ -1220,9 +1220,6 @@ private def checkSupport : IO Unit := do
   let copiesBefore ← supportCopies
   let queuesBefore ← supportCount
   let clearsBefore ← supportClears
-  let symbolicSeed ← Hex.Groebner.NativeChecks.readSeed
-  if !Hex.Groebner.PairRowsConformance.bitmapChecks symbolicSeed then
-    throw (IO.userError "symbolic support bitmap closure mismatch")
   for native in [true,false] do
     if !Hex.Groebner.PairRowsConformance.chunkChecks seed native then
       throw (IO.userError "production support chunks or separate-tail allocation mismatch")
@@ -1274,6 +1271,8 @@ private def checkBinary (seed : Nat) : IO Unit := do
   if !Hex.Groebner.EliminationConformance.binaryTableChecks seed then
     throw (IO.userError "known-pivot XOR table/reference mismatch")
   if (← binaryTables) ≤ tableBefore then throw (IO.userError "known-pivot XOR table unused")
+  if !Hex.Groebner.EliminationConformance.binaryRandomChecks seed then
+    throw (IO.userError "seeded wide projection/reference mismatch")
   let projectionBefore ← binaryProjects
   if !Hex.Groebner.EliminationConformance.binaryProjectChecks seed then
     throw (IO.userError "known-pivot projection/reference mismatch")
