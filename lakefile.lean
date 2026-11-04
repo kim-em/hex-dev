@@ -126,7 +126,9 @@ target hexgroebnerStateO pkg : FilePath := do
 target hexgroebnerEliminationO pkg : FilePath := do
   let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_eliminate.c"
   let header ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_runtime.h"
-  let inputs := source.zipWith (fun source _ => source) header
+  let simd ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_simd.h"
+  let inputs := (source.zipWith (fun source _ => source) header).zipWith
+    (fun source _ => source) simd
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_eliminate.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]
