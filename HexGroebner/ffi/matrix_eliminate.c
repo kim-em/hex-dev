@@ -152,9 +152,9 @@ static void matrix_cleanup(matrix_context *c) {
 /* Installed rows are already canonical and monic. Thus the optional factory's
    exact acceptance and charges are known without allocating an unused cache.
    Parent-budget refusal costs zero, as in Matrix.preparePivot. A work-cap
-   decline occurs only when the same reference charge exceeds MATRIX_QUANTUM. */
+   decline occurs when the same reference charge exceeds the selected frame cap. */
 static int matrix_prepare(matrix_context *c,b_lean_obj_arg row) {
-    if(!c->cache) return 1;
+    if(!c->cache || c->columns>65536) return 1;
     uint64_t n=lean_sarray_size(lean_ctor_get(row,0))/4;
     if(n<128 || n>4096) return 1;
     const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(row,0));
@@ -746,8 +746,8 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
             if(!matrix_install(&c,output,first,inverse,sugar,0)) goto defer;
         } else {
             if(!c.project && !matrix_work(&c,n)) goto defer;
-            /* Every nonempty target starts from zero, including after rows
-               whose nonzero integers cancelled to zero residues. */
+            /* Keep target initialization explicit and bound its physical cost
+               by targets*columns, separately from the reference counters. */
             if(c.delayed) memset(lean_sarray_cptr(c.dense),0,(size_t)c.columns*8);
             for(size_t j=0;!c.project && j<n;++j) {
                 uint64_t col=matrix_read(lean_sarray_cptr(cs)+j*4,4);

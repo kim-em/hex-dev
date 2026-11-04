@@ -622,7 +622,8 @@ static uint64_t delayed_quantum=UINT64_C(1)<<34,delayed_refused_work=0;
 #define HEX_GROEBNER_DELAYED_QUANTUM delayed_quantum
 #define HEX_GROEBNER_DELAYED_DEFERRED(work) (delayed_refused_work+=(work))
 #define HEX_GROEBNER_DELAYED_FRAME() (++delayed_frames)
-#define HEX_GROEBNER_DELAYED_UPDATE(vectorized) (++delayed_updates,delayed_vectors+=(vectorized))
+static uint64_t delayed_packet_widths[3]={0};
+#define HEX_GROEBNER_DELAYED_UPDATE(width) (++delayed_updates,(width)?(++delayed_vectors,++delayed_packet_widths[(width)==1?0:(width)==2?1:2]):0)
 #define HEX_GROEBNER_DELAYED_TARGET(context) do { \
  if(delayed_offset_enabled) { \
   matrix_context *ctx=(context); \
@@ -848,7 +849,7 @@ static int delayed_guard_test(void) {
    }
    uint8_t cb[40],vb[40];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
    delayed_pivot pivot={cols,vals,n,(n-1)*stride,0};
-   if(width==4) delayed_update_wide(&ctx,&pivot,factor);
+   if(width==4) delayed_update_wide_avx2(&ctx,&pivot,factor);
    else delayed_update_avx2(&ctx,&pivot,factor);
    for(unsigned col=0;col<64;++col) if(delayed_read(&ctx,col)!=expected[col]) return 0;
    if(memcmp(cb,cols,n*4)||memcmp(vb,vals,n*width)) return 0;
@@ -859,6 +860,9 @@ static int delayed_guard_test(void) {
 }
 LEAN_EXPORT lean_obj_res hex_test_delayed_guard(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box(delayed_guard_test()));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_width_packets(uint8_t width,lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(delayed_packet_widths[width==1?0:width==2?1:2]));
 }
 LEAN_EXPORT lean_obj_res hex_test_delayed_vectors(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(delayed_vectors));
@@ -1206,6 +1210,7 @@ import HexGroebner.DelayedConformance
 @[extern "hex_test_delayed_refused"] opaque delayedRefused : IO UInt64
 @[extern "hex_test_delayed_guard"] opaque delayedGuard : IO Bool
 @[extern "hex_test_delayed_vectors"] opaque delayedVectors : IO UInt64
+@[extern "hex_test_delayed_width_packets"] opaque delayedWidthPackets (width : UInt8) : IO UInt64
 @[extern "hex_test_delayed_available"] opaque delayedAvailable : IO Bool
 @[extern "hex_test_delayed_offsets"] opaque delayedOffsets (enabled : Bool) : IO Unit
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
@@ -1376,6 +1381,7 @@ private def checkSupport : IO Unit := do
 private def checkBinaryBuffers : IO Unit := do
   if !(← delayedGuard) then throw (IO.userError "delayed exact packet/guard-page test failed")
   let vectorsBefore ← delayedVectors
+  let widePacketsBefore ← delayedWidthPackets 4
   let delayedBefore ← delayedCounts
   let delayedSeed ← Hex.Groebner.NativeChecks.readSeed
   for offsets in [false,true] do
@@ -1386,6 +1392,8 @@ private def checkBinaryBuffers : IO Unit := do
   if !Hex.Groebner.DelayedConformance.boundaryChecks delayedSeed ||
       !Hex.Groebner.DelayedConformance.producerChecks delayedSeed then
     throw (IO.userError "delayed high columns or full producer differs")
+  if !Hex.Groebner.DelayedConformance.denseChecks delayedSeed then
+    throw (IO.userError "delayed dense preparation charge or cap differs")
   if !Hex.Groebner.DelayedConformance.scalarChecks delayedSeed then
     throw (IO.userError "delayed matrix differs from fully scalar Lean")
   for wide in [false,true] do
@@ -1413,6 +1421,8 @@ private def checkBinaryBuffers : IO Unit := do
   let delayedAfter ← delayedCounts
   let vectorsAfter ← delayedVectors
   if (← delayedAvailable) then
+    if (← delayedWidthPackets 4) ≤ widePacketsBefore then
+      throw (IO.userError "delayed wide four-lane packets unused")
     if vectorsAfter ≤ vectorsBefore then throw (IO.userError "delayed AVX2 packet unused")
   else if vectorsAfter != vectorsBefore then
     throw (IO.userError "delayed unavailable AVX2 packet executed")

@@ -92,16 +92,17 @@ def runtimeChecks (nonce : Nat) : Bool := Id.run do
 a dense set of input entries. Independent mode retains each target's scalar. -/
 def boundaryChecks (nonce : Nat) : Bool := Id.run do
   if USize.size != 2^64 then return true
-  let field : PrimeField := ⟨65521,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
-  for columns in [4097,65536,131071,131072] do
-    let some r := SparseRow.ofEntries field columns #[(0,65520),(columns-1,65520)] | return false
-    let some t := SparseRow.ofEntries field columns #[(0,(nonce%65520+1).toUInt64)] | return false
-    let limits : MatrixLimits := { delayedReduction := true,work := 2^40,packedBytes := 2^30 }
-    for independent in [false,true] do
-      let some actual := Elimination.attempt field limits columns #[r] #[t,t] #[7,3,9] independent
-        | return false
-      let expected := Elimination.reference field limits columns #[r] #[t,t] #[7,3,9] independent
-      if !same actual expected then return false
+  for field in Fixtures.fields do
+    if field.modulus > 2 then
+      for columns in [4097,65536,131071,131072] do
+        let some r := SparseRow.ofEntries field columns #[(0,field.modulus-1),(columns-1,field.modulus-1)] | return false
+        let some t := SparseRow.ofEntries field columns #[(0,(nonce%(field.modulus.toNat-1)+1).toUInt64)] | return false
+        let limits : MatrixLimits := { delayedReduction := true,work := 2^40,packedBytes := 2^30 }
+        for independent in [false,true] do
+          let some actual := Elimination.attempt field limits columns #[r] #[t,t] #[7,3,9] independent
+            | return false
+          let expected := Elimination.reference field limits columns #[r] #[t,t] #[7,3,9] independent
+          if !same actual expected then return false
   return true
 
 /-- The F4 producer forwards the option while retaining exact scalar behavior. -/
@@ -151,6 +152,30 @@ def scalarChecks (nonce : Nat) : Bool := Id.run do
         let actual := Elimination.run field limits columns rs ts false sugars true false
         let expected := eliminateWith field limits columns rs ts false sugars false
         if !same actual ⟨expected.result.map (fun e => (e,#[])),expected.stats⟩ then return false
+  return true
+
+/-- Dense preparation is charged only through its existing 65536-column
+boundary even when a wider delayed frame is admitted. -/
+def denseChecks (nonce : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2147483647,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  for columns in [256,65536,65537,131072] do
+    let entries := ((Array.range 128).map fun i => (i,field.modulus-1)).push (169,1)
+    let some row := SparseRow.ofEntries field columns entries | return false
+    let limits : MatrixLimits := { delayedReduction := true,densePivots := true,work := 2^40 }
+    let sugars := #[nonce%97,4,7]
+    for independent in [false,true] do
+      let some expected := Elimination.attemptPortable field limits columns #[row] #[row,row] sugars independent
+        | return false
+      let some actual := Elimination.attempt field limits columns #[row] #[row,row] sugars independent
+        | return false
+      if !same actual expected then return false
+      let bytes := expected.stats.packedBytes+Elimination.delayedBytes field columns 1 2
+      for work in [expected.stats.work-1,expected.stats.work] do
+        for packedBytes in [bytes-1,bytes] do
+          let tight := { limits with work,packedBytes }
+          if !sameAttempt (Elimination.attempt field tight columns #[row] #[row,row] sugars independent)
+              (Elimination.attemptPortable field tight columns #[row] #[row,row] sugars independent) then return false
   return true
 
 end Hex.Groebner.DelayedConformance

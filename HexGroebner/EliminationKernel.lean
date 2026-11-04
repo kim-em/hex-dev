@@ -419,7 +419,10 @@ reference result, including exact rows, aliases, sugars and counters. It admits
 ordinary frames with at most 4096 columns, 1024 known reducers, 64 targets and
 `2^20` charged work. Opt-in F2 frames admit at most 131072 columns, 131072 reducers
 and 4096 targets, with a `2^38` logical-work bound and a separate `2^34` bound
-on packing/scalar/word visits. Their private pivot/accumulator bytes must fit
+on packing/scalar/word visits. Delayed frames over every prime `3 ≤ p < 2^31`
+use the same dimension ceilings, a `2^38` conservative bound and `2^34` charged
+work cap. Requested M31 dense-pivot preparation retains the reference charges
+only within its existing 65536-column limit. Their private pivot/accumulator bytes must fit
 the packed-byte allowance in addition to the complete reference payload. Known leading
 columns are distinct. Large limits saturate above all
 possible accepted totals; non-machine-size sugars use checked Lean arithmetic.
