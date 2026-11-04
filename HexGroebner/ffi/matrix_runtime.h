@@ -8,6 +8,10 @@
 
 extern lean_obj_res lean_hex_scan_transition(uint64_t,b_lean_obj_arg,b_lean_obj_arg,
     lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint8_t);
+/* Owned scan state; borrowed slots, pivots, quantum and work. Internal,
+   untraced, <=2^20 microsteps; the whole-matrix portable model is its contract. */
+extern lean_obj_res lean_hex_scan_bulk(uint64_t,b_lean_obj_arg,b_lean_obj_arg,
+    lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg);
 extern lean_obj_res lean_hex_dense_transition(uint64_t,b_lean_obj_arg,b_lean_obj_arg,
     b_lean_obj_arg,lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint8_t);
 extern lean_obj_res lean_hex_prepare_dense(uint64_t,b_lean_obj_arg,b_lean_obj_arg,

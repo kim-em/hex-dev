@@ -466,11 +466,11 @@ static int matrix_scan(matrix_context *c,uint64_t first,uint64_t *last,
     lean_ctor_set(state,7,lean_uint64_to_nat(*sugar));
     lean_ctor_set_uint64(state,8*sizeof(void*),0);
     uint64_t cap=c->limits[5]<c->quantum?c->limits[5]:c->quantum;
-    uint64_t calls=(c->columns*(c->columns+2)+4095)/4096+1;
+    uint64_t calls=(c->columns*(c->columns+2)+1048575)/1048576+1;
     for(uint64_t call=0;call<calls;++call) {
         lean_object *remaining=lean_uint64_to_nat(cap-c->stats[0]);
-        lean_object *out=lean_hex_scan_transition(c->p,c->slots,c->native_pivots,
-            state,lean_box(4096),remaining,lean_box(0),0);
+        lean_object *out=lean_hex_scan_bulk(c->p,c->slots,c->native_pivots,
+            state,lean_box(1048576),remaining);
         state=NULL;lean_dec(remaining);
         uint8_t status=lean_ctor_get_uint8(out,5*sizeof(void*));
         uint64_t work=lean_unbox(lean_ctor_get(out,2));
