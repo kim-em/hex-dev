@@ -9,6 +9,78 @@ import LeanBench
 
 namespace Hex.Groebner.Bench
 
+private def binaryField : PrimeField :=
+  ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+
+/-- Dense ordinary-F2 matrices with distinct known leading columns and random
+target rows. Preparation is quadratic and remains outside the timed call. -/
+def prepareBinary (n : Nat) : Nat × Array SparseRow × Array SparseRow := Id.run do
+  let columns := 2*n
+  let mut reducers := #[]
+  let mut targets := #[]
+  let mut state : UInt64 := 10987
+  for i in [:2*n] do
+    let mut support : ByteArray := {}
+    let mut coefficients : ByteArray := {}
+    for j in [:columns] do
+      state := state*6364136223846793005+1442695040888963407
+      let keep := if i < n then j == i || (j ≥ n && state >>> 63 != 0)
+        else state >>> 63 != 0
+      if keep then
+        support := Packed.push .u32 support j.toUInt64
+        coefficients := coefficients.push 1
+    let row : SparseRow := ⟨support,coefficients⟩
+    if i < n then reducers := reducers.push row else targets := targets.push row
+  return (columns,reducers,targets)
+
+private def binaryResult (packed : Bool) (input : Nat × Array SparseRow × Array SparseRow) :
+    Bool × Array (Bool × Array (Nat × UInt64) × Nat) × Array Nat :=
+  let result := eliminateWith binaryField { work := 1000000000,binaryPivots := packed }
+    input.1 input.2.1 input.2.2
+  let stats := result.stats
+  let counters := #[stats.work,stats.inputEntries,stats.outputEntries,stats.packedBytes,
+    stats.traceNodes,stats.processedRows,stats.reductions,stats.zeroRows]
+  match result.result with
+  | .ok echelon => (echelon.reducerRank == input.2.1.size,
+      echelon.rows.map (fun (pivot : Pivot) =>
+        (pivot.fromTarget,pivot.row.entries binaryField,pivot.sugar)),counters)
+  | .error _ => (false,#[],counters)
+
+/-- Validation, private bitmap construction, elimination and complete decoded
+output/counter consumption; no polynomial Boolean-quotient relations apply. -/
+def binaryEliminate (input : Nat × Array SparseRow × Array SparseRow) :=
+  binaryResult true input
+
+/-- Identical input/output through the existing sparse/native-phase route. -/
+def binaryEliminateSparse (input : Nat × Array SparseRow × Array SparseRow) :=
+  binaryResult false input
+
+#guard (#[1,2,4,8].all fun n =>
+  let input := prepareBinary n
+  (binaryEliminate input).1 && binaryEliminate input == binaryEliminateSparse input)
+
+-- Dense elimination is O(n³); preparation and complete output hashing are O(n²).
+setup_benchmark binaryEliminate n => n^3
+  with prep := prepareBinary
+  where {
+    paramFloor := 32
+    paramCeiling := 512
+    paramSchedule := .custom #[32,64,128,256,512]
+    targetInnerNanos := 4000000000
+    maxSecondsPerCall := 32.0
+  }
+
+-- The sparse provider uses the same canonical rows and complete result digest.
+setup_benchmark binaryEliminateSparse n => n^3
+  with prep := prepareBinary
+  where {
+    paramFloor := 32
+    paramCeiling := 512
+    paramSchedule := .custom #[32,64,128,256,512]
+    targetInnerNanos := 4000000000
+    maxSecondsPerCall := 32.0
+  }
+
 private def primitiveField : PrimeField :=
   ⟨65537,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
 

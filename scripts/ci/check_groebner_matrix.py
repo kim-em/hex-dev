@@ -552,11 +552,11 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
 
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
-static uint64_t binary_sparse=0,binary_words=0;
+static uint64_t binary_sparse=0,binary_words=0,binary_high_words=0;
 #define HEX_GROEBNER_BINARY_SCAN_USED() (++binary_scans)
 #define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=(n))
 #define HEX_GROEBNER_BINARY_SPARSE_USED() (++binary_sparse)
-#define HEX_GROEBNER_BINARY_WORD_USED() (++binary_words)
+#define HEX_GROEBNER_BINARY_WORD_USED(id) (++binary_words,(id)>=1024?++binary_high_words:0)
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
@@ -705,8 +705,9 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  return lean_io_result_mk_ok(out);
 }
 LEAN_EXPORT lean_obj_res hex_test_binary_paths(lean_obj_arg world) {
- (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
- lean_ctor_set(out,0,lean_box_uint64(binary_sparse));lean_ctor_set(out,1,lean_box_uint64(binary_words));
+ (void)world;lean_object *out=lean_alloc_ctor(0,2,0),*tail=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(binary_words));lean_ctor_set(tail,1,lean_box_uint64(binary_high_words));
+ lean_ctor_set(out,0,lean_box_uint64(binary_sparse));lean_ctor_set(out,1,tail);
  return lean_io_result_mk_ok(out);
 }
 LEAN_EXPORT lean_obj_res hex_test_matrix_primitives(lean_obj_arg world) {
@@ -968,7 +969,7 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_batch_insertions"] opaque batchInsertions : IO UInt64
 @[extern "hex_test_binary_counts"] opaque binaryCounts : IO (UInt64 × UInt64 × UInt64)
-@[extern "hex_test_binary_paths"] opaque binaryPaths : IO (UInt64 × UInt64)
+@[extern "hex_test_binary_paths"] opaque binaryPaths : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
@@ -1083,7 +1084,8 @@ private def checkBinary (seed : Nat) : IO Unit := do
     throw (IO.userError "private packed F2 frame/reference mismatch")
   let after ← binaryCounts
   let pathsAfter ← binaryPaths
-  if pathsAfter.1 ≤ pathsBefore.1 || pathsAfter.2 ≤ pathsBefore.2 then
+  if pathsAfter.1 ≤ pathsBefore.1 || pathsAfter.2.1 ≤ pathsBefore.2.1 ||
+      pathsAfter.2.2 ≤ pathsBefore.2.2 then
     throw (IO.userError "private F2 sparse or word pivot update unused")
   if after.1 ≤ before.1 || after.2.1 ≤ before.2.1 || after.2.2 ≤ before.2.2 then
     throw (IO.userError "private F2 pivots or word scan unused")

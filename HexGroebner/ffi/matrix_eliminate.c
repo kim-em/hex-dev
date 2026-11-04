@@ -27,7 +27,7 @@
 #define HEX_GROEBNER_BINARY_SPARSE_USED() ((void)0)
 #endif
 #ifndef HEX_GROEBNER_BINARY_WORD_USED
-#define HEX_GROEBNER_BINARY_WORD_USED() ((void)0)
+#define HEX_GROEBNER_BINARY_WORD_USED(id) ((void)(id))
 #endif
 
 typedef struct {
@@ -226,7 +226,7 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
                 data[j>>3]^=(uint8_t)(1u<<(j&7));
             }
         } else {
-            HEX_GROEBNER_BINARY_WORD_USED();
+            HEX_GROEBNER_BINARY_WORD_USED(slot-1);
             const uint8_t *packed=lean_sarray_cptr(c->binary_rows)+(size_t)(slot-1)*c->words*8;
             matrix_binary_xor(data,packed,col>>6,end>>6);
         }

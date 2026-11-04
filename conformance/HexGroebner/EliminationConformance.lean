@@ -207,9 +207,13 @@ def sizeChecks (seed : Nat) : Bool := Id.run do
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let salt := nonce%7
   let reducers ← (Array.range 2048).mapM fun i =>
-    SparseRow.ofEntries field 8192 #[(i,1),(4096+(17*i+salt)%4096,1)]
+    SparseRow.ofEntries field 8192 (#[ (i,(1:UInt64)) ] ++
+      (Array.range 1024).map fun j => (4096+salt+j,(1:UInt64)))
   let targets ← (Array.range 128).mapM fun i =>
-    SparseRow.ofEntries field 8192 #[(i,1),(2048+i,1),(4096+(17*i+salt)%4096,1)]
+    SparseRow.ofEntries field 8192 (#[ (1900+i,(1:UInt64)) ] ++
+      (if i == 0 then #[] else #[(2048+i-1,(1:UInt64))]) ++
+      #[ (2048+i,(1:UInt64)) ] ++
+      (Array.range 1024).map fun j => (4096+salt+j,(1:UInt64)))
   return (reducers,targets)
 
 /-- Nonempty rows beyond all old caps, sparse wide updates, high leading
