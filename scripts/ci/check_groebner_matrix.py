@@ -265,6 +265,15 @@ LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
 }
 static uint64_t batch_hits=0,batch_terms=0,batch_deferrals=0,batch_waste=0,batch_bound_errors=0;
 static uint64_t batch_insertions=0;
+static const uint8_t *product_snapshot=NULL;
+static size_t product_snapshot_size=0;
+static void check_product_borrow(b_lean_obj_arg support) {
+ if(product_snapshot) {
+  assert(lean_sarray_size(support)==product_snapshot_size);
+  assert(memcmp(lean_sarray_cptr(support),product_snapshot,product_snapshot_size)==0);
+ }
+}
+#define HEX_GROEBNER_PRODUCTS_BORROWED(support) check_product_borrow(support)
 #define HEX_GROEBNER_PRODUCTS_INSERTED(n) (batch_insertions+=(n))
 #define HEX_GROEBNER_PRODUCTS_DEFERRED(w) (++batch_deferrals,batch_waste+=(w),batch_bound_errors+=((w)>4096))
 #define HEX_GROEBNER_PRODUCTS_FOUND(n) (++batch_hits,batch_terms+=(n))
@@ -280,6 +289,91 @@ static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,u
 #include HITCODE
 #undef lean_hex_groebner_combine_owned
 #undef lean_hex_monomial_products_attempt
+/* Build an RC=1 table directly: no Lean variable can retain a snapshot and
+   accidentally turn the tested operation into the shared-table branch. */
+LEAN_EXPORT lean_obj_res hex_test_product_aliases(lean_obj_arg world) {
+ (void)world;int ok=1;
+ for(unsigned mode=0;mode<11;++mode) for(unsigned linear=0;linear<2;++linear)
+ for(unsigned spare=0;spare<2;++spare) {
+  /* Multiple owning fields deliberately share arenas only when unmarked. */
+  if(linear && mode>=6) continue;
+  size_t sizes[5]={12,72,32,64,12};lean_object *arenas[5];
+  for(unsigned i=0;i<5;++i) {
+   arenas[i]=lean_alloc_sarray(1,sizes[i],sizes[i]+(spare?128:0));
+   memset(lean_sarray_cptr(arenas[i]),0,sizes[i]);
+  }
+  for(unsigned i=0;i<3;++i) {
+   write_le(lean_sarray_cptr(arenas[0])+4*i,4,i);
+   uint8_t *m=lean_sarray_cptr(arenas[1])+24*i;
+   hit_write64(m,i);hit_write64(m+8,i?1:0);hit_write64(m+16,0);
+   write_le(lean_sarray_cptr(arenas[4])+4*i,4,i);
+  }
+  write_le(lean_sarray_cptr(arenas[3]),4,3);
+  write_le(lean_sarray_cptr(arenas[3])+4,4,1);
+  write_le(lean_sarray_cptr(arenas[2]),4,1);
+  /* Intra-table aliases: exponents/links have identical complete contents;
+     each workspace alias is also a valid pre-existing scratch buffer. */
+  if(mode==6) {lean_dec(arenas[4]);arenas[4]=arenas[0];lean_inc(arenas[4]);}
+  if(mode>=7) {
+   unsigned source=mode==7?0:mode==8?1:mode==9?3:4;
+   lean_dec(arenas[2]);arenas[2]=arenas[source];lean_inc(arenas[2]);sizes[2]=sizes[source];
+  }
+  unsigned support_arena=mode?mode<=5?mode-1:0:5;
+  lean_object *support;
+  size_t start=0;
+  if(support_arena==5) {support=lean_alloc_sarray(1,4,4);write_le(lean_sarray_cptr(support),4,1);}
+  else {
+   support=arenas[support_arena];
+   start=support_arena==0 || support_arena==3 || support_arena==4?1:support_arena==1?6:0;
+  }
+  uint8_t snapshots[5][256],support_copy[256];
+  for(unsigned i=0;i<5;++i) memcpy(snapshots[i],lean_sarray_cptr(arenas[i]),sizes[i]);
+  size_t support_size=lean_sarray_size(support);memcpy(support_copy,lean_sarray_cptr(support),support_size);
+  if(linear) for(unsigned i=0;i<5;++i) lean_sarray_mark_linear_core(arenas[i]);
+  lean_object *index=lean_alloc_ctor(0,2,0);
+  lean_ctor_set(index,0,arenas[3]);lean_ctor_set(index,1,arenas[4]);
+  lean_object *table=lean_alloc_ctor(0,8,1);
+  lean_ctor_set(table,0,lean_box(1));lean_ctor_set(table,1,arenas[0]);lean_ctor_set(table,2,arenas[1]);
+  lean_ctor_set(table,3,lean_box(3));lean_ctor_set(table,4,arenas[2]);lean_ctor_set(table,5,index);
+  lean_ctor_set(table,6,lean_box(0));lean_ctor_set(table,7,lean_box(0));
+  lean_ctor_set_uint8(table,8*sizeof(void*),2);
+  assert(lean_is_exclusive(table));
+  uint8_t prepared[32];
+  assert(prepare_monomial(1,4,1,3,1,2,snapshots[0],12,prepared,32));
+  uint64_t visited=0;product_snapshot=support_copy;product_snapshot_size=support_size;
+  lean_object *result=products_hits(table,support,lean_box(2),lean_box(start),lean_box(1),
+    lean_box(100),lean_box(10000),lean_box(10000),1,&visited);
+  product_snapshot=NULL;
+  ok=ok && result!=NULL;
+  if(!result) {lean_dec(table);if(!mode)lean_dec(support);continue;}
+  lean_object *updated=lean_ctor_get(result,1),*ids=lean_ctor_get(lean_ctor_get(result,0),0);
+  ok=ok && updated==table && lean_is_exclusive(updated) && lean_obj_tag(lean_ctor_get(result,0))==1;
+  ok=ok && lean_unbox(lean_ctor_get(updated,0))==1 && lean_unbox(lean_ctor_get(updated,3))==4;
+  ok=ok && lean_unbox(lean_ctor_get(updated,6))==0 && lean_unbox(lean_ctor_get(updated,7))==11;
+  ok=ok && lean_ctor_get_uint8(updated,8*sizeof(void*))==2 && visited==11;
+  ok=ok && lean_sarray_size(ids)==4 && read_le(lean_sarray_cptr(ids),4)==3;
+  lean_object *new_index=lean_ctor_get(updated,5);
+  lean_object *out[5]={lean_ctor_get(updated,1),lean_ctor_get(updated,2),lean_ctor_get(updated,4),
+    lean_ctor_get(new_index,0),lean_ctor_get(new_index,1)};
+  uint8_t expected_exponents[16],expected_metadata[96],expected_heads[64],expected_links[16];
+  memcpy(expected_exponents,snapshots[0],12);write_le(expected_exponents+12,4,3);
+  memcpy(expected_metadata,snapshots[1],72);memcpy(expected_metadata+72,prepared+4,16);
+  hit_write64(expected_metadata+88,0);
+  memcpy(expected_heads,snapshots[3],64);write_le(expected_heads,4,4);
+  memcpy(expected_links,snapshots[4],12);write_le(expected_links+12,4,3);
+  const uint8_t *expected[5]={expected_exponents,expected_metadata,prepared,expected_heads,expected_links};
+  size_t output_sizes[5]={16,96,32,64,16};
+  for(unsigned i=0;i<5;++i) {
+   ok=ok && lean_is_exclusive(out[i]) && lean_sarray_size(out[i])==output_sizes[i];
+   if(lean_sarray_size(out[i])==output_sizes[i]) ok=ok && memcmp(lean_sarray_cptr(out[i]),expected[i],output_sizes[i])==0;
+   if(linear) ok=ok && lean_sarray_is_marked_linear(out[i]);
+   if(!mode && spare && (i==0 || i==1 || i==4)) ok=ok && out[i]==arenas[i];
+  }
+  if(!mode) {ok=ok && memcmp(lean_sarray_cptr(support),support_copy,support_size)==0;lean_dec(support);}
+  lean_dec(result);
+ }
+ return lean_io_result_mk_ok(lean_box(ok));
+}
 LEAN_EXPORT lean_obj_res hex_test_owned_runtime(lean_obj_arg world) {
  (void)world;int ok=1;
  for(size_t capacity=1;capacity<=8;capacity*=8) {
@@ -804,6 +898,7 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_accept_count"] opaque acceptedCount : IO UInt64
 @[extern "hex_test_insert_count"] opaque insertCount : IO UInt64
 @[extern "hex_test_unique_count"] opaque uniqueCount : IO UInt64
+@[extern "hex_test_product_aliases"] opaque productAliases : IO Bool
 @[extern "hex_test_owned_runtime"] opaque ownedRuntime : IO Bool
 @[extern "hex_test_deferred_count"] opaque deferredCount : IO UInt64
 @[extern "hex_test_alias_mask"] opaque aliasMask : IO UInt64
@@ -883,6 +978,7 @@ def checkMersenne : IO UInt64 := do
 def main : IO Unit := do
   if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
   if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
+  if !(← productAliases) then throw (IO.userError "exclusive product insertion/alias mismatch")
   if !(← ownedRuntime) then throw (IO.userError "native layout or linear resize mismatch")
   IO.println "native constructor layout and marked-linear growth passed"
   let beforeOwned ← uniqueCount

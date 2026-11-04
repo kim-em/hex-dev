@@ -128,7 +128,8 @@ def capacityChecks : Bool := Id.run do
     if !check table support 0 0 count 100 1000000 1000000 true then return false
   return true
 
-/-- Exactly the final product is missing; a discarded nonempty prefix must
+/-- Exactly the final product is missing and insertion would grow the 128-slot
+index beyond half capacity. A discarded nonempty prefix must
 reach ordinary scalar insertion while preserving the complete reference state. -/
 def lastMiss (seed : Nat) : Bool := Id.run do
   let mut table : MonomialTable := { arity := 3 }
@@ -142,9 +143,9 @@ def lastMiss (seed : Nat) : Bool := Id.run do
 
 @[noinline] private def insertionTable (arity count step bits nonce : Nat) (width := Width.u8) :
     Option MonomialTable := Id.run do
-  let mut table : MonomialTable := { arity,hashBits := bits,width }
+  let mut table : MonomialTable := { arity,hashBits := bits,width,work := nonce%17 }
   for i in [:count] do
-    let value := (i*step+(nonce+nonce)%2).toUInt64
+    let value := (i*step).toUInt64
     let next := table.internOwned (Array.replicate arity value) 1000 10000000 1000000000
     let .ok _ := next.result | return none
     table := next.table
@@ -174,6 +175,22 @@ def insertionChecks (seed : Nat) : Bool := Id.run do
           | return false
         if !same ⟨.ok {},original⟩ ⟨.ok {},table⟩ ||
             !check table support 10 0 12 countLimit byteLimit workLimit true then return false
+  -- Malformed original links may become virtual ids after the first insertion.
+  let some base := insertionTable 1 5 1 0 seed | return false
+  let support := Packed.push .u32 (Packed.push .u32 {} 4) 3
+  for head in [0,1,5,6,7,100] do
+    for link in [0,1,5,6,7,100] do
+      let input := { base with
+        index.heads := Packed.set .u32 base.index.heads 0 head.toUInt64
+        index.links := Packed.set .u32 base.index.links 4 link.toUInt64 }
+      if !check input support 1 0 2 1000 10000000 1000000000 true then return false
+  -- Distinct buckets let an initially invalid future id become readable after
+  -- an earlier insertion; other values and cycles must still defer atomically.
+  let some base := insertionTable 1 5 1 64 seed | return false
+  for slot in [:base.index.heads.size/4] do
+    for head in [6,7,100] do
+      let input := { base with index.heads := Packed.set .u32 base.index.heads slot head.toUInt64 }
+      if !check input support 1 0 2 1000 10000000 1000000000 true then return false
   -- The first missing product fits; the second needs a rehash.
   let some rehash := insertionTable 1 7 1 64 seed | return false
   let support := Packed.push .u32 (Packed.push .u32 {} 5) 6

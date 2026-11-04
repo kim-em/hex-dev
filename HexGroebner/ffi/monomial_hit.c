@@ -32,19 +32,31 @@ static uint64_t hit_mix(uint64_t h) {
     return h^(h>>31);
 }
 
-static lean_obj_res hit_extend(lean_obj_arg bytes,size_t size) {
+/* An explicitly borrowed alias may force a copy without violating the owned
+   arena's linear contract. Other sharing retains the runtime's diagnostics. */
+static lean_obj_res hit_extend_alias(lean_obj_arg bytes,size_t size,int alias) {
     size_t old=lean_sarray_size(bytes);
     if(lean_is_exclusive(bytes) && lean_sarray_capacity(bytes)>=size) {
         lean_sarray_set_size(bytes,size);return bytes;
     }
     size_t capacity=old<=SIZE_MAX/2?old*2:size;
     if(capacity<size) capacity=size;
-    if(lean_is_exclusive(bytes)) {
+    if(alias || lean_is_exclusive(bytes)) {
         int linear=lean_sarray_is_marked_linear(bytes);
         bytes=lean_copy_sarray(bytes,capacity);
         if(linear) lean_sarray_mark_linear_core(bytes);
     } else bytes=lean_copy_sarray_nonlinear(bytes,capacity);
     lean_sarray_set_size(bytes,size);return bytes;
+}
+static lean_obj_res hit_extend(lean_obj_arg bytes,size_t size) {
+    return hit_extend_alias(bytes,size,0);
+}
+static lean_obj_res hit_exclusive_alias(lean_obj_arg bytes,int alias) {
+    if(!alias) return lean_sarray_ensure_exclusive(bytes);
+    int linear=lean_sarray_is_marked_linear(bytes);
+    bytes=lean_copy_sarray(bytes,lean_sarray_capacity(bytes));
+    if(linear) lean_sarray_mark_linear_core(bytes);
+    return bytes;
 }
 static void hit_write64(uint8_t *p,uint64_t value) {
     write_le(p,4,value);write_le(p+4,4,value>>32);
@@ -243,6 +255,9 @@ fallback_owned:
 #ifndef HEX_GROEBNER_PRODUCTS_DEFERRED
 #define HEX_GROEBNER_PRODUCTS_DEFERRED(work) ((void)(work))
 #endif
+#ifndef HEX_GROEBNER_PRODUCTS_BORROWED
+#define HEX_GROEBNER_PRODUCTS_BORROWED(support) ((void)(support))
+#endif
 #ifndef HEX_GROEBNER_PRODUCTS_INSERTED
 #define HEX_GROEBNER_PRODUCTS_INSERTED(n) ((void)(n))
 #endif
@@ -259,6 +274,7 @@ typedef struct {
     unsigned inserted,changed;
 } product_plan;
 
+/* Consumes table on success only; NULL leaves its ownership with the caller. */
 static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
         b_lean_obj_arg monomial,b_lean_obj_arg start_arg,b_lean_obj_arg count_arg,
         b_lean_obj_arg max_count,b_lean_obj_arg max_bytes,b_lean_obj_arg max_work,
@@ -374,18 +390,18 @@ static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
     else {lean_dec(table);updated=lean_alloc_ctor(0,8,1);}
     if(lean_sarray_size(fields[4])!=size) {
         lean_dec(fields[4]);fields[4]=lean_alloc_sarray(1,size,size);
-    } else fields[4]=lean_sarray_ensure_exclusive(fields[4]);
+    } else fields[4]=hit_exclusive_alias(fields[4],support==workspace);
     memcpy(lean_sarray_cptr(fields[4]),plan.prepared,size);
     if(plan.inserted) {
         size_t old_bytes=(size_t)count*arity*width;
-        fields[1]=hit_extend(fields[1],(size_t)(count+plan.inserted)*arity*width);
+        fields[1]=hit_extend_alias(fields[1],(size_t)(count+plan.inserted)*arity*width,support==exponents);
         memcpy(lean_sarray_cptr(fields[1])+old_bytes,plan.exponents,(size_t)plan.inserted*arity*width);
-        fields[2]=hit_extend(fields[2],(size_t)(count+plan.inserted)*24);
+        fields[2]=hit_extend_alias(fields[2],(size_t)(count+plan.inserted)*24,support==metadata);
         memcpy(lean_sarray_cptr(fields[2])+(size_t)count*24,plan.metadata,(size_t)plan.inserted*24);
         lean_object *old_index=fields[5],*new_heads=lean_ctor_get(old_index,0),*new_links=lean_ctor_get(old_index,1);
         lean_inc(new_heads);lean_inc(new_links);lean_dec(old_index);
-        new_heads=lean_sarray_ensure_exclusive(new_heads);
-        new_links=hit_extend(new_links,(size_t)(count+plan.inserted)*4);
+        new_heads=hit_exclusive_alias(new_heads,support==heads);
+        new_links=hit_extend_alias(new_links,(size_t)(count+plan.inserted)*4,support==links);
         for(unsigned i=0;i<plan.changed;++i) write_le(lean_sarray_cptr(new_heads)+plan.slots[i]*4,4,plan.heads[i]);
         for(unsigned i=0;i<plan.inserted;++i) write_le(lean_sarray_cptr(new_links)+(size_t)(count+i)*4,4,plan.links[i]);
         fields[5]=lean_alloc_ctor(0,2,0);lean_ctor_set(fields[5],0,new_heads);lean_ctor_set(fields[5],1,new_links);
@@ -394,6 +410,7 @@ static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
     lean_dec(fields[7]);fields[7]=lean_uint64_to_nat(work);
     for(unsigned i=0;i<8;++i) lean_ctor_set(updated,i,fields[i]);
     lean_ctor_set_uint8(updated,8*sizeof(void*),tag);
+    HEX_GROEBNER_PRODUCTS_BORROWED(support);
     if(alias) lean_dec(alias);
     lean_object *ids=lean_alloc_sarray(1,terms*4,terms*4);memcpy(lean_sarray_cptr(ids),plan.output,terms*4);
     lean_object *ok=lean_alloc_ctor(1,1,0);lean_ctor_set(ok,0,ids);
