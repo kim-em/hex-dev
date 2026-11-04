@@ -189,7 +189,16 @@ def main():
     guards=Capsule(args.guards);guard_manifest=source(guards,'batch')
     require(guard_manifest==results[-1][1],'verification runtime differs from measured source')
     guard_identity=verify_checks(guards,guard_manifest)
+    for _,_,_,observations,measured_kernels,comparisons in results:
+        require(measured_kernels['productMisses']['ratio']<1,'missing-product improvement not observed')
+        for label,row in observations:
+            if label.startswith('f2'):
+                samples=row['metadata']['samples']
+                rss={arm:max(r['peak_rss_kib']for r in samples if r['arm']==arm)for arm in ['A','B']}
+                require(rss['B']<rss['A'],'F2 RSS reduction not observed')
+        require(all(row['geomean']>1 and row['family_balanced_geomean']>1 for _,row,_ in comparisons),'overall comparator gap not observed')
     reference=kernels(ReferenceKernels(guards),guard_manifest,guard_manifest,True)['productMisses']
+    require(reference['ratio']<1,'per-term-reference improvement not observed')
     usage_rows=usage(guards,final,guard_identity)
     if args.current:
         current=source_identity();require(all(current[k]==v for k,v in guard_identity.items()if k!='source_commit'),'current sources differ')
@@ -226,7 +235,7 @@ def main():
                 lines.append(f"| {b['source_fingerprint']} / {label} | {family} | {ratio:.6f} |")
     lines+=['','msolve commit `3672113ee2c696a2ac9c637636e0f7214f500ba1` uses Clang 23.1.3, `-O3 -march=native`, and `-g 2 -l 2 -t 1`. Both Hex/msolve suites force Hex dense-pivot caches off (`--dense-pivots false`); the prime A/B sweeps use default dispatch. Compiler, tuning and explicit controls are part of the observed gap. Hex remains behind msolve overall on these inputs. No fastest-open-source milestone or language-impossibility claim follows. Candidate production, certificate generation, independent native verification and kernel checking remain separate; only candidate/process performance is timed here.','',
         'The F2 peak-RSS reduction is unexplained. It is retained as a memory observation, without a causal claim.','',
-        'Both source versions pass all twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Revised tests construct RC=1 tables directly, compare all output arenas, cover spare-capacity growth, every borrowed arena alias, marked-linear buffers, intra-table aliases, exact-size workspace reuse, multi-slot insertions, lookup-only exclusive commits and malformed forward/cyclic links. The `compute-reference` executable uses full initialization of the same native arithmetic; it is not a portable-arithmetic timing.','']
+        'Both source versions pass all twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Revised tests construct RC=1 tables directly, compare all output arenas, cover spare-capacity growth, every borrowed arena alias, marked-linear buffers, intra-table aliases, copies of workspaces aliased to 32-byte arenas, multi-slot insertions, lookup-only exclusive commits and malformed forward/cyclic links. The `compute-reference` executable uses full initialization of the same native arithmetic; it is not a portable-arithmetic timing.','']
     lines+=['| Diagnostic input | Accepted batches | Inserted monomials | Deferred batches | Deferred terms | Deferred work |','|---|---:|---:|---:|---:|---:|']
     for case,c in usage_rows:
         lines.append(f"| {case} | {c['batchHits']} | {c['batchInsertions']} | {c['deferredBatches']} | {c['deferredTerms']} | {c['deferredWork']} |")

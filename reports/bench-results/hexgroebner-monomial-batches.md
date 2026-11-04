@@ -137,7 +137,7 @@ msolve commit `3672113ee2c696a2ac9c637636e0f7214f500ba1` uses Clang 23.1.3, `-O3
 
 The F2 peak-RSS reduction is unexplained. It is retained as a memory observation, without a causal claim.
 
-Both source versions pass all twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Revised tests construct RC=1 tables directly, compare all output arenas, cover spare-capacity growth, every borrowed arena alias, marked-linear buffers, intra-table aliases, exact-size workspace reuse, multi-slot insertions, lookup-only exclusive commits and malformed forward/cyclic links. The `compute-reference` executable uses full initialization of the same native arithmetic; it is not a portable-arithmetic timing.
+Both source versions pass all twelve Clang 23.1.3/GCC 16.2.0 ASan+UBSan variants and all nine project gates. Independent oracles compare 567 unique reduced bases with both SymPy and Singular. Revised tests construct RC=1 tables directly, compare all output arenas, cover spare-capacity growth, every borrowed arena alias, marked-linear buffers, intra-table aliases, copies of workspaces aliased to 32-byte arenas, multi-slot insertions, lookup-only exclusive commits and malformed forward/cyclic links. The `compute-reference` executable uses full initialization of the same native arithmetic; it is not a portable-arithmetic timing.
 
 | Diagnostic input | Accepted batches | Inserted monomials | Deferred batches | Deferred terms | Deferred work |
 |---|---:|---:|---:|---:|---:|
