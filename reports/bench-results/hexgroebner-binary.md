@@ -59,9 +59,12 @@ Coverage includes nonempty frames beyond the old dimensions, high-index packed p
 
 Native runtime `e02434ca3804`; documented runtime `586b40821cab`; checks `687b436b9355`.
 
+The combined tree after the scheduling-policy merge has runtime `545c62af5b66` and checks `6aaf1938b886`. Its separate twelve sanitizer variants, nine project gates and twenty CLI policy checks pass. Its computation executables are byte-identical to the measured carrier. The benchmark executable changes through the sampled-policy dependency; the packed runtime and kernel definitions are unchanged. Kernel timings remain bound to the original benchmark executable; no additional timing repeat is used.
+
 `f4-binary-pivots-initial-86ad4e3f842f.tar.xz`: SHA-256 `c637818a14b1754bc9ae6a4fb036482fc931a1f39c4c9800846bb044c0706029`.
 `f4-binary-words-f3525392a594.tar.xz`: SHA-256 `922f2311a836e0eaea33995e5f56922a8693e7a71dbcc4e0660648e197beba7b`.
 `f4-binary-blocks-a45acb9da3a9.tar.xz`: SHA-256 `dccdafe6932284afc917b41b7dfe1f8fa8925c36aecbb1e9ae8ccec1b5b1b74c`.
 `f4-binary-selected-586b40821cab.tar.xz`: SHA-256 `4414107aa1ac7152c4a05fb9892d22c7a9d0bd73459fd01a3c097236147f47d4`.
+`f4-binary-combined-545c62af5b66.tar.xz`: SHA-256 `7abae21344382843e9addfddf24702f298cdf33965ca78d86eaa6ffce3ccb928`.
 
-Regenerate with `python3 scripts/bench/groebner_binary_report.py --initial reports/bench-results/raw/f4-binary-pivots-initial-86ad4e3f842f.tar.xz --word reports/bench-results/raw/f4-binary-words-f3525392a594.tar.xz --blocked reports/bench-results/raw/f4-binary-blocks-a45acb9da3a9.tar.xz --selected reports/bench-results/raw/f4-binary-selected-586b40821cab.tar.xz --report reports/bench-results/hexgroebner-binary.md --check`. Add `--current` to bind the checkout.
+Regenerate with `python3 scripts/bench/groebner_binary_report.py --initial reports/bench-results/raw/f4-binary-pivots-initial-86ad4e3f842f.tar.xz --word reports/bench-results/raw/f4-binary-words-f3525392a594.tar.xz --blocked reports/bench-results/raw/f4-binary-blocks-a45acb9da3a9.tar.xz --selected reports/bench-results/raw/f4-binary-selected-586b40821cab.tar.xz --rebased reports/bench-results/raw/f4-binary-combined-545c62af5b66.tar.xz --report reports/bench-results/hexgroebner-binary.md --check`. Add `--current` to bind the checkout.

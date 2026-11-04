@@ -204,6 +204,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ["initial", "word", "blocked", "selected", "report"]:
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--rebased", type=Path, help="additional combined-tree source and verification snapshot")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--current", action="store_true")
     args = parser.parse_args()
@@ -220,6 +221,57 @@ def main():
                 for m in [original, word_manifest, blocked_manifest, selected_manifest]),
             "production compiler/options differ")
     identity, native = check_guards(selected, selected_manifest)
+    historical = identity
+    rebased = None
+    if args.rebased:
+        rebased = Capsule(args.rebased)
+        combined = source(rebased, "pivots")
+        documented = rebased.json("identity.json")
+        require(documented["source_fingerprint"] == combined["source_fingerprint"] and
+                documented["source_manifest_sha256"] == hashlib.sha256(
+                    combined["source_manifest"].encode()).hexdigest(), "combined runtime differs")
+        checks = rebased.text("checks.manifest")
+        require(documented["checks_manifest_sha256"] == hashlib.sha256(checks.encode()).hexdigest(),
+                "combined check manifest differs")
+        blobs(rebased, checks, "checks-sources/")
+        for label, names in [("native", ["clang", "gcc"]),
+                ("full", ["build", "oracles", "driver", "bench", "dag", "phase4", "manifest", "headers", "lines"])]:
+            rows = rebased.json(label + "-status.json")
+            require([r["name"] for r in rows] == names and all(r["exit_code"] == 0 and
+                    all(r[k] == v for k, v in documented.items()) for r in rows),
+                    "failed or stale combined checks")
+        require(all(r["variants"] == ["Native", "AVX2", "AVX2Remainder", "Scalar", "Remainder", "ScalarRemainder"] and
+                    r["sanitize"] == ["address", "undefined"] for r in rebased.json("native-status.json")),
+                "combined native coverage differs")
+        require("567 unique reduced bases match SymPy" in rebased.text("full/oracles.log") and
+                "567 reduced bases match Singular" in rebased.text("full/oracles.log"),
+                "combined oracle coverage differs")
+        require(combined["compilers"] == selected_manifest["compilers"] and
+                combined["native_options"] == selected_manifest["native_options"],
+                "combined compiler/options differ")
+        require(all(combined["binary_sha256"][key] == selected_manifest["binary_sha256"][key]
+                    for key in ["compute", "compute-reference"]),
+                "combined computation executable differs from measured carrier")
+        old_sources = listing(selected.text("current.source.manifest"))
+        new_sources = listing(combined["source_manifest"])
+        allowed = {"HexGroebner/README.md", "HexGroebner/Sampled.lean", "HexGroebner/SamplingRound.lean",
+                   "bench/HexGroebner/Driver/Sampled.lean", "scripts/bench/groebner_cli_measure.py"}
+        require(set(old_sources) == set(new_sources) and
+                {p for p in old_sources if old_sources[p] != new_sources[p]} <= allowed,
+                "combined tree changed the packed runtime or kernel definitions")
+        cli = rebased.json("cli/status.json")
+        require(len(cli) == 20 and sum(r["exit_code"] == 2 for r in cli) == 4 and
+                all(r["exit_code"] in [0, 2] for r in cli), "combined CLI coverage differs")
+        for driver in ["compute", "compute-reference"]:
+            for prime in [2, 32003]:
+                reference = None
+                for label in ["default", "false", "true", "duplicate"]:
+                    value = rebased.json(f"cli/{driver}-p{prime}-{label}.stdout")
+                    require(value["binaryPivots"] == (label == "true"), "combined CLI policy differs")
+                    result = value["basis"], value["statistics"]
+                    reference = reference or result
+                    require(result == reference, "combined CLI bases/statistics differ")
+        identity = documented
     if args.current:
         current = source_identity()
         require(all(current[k] == v for k, v in identity.items() if k != "source_commit"),
@@ -236,7 +288,7 @@ def main():
         observations.extend([(title, first), (title + " repeat", repeat)])
     control = sweep(initial, "pivots/prime-control", original, prototype, count=14)
     short = kernels(selected, selected_manifest, "", native)
-    longer = kernels(selected, selected_manifest, "-long", identity)
+    longer = kernels(selected, selected_manifest, "-long", historical)
     counts = {k: 2 for k in ["cyclic", "kat", "eco", "noon", "reimer", "minrank", "dense-quadratic"]}
     counts["mq"] = 6
     comparisons = []
@@ -288,12 +340,17 @@ def main():
     lines += ["", "The selected-binary comparisons show a larger remaining gap than the initial prototype campaign and substantial variability. They do not demonstrate leadership or establish a cause for the change across campaigns. Candidate production, certificate generation, independent native verification and kernel checking remain distinct; these timings measure candidate/process work only.", "",
         "All twelve Clang/GCC ASan+UBSan variants pass on the measured carrier and final high-pivot test snapshot. All nine project gates pass after correcting only the sparse benchmark's adjacent cost-model comment. The verifier checks that exact one-line difference, both source identities, every archived source blob, and all status records. The initial phase-check failure is retained. The final compute and full-initialization executables are byte-identical to the timed zero-block binaries; the benchmark registrations add no computation-driver code.", "",
         "Coverage includes nonempty frames beyond the old dimensions, high-index packed pivot reads, target-pivot reuse, scalar/word path counters, byte/word boundaries, ordinary F2 complete F4 calls, malformed rows, exact physical-work boundaries with nonzero entries, and resource/ownership tests. Independent oracles check 567 bases with SymPy and Singular. Native verification and kernel replay remain separate from candidate timings. No fastest-open-source milestone or language impossibility is established.", "",
-        f"Native runtime `{native['source_fingerprint']}`; documented runtime `{identity['source_fingerprint']}`; checks `{identity['checks_fingerprint']}`.", ""]
+        f"Native runtime `{native['source_fingerprint']}`; documented runtime `{historical['source_fingerprint']}`; checks `{historical['checks_fingerprint']}`.", ""]
+    if rebased:
+        lines += [f"The combined tree after the scheduling-policy merge has runtime `{identity['source_fingerprint']}` and checks `{identity['checks_fingerprint']}`. Its separate twelve sanitizer variants, nine project gates and twenty CLI policy checks pass. Its computation executables are byte-identical to the measured carrier. The benchmark executable changes through the sampled-policy dependency; the packed runtime and kernel definitions are unchanged. Kernel timings remain bound to the original benchmark executable; no additional timing repeat is used.", ""]
     for name, cap in [("initial", initial), ("word", word), ("blocked", blocked), ("selected", selected)]:
         lines.append(f"`{getattr(args, name).name}`: SHA-256 `{cap.sha256}`.")
+    if rebased:
+        lines.append(f"`{args.rebased.name}`: SHA-256 `{rebased.sha256}`.")
     lines += ["", "Regenerate with `python3 scripts/bench/groebner_binary_report.py " + " ".join(
         f"--{name} reports/bench-results/raw/{getattr(args, name).name}" for name in
         ["initial", "word", "blocked", "selected"]) +
+        (f" --rebased reports/bench-results/raw/{args.rebased.name}" if rebased else "") +
         " --report reports/bench-results/hexgroebner-binary.md --check`. Add `--current` to bind the checkout.", ""]
     text = "\n".join(lines)
     if args.check:
