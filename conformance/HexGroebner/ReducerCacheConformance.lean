@@ -42,12 +42,14 @@ private def cacheChecks (seed : Nat) : Bool := Id.run do
     let index ← ReducerIndex.build context limits basis
     let first ← SymbolicMatrix.prepareWith context limits index basis targets
     let before := (← get).statistics
+    let supportBytes := ((← get).table.count + 7) / 8
     let second ← SymbolicMatrix.prepareWith context limits index basis targets first.cache
     let after := (← get).statistics
     if first.reducers.size != second.reducers.size then return false
     for (a,b) in first.reducers.zip second.reducers do
       if a.polynomial.support != b.polynomial.support || a.polynomial.coefficients != b.polynomial.coefficients then return false
-    if after.allocatedBytes != before.allocatedBytes then return false
+    -- A cache hit reuses polynomial payloads; each matrix owns its support bitmap.
+    if after.allocatedBytes != before.allocatedBytes + supportBytes then return false
     -- Re-encoding the exponent arena must preserve cached polynomial IDs.
     let _ ← intern limits #[65536,0]
     if (← get).table.width != .u32 then return false
