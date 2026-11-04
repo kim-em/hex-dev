@@ -69,9 +69,7 @@ theorem checked (table : LiteralSign.Table E)
       (Field.value_one _ (Field.literalRep_mk p s hw hp) real)
   have point (d : Dyadic) :
       read (PolyQuot.ofRat d.toRat) = HexRealRootsTheory.Dyadic.toReal d := by
-    simpa only [read, HexRealRootsTheory.toReal_eq_cast_toRat] using
-      FieldSpecialize.value_ofRat (Field.literalRep p s hw hp)
-        (Field.literalRep_mk p s hw hp) real d.toRat
+    exact FieldTransport.point table tableChecked d
   dsimp only [read] at unit point
   simp only [IsolationReplay.check, map, Bool.and_eq_true]
   refine ⟨⟨gaps, ?_⟩, ?_⟩

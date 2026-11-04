@@ -34,12 +34,7 @@ from separate Tarski queries and open signs from the listed sample. -/
     (rootValue : Fin cert.isolations.intervals.size → RealFormula.Poly (n + 1) → Int)
     (cell : Cell cert.isolations.intervals.size)
     (atom : RealFormula.Poly (n + 1)) : Option Sign :=
-  match cell with
-  | .open cut =>
-      some <| Sign.ofInt <| sign <|
-        (FieldSpecialize.literalPolynomial values atom).eval
-          (point (cert.isolations.openPoint cut))
-  | .root i => some <| Sign.ofInt (rootValue i atom)
+  Decision.cellSign sign point (FieldSpecialize.literalPolynomial values) cert rootValue cell atom
 
 /-- Every accepted atom sign agrees with its source formula at every point of
 its cell. A copied root query cannot inherit another cell's sign. -/
@@ -99,11 +94,7 @@ theorem cellSign_spec (rep : RefinedIsolation p)
     (FieldSpecialize.literalPolynomial values)
     (FieldCarrier.atom_eval rep hrep hr values) context radical.core cert hisolation
     covered rootValue evidence hquery
-  have same : Decision.cellSign sign point (FieldSpecialize.literalPolynomial values)
-      cert rootValue = cellSign sign values cert rootValue := by
-    funext cell atom
-    cases cell <;> rfl
-  simpa only [same, f] using result
+  simpa only [cellSign, f] using result
 
 /-- The checked fixed-field cells decide a universal source formula. -/
 theorem forall_cells (rep : RefinedIsolation p)

@@ -7,7 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.RadicalCheck
 public import HexPolyTheory.Interpret
-public import HexRealClosureTheory.TransportPower
+public import HexRealClosureTheory.TransportMoment
 public import HexRealAlgebraicTheory.Order
 public import Mathlib.Basic.Real.Basic
 
@@ -91,39 +91,30 @@ theorem roots {E : Type u} {Ctx : Type v} [Zero E] [One E] [Add E] [Sub E] [Mul 
   exact roots_of_identities _ _ _ _ cert.exponent hfirst hsecond x
 
 /-- The root identities also transport through a noninjective interpretation.
-Only preservation of the arithmetic actually used is needed. -/
+The closed interpretation preserves the reached arithmetic. -/
 theorem roots_transport {E : Type u} {Ctx : Type v}
-    [Zero E] [One E] [Add E] [Sub E] [Mul E] [DecidableEq E] [DecidableEq Ctx]
-    (f : E → ℝ) (h0 : f 0 = 0) (h1 : f 1 = 1)
-    (ha : ∀ a b, f (a + b) = f a + f b)
-    (hs : ∀ a b, f (a - b) = f a - f b)
-    (hm : ∀ a b, f (a * b) = f a * f b)
+    [Zero E] [One E] [Add E] [Sub E] [Mul E] [NatCast E]
+    [DecidableEq E] [DecidableEq Ctx]
+    (f : E → ℝ) (laws : Hex.RealClosure.Transport.Closed f (fun _ => True))
     (context : Ctx) (product : DensePoly E) (cert : RadicalCert E Ctx)
     (accepted : cert.check context product = true) (x : ℝ) :
     (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
       (Hex.RealClosure.Transport.polynomial f cert.core)).IsRoot x ↔
     (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
       (Hex.RealClosure.Transport.polynomial f product)).IsRoot x := by
+  have h0 := laws.read_zero
+  have h1 := laws.read_one
+  have ha a b := laws.read_add a b trivial trivial
+  have hs a b := laws.read_sub a b trivial trivial
+  have hm a b := laws.read_mul a b trivial trivial
   let read := Hex.RealClosure.Transport.polynomial f
   have mul (a b : DensePoly E) : read (a * b) = read a * read b :=
     Hex.RealClosure.Transport.Ring.polynomial_mul f h0 a b
       (fun _ _ _ _ => hm _ _) (fun _ _ _ _ => ha _ _)
-  have powData (a : DensePoly E) (n : Nat) :
-      Hex.RealClosure.Transport.PowerData f a n := by
-    induction n using Nat.strongRecOn generalizing a with
-    | ind n ih =>
-      rw [Hex.RealClosure.Transport.PowerData]
-      split
-      · trivial
-      · split
-        · trivial
-        · refine ⟨⟨fun _ _ _ _ => hm _ _, fun _ _ _ _ => ha _ _⟩,
-            ih (n / 2) (by omega) (a * a), ?_⟩
-          split
-          · trivial
-          · exact ⟨fun _ _ _ _ => hm _ _, fun _ _ _ _ => ha _ _⟩
   have power (a : DensePoly E) (n : Nat) : read (a.natPow n) = (read a).natPow n :=
-    Hex.RealClosure.Transport.polynomial_natPow f h0 h1 a n (powData a n)
+    Hex.RealClosure.Transport.polynomial_natPow f h0 h1 a n
+      (Hex.RealClosure.Transport.PowerData.of_closed f (fun _ => True) laws a n
+        (fun _ _ => trivial))
   have identity (a b : DensePoly E) (zero : (a - b).isZero = true) : read a = read b := by
     have same : a - b = 0 :=
       (DensePoly.size_eq_zero_iff _).mp ((DensePoly.isZero_eq_true_iff _).mp zero)

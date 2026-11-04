@@ -118,6 +118,12 @@ once, then checks the carrier identities, complete root counts, every atom at
 every root, and every ordinary sector sample. The ordered root-row inventory
 must match the source atoms; every retained repeated row is checked separately.
 
+The native producer computes in a proved number field using its actual checked
+irreducibility instance. Finite replay checks the selected presentation without
+quoting that instance into the accepted proof. A presentation with a semantically
+zero leading coefficient is rejected; this interface does not trim it using a
+zero certificate.
+
 The interpretation preserves arithmetic even when two stored coordinates have
 the same real value. Each nonempty specialized atom and remainder polynomial needs an
 explicit checked nonzero sign for its leading coefficient. A missing sign or a

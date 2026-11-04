@@ -233,7 +233,7 @@ private def chainExpr {E : Type} [Zero E] [DecidableEq E]
 
 /-- Quote supplied finite query data without invoking its producer. The caller
 must separately check the exact subject and the resulting literal certificate. -/
-def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
+private def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : TarskiCertificate E E Unit) : MetaM Expr := do
   let ty ← inferType (← elem (0 : E))
   mkAppM ``TarskiCertificate.mk
@@ -247,7 +247,7 @@ def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
       mkIntLit cert.value]
 
 /-- Quote the proposed intervals and their stored root-count certificates. -/
-def isolationExpr {E : Type} [Zero E] [DecidableEq E]
+private def isolationExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : IsolationReplay E Unit) : MetaM Expr := do
   let intervals ← cert.isolations.intervals.toList.mapM intervalExpr
   let isolation ← mkAppM ``IsolationCert.mk

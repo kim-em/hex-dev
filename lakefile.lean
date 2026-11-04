@@ -1519,7 +1519,8 @@ lean_lib HexConformance where
     ].map Glob.one
 
     ++ #[`HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
-      `HexRCF.FiniteFieldSource, `HexRCF.FiniteFieldGuards, `HexRCF.FiniteFieldProofs].map Glob.one
+      `HexRCF.FiniteFieldSource, `HexRCF.FiniteFieldGuards,
+      `HexRCF.FiniteFieldCompatibility, `HexRCF.FiniteFieldProofs].map Glob.one
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
       `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicTheory.FieldSignConformance].map Glob.one

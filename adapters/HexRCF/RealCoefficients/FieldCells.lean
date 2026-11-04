@@ -89,13 +89,7 @@ theorem query_transport (table : Table K Ctx n roots)
     (table.checkRows_checked formula _ accepted) i atom member fallback
   change FieldQuery.check signs context head (query atom) _ _
     (table.value fallback i atom) (table.evidence fallback i atom) = true at checked
-  have real := FieldTransport.real signs header
-  have point (d : Dyadic) :
-      Field.value (Field.literalRep p s hw hp) (PolyQuot.ofRat d.toRat : K) =
-        HexRealRootsTheory.Dyadic.toReal d := by
-    simpa only [HexRealRootsTheory.toReal_eq_cast_toRat] using
-      FieldSpecialize.value_ofRat (Field.literalRep p s hw hp)
-        (Field.literalRep_mk p s hw hp) real d.toRat
+  have point := FieldTransport.point signs header
   simpa only [Hex.RealClosure.Transport.endpoint, point] using
     FieldQuery.checked signs header context head (query atom) _ _
       (table.value fallback i atom) (table.evidence fallback i atom) checked
@@ -151,7 +145,7 @@ theorem signs_checked (signs : LiteralSign.Table E) (context : Ctx)
   exact accepted.1.1.1.1.1
 
 /-- Acceptance certifies each original atom's semantic degree, including
-literal zero atoms and leading cancellation in the shared specialization. -/
+literal zero atoms and structural cancellation in the shared specialization. -/
 theorem degrees (signs : LiteralSign.Table E) (context : Ctx)
     (query : RealFormula.Poly n → DensePoly E) (formula : QF n)
     (radical : RadicalCert E Ctx) (cert : IsolationReplay E Ctx)
@@ -215,11 +209,9 @@ theorem cells (signs : LiteralSign.Table E) (context : Ctx)
   have h0 : read 0 = 0 := Field.value_zero rep same real
   have h1 : read 1 = 1 := Field.value_one rep same real
   have ha : ∀ a b, read (a + b) = read a + read b := Field.value_add rep same real
-  have hs : ∀ a b, read (a - b) = read a - read b := Field.value_sub rep same real
   have hm : ∀ a b, read (a * b) = read a * read b := Field.value_mul rep same real
   have point (d : Dyadic) : read (FieldDecision.point d) = HexRealRootsTheory.Dyadic.toReal d := by
-    simpa only [read, rep, FieldDecision.point, HexRealRootsTheory.toReal_eq_cast_toRat] using
-      FieldSpecialize.value_ofRat rep same real d.toRat
+    exact FieldTransport.point signs header d
   have coverage : ∀ atom ∈ formula.polys,
       interpret (fun x : ℝ => x) (fun _ => Iff.rfl) (Transport.polynomial read (query atom)) = 0 ∨
       ∀ x, (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
@@ -233,7 +225,7 @@ theorem cells (signs : LiteralSign.Table E) (context : Ctx)
     · exact Or.inl zero
     · right
       intro x root
-      exact (radical.roots_transport read h0 h1 ha hs hm context _ radicalChecked x).mpr
+      exact (radical.roots_transport read (FieldTransport.closed rep same real) context _ radicalChecked x).mpr
         (roots x root)
   have queries : ∀ i atom, atom ∈ formula.polys →
       Sturm.check (fun x : ℝ => (SignType.sign x : Int)) context

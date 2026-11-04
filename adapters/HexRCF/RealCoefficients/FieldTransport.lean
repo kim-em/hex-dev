@@ -5,7 +5,9 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.Field
+public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRealClosureTheory.TransportClosedQuery
+public import HexRealRootsTheory.Separation
 public section
 
 universe u
@@ -50,6 +52,15 @@ theorem real (table : LiteralSign.Table E)
     simp only [Field.checkSignTable, Bool.and_eq_true] at checked
     exact checked.1.2
   exact Field.literalRep_real p s hw hp reality
+
+/-- Rational dyadic points use the same fixed selected real embedding. -/
+theorem point (table : LiteralSign.Table E)
+    (checked : Field.checkSignTable p s hw hp table = true) (d : Dyadic) :
+    Field.value (Field.literalRep p s hw hp) (PolyQuot.ofRat d.toRat : E) =
+      HexRealRootsTheory.Dyadic.toReal d := by
+  simpa only [HexRealRootsTheory.toReal_eq_cast_toRat] using
+    FieldSpecialize.value_ofRat (Field.literalRep p s hw hp)
+      (Field.literalRep_mk p s hw hp) (real table checked) d.toRat
 
 /-- Require a recorded nonzero sign for each nonempty polynomial's top coefficient. -/
 @[expose] def leadingCheck (table : LiteralSign.Table E) (q : DensePoly E) : Bool :=
