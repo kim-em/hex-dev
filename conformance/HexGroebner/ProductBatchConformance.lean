@@ -163,6 +163,10 @@ def insertionChecks (seed : Nat) : Bool := Id.run do
           table.productsAttemptPortable support 10 0 12 1000 10000000 1000000000 true] do
         let .accepted result := attempt | return false
         if result.table.count != 22 || !same result expected then return false
+      if !check table support 10 0 12 (2^90) 10000000 1000000000 true then return false
+      let .deferred original := table.productsAttempt support 10 0 12 (2^90) 10000000 1000000000 true
+        | return false
+      if !same ⟨.ok {},original⟩ ⟨.ok {},table⟩ then return false
       let repeated := (Array.range 16).foldl (fun b _ => Packed.push .u32 b 19) {}
       let .accepted result := table.productsAttempt repeated 1 0 16 1000 10000000 1000000000 true
         | return false
