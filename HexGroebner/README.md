@@ -27,6 +27,8 @@ of at most 4096 packed identifiers. Shared and borrowed buffers retain their
 contents; disabling native monomial operations selects the portable definition.
 The [support-queue measurements](../reports/bench-results/hexgroebner-support.md)
 separate primitive timings, complete F4 candidate timings and independent checks.
+The [known-pivot projection measurements](../reports/bench-results/hexgroebner-tables.md)
+include exact four-row XOR tables, complete matrix comparisons and matched F4 controls.
 Joint matrix elimination stably orders targets by decreasing leading-column
 index, then increasing support size, retaining input order for equal keys.
 This starts with smaller leading monomials in the decreasing monomial column
