@@ -45,6 +45,29 @@ theorem node_fields (value : ValueCodec E) (context : ValueCodec Ctx) (data : No
   rw [Codec.node_eq]
   rfl
 
+/-- Moment fields can be rewritten without knowing the array length or entries. -/
+theorem moments_encode (value : ValueCodec E) (context : ValueCodec Ctx)
+    (moments : Array (TarskiCertificate E E Ctx)) :
+    Codec.array (Codec.tarski value context) moments = Codec.array (fun c =>
+      Codec.Json.arr #[context.encode c.context, Codec.poly value c.head,
+        Codec.poly value c.queryPoly, Codec.endpoint value c.lower, Codec.endpoint value c.upper,
+        Codec.chain value c.squarefree, Codec.chain value c.remainders,
+        Codec.Json.of c.lowerSigns, Codec.Json.of c.upperSigns,
+        Codec.Json.of c.lowerVariations, Codec.Json.of c.upperVariations,
+        Codec.Json.of c.value]) moments := by
+  fail_if_success rfl
+  rw [Codec.tarski_fn]
+
+/-- Optional reductions and their nested step lists rewrite at arbitrary lengths. -/
+theorem reductions_encode (value : ValueCodec E) (reductions : Array (Option (Reduction E))) :
+    Codec.array (Codec.option (Codec.reduction value)) reductions =
+      Codec.array (Codec.option (fun r => Codec.Json.arr #[
+        Codec.list (fun s => Codec.Json.arr #[Codec.Json.of s.index, Codec.poly value s.next,
+          Codec.Json.arr #[value.encode s.witness.leftScale, Codec.poly value s.witness.quotient,
+            value.encode s.witness.rightScale]]) r.steps,
+        Codec.poly value r.result])) reductions := by
+  rw [Codec.reduction_fn, Codec.reductionStep_fn, Codec.remainder_fn]
+
 /-- info: 'Hex.SignDet.Codec.graph_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Codec.graph_eq
@@ -301,6 +324,30 @@ theorem graph_wrong_endpoints :
 /-- info: 'Hex.SignDet.Codec.preparation_eq' depends on axioms: [propext] -/
 #guard_msgs in
 #print axioms Codec.preparation_eq
+
+/-- info: 'Hex.SignDet.Codec.remainder_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.remainder_fn
+
+/-- info: 'Hex.SignDet.Codec.tarski_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.tarski_fn
+
+/-- info: 'Hex.SignDet.Codec.reductionStep_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.reductionStep_fn
+
+/-- info: 'Hex.SignDet.Codec.reduction_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.reduction_fn
+
+/-- info: 'Hex.SignDet.PublicCodec.moments_encode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms moments_encode
+
+/-- info: 'Hex.SignDet.PublicCodec.reductions_encode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms reductions_encode
 
 /-- info: 'Hex.SignDet.PublicCodec.graph_nested_literal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

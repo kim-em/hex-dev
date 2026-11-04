@@ -55,7 +55,12 @@ rewrites the encoder as a function, including inside `Codec.array` maps.
 `reduction_eq` and `preparation_eq` identify all nested witness fields. These
 are equations for arbitrary raw records, without structural or arithmetic
 acceptance premises. The reference encoder bodies remain hidden across imports;
-consumers use the public equations rather than private imports.
+consumers use the public equations rather than private imports. Function forms
+`tarski_fn`, `remainder_fn`, `reductionStep_fn` and `reduction_fn` also rewrite
+partially applied encoders beneath arbitrary arrays, lists and optional payloads.
+The `moments_encode` and `reductions_encode` public-import consumers check this
+without fixing lengths or entries. `moments_encode` additionally requires that
+reflexivity alone cannot open the hidden Tarski encoder.
 
 The ordinary-import `PublicCodec` consumer composes these equations to identify
 both a size-zero graph and a size-one numerical graph with all nested evidence
@@ -66,11 +71,10 @@ query preparation and a 1×1 system. The deliberately zero scales and system
 denominator are literal data, not a claim of arithmetic acceptance. Its basis
 has rank zero; the existing conformance retains positive-rank coverage.
 
-Seven new equation guards require exactly `propext`; the composed nested graph
-proof requires exactly `propext`, `Classical.choice` and `Quot.sound`. Together
-with the existing encoding guards, there are 22 encoding axiom guards. The
-reference equations are proved by reflexivity, and no global simplification
-attributes or executable bodies change.
+The nested equation and general array-consumer guards require exactly
+`propext`; the composed numerical graph proof requires exactly `propext`,
+`Classical.choice` and `Quot.sound`. The reference equations are proved by
+reflexivity, and no global simplification attributes or executable bodies change.
 
 This removes the nested structured-encoder equation gap. It does not identify
 an arbitrary numerical tower frame: the actual coefficient/context codecs and
