@@ -734,7 +734,9 @@ private meta def proveFresh (prepared : Coefficients.Coordinates) : MetaM Expr :
     mkAppM ``Iff.mp #[prepared.source.proof, specialized]
 
 private meta def prove (source : Reify.Source) (leafSources : Array Expr)
-    (plans : Array SourcePlan) : MetaM Expr := do
+    (plans : Array SourcePlan) : MetaM Expr :=
+    withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
   profileitM Exception "rcf algebraic frontend" (← getOptions)
     (do
       let prepared ← coordinates source leafSources plans

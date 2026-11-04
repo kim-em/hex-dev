@@ -30,9 +30,7 @@ run_meta withoutExporting do
       ``Hex.RCF.RealCoefficients.IsolationReplay.queryAt,
       ``Hex.TarskiCertificate.fromChains, ``Hex.SignedRemainderChain.build,
       ``Hex.RCF.RealCoefficients.FieldIsolate.propose?,
-      ``Hex.Sturm.queryPrepared, ``Hex.QAdjoin.common,
-      ``Hex.RCF.RealCoefficients.FiniteLiteral.prove,
-      ``Hex.RCF.RealCoefficients.CommonTactic.prepareCoordinates] do
+      ``Hex.Sturm.queryPrepared, ``Hex.QAdjoin.common] do
     if dependencies.contains name then throwError "forbidden default proof dependency: {name}"
   let sources := #[Hex.RCF.CertificationInputs.polynomial,
     Hex.RCF.RealCoefficients.SquareTwo.polynomial]

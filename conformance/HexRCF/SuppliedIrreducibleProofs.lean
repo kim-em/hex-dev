@@ -61,6 +61,8 @@ run_meta do
       (message.splitOn "quotes irreducibility of a non-source presentation").length > 1) do
     throwError "the own-presentation audit missed the explicit common-field class: {rejected}"
 
+/-- info: 'Hex.RCF.SuppliedIrreducibleProofs.legacyPositive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Hex.RCF.SuppliedIrreducibleProofs.legacyPositive
 
 run_meta do

@@ -34,6 +34,16 @@ set_option rcf.algebraic.singleReplay false in
 theorem linear_split : ∃ x : ℝ,
     x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by rcf
 
+set_option rcf.algebraic.indexSigns true in
+theorem finite_combined : ∀ x : ℝ, x^2 + 1 / Real.sqrt 2 > 0 := by rcf
+
+run_meta do
+  for route in [``Hex.RCF.RealCoefficients.FieldCells.checkIndex_eq,
+      ``Hex.RCF.RealCoefficients.FieldQuery.cachedIndex_eq,
+      ``Hex.RCF.RealCoefficients.FieldCells.forall_formula] do
+    unless ← Hex.RCF.ProofEvidence.contains ``finite_combined (·.isConstOf route) do
+      throwError "combined finite replay omitted its indexed envelope or fold: {route}"
+
 run_meta do
   for (name, route) in [(`Hex.RCF.ReplayModes.universal,
       ``Hex.RCF.RealCoefficients.FieldCells.forall_formula),
@@ -81,5 +91,9 @@ run_meta do
 /-- info: 'Hex.RCF.ReplayModes.linear_split' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms linear_split
+
+/-- info: 'Hex.RCF.ReplayModes.finite_combined' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms finite_combined
 
 end Hex.RCF.ReplayModes

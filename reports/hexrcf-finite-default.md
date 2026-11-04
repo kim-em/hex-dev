@@ -25,7 +25,7 @@ The [complete source-bound report](bench-results/hex-rcf-finite-signs-ef471a8cb3
 | Linear | 54.622 | 8679766 | 1075720 |
 | Indexed | 50.213 | 7827830 | 1106992 |
 
-All four signed paired wall-time changes favor indexing: -3.426, -4.194, -4.866, -5.058 seconds. The median paired change is -4.530 seconds. This is a fixed-input observation, not a general 2–4× gain. The harness records `resolution=no-comparable-control`; no independent null-control separation is claimed. Host activity and all accounting remain in the raw data. Indexed quotation adds 31,272 private artifact bytes; this does not demonstrate shared arithmetic validation or reduced expanded evidence work. All eight actual theorem axiom inventories contain only the standard three.
+All four signed paired wall-time changes favor indexing: -3.426, -4.194, -4.866, -5.058 seconds. The median paired change is -4.530 seconds. This fixed-input observation does not establish a general speedup. The harness records `resolution=no-comparable-control`; no independent null-control separation is claimed. Host activity and all accounting remain in the raw data. Indexed quotation adds 31,272 private artifact bytes; this does not demonstrate shared arithmetic validation or reduced expanded evidence work. All eight actual theorem axiom inventories contain only the standard three.
 
 The fixed schedule completes in 7min8.161s with aggregate peak 5.9GiB and no swap under the hard 32GiB cap. RSS above is the timed child metric, rather than the systemd charged-memory metric. Existing carrier/sign defaults remain: monic core and interval signs enabled, direct reduced construction and generator refinement disabled. This measurement changes no setting.
 
