@@ -423,4 +423,40 @@ def zeros (output : ByteArray) (count : @& Nat) : Option ByteArray :=
 
 end Columns
 
+
+namespace Support
+
+/-- Queue the previously unseen u32 arena IDs in one slice, preserving first
+occurrence order. The bitmap has exactly ceil(arena count/8) bytes. Pending is
+an arbitrary prefix; its contents do not seed the bitmap. A slice contains at
+most4096 terms. Malformed geometry, out-of-range IDs or a larger slice return
+none. Existing bitmap bits and pending entries are retained. -/
+@[expose] def queuePortable (count : UInt64) (ids : @& ByteArray) (start terms : Nat)
+    (bits : ByteArray) (pending : Array Nat) : Option (ByteArray × Array Nat) := Id.run do
+  let count := count.toNat
+  if count > 4294967296 || bits.size != (count+7)/8 || ids.size%4 != 0 ||
+      terms > 4096 || start > ids.size/4 || terms > ids.size/4-start then return none
+  let mut bits := bits
+  let mut pending := pending
+  for i in [start:start+terms] do
+    let id := read ids 4 (4*i)
+    if id ≥ count then return none
+    let pos := id/8
+    let mask : UInt8 := 1 <<< (id%8).toUInt8
+    let value := bits[pos]!
+    if value &&& mask == 0 then
+      bits := bits.set! pos (value ||| mask)
+      pending := pending.push id
+  return some (bits,pending)
+
+/-- Bounded native support queue. The ID slice is borrowed; bitmap and pending
+are consumed, with copy-on-write for shared storage and borrowed aliases.
+Validation precedes mutation. No pointer is retained and byte order is explicit. -/
+@[expose, extern "lean_hex_groebner_queue_support"]
+def queue (count : UInt64) (ids : @& ByteArray) (start terms : @& Nat)
+    (bits : ByteArray) (pending : Array Nat) : Option (ByteArray × Array Nat) :=
+  queuePortable count ids start terms bits pending
+
+end Support
+
 end Hex.Groebner.Native

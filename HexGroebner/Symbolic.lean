@@ -56,15 +56,15 @@ private def queueSupport (limits : Limits) (p : Polynomial) (bits : ByteArray)
         else Native.Columns.zerosPortable bits amount | throw (.representation .address)
       bits := next
   let mut pending := pending
-  for i in [:p.size] do
-    let id := p.monomial i
-    if id ≥ count then throw (.representation .index)
-    let pos := id/8
-    let mask : UInt8 := 1 <<< (id%8).toUInt8
-    let value := bits[pos]!
-    if value &&& mask == 0 then
-      bits := bits.set! pos (value ||| mask)
-      pending := pending.push id
+  for chunk in [:(p.size+4095)/4096] do
+    let start := chunk*4096
+    let terms := min 4096 (p.size-start)
+    let some (next,queued) := if limits.nativeMonomials then
+        Native.Support.queue count.toUInt64 p.support start terms bits pending
+      else Native.Support.queuePortable count.toUInt64 p.support start terms bits pending |
+        throw (.representation .index)
+    bits := next
+    pending := queued
   return (bits,pending)
 
 /-- Close every selected term under the required reducers. A monomial is queued

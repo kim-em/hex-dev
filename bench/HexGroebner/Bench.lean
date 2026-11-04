@@ -10,6 +10,7 @@ import HexGroebner.Bench.Products
 import HexGroebner.Bench.Primitives
 import HexGroebner.Bench.Continuation
 import HexGroebner.Bench.Columns
+import HexGroebner.Bench.Support
 import HexGroebner.Bench.Mersenne
 import HexGroebner.Bench.Dense
 import HexGroebner.Bench.Sampling

@@ -73,6 +73,7 @@ def run() -> None:
 #define lean_hex_groebner_subtract_row hex_test_unused_subtract
 #define lean_hex_groebner_remap_columns hex_test_remap
 #define lean_hex_groebner_remap_index hex_test_remap_index
+#define lean_hex_groebner_queue_support hex_test_queue_support
 #define lean_hex_groebner_append_zeros hex_test_append_zeros
 #define lean_hex_groebner_prepare_monomial hex_test_unused_prepare
 #define lean_hex_groebner_equal_monomial hex_test_unused_monomial_equal
@@ -89,6 +90,7 @@ def run() -> None:
 #undef lean_hex_groebner_subtract_row
 #undef lean_hex_groebner_remap_columns
 #undef lean_hex_groebner_remap_index
+#undef lean_hex_groebner_queue_support
 #undef lean_hex_groebner_append_zeros
 #undef lean_hex_groebner_prepare_monomial
 #undef lean_hex_groebner_equal_monomial
@@ -137,6 +139,51 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_remap_columns(
  b_lean_obj_arg positions,b_lean_obj_arg support,b_lean_obj_arg start,
  b_lean_obj_arg count,lean_obj_arg output) {
  ++remap_calls;return hex_test_remap(positions,support,start,count,output);
+}
+static uint64_t support_calls=0;
+__typeof__(hex_test_queue_support) __wrap_lean_hex_groebner_queue_support;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_queue_support(uint64_t count,
+ b_lean_obj_arg ids,b_lean_obj_arg start,b_lean_obj_arg terms,
+ lean_obj_arg bits,lean_obj_arg pending) {
+ ++support_calls;return hex_test_queue_support(count,ids,start,terms,bits,pending);
+}
+LEAN_EXPORT lean_obj_res hex_test_support_aliases(lean_obj_arg world) {
+ (void)world;int ok=1;
+ for(unsigned linear=0;linear<2;++linear) for(unsigned alias=0;alias<2;++alias)
+ for(unsigned shared=0;shared<2;++shared) for(unsigned fail=0;fail<2;++fail) {
+  if(linear && shared) continue;
+  lean_object *ids=lean_alloc_sarray(1,8,8);
+  write_le(lean_sarray_cptr(ids),4,33);write_le(lean_sarray_cptr(ids)+4,4,fail?64:0);
+  lean_object *bits=alias?ids:lean_alloc_sarray(1,8,8);
+  if(!alias)memset(lean_sarray_cptr(bits),0,8);
+  uint8_t ids_saved[8],bits_saved[8],expected[8];
+  memcpy(ids_saved,lean_sarray_cptr(ids),8);memcpy(bits_saved,lean_sarray_cptr(bits),8);
+  memcpy(expected,bits_saved,8);expected[4]|=2;expected[0]|=1;
+  lean_object *keeper=bits,*pending=lean_alloc_array(0,4);
+  if(linear)lean_sarray_mark_linear_core(bits);
+  if(shared)lean_inc(keeper);
+  lean_object *result=hex_test_queue_support(64,ids,lean_box(0),lean_box(2),bits,pending);
+  ok=ok && lean_obj_tag(result)==(fail?0:1);
+  if(!fail && lean_obj_tag(result)==1) {
+   lean_object *pair=lean_ctor_get(result,0),*actual=lean_ctor_get(pair,0),*queued=lean_ctor_get(pair,1);
+   ok=ok && lean_is_exclusive(actual) && lean_sarray_size(actual)==8;
+   ok=ok && memcmp(lean_sarray_cptr(actual),expected,8)==0;
+   ok=ok && lean_array_size(queued)==(alias?1:2) && lean_unbox(lean_array_get_core(queued,0))==33;
+   if(!alias && lean_array_size(queued)==2)ok=ok && lean_unbox(lean_array_get_core(queued,1))==0;
+   if(linear)ok=ok && lean_sarray_is_marked_linear(actual);
+  }
+  if(shared) {
+   ok=ok && memcmp(lean_sarray_cptr(keeper),bits_saved,8)==0;lean_dec(keeper);
+  }
+  if(!alias) {
+   ok=ok && memcmp(lean_sarray_cptr(ids),ids_saved,8)==0;lean_dec(ids);
+  }
+  lean_dec(result);
+ }
+ return lean_io_result_mk_ok(lean_box(ok));
+}
+LEAN_EXPORT lean_obj_res hex_test_support_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(support_calls));
 }
 static uint64_t index_calls=0,zero_calls=0;
 __typeof__(hex_test_remap_index) __wrap_lean_hex_groebner_remap_index;
@@ -973,7 +1020,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING", "-DHEX_GROEBNER_ENABLE_AVX512"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_queue_support", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_prepare_dense", "-Wl,--wrap=lean_hex_dense_transition",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
@@ -988,6 +1035,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 import HexGroebner.PairRowsConformance
+import HexGroebner.SupportConformance
 import HexGroebner.SampledConformance
 import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
@@ -1106,6 +1154,18 @@ def checkMersenne : IO UInt64 := do
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   return mersenne
 
+@[extern "hex_test_support_count"] opaque supportCount : IO UInt64
+@[extern "hex_test_support_aliases"] opaque supportAliases : IO Bool
+
+private def checkSupport : IO Unit := do
+  if !(← supportAliases) then throw (IO.userError "support queue ownership mismatch")
+  let before ← supportCount
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  if !Hex.Groebner.SupportConformance.queueChecks seed then
+    throw (IO.userError "native support queue/reference mismatch")
+  if (← supportCount) ≤ before then throw (IO.userError "native support queue unused")
+  IO.println s!"native support queue calls: {(← supportCount)-before}"
+
 private def checkBinary (seed : Nat) : IO Unit := do
   let symbolicSeed ← Hex.Groebner.NativeChecks.readSeed
   if !Hex.Groebner.PairRowsConformance.bitmapChecks symbolicSeed then
@@ -1163,6 +1223,7 @@ def main : IO Unit := do
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
+  checkSupport
   checkBinary primitiveSeed
   let beforeBatchInsertions ← batchInsertions
   if !Hex.Groebner.ProductBatchConformance.insertionChecks primitiveSeed then
