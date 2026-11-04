@@ -74,6 +74,13 @@ def systems(cap,prefix,manifest):
                 command=row['command'];require(command[command.index('--delayed-reduction')+1]==
                                               ('true'if arm=='B'else'false'),'option ignored')
                 value=payload(cap,prefix,row);require(value['kind']=='unchecked_candidate','wrong candidate kind')
+                for option,expected in [('--batch-size','1024'),('--scheduling','degree'),
+                                        ('--binary-pivots','true'),('--dense-pivots','false')]:
+                    require(command[command.index(option)+1]==expected,'recorded control differs: '+option)
+                require(value['batchSize']==1024 and value['scheduling']=='degree'and
+                        value['binaryPivots']is True and value['order']=='grevlex'and
+                        value['variables']==case['variables']and value['randomState']==0,
+                        'candidate output contract differs')
                 require(value['p']==case['p']and value['delayedReduction']==(arm=='B'),
                         'field or requested policy differs')
                 require(value['candidateNanos']==row['candidate_nanos'],'candidate timing differs')
