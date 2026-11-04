@@ -848,7 +848,8 @@ static int delayed_guard_test(void) {
    }
    uint8_t cb[40],vb[40];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
    delayed_pivot pivot={cols,vals,n,(n-1)*stride,0};
-   delayed_update_avx2(&ctx,&pivot,factor);
+   if(width==4) delayed_update_wide(&ctx,&pivot,factor);
+   else delayed_update_avx2(&ctx,&pivot,factor);
    for(unsigned col=0;col<64;++col) if(delayed_read(&ctx,col)!=expected[col]) return 0;
    if(memcmp(cb,cols,n*4)||memcmp(vb,vals,n*width)) return 0;
    lean_dec(ctx.dense);munmap(cm,page*2);munmap(vm,page*2);

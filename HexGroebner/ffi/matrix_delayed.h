@@ -9,18 +9,13 @@ __attribute__((target("avx2")))
 static void delayed_update_avx2(matrix_context *c,const delayed_pivot *pivot,uint64_t factor) {
     HEX_GROEBNER_DELAYED_UPDATE(1);
     __m256i factors=_mm256_set1_epi64x((long long)factor);
-    __m256i modulus=_mm256_set1_epi64x((long long)c->modulus_squared);
-    __m256i threshold=_mm256_set1_epi64x((long long)(c->modulus_squared-1));
     uint8_t *data=lean_sarray_cptr(c->dense);
     uint64_t j=1;
     for(;j+4<=pivot->size;j+=4) {
         uint32_t indices[4];memcpy(indices,pivot->columns+(size_t)j*4,16);
         __m128i ids=_mm_loadu_si128((const __m128i_u*)indices);
         __m256i coefficients;
-        if(c->width==4) {
-            coefficients=_mm256_cvtepu32_epi64(_mm_loadu_si128(
-                (const __m128i_u*)(pivot->coefficients+(size_t)j*4)));
-        } else if(c->width==2) {
+        if(c->width==2) {
             __m128i packed=_mm_loadl_epi64((const __m128i*)(pivot->coefficients+(size_t)j*2));
             coefficients=_mm256_cvtepu16_epi64(packed);
         } else {
@@ -32,7 +27,41 @@ static void delayed_update_avx2(matrix_context *c,const delayed_pivot *pivot,uin
         __m256i current=contiguous?_mm256_loadu_si256((const __m256i_u*)(data+(size_t)indices[0]*8)):
             _mm256_i32gather_epi64((const long long int*)data,ids,8);
         __m256i updated=_mm256_add_epi64(current,products);
-        if(c->width==4) updated=_mm256_sub_epi64(updated,_mm256_and_si256(
+        if(contiguous) _mm256_storeu_si256((__m256i_u*)(data+(size_t)indices[0]*8),updated);
+        else {
+            uint64_t values[4];_mm256_storeu_si256((__m256i_u*)values,updated);
+            for(unsigned k=0;k<4;++k) memcpy(data+(size_t)indices[k]*8,&values[k],8);
+        }
+    }
+    for(;j<pivot->size;++j) {
+        uint64_t k=matrix_read(pivot->columns+(size_t)j*4,4);
+        uint64_t b=matrix_read(pivot->coefficients+(size_t)j*c->width,c->width);
+        delayed_write(c,k,delayed_read(c,k)+factor*b);
+    }
+}
+#endif
+
+#if HEX_GROEBNER_AVX2
+__attribute__((target("avx2")))
+static void delayed_update_wide(matrix_context *c,const delayed_pivot *pivot,uint64_t factor) {
+    HEX_GROEBNER_DELAYED_UPDATE(1);
+    __m256i factors=_mm256_set1_epi64x((long long)factor);
+    __m256i modulus=_mm256_set1_epi64x((long long)c->modulus_squared);
+    __m256i threshold=_mm256_set1_epi64x((long long)(c->modulus_squared-1));
+    uint8_t *data=lean_sarray_cptr(c->dense);
+    uint64_t j=1;
+    for(;j+4<=pivot->size;j+=4) {
+        uint32_t indices[4];memcpy(indices,pivot->columns+(size_t)j*4,16);
+        __m128i ids=_mm_loadu_si128((const __m128i_u*)indices);
+        __m256i coefficients;
+        coefficients=_mm256_cvtepu32_epi64(_mm_loadu_si128(
+            (const __m128i_u*)(pivot->coefficients+(size_t)j*4)));
+        __m256i products=_mm256_mul_epu32(coefficients,factors);
+        int contiguous=indices[1]==indices[0]+1 && indices[2]==indices[0]+2 && indices[3]==indices[0]+3;
+        __m256i current=contiguous?_mm256_loadu_si256((const __m256i_u*)(data+(size_t)indices[0]*8)):
+            _mm256_i32gather_epi64((const long long int*)data,ids,8);
+        __m256i updated=_mm256_add_epi64(current,products);
+        updated=_mm256_sub_epi64(updated,_mm256_and_si256(
             _mm256_cmpgt_epi64(updated,threshold),modulus));
         if(contiguous) _mm256_storeu_si256((__m256i_u*)(data+(size_t)indices[0]*8),updated);
         else {
@@ -44,7 +73,7 @@ static void delayed_update_avx2(matrix_context *c,const delayed_pivot *pivot,uin
         uint64_t k=matrix_read(pivot->columns+(size_t)j*4,4);
         uint64_t b=matrix_read(pivot->coefficients+(size_t)j*c->width,c->width);
         uint64_t value=delayed_read(c,k)+factor*b;
-        if(c->width==4 && value>=c->modulus_squared) value-=c->modulus_squared;
+        if(value>=c->modulus_squared) value-=c->modulus_squared;
         delayed_write(c,k,value);
     }
 }
@@ -74,7 +103,10 @@ static int delayed_scan(matrix_context *c,uint64_t first,uint64_t *last,
         if(!matrix_work(c,pivot.size)) return 0;
         uint64_t factor=c->p-a;
 #if HEX_GROEBNER_AVX2
-        if(hex_avx2_available()) delayed_update_avx2(c,&pivot,factor);
+        if(hex_avx2_available()) {
+            if(c->width==4) delayed_update_wide(c,&pivot,factor);
+            else delayed_update_avx2(c,&pivot,factor);
+        }
         else
 #endif
         {
