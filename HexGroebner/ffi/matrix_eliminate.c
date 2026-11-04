@@ -147,11 +147,15 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         matrix_write(meta+4,4,matrix_read(lean_sarray_cptr(ids)+(n-1)*4,4));
         for(unsigned b=0;b<8;++b) meta[8+b]=(uint8_t)(sugar>>(8*b));
     }
-    lean_object *native=lean_alloc_ctor(0,3,0);
-    lean_ctor_set(native,0,matrix_take(row,0));
-    lean_ctor_set(native,1,matrix_take(row,1));
-    lean_ctor_set(native,2,lean_uint64_to_nat(sugar));
-    c->native_pivots=lean_array_push(c->native_pivots,native);
+    /* Packed F2 scans use their private metadata and the existing pivot's row.
+       Only ordinary scans need the separate native pivot representation. */
+    if(!c->binary) {
+        lean_object *native=lean_alloc_ctor(0,3,0);
+        lean_ctor_set(native,0,matrix_take(row,0));
+        lean_ctor_set(native,1,matrix_take(row,1));
+        lean_ctor_set(native,2,lean_uint64_to_nat(sugar));
+        c->native_pivots=lean_array_push(c->native_pivots,native);
+    }
     lean_object *pivot=lean_alloc_ctor(0,3,9);
     lean_ctor_set(pivot,0,row);lean_ctor_set(pivot,1,lean_box(0));
     lean_ctor_set(pivot,2,lean_uint64_to_nat(sugar));
@@ -175,6 +179,10 @@ static void matrix_remainder(matrix_context *c,lean_obj_arg row,uint64_t sugar) 
    memcpy word loads/stores avoid alignment and effective-type assumptions. */
 static uint8_t *matrix_binary_dense(matrix_context *c) {
     return lean_sarray_cptr(c->binary_rows)+(size_t)c->capacity*c->words*8;
+}
+static const uint8_t *matrix_binary_ids(matrix_context *c,uint64_t slot) {
+    lean_object *pivot=lean_array_cptr(c->pivots)[slot-1];
+    return lean_sarray_cptr(lean_ctor_get(lean_ctor_get(pivot,0),0));
 }
 /* The bitmap has a little-endian byte layout on every host. Compilers fold
    this fixed-width decode into an unaligned load (and a swap if necessary). */
@@ -338,8 +346,7 @@ static int matrix_project_binary(matrix_context *c,lean_obj_arg targets,
             if(!matrix_work(c,n)) return 0;
             if(n<=span) {
                 HEX_GROEBNER_BINARY_SPARSE_USED();
-                lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
-                const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
+                const uint8_t *ids=matrix_binary_ids(c,slot);
                 for(uint64_t j=0;j<n;++j) {
                     uint64_t k=matrix_read(ids+j*4,4);
                     data[k>>3]^=(uint8_t)(1u<<(k&7));
@@ -389,8 +396,7 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
         uint64_t span=(end>>6)-(col>>6)+1;
         if(n<=span) {
             HEX_GROEBNER_BINARY_SPARSE_USED();
-            lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
-            const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
+            const uint8_t *ids=matrix_binary_ids(c,slot);
             for(uint64_t i=0;i<n;++i) {
                 uint64_t j=matrix_read(ids+i*4,4);
                 data[j>>3]^=(uint8_t)(1u<<(j&7));
