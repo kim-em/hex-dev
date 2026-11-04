@@ -273,7 +273,7 @@ continue through the existing reference-equivalent routes; a late refusal may
 repeat a bounded prefix of physical work without changing logical counters.
 Cancellation is observed between calls. Other fields retain their existing route.
 Measured kernels, full-system cases, source bindings and raw samples are described
-in [the delayed-elimination report](../reports/bench-results/hexgroebner-delayed.md).
+in [the prime-field elimination report](../reports/bench-results/hexgroebner-prime.md).
 
 `Limits.binaryPivots` optionally uses private bit-packed pivots and an accumulator
 in untraced ordinary F2 matrix frames. It defaults to `false`; the deterministic
