@@ -143,7 +143,7 @@ def resumeWith (limits : Limits) (nodeLimit : Nat) (initial : State)
 retain this choice; pass `scheduling := .sugar` here to start a sugar computation. -/
 def begin (context : Context) (generators : Array RawPolynomial) (statistics : Statistics := {})
     (scheduling : Scheduling := .degree) : State :=
-  ⟨context,generators,⟨{ arity := context.variables },statistics⟩,{},{},scheduling⟩
+  ⟨context,generators,{ table := { arity := context.variables }, statistics := statistics },{},{},scheduling⟩
 
 def computeWith (context : Context) (limits : Limits) (nodeLimit : Nat)
     (generators : Array RawPolynomial) : Outcome :=

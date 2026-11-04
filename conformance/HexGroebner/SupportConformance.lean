@@ -44,7 +44,7 @@ def queueChecks (seed : Nat) : Bool := Id.run do
   let expected := Native.Support.queuePortable 65 ids 0 4096 (zeroes 9) #[]
   if expected.isNone || Native.Support.queue 65 ids 0 4096 (zeroes 9) #[] != expected then return false
   if (Native.Support.queue 65 ids 0 4097 (zeroes 9) #[]).isSome then return false
-  -- The bitmap aliases the borrowed ID bytes. Setting bit33 would alter the next
+  -- The bitmap aliases the borrowed ID bytes. Setting bit 33 would alter the next
   -- ID if the native implementation mutated the borrowed storage in place.
   let alias := packed #[33,0]
   let snapshot := packed #[33,0]
@@ -52,9 +52,32 @@ def queueChecks (seed : Nat) : Bool := Id.run do
   if Native.Support.queue 64 alias 0 2 alias #[seed] != expected || alias != snapshot then return false
   for (count,ids,bits) in [
       (8,packed #[0,8],zeroes 1), (8,⟨#[0,0,0]⟩,zeroes 1),
-      (8,packed #[0],zeroes 2), (4294967297,ByteArray.empty,ByteArray.empty)] do
+      (8,packed #[0],zeroes 0), (4294967297,ByteArray.empty,ByteArray.empty)] do
     if (Native.Support.queue count.toUInt64 ids 0 (ids.size/4) bits #[seed]).isSome then return false
   return true
+
+
+/-- Clearing rejects malformed slices and IDs and preserves every other bit,
+including duplicates, empty slices and a bitmap shared with an observer. -/
+def clearChecks (seed : Nat) : Bool := Id.run do
+  let bits : ByteArray := ⟨Array.replicate 9 255⟩
+  let queue := #[0,7,8,31,32,63,63,64,seed%65]
+  for start in [0,1,queue.size,queue.size+1,2^100] do
+    for terms in [0,1,queue.size,4096,4097,2^100] do
+      let expected := Native.Support.clearPortable bits queue start terms
+      if Native.Support.clear bits queue start terms != expected then return false
+      if bits != (⟨Array.replicate 9 255⟩ : ByteArray) then return false
+  let some actual := Native.Support.clear bits #[0,7,8,31,32,63,63] 0 7 | return false
+  if actual != (⟨#[126,254,255,127,254,255,255,127,255]⟩ : ByteArray) then return false
+  for queue in [#[72],#[2^32],#[2^100]] do
+    if (Native.Support.clear bits queue 0 1).isSome then return false
+  let queue := (Array.range 4097).map fun i => (i+seed)%65
+  let expected := Native.Support.clearPortable bits queue 0 4096
+  if expected.isNone || Native.Support.clear bits queue 0 4096 != expected then return false
+  return (Native.Support.clear bits queue 0 4097).isNone
+
+#guard clearChecks 0
+#guard clearChecks 17
 
 #guard queueChecks 0
 #guard queueChecks 17

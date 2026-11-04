@@ -139,13 +139,13 @@ private def missingColumns : Bool := Id.run do
     let q ← Polynomial.normalize context {} 0 #[⟨#[0,1],1⟩,⟨#[0,0],1⟩]
     let matrix : SymbolicMatrix := { columns := #[],reducers := #[],targets := #[⟨p,1⟩,⟨q,1⟩] }
     matrix.eliminate context {}
-  match trial.run ⟨{ arity := 2 },{}⟩ with
+  match trial.run { table := { arity := 2 }, statistics := {} } with
   | (.error (.representation .index),_) => return true
   | _ => return false
 
 #guard missingColumns
 
-/-- In one variable, closing x^k under x-1 has exactly degrees k down to0.
+/-- In one variable, closing x^k under x-1 has exactly degrees k down to 0.
 Unrelated arena entries and newly interned lower powers cross bitmap bytes. -/
 private def bitmapClosure (padding k : Nat) (seeded native : Bool) : Bool := Id.run do
   let context : Context := ⟨field,1,.lex⟩
@@ -181,5 +181,66 @@ def bitmapChecks (seed : Nat) : Bool := Id.run do
         if !bitmapClosure (padding+seed%2) k seeded false ||
             !bitmapClosure (padding+seed%2) k seeded true then return false
   return true
+
+
+/-- Production symbolic preprocessing crosses both chunk limits: a 40000-ID
+arena needs 5000 bitmap bytes, and each target contains 4200 distinct IDs.
+Separate-tail remainders reuse the bitmap: only the first call pays its growth.
+The visited queue is cleared between calls, without changing the normal form. -/
+def chunkChecks (seed : Nat) (native : Bool) : Bool := Id.run do
+  let context : Context := ⟨field,1,.lex⟩
+  let limits : Limits := { work := 1000000000, nativeRows := native,nativeMonomials := native }
+  let action : Computation Bool := do
+    for i in [:40000] do
+      let _ ← intern limits #[i.toUInt64]
+    let mut p : Polynomial := {}
+    for i in [:4200] do
+      p := { support := Packed.push .u32 p.support (4199-i+seed%17).toUInt64, coefficients := p.coefficients.push 1 }
+    let index ← ReducerIndex.build context limits #[]
+    let before := (← get).statistics
+    let first ← p.remainderWith context limits index #[]
+    let middle := (← get).statistics
+    let second ← p.remainderWith context limits index #[]
+    let after := (← get).statistics
+    if first.support != p.support || first.coefficients != p.coefficients ||
+        second.support != p.support || second.coefficients != p.coefficients then return false
+    if middle.allocatedBytes-before.allocatedBytes != after.allocatedBytes-middle.allocatedBytes+5000 then
+      return false
+    let scratch := (← get).support
+    return scratch.bits.size == 5000 && scratch.queue.size == 4200
+  match action.run { table := { arity := 1 } } with
+  | (.ok value,_) => value
+  | _ => false
+
+
+/-- A failed clearing reservation preserves paid-for scratch for a later retry.
+Repeated preparation under an exact byte allowance needs no additional bitmap. -/
+def scratchChecks (native : Bool) : Bool := Id.run do
+  let limits : Limits := { nativeMonomials := native }
+  let action : Computation Bool := do
+    for i in [:16] do
+      let _ ← intern limits #[i.toUInt64]
+    let support := Packed.push .u32 {} 15
+    queueSupport limits support
+    let before := (← get).statistics
+    let bits := (← get).support.bits
+    try
+      resetSupport { limits with work := before.work }
+      return false
+    catch
+      | .exhausted .work => pure ()
+      | _ => return false
+    if (← get).support.bits != bits || (← get).support.queue != #[15] then return false
+    let bytes := before.allocatedBytes+(← get).table.bytes
+    resetSupport { limits with packedBytes := bytes }
+    queueSupport { limits with packedBytes := bytes } support
+    if (← get).statistics.allocatedBytes != before.allocatedBytes then return false
+    return (← get).support.bits == bits && (← get).support.queue == #[15]
+  match action.run { table := { arity := 1 } } with
+  | (.ok value,_) => value
+  | _ => false
+
+#guard scratchChecks false
+#guard scratchChecks true
 
 end Hex.Groebner.PairRowsConformance

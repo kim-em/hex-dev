@@ -51,7 +51,7 @@ def checks (seed : Nat) (full := true) : Bool := Id.run do
           let .ok _ := next.result | return false
           table := next.table
         let statistics : Statistics := { work := 17, allocatedBytes := 11, pairs := 7, rounds := 3, matrixCalls := 2 }
-        let workspace : Workspace := ⟨table,statistics⟩
+        let workspace : Workspace := { table,statistics }
         let mut p : Polynomial := {}
         for i in [:n] do
           p := ⟨Packed.push .u32 p.support (n-1-i).toUInt64,
@@ -77,7 +77,7 @@ def checks (seed : Nat) (full := true) : Bool := Id.run do
     table := next.table
   let p : Polynomial := ⟨Packed.push .u32 {} 1,Packed.push field.width {} 1⟩
   for work in [:12] do
-    if !check ⟨field,1,.grevlex⟩ { work } ⟨table,{}⟩ p 1 then return false
+    if !check ⟨field,1,.grevlex⟩ { work } { table } p 1 then return false
   -- Check the two-term/one-term and admitted/scalar quantum boundaries.
   for arity in [681,682,1365,1366] do
     let mut largeTable : MonomialTable := { arity }
@@ -88,7 +88,7 @@ def checks (seed : Nat) (full := true) : Bool := Id.run do
     let mut largeP : Polynomial := {}
     for i in [:65] do
       largeP := ⟨Packed.push .u32 largeP.support (64-i).toUInt64,Packed.push field.width largeP.coefficients 1⟩
-    if !check ⟨field,arity,.grevlex⟩ { work := 1000000000 } ⟨largeTable,{}⟩ largeP 1 then return false
+    if !check ⟨field,arity,.grevlex⟩ { work := 1000000000 } { table := largeTable } largeP 1 then return false
   return true
 
 /-- A real 128-term polynomial uses adaptive multi-term native slices at 22
@@ -104,7 +104,7 @@ def wide (seed : Nat) : Bool := Id.run do
   for i in [:128] do
     p := ⟨Packed.push .u32 p.support (127-i).toUInt64,
       Packed.push field.width p.coefficients (1+seed%6).toUInt64⟩
-  return check ⟨field,22,.grevlex⟩ { work := 1000000000 } ⟨table,{}⟩ p 1
+  return check ⟨field,22,.grevlex⟩ { work := 1000000000 } { table } p 1
 
 #guard wide 0
 

@@ -296,7 +296,7 @@ interreduction. Success is explicitly an unchecked candidate. Deterministic
 execution consumes no random samples and returns the supplied state unchanged. -/
 def computeWith (context : Context) (limits : Limits) (generators : Array RawPolynomial)
     (randomState : UInt64 := 0) : ComputeResult :=
-  resumeWith limits ⟨context, generators, ⟨{ arity := context.variables }, {}⟩, {}, randomState,
+  resumeWith limits ⟨context, generators, { table := { arity := context.variables }, statistics := {} }, {}, randomState,
     limits.scheduling⟩
 
 end Hex.Groebner

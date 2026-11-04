@@ -13,8 +13,10 @@ The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
 Symbolic support membership uses a bitmap of stable arena identifiers. It grows
 as reducer products are interned and preserves first-occurrence queue order.
-Initialization and growth count against the parent work and packed-byte limits,
-including when multiplied-polynomial payloads come from the reducer cache.
+The workspace retains the bitmap across preparations and checkpoints. Growth
+counts against the parent work and packed-byte limits once; the next preparation
+clears only the previously visited identifiers and charges that clearing work.
+Cache hits and separate-tail normal forms reuse the paid-for bitmap payload.
 With `nativeMonomials := true`, a bounded operation validates and queues slices
 of at most 4096 packed identifiers. Shared and borrowed buffers retain their
 contents; disabling native monomial operations selects the portable definition.

@@ -44,17 +44,17 @@ private def corpus : Bool := Id.run do
 
 private def pruneExample : Bool :=
   match (Producer.prune {} #[.generator 0, .zero, .scale 1 0, .add 2 1] #[2]).run
-      ⟨⟨{ arity := 0 }, {}⟩, {}⟩ with
+      ⟨{ table := { arity := 0 }, statistics := {} }, {}⟩ with
   | (.ok value, _) => value.nodes == [.generator 0, .scale 1 0] && value.roots == #[1]
   | _ => false
 
 #guard pruneExample
 #guard match (Producer.prune {} #[.scale 1 1, .zero] #[0]).run
-    ⟨⟨{ arity := 0 }, {}⟩, {}⟩ with
+    ⟨{ table := { arity := 0 }, statistics := {} }, {}⟩ with
   | (.error (.matrix .dimensions), _) => true
   | _ => false
 #guard match (Producer.prune {} #[.zero] #[1]).run
-    ⟨⟨{ arity := 0 }, {}⟩, {}⟩ with
+    ⟨{ table := { arity := 0 }, statistics := {} }, {}⟩ with
   | (.error (.matrix .dimensions), _) => true
   | _ => false
 
@@ -82,7 +82,7 @@ private def matrixPrefix (native independent : Bool) : Bool := Id.run do
     let targets : Array Producer.Element := #[basis[0]!,⟨⟨unit,0⟩,unitRoot⟩]
     let matrix ← Producer.lift (SymbolicMatrix.prepare context limits (Producer.plain basis) (Producer.plain targets))
     let _ ← Producer.solve context limits 3 basis targets matrix true independent
-  let (result,execution) := calculation.run ⟨⟨{ arity := 2 },{}⟩,{}⟩
+  let (result,execution) := calculation.run ⟨{ table := { arity := 2 }, statistics := {} },{}⟩
   return match result with
     | .error (.matrix (.exhausted .traceNodes)) =>
       let stats := execution.workspace.statistics

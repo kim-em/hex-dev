@@ -50,6 +50,56 @@ def supportNative (input : SupportInput) := queueSupport input true
 /-- The same input, chunking, output contract and validation in portable Lean. -/
 def supportPortable (input : SupportInput) := queueSupport input false
 
+
+/-- Original support HashSet membership and ordered queue, including insertion
+and rehashing. Complete queue validation and hashing match `supportPacked`. -/
+def supportHashSet (input : SupportInput) : Bool × Array Nat := Id.run do
+  let mut seen : Std.HashSet Nat := {}
+  let mut pending := #[]
+  for i in [:input.ids.size/4] do
+    let id := (Packed.read .u32 input.ids i).toNat
+    if !seen.contains id then
+      seen := seen.insert id
+      pending := pending.push id
+  let mut valid := pending.size == input.count
+  for i in [:pending.size] do
+    if pending[i]! != (17*i)%input.count then valid := false
+  return (valid,pending)
+
+/-- Native bitmap membership under the same ordered-queue result contract as
+`supportHashSet`. Initialization and output validation are included. -/
+def supportPacked (input : SupportInput) : Bool × Array Nat :=
+  let (valid,_,pending) := queueSupport input true
+  (valid,pending)
+
+#guard (#[1,8,64,256,4096].all fun n =>
+  let input := prepareSupport n
+  (supportHashSet input).1 && supportHashSet input == supportPacked input)
+
+-- Expected O(n) membership, amortized HashSet rehashing, n ordered appends,
+-- full queue validation and hashing for the original representation.
+setup_benchmark supportHashSet n => n
+  with prep := prepareSupport
+  where {
+    paramFloor := 256
+    paramCeiling := 65536
+    paramSchedule := .custom #[256,512,1024,2048,4096,8192,16384,32768,65536]
+    targetInnerNanos := 4000000000
+    maxSecondsPerCall := 20.0
+  }
+
+-- O(n) bitmap initialization, bounded support slices, n appends, complete
+-- ordered-queue validation and hashing under the same result contract.
+setup_benchmark supportPacked n => n
+  with prep := prepareSupport
+  where {
+    paramFloor := 256
+    paramCeiling := 65536
+    paramSchedule := .custom #[256,512,1024,2048,4096,8192,16384,32768,65536]
+    targetInnerNanos := 4000000000
+    maxSecondsPerCall := 20.0
+  }
+
 #guard (#[0,1,8,64,256,4096].all fun n =>
   let input := prepareSupport n
   (supportNative input).1 && supportNative input == supportPortable input)

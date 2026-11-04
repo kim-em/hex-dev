@@ -179,6 +179,6 @@ def computeWith (context : Context) (limits : Limits) (generators : Array RawPol
     (random : Hex.Rand) (config : Sampling.Config := {}) (slices := 1000000) (minimumTargets := 0) : Result :=
   if config.blockRows == 0 || config.blockRows > 4096 || config.zeroTests == 0 then .invalidConfig random
   else resumeWith limits
-    ⟨context,generators,⟨{ arity := context.variables },{}⟩,{},random,random,config,minimumTargets,limits.scheduling,none,{}⟩ slices
+    ⟨context,generators,{ table := { arity := context.variables }, statistics := {} },{},random,random,config,minimumTargets,limits.scheduling,none,{}⟩ slices
 
 end Hex.Groebner.Sampled

@@ -73,6 +73,7 @@ def run() -> None:
 #define lean_hex_groebner_subtract_row hex_test_unused_subtract
 #define lean_hex_groebner_remap_columns hex_test_remap
 #define lean_hex_groebner_remap_index hex_test_remap_index
+#define lean_hex_groebner_clear_support hex_test_clear_support
 #define lean_hex_groebner_queue_support hex_test_queue_support
 #define lean_hex_groebner_append_zeros hex_test_append_zeros
 #define lean_hex_groebner_prepare_monomial hex_test_unused_prepare
@@ -90,6 +91,7 @@ def run() -> None:
 #undef lean_hex_groebner_subtract_row
 #undef lean_hex_groebner_remap_columns
 #undef lean_hex_groebner_remap_index
+#undef lean_hex_groebner_clear_support
 #undef lean_hex_groebner_queue_support
 #undef lean_hex_groebner_append_zeros
 #undef lean_hex_groebner_prepare_monomial
@@ -140,12 +142,24 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_remap_columns(
  b_lean_obj_arg count,lean_obj_arg output) {
  ++remap_calls;return hex_test_remap(positions,support,start,count,output);
 }
-static uint64_t support_calls=0;
+static uint64_t support_calls=0,support_copies=0,clear_calls=0;
 __typeof__(hex_test_queue_support) __wrap_lean_hex_groebner_queue_support;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_queue_support(uint64_t count,
  b_lean_obj_arg ids,b_lean_obj_arg start,b_lean_obj_arg terms,
  lean_obj_arg bits,lean_obj_arg pending) {
- ++support_calls;return hex_test_queue_support(count,ids,start,terms,bits,pending);
+ ++support_calls;if(!lean_is_exclusive(bits))++support_copies;return hex_test_queue_support(count,ids,start,terms,bits,pending);
+}
+__typeof__(hex_test_clear_support) __wrap_lean_hex_groebner_clear_support;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_clear_support(lean_obj_arg bits,
+ b_lean_obj_arg queue,b_lean_obj_arg start,b_lean_obj_arg terms) {
+ ++clear_calls;if(!lean_is_exclusive(bits))++support_copies;
+ return hex_test_clear_support(bits,queue,start,terms);
+}
+LEAN_EXPORT lean_obj_res hex_test_support_copies(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(support_copies));
+}
+LEAN_EXPORT lean_obj_res hex_test_support_clears(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(clear_calls));
 }
 LEAN_EXPORT lean_obj_res hex_test_support_aliases(lean_obj_arg world) {
  (void)world;int ok=1;
@@ -1020,7 +1034,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING", "-DHEX_GROEBNER_ENABLE_AVX512"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_queue_support", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_array_push", "-Wl,--wrap=lean_hex_groebner_queue_support", "-Wl,--wrap=lean_hex_groebner_clear_support", "-Wl,--wrap=lean_hex_groebner_subtract_row", "-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_prepare_dense", "-Wl,--wrap=lean_hex_dense_transition",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
@@ -1156,6 +1170,8 @@ def checkMersenne : IO UInt64 := do
 
 @[extern "hex_test_support_count"] opaque supportCount : IO UInt64
 @[extern "hex_test_support_aliases"] opaque supportAliases : IO Bool
+@[extern "hex_test_support_copies"] opaque supportCopies : IO UInt64
+@[extern "hex_test_support_clears"] opaque supportClears : IO UInt64
 
 private def checkSupport : IO Unit := do
   if !(← supportAliases) then throw (IO.userError "support queue ownership mismatch")
@@ -1164,12 +1180,27 @@ private def checkSupport : IO Unit := do
   if !Hex.Groebner.SupportConformance.queueChecks seed then
     throw (IO.userError "native support queue/reference mismatch")
   if (← supportCount) ≤ before then throw (IO.userError "native support queue unused")
-  IO.println s!"native support queue calls: {(← supportCount)-before}"
-
-private def checkBinary (seed : Nat) : IO Unit := do
+  if !Hex.Groebner.SupportConformance.clearChecks seed then
+    throw (IO.userError "native support clear/reference mismatch")
+  for native in [true,false] do
+    if !Hex.Groebner.PairRowsConformance.scratchChecks native then
+      throw (IO.userError "support scratch exhaustion/retry mismatch")
+  let copiesBefore ← supportCopies
+  let queuesBefore ← supportCount
+  let clearsBefore ← supportClears
   let symbolicSeed ← Hex.Groebner.NativeChecks.readSeed
   if !Hex.Groebner.PairRowsConformance.bitmapChecks symbolicSeed then
     throw (IO.userError "symbolic support bitmap closure mismatch")
+  for native in [true,false] do
+    if !Hex.Groebner.PairRowsConformance.chunkChecks seed native then
+      throw (IO.userError "production support chunks or separate-tail allocation mismatch")
+  if (← supportCopies) != copiesBefore || (← supportCount) ≤ queuesBefore ||
+      (← supportClears) ≤ clearsBefore then
+    throw (IO.userError "production support loop copied scratch or native chunks were unused")
+  IO.println s!"production support calls/clears/copies: {(← supportCount)-queuesBefore}/{(← supportClears)-clearsBefore}/{(← supportCopies)-copiesBefore}"
+  IO.println s!"native support queue calls: {(← supportCount)-before}"
+
+private def checkBinary (seed : Nat) : IO Unit := do
   let allocationBefore ← binaryCounts
   let targetBefore ← binaryPaths
   let targetSeed ← Hex.Groebner.NativeChecks.readSeed
