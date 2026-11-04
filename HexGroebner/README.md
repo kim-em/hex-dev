@@ -11,6 +11,15 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
+Symbolic support membership uses a bitmap of stable arena identifiers. It grows
+as reducer products are interned and preserves first-occurrence queue order.
+Initialization and growth count against the parent work and packed-byte limits,
+including when multiplied-polynomial payloads come from the reducer cache.
+With `nativeMonomials := true`, a bounded operation validates and queues slices
+of at most 4096 packed identifiers. Shared and borrowed buffers retain their
+contents; disabling native monomial operations selects the portable definition.
+The [support-queue measurements](../reports/bench-results/hexgroebner-support.md)
+separate primitive timings, complete F4 candidate timings and independent checks.
 Joint matrix elimination stably orders targets by decreasing leading-column
 index, then increasing support size, retaining input order for equal keys.
 This starts with smaller leading monomials in the decreasing monomial column
