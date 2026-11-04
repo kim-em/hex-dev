@@ -624,7 +624,7 @@ static uint64_t binary_projects=0;
 #define HEX_GROEBNER_BINARY_PROJECT_USED() (++binary_projects)
 static uint64_t binary_sparse=0,binary_words=0,binary_high_words=0;
 #define HEX_GROEBNER_BINARY_SCAN_USED() (++binary_scans)
-#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=lean_sarray_size(c.binary_rows))
+#define HEX_GROEBNER_BINARY_PIVOTS_USED(n) (++binary_frames,binary_bytes+=lean_sarray_size(c.binary_rows)+lean_sarray_size(c.binary_meta)+(c.project_rows?lean_sarray_size(c.project_rows):0)+(c.project_meta?lean_sarray_size(c.project_meta):0)+(c.project_table?lean_sarray_size(c.project_table):0))
 #define HEX_GROEBNER_BINARY_SPARSE_USED() (++binary_sparse)
 #define HEX_GROEBNER_BINARY_WORD_USED(id) (++binary_words,(id)>=1024?++binary_high_words:0)
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
@@ -1233,7 +1233,7 @@ private def checkSupport : IO Unit := do
   IO.println s!"native support queue calls: {(← supportCount)-before}"
   checkSupportSystems
 
-private def checkBinary (seed : Nat) : IO Unit := do
+private def checkBinaryBuffers : IO Unit := do
   let allocationBefore ← binaryCounts
   let targetBefore ← binaryPaths
   let targetSeed ← Hex.Groebner.NativeChecks.readSeed
@@ -1245,8 +1245,23 @@ private def checkBinary (seed : Nat) : IO Unit := do
       allocationAfter.2.2 != allocationBefore.2.2+allocated.toUInt64 ||
       targetAfter.2.1 ≤ targetBefore.2.1 then
     throw (IO.userError "actual private allocation or target-built word pivot unused")
-  if !Hex.Groebner.EliminationConformance.binaryQuantum then
+  if !Hex.Groebner.EliminationConformance.binaryQuantum targetSeed then
     throw (IO.userError "F2 logical quantum or maximum target boundary mismatch")
+  let before ← binaryCounts
+  let projectsBefore ← binaryProjects
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  let some allocated := Hex.Groebner.EliminationConformance.binaryAllocationChecks seed |
+    throw (IO.userError "projected private allocation/reference mismatch")
+  let after ← binaryCounts
+  if after.1 != before.1+2 || after.2.2 != before.2.2+allocated.toUInt64 ||
+      (← binaryProjects) != projectsBefore+2 then
+    throw (IO.userError "projected private buffer payload differs")
+
+private def checkBinary (seed : Nat) : IO Unit := do
+  let symbolicSeed ← Hex.Groebner.NativeChecks.readSeed
+  if !Hex.Groebner.PairRowsConformance.bitmapChecks symbolicSeed then
+    throw (IO.userError "symbolic support bitmap closure mismatch")
+  checkBinaryBuffers
   let groupsBefore ← binaryGroups
   let groupSeed ← Hex.Groebner.NativeChecks.readSeed
   let some expectedGroups := Hex.Groebner.EliminationConformance.binaryGroupChecks groupSeed |

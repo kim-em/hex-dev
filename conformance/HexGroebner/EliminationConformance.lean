@@ -269,12 +269,12 @@ def binaryTargetChecks (seed : Nat) : Option Nat := do
     let some expected := Elimination.attemptPortable field limits 257 #[] targets sugars false | none
     let some actual := Elimination.attempt field limits 257 #[] targets sugars false | none
     if !same actual expected then none
-    allocated := allocated+Elimination.binaryBytes 257 count
+    allocated := allocated+Elimination.binaryBytes 257 0 count
   return allocated
 
 /-- The logical quantum is attained with 1024 nonempty targets while the
 independent physical bound remains below its cap. One more entry is declined. -/
-def binaryQuantum : Bool := Id.run do
+def binaryQuantum (seed : Nat) : Bool := Id.run do
   if USize.size != 2^64 then return true
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let limits : MatrixLimits := { binaryPivots := true }
@@ -283,15 +283,34 @@ def binaryQuantum : Bool := Id.run do
   if bound 184384 != 2^32 || bound 184385 != 2^32+1026 ||
       Elimination.binaryBound 3904 0 1024 184385 > 2^28 then return false
   let some targets := (Array.range 1024).mapM fun i => SparseRow.ofEntries field 3904
-      ((Array.range (if i < 64 then 181 else 180)).map (·,(1:UInt64))) | return false
+      ((Array.range (if i < 64 then 181 else 180)).map (fun j => (j+seed%64,(1:UInt64)))) | return false
   let some expected := Elimination.attemptPortable field limits 3904 #[] targets #[] false | return false
   let some actual := Elimination.attempt field limits 3904 #[] targets #[] false | return false
   if !same actual expected then return false
-  let some extra := SparseRow.ofEntries field 3904 ((Array.range 182).map (·,(1:UInt64))) | return false
+  let some extra := SparseRow.ofEntries field 3904 ((Array.range 182).map (fun j => (j+seed%64,(1:UInt64)))) | return false
   let refused := targets.set! 0 extra
   return (Elimination.attemptPortable field limits 3904 #[] refused #[] false).isNone &&
     (Elimination.attempt field limits 3904 #[] refused #[] false).isNone
 
+
+/-- All five private buffers are live in these two projected frames. Return
+exact logical payload bytes for the compiled allocation counter assertion. -/
+def binaryAllocationChecks (seed : Nat) : Option Nat := do
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let some reducers := (Array.range 4).mapM fun head => SparseRow.ofEntries field 128
+      ((Array.range (128-head)).map fun j => (head+j,(1:UInt64))) | none
+  let some row := SparseRow.ofEntries field 128
+      ((Array.range 128).filterMap fun j => if (j+seed)%3 != 0 then some (j,(1:UInt64)) else none) | none
+  let targets := Array.replicate 64 row
+  let sugars := (Array.range 68).map fun i => 2^40+seed%17+i
+  for independent in [false,true] do
+    let some expected := Elimination.attemptPortable field limits 128 reducers targets sugars independent | none
+    let some actual := Elimination.attempt field limits 128 reducers targets sugars independent | none
+    if !same actual expected then none
+  return 2*Elimination.binaryBytes 128 4 64
+
+#guard (binaryAllocationChecks 0).isSome
 
 /-- Known reducers are unsorted and cross target-pivot columns. Projection
 must preserve all factors, sugar maxima, independent rows and exact budgets. -/
