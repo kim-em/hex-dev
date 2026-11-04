@@ -70,7 +70,7 @@ setup_benchmark binaryEliminate n => n^3
     maxSecondsPerCall := 32.0
   }
 
--- The sparse provider uses the same canonical rows and complete result digest.
+-- O(n³) sparse elimination, with O(n²) preparation and complete output hashing.
 setup_benchmark binaryEliminateSparse n => n^3
   with prep := prepareBinary
   where {
