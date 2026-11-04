@@ -27,7 +27,13 @@
 
 #define MATRIX_QUANTUM UINT64_C(1048576)
 #define DELAYED_LOGICAL_QUANTUM (UINT64_C(1)<<38)
-#define DELAYED_WORK_QUANTUM (UINT64_C(1)<<34)
+#ifndef HEX_GROEBNER_DELAYED_QUANTUM
+#define HEX_GROEBNER_DELAYED_QUANTUM (UINT64_C(1)<<34)
+#endif
+#define DELAYED_WORK_QUANTUM HEX_GROEBNER_DELAYED_QUANTUM
+#ifndef HEX_GROEBNER_DELAYED_DEFERRED
+#define HEX_GROEBNER_DELAYED_DEFERRED(work) ((void)(work))
+#endif
 #define BINARY_LOGICAL_QUANTUM (UINT64_C(1)<<38)
 #define BINARY_WORD_QUANTUM (UINT64_C(1)<<34)
 #ifndef HEX_GROEBNER_BINARY_GROUPS
@@ -504,8 +510,8 @@ static void delayed_update_avx2(matrix_context *c,const delayed_pivot *pivot,uin
         __m128i ids=_mm_loadu_si128((const __m128i_u*)indices);
         __m256i coefficients;
         if(c->width==2) {
-            uint64_t packed;memcpy(&packed,pivot->coefficients+(size_t)j*2,8);
-            coefficients=_mm256_cvtepu16_epi64(_mm_cvtsi64_si128((long long)packed));
+            __m128i packed=_mm_loadl_epi64((const __m128i*)(pivot->coefficients+(size_t)j*2));
+            coefficients=_mm256_cvtepu16_epi64(packed);
         } else {
             uint32_t packed;memcpy(&packed,pivot->coefficients+(size_t)j,4);
             coefficients=_mm256_cvtepu8_epi64(_mm_cvtsi32_si128((int)packed));
@@ -662,7 +668,7 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
 }
 
 /* ABI: PrimeField is its unboxed uint64 modulus (prime 2 <= p < 2^31).
-   All five object arguments are borrowed: MatrixLimits has seven Nat fields and dense/binary Bool bytes,
+   All five object arguments are borrowed: MatrixLimits has seven Nat fields and dense/binary/delayed Bool bytes,
    columns is Nat, rows are Lean Arrays of SparseRow(two ByteArrays), sugars is
    Array Nat. independent is uint8 Bool. Limits above Nat's scalar range saturate
    above every possible accepted total; sugars must be scalar Nats.
@@ -672,6 +678,9 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    against the parent peak. Distinct reducer heads and logical bounds are checked
    before private allocation. A physical floor bounds validation/installation;
    the table bound is refined after known installation, before target reduction.
+   Opt-in delayed frames over primes below 2^16 use the same wider dimensions,
+   a 2^38 admission bound and 2^34 charged-work cap. Their UInt64 accumulator
+   and 40-byte pivot descriptors reserve the additional private payload.
    Canonical row validation precedes elimination.
    Dense workspace is owned; inputs, including overlapping arrays, are immutable.
    Some(Result(Except.ok(Prod(Echelon(rows,rank,emptyTrace),remainders)),stats))
@@ -682,7 +691,8 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    its explicit shape bound. With optional preparation, the reference
    may succeed above the frame quantum. A declined prefix then costs less than
    its own reference computation; this per-frame overhead can recur on multiple
-   matrices. Without dense preparation or private F2 payload, the shape bound
+   matrices. Without dense preparation, private F2 payload or delayed
+   frames, the shape bound
    makes a charged decline imply reference failure. Private-payload admission
    can decline an otherwise successful reference.
    Scan/gather symbols come from HexGroebnerMatrixNative. Lake links its complete
@@ -724,7 +734,8 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         size_t cb=lean_sarray_size(lean_ctor_get(row,0));
         size_t vb=lean_sarray_size(lean_ctor_get(row,1));
         size_t n=cb/4;
-        if(cb%4 || n>c.quantum/2 || entries>c.quantum/2-n ||
+        uint64_t entry_bound=c.delayed?DELAYED_LOGICAL_QUANTUM:c.quantum;
+        if(cb%4 || n>entry_bound/2 || entries>entry_bound/2-n ||
            vb!=n*c.width) goto defer;
         entries+=n;
     }
@@ -893,6 +904,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,result);
     matrix_cleanup(&c);HEX_GROEBNER_MATRIX_ACCEPTED();return some;
 defer:
+    if(c.delayed) HEX_GROEBNER_DELAYED_DEFERRED(c.stats[0]);
     matrix_cleanup(&c);HEX_GROEBNER_MATRIX_DEFERRED();return lean_box(0);
 }
 

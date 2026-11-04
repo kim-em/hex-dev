@@ -431,7 +431,7 @@ F2 packing and word visits have their separate shape bound. Delayed frames
 have a `2^34` logical-work cap and an additional at-most `targets*columns`
 accumulator-clear bound. Their UInt64 accumulator and flat pivot metadata can
 also cause a late byte refusal, followed by the reference-equivalent continuation. Without dense
-preparation or private F2 payload, the shape bound makes a charged decline imply
+preparation, private F2 payload or delayed frames, the shape bound makes a charged decline imply
 reference failure. F2 payload admission can decline a successful reference. With dense preparation, a successful reference may
 exceed the frame quantum and continue outside the frame. Such a declined
 prefix costs less than that frame's reference work; this can occur on multiple

@@ -115,4 +115,39 @@ def producerChecks (nonce : Nat) : Bool := Id.run do
     { delayedReduction := true,nativeRows := false,nativeMonomials := false } generators | return false
   return actual.polynomials == expected.polynomials && stats == reference
 
+
+/-- Newly admitted reducer/target counts exercise real reductions. The optional
+cap models the harness's smaller native work ceiling at its exact boundary. -/
+def wideChecks (nonce : Nat) (cap : Nat := 2^34) : Option Nat := do
+  let field : PrimeField := ⟨65521,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let columns := 2305
+  let reducers ← (Array.range 1100).mapM fun h =>
+    SparseRow.ofEntries field columns #[(h,65520),(columns-1,65520)]
+  let target ← SparseRow.ofEntries field columns
+    (((Array.range 1100).map fun h => (h,(65520:UInt64))).push (columns-1,65520))
+  let targets := Array.replicate 80 target
+  let sugars := (Array.range 1180).map fun i => (i+nonce%17)%101
+  let limits : MatrixLimits := { delayedReduction := true }
+  let mut work := 0
+  for independent in [false,true] do
+    let expected ← Elimination.attemptPortable field limits columns reducers targets sugars independent
+    let actual := Elimination.attempt field limits columns reducers targets sugars independent
+    if !sameAttempt actual (if expected.stats.work ≤ cap then some expected else none) then failure
+    work := max work expected.stats.work
+  return work
+
+/-- Small delayed matrices also agree directly with fully scalar Lean updates,
+including every joint-elimination row, label, alias and logical counter. -/
+def scalarChecks (nonce : Nat) : Bool := Id.run do
+  for field in Fixtures.fields do
+    if field.modulus > 2 && field.modulus < 65536 then
+      for columns in [1,5,17,65] do
+        let some (rs,ts) := rows field columns nonce | return false
+        let limits : MatrixLimits := { delayedReduction := true }
+        let sugars := (Array.range (rs.size+ts.size)).map (·+nonce%97)
+        let actual := Elimination.run field limits columns rs ts false sugars true false
+        let expected := eliminateWith field limits columns rs ts false sugars false
+        if !same actual ⟨expected.result.map (fun e => (e,#[])),expected.stats⟩ then return false
+  return true
+
 end Hex.Groebner.DelayedConformance

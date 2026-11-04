@@ -618,6 +618,9 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
 
 static uint64_t delayed_frames=0,delayed_updates=0,delayed_overflows=0,delayed_vectors=0;
 static int delayed_offset_enabled=0;
+static uint64_t delayed_quantum=UINT64_C(1)<<34,delayed_refused_work=0;
+#define HEX_GROEBNER_DELAYED_QUANTUM delayed_quantum
+#define HEX_GROEBNER_DELAYED_DEFERRED(work) (delayed_refused_work+=(work))
 #define HEX_GROEBNER_DELAYED_FRAME() (++delayed_frames)
 #define HEX_GROEBNER_DELAYED_UPDATE(vectorized) (++delayed_updates,delayed_vectors+=(vectorized))
 #define HEX_GROEBNER_DELAYED_TARGET(context) do { \
@@ -861,6 +864,12 @@ LEAN_EXPORT lean_obj_res hex_test_delayed_available(lean_obj_arg world) {
 #endif
 }
 
+LEAN_EXPORT lean_obj_res hex_test_delayed_quantum(uint64_t cap,lean_obj_arg world) {
+ (void)world;delayed_quantum=cap;return lean_io_result_mk_ok(lean_box(0));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_refused(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(delayed_refused_work));
+}
 LEAN_EXPORT lean_obj_res hex_test_delayed_counts(lean_obj_arg world) {
  (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
  lean_ctor_set(tail,0,lean_box_uint64(delayed_updates));lean_ctor_set(tail,1,lean_box_uint64(delayed_overflows));
@@ -1182,6 +1191,8 @@ import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
 import HexGroebner.DelayedConformance
 @[extern "hex_test_delayed_counts"] opaque delayedCounts : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_delayed_quantum"] opaque delayedQuantum (cap : UInt64) : IO Unit
+@[extern "hex_test_delayed_refused"] opaque delayedRefused : IO UInt64
 @[extern "hex_test_delayed_guard"] opaque delayedGuard : IO Bool
 @[extern "hex_test_delayed_vectors"] opaque delayedVectors : IO UInt64
 @[extern "hex_test_delayed_available"] opaque delayedAvailable : IO Bool
@@ -1221,6 +1232,7 @@ import HexGroebner.DelayedConformance
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
 @[extern "hex_test_whole_modes"] opaque wholeModes : IO (UInt64 × UInt64)
 @[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+@[extern "hex_test_delayed_refused"] opaque delayedRefusedWork : IO UInt64
 @[extern "hex_test_byte_count"] opaque byteCount : IO UInt64
 @[extern "hex_test_search_count"] opaque searchCount : IO UInt64
 @[extern "hex_test_accept_count"] opaque acceptedCount : IO UInt64
@@ -1363,6 +1375,20 @@ private def checkBinaryBuffers : IO Unit := do
   if !Hex.Groebner.DelayedConformance.boundaryChecks delayedSeed ||
       !Hex.Groebner.DelayedConformance.producerChecks delayedSeed then
     throw (IO.userError "delayed high columns or full producer differs")
+  if !Hex.Groebner.DelayedConformance.scalarChecks delayedSeed then
+    throw (IO.userError "delayed matrix differs from fully scalar Lean")
+  let some wideWork := Hex.Groebner.DelayedConformance.wideChecks delayedSeed |
+    throw (IO.userError "delayed newly admitted reductions differ")
+  let refusedBefore ← delayedRefused
+  delayedQuantum (wideWork-1).toUInt64
+  if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+17) (wideWork-1)).isNone then
+    throw (IO.userError "delayed late work refusal differs from capped reference")
+  if (← delayedRefused) ≤ refusedBefore then
+    throw (IO.userError "delayed late work refusal did no charged work")
+  delayedQuantum wideWork.toUInt64
+  if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+34) wideWork).isNone then
+    throw (IO.userError "delayed exact work cap was declined")
+  delayedQuantum (2^34)
   let delayedAfter ← delayedCounts
   let vectorsAfter ← delayedVectors
   if (← delayedAvailable) then
@@ -1805,6 +1831,7 @@ lean_exe {target} where
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_dense_admitted"] opaque denseAdmitted : IO UInt64
 @[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+@[extern "hex_test_delayed_refused"] opaque delayedRefusedWork : IO UInt64
 @[extern "hex_test_avx512_count"] opaque avx512Count : IO UInt64
 def main (args : List String) : IO UInt32 := do
   let status ← Hex.Groebner.Driver.run args
@@ -1812,9 +1839,11 @@ def main (args : List String) : IO UInt32 := do
   let packets ← avx512Count
   let admitted ← denseAdmitted
   let (accepted,declined) ← wholeCounts
+  let refusedWork ← delayedRefusedWork
   (← IO.getStderr).putStrLn (Lean.Json.mkObj [
     ("avx512Packets",Lean.toJson packets),("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
     ("scans",Lean.toJson scans),("updates",Lean.toJson updates),
+    ("delayedRefusedWork",Lean.toJson refusedWork),
     ("bulkAccepted",Lean.toJson accepted),("bulkDeclined",Lean.toJson declined)]).compress
   return status
 ''')
