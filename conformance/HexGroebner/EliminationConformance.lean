@@ -237,15 +237,23 @@ def binaryLargeChecks (seed : Nat) : Bool := Id.run do
       (Elimination.attemptPortable other limits 8192 #[] #[] #[] false).isSome then return false
   if !sameAttempt (Elimination.attempt field limits 0 #[] #[{}] #[] true)
       (Elimination.attemptPortable field limits 0 #[] #[{}] #[] true) then return false
-  if Elimination.binaryBound 16384 16321 62 14976 != 2^28 ||
-      Elimination.binaryBound 16384 16321 62 14977 != 2^28+3 then return false
-  for entries in [14976,14977] do
+  let some reducer := SparseRow.ofEntries field 129 #[(0,1),(128,1)] | return false
+  let some target := SparseRow.ofEntries field 129 #[(0,1),(64,1)] | return false
+  for sugar in [2^32+7,2^40+1,USize.size/2-1] do
+    let some expected := Elimination.attemptPortable field limits 129 #[reducer] #[target] #[sugar,0] false
+      | return false
+    let some actual := Elimination.attempt field limits 129 #[reducer] #[target] #[sugar,0] false
+      | return false
+    if !same actual expected then return false
+  if Elimination.binaryBound 16384 16313 62 14317 != 2^28-1 ||
+      Elimination.binaryBound 16384 16313 62 14318 != 2^28+2 then return false
+  for entries in [14317,14318] do
     let some row := SparseRow.ofEntries field 16384 ((Array.range entries).map (·,(1:UInt64))) | return false
-    let reducers := (Array.replicate 16321 ({} : SparseRow)).set! 0 row
+    let reducers := (Array.replicate 16313 ({} : SparseRow)).set! 0 row
     let targets := Array.replicate 62 ({} : SparseRow)
     let expected := Elimination.attemptPortable field limits 16384 reducers targets #[] false
     let actual := Elimination.attempt field limits 16384 reducers targets #[] false
-    if expected.isSome != (entries == 14976) || !sameAttempt actual expected then return false
+    if expected.isSome != (entries == 14317) || !sameAttempt actual expected then return false
   return true
 
 /-- A target-built dense pivot is reused by an aliased target. The returned

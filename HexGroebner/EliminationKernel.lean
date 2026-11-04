@@ -281,15 +281,19 @@ def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
 def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
   if binaryEnabled field limits then 2^32 else 2^20
 
-/-- Private pivot rows plus one accumulator, reserved against the parent peak. -/
-def binaryBytes (columns rows : Nat) : Nat := (min rows columns+1)*((columns+63)/64)*8
+/-- Private pivot rows, one accumulator and 16 metadata bytes per pivot,
+reserved against the parent peak. -/
+def binaryBytes (columns rows : Nat) : Nat :=
+  let capacity := min rows columns
+  (capacity+1)*((columns+63)/64)*8+16*capacity
 
 /-- Word XORs, packing, validation and scalar scanning have this conservative
-shape bound. A pivot is visited at most once for each target. -/
+shape bound, including metadata packing. A pivot is visited at most once
+for each target. -/
 def binaryBound (columns reducers targets entries : Nat) : Nat :=
   let rows := reducers+targets
   let words := (columns+63)/64
-  rows*words+3*entries+4*targets*columns+5*columns+
+  rows*(words+8)+3*entries+4*targets*columns+5*columns+
     targets*(rows*words+64)+columns
 
 /-- Known reducers have distinct leading columns. The conservative work bound

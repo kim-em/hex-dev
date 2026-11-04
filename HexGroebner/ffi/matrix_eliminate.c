@@ -34,7 +34,7 @@ typedef struct {
     uint64_t limits[7],stats[8],p,columns,quantum,scratch,words,capacity;
     unsigned width;
     uint8_t cache,binary;
-    lean_object *dense,*slots,*pivots,*native_pivots,*remainders,*binary_rows;
+    lean_object *dense,*slots,*pivots,*native_pivots,*remainders,*binary_rows,*binary_meta;
     uint64_t rank;
 } matrix_context;
 
@@ -91,6 +91,7 @@ static int matrix_inverse(matrix_context *c,uint64_t a,uint64_t *inverse) {
     *inverse=value;return 1;
 }
 static void matrix_cleanup(matrix_context *c) {
+    if(c->binary_meta) lean_dec(c->binary_meta);
     if(c->binary_rows) lean_dec(c->binary_rows);
     if(c->dense) lean_dec(c->dense);
     if(c->slots) lean_dec(c->slots);
@@ -121,10 +122,18 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         if(id>=c->capacity) {lean_dec(row);return 0;}
         uint8_t *packed=lean_sarray_cptr(c->binary_rows)+(size_t)id*c->words*8;
         lean_object *ids=lean_ctor_get(row,0);
-        for(size_t i=0;i<lean_sarray_size(ids)/4;++i) {
+        size_t n=lean_sarray_size(ids)/4;
+        if(!n || n>c->columns) {lean_dec(row);return 0;}
+        for(size_t i=0;i<n;++i) {
             uint64_t col=matrix_read(lean_sarray_cptr(ids)+4*i,4);
             packed[col>>3]|=(uint8_t)(1u<<(col&7));
         }
+        /* Private little-endian (entry count, final column, sugar) records.
+           Canonical nonempty rows have at most columns <= 16384 entries. */
+        uint8_t *meta=lean_sarray_cptr(c->binary_meta)+id*16;
+        matrix_write(meta,4,n);
+        matrix_write(meta+4,4,matrix_read(lean_sarray_cptr(ids)+(n-1)*4,4));
+        for(unsigned b=0;b<8;++b) meta[8+b]=(uint8_t)(sugar>>(8*b));
     }
     lean_object *native=lean_alloc_ctor(0,3,0);
     lean_ctor_set(native,0,matrix_take(row,0));
@@ -210,17 +219,17 @@ static int matrix_scan_binary(matrix_context *c,uint64_t first,uint64_t *last,
         if(!(data[col>>3]&(1u<<(col&7)))) {++col;continue;}
         uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
         if(!slot) {if(!*leading) *leading=col+1;++col;continue;}
-        lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
-        const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
-        uint64_t n=lean_sarray_size(lean_ctor_get(pivot,0))/4;
-        uint64_t end=matrix_read(ids+(n-1)*4,4);
+        const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
+        uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
         if(end>*last) *last=end;
-        uint64_t label=lean_unbox(lean_ctor_get(pivot,2));
+        uint64_t label=matrix_binary_load(meta+8);
         if(label>*sugar) *sugar=label;
         if(!matrix_work(c,n)) return 0;
         uint64_t span=(end>>6)-(col>>6)+1;
         if(n<=span) {
             HEX_GROEBNER_BINARY_SPARSE_USED();
+            lean_object *pivot=lean_array_cptr(c->native_pivots)[slot-1];
+            const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(pivot,0));
             for(uint64_t i=0;i<n;++i) {
                 uint64_t j=matrix_read(ids+i*4,4);
                 data[j>>3]^=(uint8_t)(1u<<(j&7));
@@ -376,7 +385,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     }
     if(c.columns>c.limits[0] || rows>c.limits[1]) goto defer;
     c.words=(c.columns+63)/64;c.capacity=rows<c.columns?rows:c.columns;
-    if(c.binary) c.scratch=(c.capacity+1)*c.words*8;
+    if(c.binary) c.scratch=(c.capacity+1)*c.words*8+16*c.capacity;
     if(c.scratch>c.limits[4]) goto defer;
     for(size_t i=0;i<ns;++i) if(!lean_is_scalar(lean_array_cptr(sugars)[i])) goto defer;
     uint64_t workspace=c.columns*(c.width+4);
@@ -395,7 +404,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         nt*(entries+(nt+3)*c.columns+64)+c.columns;
     if(bound>c.quantum) goto defer;
     if(c.binary) {
-        uint64_t physical=rows*c.words+3*entries+4*nt*c.columns+5*c.columns+
+        uint64_t physical=rows*(c.words+8)+3*entries+4*nt*c.columns+5*c.columns+
             nt*(rows*c.words+64)+c.columns;
         if(physical>BINARY_WORD_QUANTUM) goto defer;
     }
@@ -425,7 +434,8 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     }
     if(!matrix_bytes(&c,workspace) || !matrix_work(&c,workspace)) goto defer;
     if(c.binary) {
-        c.binary_rows=matrix_zeros((size_t)c.scratch);
+        c.binary_rows=matrix_zeros((size_t)(c.capacity+1)*c.words*8);
+        c.binary_meta=matrix_zeros((size_t)c.capacity*16);
         HEX_GROEBNER_BINARY_PIVOTS_USED(c.scratch);
     }
     c.dense=matrix_zeros(c.binary?0:(size_t)c.columns*c.width);

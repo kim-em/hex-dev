@@ -249,7 +249,9 @@ This preserves ordinary polynomial semantics, including distinct monomials
 most 16384 columns, 16384 reducers and 1024 targets, with bounds of `2^32`
 reference work and `2^28` packing/scalar/word visits. The private bitmap stores
 at most the lesser of the row and column counts in pivot rows, plus one
-accumulator. Its complete payload fits the remaining packed-byte allowance
+accumulator. Each pivot also stores its length, final column and sugar in a
+private 16-byte metadata record, avoiding repeated object traversal during word
+updates. The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
 identical; the private buffers never escape the call. Sparse wide pivots toggle
 their explicit entries, while denser pivots use exact word XOR. Word scans and
