@@ -145,12 +145,23 @@ def render(path,replay_path):
             complexity.append(result['verdict'])
     consistent=complexity.count('consistent_with_declared_complexity')
     inconclusive_count=complexity.count('inconclusive')
-    complete_gates='final/full/status.json' in cap.payloads
-    full=cap.json('final/full/status.json' if complete_gates else 'final/build/status.json')
-    expected_gates=['build','oracles','driver','bench','dag','phase4','manifest','headers','lines'] if complete_gates else ['build']
+    require('final/full/status.json' in cap.payloads,'missing completed project-gate receipts')
+    full=cap.json('final/full/status.json')
+    expected_gates=['build','oracles','driver','bench','dag','phase4','manifest','headers','lines']
     require([r['name']for r in full]==expected_gates and all(r['exit_code']==0 and
             r['source_fingerprint']==manifests['final']['source_fingerprint']for r in full),
             'project gates incomplete, failed or used different runtime')
+    listing=cap.text('final/full/source-manifest.txt')
+    blobs(cap,'final/full/check-sources',listing)
+    digest=hashlib.sha256(listing.encode()).hexdigest()
+    require(len({r['source_commit']for r in full})==1 and all(
+        r['checks_manifest_sha256']==digest and digest.startswith(r['checks_fingerprint'])
+        for r in full),'project gate verification sources differ')
+    def entries(text):
+        return {line.split('\t',1)[1]:line.split('\t',1)[0]
+                for line in text.splitlines() if not line.endswith('\tscripts/ci/run_oracles.sh')}
+    require(entries(cap.text('final/checks/source-manifest.txt'))==entries(listing),
+            'native profiles used different verification sources')
     native=cap.json('measurements/refusals/metadata.json')
     require(native['source_bindings']==native['source_bindings_after']and
             native['exit_code']==0 and native['complete_output_and_counters_equal'],
@@ -172,9 +183,9 @@ def render(path,replay_path):
         rss={a:max(r['peak_rss_kib']for r in rows if r['p']==p and r['arm']==a)for a in ['A','B']}
         field_label='2 (unchanged-path control)'if p==2 else str(p)
         lines.append(f"| {field_label} | {gm([r['candidate']for r in values]):.4f} | {gm([r['process']for r in values]):.4f} | {min(r['candidate']for r in values):.4f}–{max(r['candidate']for r in values):.4f} | {rss['A']}/{rss['B']} |")
-    lines+=['','F₂ is a null control: both arms use the same executable and arithmetic route. Its observed spread measures variability in this campaign, not an algorithmic gain or a calibrated confidence interval. Candidate production and process time are separate observations. Their aggregate ratios are descriptive point estimates: gains comparable to the unchanged-control fluctuation cannot be attributed to this option. No control-adjusted speedup or aggregate causal improvement is claimed. All completed samples and tiny-case outliers remain included; the pair range also includes differences between families. External limits are 300 seconds, 8 GiB address space and 256 MiB per output file, with the fixed corpus protocol’s recorded large parent work/memory allowances. The data do not establish admission or timing under library default budgets.','',
+    lines+=['','F₂ is a null control: both arms use the same executable and arithmetic route. Its observed spread measures variability in this campaign, not an algorithmic gain or a calibrated confidence interval. Candidate production and process time are separate observations. Their aggregate ratios are descriptive point estimates: gains comparable to the unchanged-control fluctuation cannot be attributed to this option. No control-adjusted speedup or aggregate causal improvement is claimed. All completed samples and tiny-case outliers remain included; the pair range also includes differences between families. External limits are 300 seconds, 8 GiB address space and 256 MiB per output file, with the fixed corpus protocol’s recorded large parent work/memory allowances. The data do not establish admission or timing under library default budgets. The smallest F₂ candidate ratio, 0.0922, is kat8-2 in block 0 of the first sweep; it is retained as unchanged-path variability.','',
         '| In-sample KLYZ-12 field | Candidate B/A | Pair ratios |','|---|---:|---:|']
-    for p in [32003,2147483647]:
+    for p in [2,32003,2147483647]:
         values=[r for r in final if r['family']=='sparse-structured'and r['p']==p]
         field_label='2 (unchanged-path control)'if p==2 else str(p)
         lines.append(f"| {field_label} | {gm([r['candidate']for r in values]):.4f} | "+', '.join(f"{r['candidate']:.4f}"for r in values)+' |')
@@ -184,21 +195,20 @@ def render(path,replay_path):
         require(len(values)==count_per_field*9//10,'excluding-KLYZ coverage differs')
         lines.append(f"| {p} | {gm([r['candidate']for r in values]):.4f} |")
     lines+=['','Excluding KLYZ leaves nine equally weighted first-size families. Both full and excluding-KLYZ summaries retain every pair; this sensitivity comparison does not replace the fixed balanced suite.','','The independent instrumented M31 producer accepted all 61 matrices, declined none and discarded zero charged native work; its complete output and counters equal production. This is evidence for that motivating system, not a guarantee against late refusals on other inputs. Work and private-payload caps can still trigger bounded refusal and continuation. Cancellation is observed between native calls.','',
-        '| Kernel field | Columns | B/A geometric mean |','|---|---:|---:|']
+        '| Delayed whole frame / ordinary continuation: field | Columns | B/A geometric mean |','|---|---:|---:|']
     for shape,n,ratio in matrix:lines.append(f"| {dict(Byte=251,Short=32003,Word=2147483647)[shape]} | {n} | {ratio:.4f} |")
-    lines+=['',f'The 42 final lean-bench processes retain all samples and have no point below the signal floor. Kernel sizes are {kernel_sizes[0]}–{kernel_sizes[-1]} columns, below the 131072-column admission ceiling. A quadratic verdict on three sizes is a limited consistency observation, not a proof or evidence of scaling to that ceiling. The reported per-size ratios show whether gains narrow as size increases. The six three-trial, three-size sweeps give {consistent} verdicts consistent with quadratic work and {inconclusive_count} inconclusive verdicts. Both outcomes are retained; no proof of asymptotic behavior follows from this grid. Matched runs alternate AB/BA. Inputs have distinct known heads, dense tails and eight shared targets. Preparation is outside timing; validation, elimination and hashing complete row contents, labels and all eight counters are inside. Every matched digest agrees.','',
+    lines+=['',f'The 42 final lean-bench processes retain all samples and have no point below the signal floor. Kernel sizes are {kernel_sizes[0]}–{kernel_sizes[-1]} columns, below the 131072-column admission ceiling. A quadratic verdict on three sizes is a limited consistency observation, not a proof or evidence of scaling to that ceiling. The six three-trial, three-size sweeps give {consistent} verdicts consistent with quadratic work and {inconclusive_count} inconclusive verdicts. Both outcomes are retained; no proof of asymptotic behavior follows from this grid. Matched runs alternate AB/BA. Inputs have distinct known heads, dense tails and eight shared targets. Preparation is outside timing; validation, elimination and hashing complete row contents, labels and all eight counters are inside. Every matched digest agrees.','',
         'The host is AMD EPYC 9455. Production native code uses Clang 21.1.8; Lean SDK compilation uses Clang 23.1.0 and Lean 4.35.0-rc3. Guarded AVX2 and scalar fallbacks are enabled; experimental AVX-512 is disabled. Executable/compiler hashes, build flags, selected CPUs and host activity are retained in the manifests. Timing evidence comes from manual shared-host runs, never CI.','',
         f"The earlier isolated prime-square prototype replay has B/A {prototype:.4f} on four initial AB/BA provider observations. Its complete independent matrix comparison is outside the C monotonic timing interval. The retained frame is the highest-work input among progressive entry-maximum dumps, not the absolute maximum-work frame. The prototype executable and production runtime have distinct source and binary identities.",'',
         'The archive also retains the unselected mixed-width and first split-width campaigns, including every outlier, plus a strict non-overlapping join of the initial four focused and 116 remaining processes. Their complete logical outputs agree with the final implementation under their recorded controls. They do not establish the combined dense-pivot option contract: the final implementation adds the missing 65536-column preparation guard and regression tests. A failed GCC test-counter macro build is retained; the final statement macro passes strict warnings on both compilers.','',
-        'Final local verification includes twelve Clang/GCC ASan/UBSan variants; exact guard-page loads and per-width four-lane coverage; near-UInt64 and prime-square residue boundaries; direct scalar Lean comparisons; newly admitted reducer/target counts; exact work/byte refusal boundaries; combined M31 dense/delayed flags below and above 65536 columns; independent portable-reference comparisons; and the recorded library/theory build. Full oracle and project-gate receipts are reported below only when present in this capsule. Runtime/check-source identities are preserved separately, including the test-only counter fix.','',
+        'Final local verification includes twelve Clang/GCC ASan/UBSan variants; exact guard-page loads and per-width four-lane coverage; near-UInt64 and prime-square residue boundaries; direct scalar Lean comparisons; newly admitted reducer/target counts; exact work/byte refusal boundaries; combined M31 dense/delayed flags below and above 65536 columns; independent portable-reference comparisons; and all nine recorded project gates, including the independent oracles and downstream kernel replay. Runtime/check-source identities are preserved separately, including the test-only counter fix.','',
         'These observations measure unchecked candidate production or matrix elimination. Certificate generation, independent native certification, kernel checking and complete checked calls remain separate costs. The fastest-open-source milestone, solved-coverage acceptance, full balanced and held-out comparisons, parallel comparator sweeps and the overall-fastest gap remain open.','',
         f"Production evidence: `{path.name}` (SHA-256 `{cap.sha256}`). Isolated replay evidence: `{replay_path.name}` (SHA-256 `{experimental.sha256}`). Payload manifests, source blobs, complete outputs, counters, controls, unique schedule positions and coverage are replayed by this report generator.",'']
-    gate_text='All nine recorded project gates passed, including independent oracles and downstream kernel replay.' if complete_gates else 'The measurement capsule records the core build and twelve native profiles. Full oracle and project-gate receipts are pending; no completion claim is made for those gates here.'
-    lines.insert(-1,gate_text)
+    lines.insert(-1,'All nine recorded project gates passed, including independent oracles and downstream kernel replay.\n')
     if repeated:
-        lines.insert(-1,'The first 120-process system sweep was inconclusive because the unchanged-path control varied. Its sole unchanged repeat is combined with it here: all 240 samples contribute, with no filtering and no further unchanged system reruns.')
+        lines.insert(-1,'The first 120-process system sweep was inconclusive because the unchanged-path control varied. Its sole unchanged repeat is combined with it here: all 240 samples contribute, with no filtering and no further unchanged system reruns.\n')
     if kernel_sizes==(1024,2048,4096):
-        lines.insert(-1,'Two earlier current-source small-kernel campaigns are retained as inconclusive: 11 and 17 completed processes, each stopping at a point below the signal floor. No third small-input rerun was taken. The 1024–4096 suite uses different inputs fixed and fully validated before timing. At these larger shapes the ordinary arm can use bounded continuation while the delayed arm admits a whole frame; this comparison measures admission, dispatch, elimination and complete output hashing together.')
+        lines.insert(-1,'Two earlier current-source small-kernel campaigns are retained as inconclusive: 11 and 17 completed processes, each stopping at a point below the signal floor. No third small-input rerun was taken. The 1024–4096 suite uses different inputs fixed and fully validated before timing. At all three larger sizes the ordinary arm declines whole-frame admission and uses bounded continuation while the delayed arm admits a whole frame; this comparison measures admission, dispatch, elimination and complete output hashing together. It does not isolate arithmetic or compare two admitted native frames. The retained small-input campaigns do not provide conclusive like-for-like kernel timing evidence. The archive includes the standalone large-input checker source, Lake configuration, pinned manifest, toolchain and complete build/run logs under large-input-check/.')
     return '\n'.join(lines),manifest
 
 
@@ -211,6 +221,10 @@ def main():
         from scripts.bench.groebner_measure import FAMILY
         from scripts.bench.sweep_freshness import index_listing
         require(index_listing(FAMILY)==manifest['source_manifest'],'current runtime differs')
+        from scripts.bench.groebner_checks import CHECKS
+        cap=Capsule(args.archive)
+        require(index_listing(CHECKS)==cap.text('final/full/source-manifest.txt'),
+                'current verification sources differ')
     if args.check:require(args.report.read_text()==text,'report differs from archived evidence')
     else:args.report.write_text(text)
     print('PASS prime-square evidence replay')

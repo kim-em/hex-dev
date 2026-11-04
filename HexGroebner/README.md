@@ -267,7 +267,8 @@ All outputs, labels and logical counters agree with the reference route.
 The separate dimension ceilings are 131072 columns, 131072 known reducers and
 4096 targets, subject to a joint `2^38` conservative shape bound and `2^34`
 charged-work cap. Additional accumulator bytes and forty-byte pivot descriptors
-fit the parent's packed-byte allowance. Scan and gather leave the private accumulator zero for reuse. Private buffers never escape the call. Declined frames
+fit the parent's packed-byte allowance. Scan and gather leave the private
+accumulator zero for reuse. Private buffers never escape the call. Declined frames
 continue through the existing reference-equivalent routes; a late refusal may
 repeat a bounded prefix of physical work without changing logical counters.
 Cancellation is observed between calls. Other fields retain their existing route.
