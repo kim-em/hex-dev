@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench.groebner_binary_guards import blobs
 from scripts.bench.groebner_binary_report import sweep
 from scripts.bench.groebner_capsule import Capsule
+from scripts.bench.groebner_tables_extra import study
 from scripts.bench.groebner_checks import source_identity
 from scripts.bench.groebner_retirement_report import listing
 from scripts.bench.groebner_trie_report import mean, require, source
@@ -86,7 +87,7 @@ def kernels(cap, manifest, identity):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    for name in ['archive', 'bench', 'report']:
+    for name in ['archive', 'bench', 'eight', 'report']:
         p.add_argument('--' + name, type=Path, required=True)
     p.add_argument('--check', action='store_true')
     p.add_argument('--current', action='store_true')
@@ -119,7 +120,12 @@ def main():
         require(bench.text(f'independent/run-{seed}.stderr') == '' and
                 bench.text(f'independent/run-{seed}.stdout').count('all eight counters passed') == 4,
                 'independent benchmark check failed')
+    eight = Capsule(args.eight)
+    extra = study(eight, latest, checks)
     text = render(cap, bench, before, after, latest, records, values, status)
+    text = text.replace("## Verification and reproduction", extra+"## Verification and reproduction", 1)
+    text = text.replace("  --report reports/bench-results/hexgroebner-tables.md",
+                        "  --eight reports/bench-results/raw/"+eight.path.name+" \\\n  --report reports/bench-results/hexgroebner-tables.md", 1)
     if args.check:
         require(args.report.read_text() == text, 'report differs; regenerate it')
     else:
