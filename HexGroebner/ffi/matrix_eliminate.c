@@ -17,6 +17,9 @@
 #define MATRIX_QUANTUM UINT64_C(1048576)
 #define BINARY_LOGICAL_QUANTUM (UINT64_C(1)<<32)
 #define BINARY_WORD_QUANTUM (UINT64_C(1)<<28)
+#ifndef HEX_GROEBNER_BINARY_GROUPS
+#define HEX_GROEBNER_BINARY_GROUPS(n) ((void)(n))
+#endif
 #ifndef HEX_GROEBNER_BINARY_TABLE_USED
 #define HEX_GROEBNER_BINARY_TABLE_USED() ((void)0)
 #endif
@@ -37,7 +40,7 @@
 #endif
 
 typedef struct {
-    uint64_t limits[7],stats[8],p,columns,quantum,scratch,words,capacity;
+    uint64_t limits[7],stats[8],p,columns,quantum,scratch,words,capacity,physical;
     unsigned width;
     uint8_t cache,binary,project;
     lean_object *dense,*slots,*pivots,*native_pivots,*remainders,*binary_rows,*binary_meta,*project_rows,*project_meta,*project_table;
@@ -208,6 +211,21 @@ static void matrix_binary_xor(uint8_t *restrict data,const uint8_t *restrict row
         memcpy(&a,data+(size_t)i*8,8);memcpy(&b,row+(size_t)i*8,8);
         a^=b;memcpy(data+(size_t)i*8,&a,8);
     }
+}
+/* Only known pivots have been installed at this point. This counts the
+   same dense runs as matrix_project_table without new private storage. */
+static uint64_t matrix_binary_groups(matrix_context *c) {
+    uint64_t run=0,groups=0;
+    for(uint64_t col=0;col<c->columns;++col) {
+        uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+col*4,4);
+        if(!slot) continue;
+        const uint8_t *meta=lean_sarray_cptr(c->binary_meta)+(slot-1)*16;
+        uint64_t n=matrix_read(meta,4),end=matrix_read(meta+4,4);
+        if(n>(end>>6)-(col>>6)+1) {
+            if(++run==4) {++groups;run=0;}
+        } else run=0;
+    }
+    return groups;
 }
 /* Four consecutive dense known reducers admit a 16-row XOR table. The
    incoming head pattern is triangular, not necessarily the identity: simulate
@@ -492,8 +510,10 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    Ordinary 64-bit frames admit <=4096 columns/1024 reducers/64 targets.
    Opt-in F2 frames admit <=16384/16384/1024, with <=2^32 logical work,
    <=2^28 packing/scalar/word visits, and the complete private payload reserved
-   against the parent peak. Distinct reducer leading columns and work bounds are
-   checked before allocation; canonical row validation precedes elimination.
+   against the parent peak. Distinct reducer heads and logical bounds are checked
+   before private allocation. A physical floor bounds validation/installation;
+   the table bound is refined after known installation, before target reduction.
+   Canonical row validation precedes elimination.
    Dense workspace is owned; inputs, including overlapping arrays, are immutable.
    Some(Result(Except.ok(Prod(Echelon(rows,rank,emptyTrace),remainders)),stats))
    contains exact reference rows and eight Nat counters, using the layouts in
@@ -549,10 +569,13 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         nt*(entries+(nt+3)*c.columns+64)+c.columns;
     if(bound>c.quantum) goto defer;
     if(c.binary) {
-        uint64_t physical=rows*(c.words+8)+3*entries+4*nt*c.columns+5*c.columns+
+        c.physical=rows*(c.words+8)+3*entries+4*nt*c.columns+5*c.columns+
             nt*(rows*c.words+64)+c.columns;
-        if(c.project) physical+=nt*(c.columns+2*c.words+8)+((nr+3)/4)*(16*c.words+512)+8*nt*nr+4*c.columns;
-        if(physical>BINARY_WORD_QUANTUM) goto defer;
+        if(c.project) c.physical+=nt*(c.columns+2*c.words+8)+((nr+3)/4)*(16*c.words+512)+8*nt*nr+5*c.columns;
+        /* Even maximal table savings cannot remove validation, workspace or
+           installation costs. Bound that prefix before doing charged work. */
+        uint64_t floor=c.physical-(c.project?nt*nr*c.words:0);
+        if(floor>BINARY_WORD_QUANTUM) goto defer;
     }
     uint8_t seen[2048]={0};
     for(size_t i=0;i<nr;++i) {
@@ -593,7 +616,13 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     c.slots=matrix_zeros((size_t)c.columns*4);
     c.pivots=matrix_empty();c.native_pivots=matrix_empty();c.remainders=matrix_empty();
     for(size_t i=0;i<rows;++i) {
-        if(c.project && i==nr && !matrix_project_binary(&c,targets,sugars,nr,nt,ns)) goto defer;
+        if(c.project && i==nr) {
+            uint64_t groups=matrix_binary_groups(&c);
+            HEX_GROEBNER_BINARY_GROUPS(groups);
+            uint64_t saved=3*c.words*nt*groups;
+            if(c.physical-saved>BINARY_WORD_QUANTUM) goto defer;
+            if(!matrix_project_binary(&c,targets,sugars,nr,nt,ns)) goto defer;
+        }
         uint8_t target=i>=nr;
         lean_object *row=lean_array_cptr(target?targets:reducers)[target?i-nr:i];
         lean_object *cs=lean_ctor_get(row,0),*vs=lean_ctor_get(row,1);

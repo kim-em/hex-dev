@@ -303,7 +303,40 @@ def binaryBound (columns reducers targets entries : Nat) : Nat :=
   let words := (columns+63)/64
   rows*(words+8)+3*entries+4*targets*columns+5*columns+
     targets*(rows*words+64)+columns+
-    if binaryProject columns reducers targets then targets*(columns+2*words+8)+((reducers+3)/4)*(16*words+512)+8*targets*reducers+4*columns else 0
+    if binaryProject columns reducers targets then targets*(columns+2*words+8)+((reducers+3)/4)*(16*words+512)+8*targets*reducers+5*columns else 0
+
+/-- Count exactly the groups consumed by column-ordered known-pivot tables.
+Sparse pivots interrupt a run; gaps and empty rows do not. -/
+def binaryGroups (columns : Nat) (reducers : Array SparseRow) : Nat := Id.run do
+  let mut slots := Array.replicate columns 0
+  for i in [:reducers.size] do
+    let row := reducers[i]!
+    if row.size != 0 then
+      let head := (Packed.read .u32 row.columns 0).toNat
+      if head ≥ columns || slots[head]! != 0 then return 0
+      slots := slots.set! head (i+1)
+  let mut run := 0
+  let mut groups := 0
+  for head in [:columns] do
+    let id := slots[head]!
+    if id != 0 then
+      let row := reducers[id-1]!
+      let last := (Packed.read .u32 row.columns (row.size-1)).toNat
+      if row.size > last/64-head/64+1 then
+        run := run+1
+        if run == 4 then
+          groups := groups+1
+          run := 0
+      else run := 0
+  return groups
+
+/-- A four-row table replaces four full-width row updates by at most one.
+Preparation and mask selection remain in the conservative bound. -/
+def binaryCost (columns : Nat) (reducers targets : Array SparseRow) (entries : Nat) : Nat :=
+  let full := binaryBound columns reducers.size targets.size entries
+  if binaryProject columns reducers.size targets.size then
+    full-3*((columns+63)/64)*targets.size*(binaryGroups columns reducers)
+  else full
 
 /-- Known reducers have distinct leading columns. The conservative work bound
 uses `65 * rows` for row visits and inversion products, `2 * entries` for
@@ -339,7 +372,7 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
   let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
     targets.size * (entries + (targets.size + 3) * columns + 64) + columns
   if bound > frameQuantum field limits then return false
-  if binary && binaryBound columns reducers.size targets.size entries > 2^28 then return false
+  if binary && binaryCost columns reducers targets entries > 2^28 then return false
   let mut seen := Array.replicate columns false
   for row in reducers do
     if row.size != 0 then

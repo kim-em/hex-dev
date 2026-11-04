@@ -260,6 +260,11 @@ head-pattern map selects exactly the reference pivots; cancelled tails still
 retain every selected row's work, end column and sugar. A sparse pivot interrupts
 the group and uses its ordinary update. Their
 initialization, copies and reduction visits are included in the physical bound.
+Each group replaces at most four full-width known-row updates by one table
+update. Admission deducts that exact worst-case saving while retaining table
+construction and mask-selection charges. An early lower bound rejects frames
+whose prefix alone exceeds the cap; the complete check follows known-pivot
+installation and precedes target elimination. The physical cap remains `2^28`.
 The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
 identical; the private buffers never escape the call. Sparse wide pivots toggle

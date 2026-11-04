@@ -616,6 +616,8 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
 
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
+static uint64_t binary_groups=0;
+#define HEX_GROEBNER_BINARY_GROUPS(n) (binary_groups+=(n))
 static uint64_t binary_tables=0;
 #define HEX_GROEBNER_BINARY_TABLE_USED() (++binary_tables)
 static uint64_t binary_projects=0;
@@ -771,6 +773,9 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  lean_ctor_set(tail,0,lean_box_uint64(binary_scans));lean_ctor_set(tail,1,lean_box_uint64(binary_bytes));
  lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
  return lean_io_result_mk_ok(out);
+}
+LEAN_EXPORT lean_obj_res hex_test_binary_groups(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(binary_groups));
 }
 LEAN_EXPORT lean_obj_res hex_test_binary_tables(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(binary_tables));
@@ -1179,6 +1184,7 @@ def checkMersenne : IO UInt64 := do
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   return mersenne
 
+@[extern "hex_test_binary_groups"] opaque binaryGroups : IO UInt64
 @[extern "hex_test_binary_tables"] opaque binaryTables : IO UInt64
 @[extern "hex_test_binary_projects"] opaque binaryProjects : IO UInt64
 
@@ -1241,6 +1247,14 @@ private def checkBinary (seed : Nat) : IO Unit := do
     throw (IO.userError "actual private allocation or target-built word pivot unused")
   if !Hex.Groebner.EliminationConformance.binaryQuantum then
     throw (IO.userError "F2 logical quantum or maximum target boundary mismatch")
+  let groupsBefore ← binaryGroups
+  let groupSeed ← Hex.Groebner.NativeChecks.readSeed
+  let some expectedGroups := Hex.Groebner.EliminationConformance.binaryGroupChecks groupSeed |
+    throw (IO.userError "known-pivot groups/reference mismatch")
+  if (← binaryGroups) != groupsBefore+expectedGroups.toUInt64 then
+    throw (IO.userError "native known-pivot group count differs")
+  if !Hex.Groebner.EliminationConformance.binaryTableBoundary seed then
+    throw (IO.userError "refined physical-work boundary mismatch")
   let tableBefore ← binaryTables
   if !Hex.Groebner.EliminationConformance.binaryTableChecks seed then
     throw (IO.userError "known-pivot XOR table/reference mismatch")

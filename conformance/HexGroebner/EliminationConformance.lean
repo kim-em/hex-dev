@@ -358,6 +358,56 @@ def binaryTableChecks (seed : Nat) : Bool := Id.run do
       if !same actual expected then return false
   return true
 
+/-- Unsorted dense runs, empty known rows and sparse interruptions agree
+with the exact native group count in joint and independent modes. -/
+def binaryGroupChecks (seed : Nat) : Option Nat := do
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let some rows := (#[0,3,7,11,65,68,72,76] : Array Nat).mapM fun head =>
+      SparseRow.ofEntries field 129 (#[ (head,(1:UInt64)) ] ++
+        (Array.range 33).map fun j => (96+j,(1:UInt64))) | none
+  let some gap := SparseRow.ofEntries field 129 #[(5,1)] | none
+  let some gap' := SparseRow.ofEntries field 129 #[(66,1)] | none
+  let some target := SparseRow.ofEntries field 129 ((Array.range 129).map (·,(1:UInt64))) | none
+  let targets := Array.replicate 64 target
+  let cases := #[(rows.reverse.push {},2),((rows.push gap).reverse,1),
+    ((rows.push gap |>.push gap').reverse,0)]
+  let mut total := 0
+  for (reducers,groups) in cases do
+    if Elimination.binaryGroups 129 reducers != groups then none
+    let sugars := (Array.range (reducers.size+64)).map (seed+·)
+    for independent in [false,true] do
+      let some expected := Elimination.attemptPortable field limits 129 reducers targets sugars independent | none
+      let some actual := Elimination.attempt field limits 129 reducers targets sugars independent | none
+      if !same actual expected then none
+      total := total+groups
+  return total
+
+/-- A nonempty 154-table frame is two visits below the physical cap; one
+additional input entry exceeds it. Few nonempty targets keep replay bounded. -/
+def binaryTableBoundary (seed : Nat) : Bool := Id.run do
+  if USize.size != 2^64 then return true
+  let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let limits : MatrixLimits := { binaryPivots := true }
+  let some reducers := (Array.range 3472).mapM fun i => SparseRow.ofEntries field 4559
+      (#[ (i,(1:UInt64)) ] ++ if i < 616 then
+        (Array.range 73).map (fun j => (4486+j,(1:UInt64))) else #[]) | return false
+  let some full := SparseRow.ofEntries field 4559 ((Array.range 4559).map (·,(1:UInt64))) | return false
+  let some fragment := SparseRow.ofEntries field 4559 ((Array.range 986).map (·,(1:UInt64))) | return false
+  let targets := (Array.replicate 810 ({} : SparseRow)).mapIdx fun i empty =>
+    if i < 185 then full else if i == 185 then fragment else empty
+  if Elimination.binaryGroups 4559 reducers != 154 ||
+      Elimination.binaryCost 4559 reducers targets 892841 != 2^28-2 then return false
+  let sugars := (Array.range (3472+810)).map (fun i => seed+i%7)
+  let some expected := Elimination.attemptPortable field limits 4559 reducers targets sugars false | return false
+  let some actual := Elimination.attempt field limits 4559 reducers targets sugars false | return false
+  if !same actual expected then return false
+  let some extra := SparseRow.ofEntries field 4559 ((Array.range 987).map (·,(1:UInt64))) | return false
+  let rejected := targets.set! 185 extra
+  if Elimination.binaryCost 4559 reducers rejected 892842 != 2^28+1 then return false
+  return (Elimination.attemptPortable field limits 4559 reducers rejected sugars false).isNone &&
+    (Elimination.attempt field limits 4559 reducers rejected sugars false).isNone
+
 @[noinline] private def binaryWorkRows (nonce : Nat) : Option (Array SparseRow) :=
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let tail := 1024+nonce%7
