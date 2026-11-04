@@ -38,6 +38,10 @@ traced production moves each target's derivation root with its polynomial.
 Known reducer pivots retain their contracts with either scheduling strategy.
 F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
 append-only monomial arena. Stable IDs survive exponent-width changes.
+Minimal-basis selection keeps the first representative of each minimal leading
+monomial. Its read-only scan accumulates work locally and commits the exact
+successful or exhausted prefix once. Traced and untraced drivers share this
+selection without changing carried derivations or monomial/scratch payloads.
 Monomial hash buckets and collision links use packed `UInt32` buffers. Hashes
 only filter candidates; exact exponent comparison decides equality. Index
 growth, rebuilding work and peak packed payload are charged before allocation.

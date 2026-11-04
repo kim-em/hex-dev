@@ -55,7 +55,7 @@ Raw capsule `f4-product-pointers-8fbb55cf8788.tar.xz`: SHA-256 `ef211422fe914264
 ```bash
 python3 scripts/bench/groebner_pointer_report.py \
   --archive reports/bench-results/raw/f4-product-pointers-8fbb55cf8788.tar.xz \
-  --report reports/bench-results/hexgroebner-pointers.md --check --current
+  --report reports/bench-results/hexgroebner-pointers.md --check
 ```
 
 [Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.
