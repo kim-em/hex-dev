@@ -231,13 +231,16 @@ theorem guarded : ∀ x : ℝ, x ^ 2 + 1 / Real.sqrt 2 > 0 := by rcf
 theorem domain : ∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2 := by rcf
 
 run_meta do
-  for name in [`Hex.RCF.GeneratorWindowTests.fixed,
-      `Hex.RCF.GeneratorWindowTests.source_window, `Hex.RCF.GeneratorWindowTests.further,
-      `Hex.RCF.GeneratorWindowTests.guarded, `Hex.RCF.GeneratorWindowTests.domain] do
+  for (name, finite) in [(`Hex.RCF.GeneratorWindowTests.fixed, false),
+      (`Hex.RCF.GeneratorWindowTests.source_window, true),
+      (`Hex.RCF.GeneratorWindowTests.further, false),
+      (`Hex.RCF.GeneratorWindowTests.guarded, true),
+      (`Hex.RCF.GeneratorWindowTests.domain, false)] do
     unless ← Hex.RCF.ProofEvidence.contains name
-        (fun e => e.isConstOf ``FieldBuild.Result.checkExistsIndex_eq ||
+        (fun e => if finite then e.isConstOf ``FieldCells.checkIndex_eq else
+          e.isConstOf ``FieldBuild.Result.checkExistsIndex_eq ||
           e.isConstOf ``FieldBuild.Result.checkForallIndex_eq) do
-      throwError "quoted solver proof did not use indexed checked sign retrieval"
+      throwError "{name} omitted its expected indexed replay theorem"
     for producer in [``FieldBuild.refineSigns, ``RefinedIsolation.refineTo?,
         ``Table.refine, ``FieldBuild.produceWithin] do
       if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf producer) then

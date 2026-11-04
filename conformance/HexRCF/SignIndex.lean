@@ -184,7 +184,7 @@ run_meta do
       ``FieldBuild.Result.checkForallIndex_eq),
       (`Hex.RCF.SignIndexTests.further, ``FieldBuild.Result.checkExistsIndex_eq),
       (`Hex.RCF.SignIndexTests.combined, ``FieldBuild.Result.checkExistsIndex_eq),
-      (`Hex.RCF.SignIndexTests.reciprocal, ``FieldBuild.Result.checkForallIndex_eq),
+      (`Hex.RCF.SignIndexTests.reciprocal, ``FieldCells.checkIndex_eq),
       (`Hex.RCF.SignIndexTests.domain, ``FieldBuild.Result.checkExistsIndex_eq)] do
     unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf route) do
       throwError "indexed proof regression did not use indexed replay"
