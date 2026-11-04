@@ -42,13 +42,17 @@ class OracleBuildTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(args, ["build", *self.targets(),
                                 "hexgroebner_compute", "hexgroebner_compute_full",
+                                "hexgroebner_sample", "hexgroebner_sample_full",
+                                "hexgroebner_sampling_checks",
                                 "hexrealclosure_trivial_tests", "hexrealclosure_codec_bytes"])
 
     def test_selected_groebner_drivers(self):
         result, args = self.prepare("HexGroebner")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(args, ["build", *self.targets({"HexGroebner"}),
-                               "hexgroebner_compute", "hexgroebner_compute_full"])
+                               "hexgroebner_compute", "hexgroebner_compute_full",
+                               "hexgroebner_sample", "hexgroebner_sample_full",
+                               "hexgroebner_sampling_checks"])
 
     def test_selected_factorization_emitter(self):
         result, args = self.prepare("HexIntFactor")

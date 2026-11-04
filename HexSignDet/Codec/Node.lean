@@ -17,6 +17,11 @@ def system (s : System n) : Json :=
   .arr #[Json.of s.rows.toArray, Json.of s.columns.toArray, Json.of s.counts.toArray,
     Json.of s.values.toArray, encodeMatrix s.inverse, Json.of s.denominator]
 
+/-- The six stored system fields, without an arithmetic acceptance premise. -/
+theorem system_eq (s : System n) : system s =
+    .arr #[Json.of s.rows.toArray, Json.of s.columns.toArray, Json.of s.counts.toArray,
+      Json.of s.values.toArray, encodeMatrix s.inverse, Json.of s.denominator] := (rfl)
+
 /-- Read every literal system field against the same dimensions and word arity. -/
 @[expose] def readSystem (n arity : Nat) (j : Json) : Except String (System n) := do
   let a ← tuple 6 j
@@ -29,6 +34,11 @@ def system (s : System n) : Json :=
 def basis (b : Matrix.RankCert Int n m) : Json :=
   .arr #[Json.of b.rank, Json.of (b.rows.toArray.map Fin.val), Json.of (b.cols.toArray.map Fin.val),
     Json.of b.denom, encodeMatrix b.adj]
+
+/-- The literal rank, selected indices, scale and numerator matrix. -/
+theorem basis_eq (b : Matrix.RankCert Int n m) : basis b =
+    .arr #[Json.of b.rank, Json.of (b.rows.toArray.map Fin.val), Json.of (b.cols.toArray.map Fin.val),
+      Json.of b.denom, encodeMatrix b.adj] := (rfl)
 
 /-- Selected indices are checked against the decoded matrix dimensions before
 constructing `Fin` values. No rank or nonsingularity claim is assumed. -/

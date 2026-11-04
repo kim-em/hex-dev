@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Reducer
+public import HexGroebner.ColumnMap
 public import HexGroebner.ReducerCache
 
 public section
@@ -48,8 +49,7 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     (cache : ReducerCache := .empty) (initial : Array SymbolicReducer := #[]) :
     Computation SymbolicMatrix := do
   let mut cache := cache
-  let mut support : Std.HashSet Nat := {}
-  let mut pending : Array Nat := #[]
+  resetSupport limits
   let mut closed : Std.HashSet Nat := {}
   let seeded := !initial.isEmpty
   for reducer in initial do
@@ -57,24 +57,16 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     if p.size == 0 || closed.contains (p.monomial 0) then throw (.matrix .dimensions)
     closed := closed.insert (p.monomial 0)
     spend limits (p.size + 1)
-    for i in [:p.size] do
-      let id := p.monomial i
-      if !support.contains id then
-        support := support.insert id
-        pending := pending.push id
+    queueSupport limits p.support
   for target in targets do
     let p := target.polynomial
     spend limits p.size
-    for i in [:p.size] do
-      let id := p.monomial i
-      if !support.contains id then
-        support := support.insert id
-        pending := pending.push id
+    queueSupport limits p.support
   let mut cursor := 0
   let mut reducers := initial
   for _ in [:limits.monomials] do
-    if cursor ≥ pending.size then break
-    let monomial := pending[cursor]!
+    if cursor ≥ (← get).support.queue.size then break
+    let monomial := (← get).support.queue[cursor]!
     cursor := cursor + 1
     if seeded && closed.contains monomial then continue
     if let some reducer ← index.find context limits basis monomial then
@@ -85,13 +77,9 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
       reducers := reducers.push ⟨reducer, multiplier, p,
         basis[reducer]!.sugar + (← get).table.degree multiplier⟩
       spend limits p.size
-      for i in [:p.size] do
-        let id := p.monomial i
-        if !support.contains id then
-          support := support.insert id
-          pending := pending.push id
-  if cursor < pending.size then throw (.exhausted .monomials)
-  let columns ← sort context limits pending
+      queueSupport limits p.support
+  if cursor < (← get).support.queue.size then throw (.exhausted .monomials)
+  let columns ← sortSupport context limits
   return ⟨columns, reducers, targets, cache⟩
 
 /-- Build a basis-specific reducer index and close the selected supports.
@@ -100,27 +88,25 @@ def prepare (context : Context) (limits : Limits) (basis : Array BasisElement)
     (targets : Array BasisElement) : Computation SymbolicMatrix := do
   prepareWith context limits (← ReducerIndex.build context limits basis) basis targets
 
-private def row (_context : Context) (limits : Limits) (positions : Std.HashMap Nat Nat)
+private def row (_context : Context) (limits : Limits) (positions : ColumnMap)
     (p : Polynomial) : Computation SparseRow := do
-  spend limits p.size
+  spend limits (p.size * positions.lookupCost)
   allocate limits p.support.size
-  let mut columns := ByteArray.emptyWithCapacity p.support.size
-  for i in [:p.size] do
-    let id := p.monomial i
-    match positions[id]? with
-    | none => throw (.representation .index)
-    | some column => columns := Packed.push .u32 columns column.toUInt64
+  let some columns := positions.encode p.support limits.nativeRows |
+    throw (.representation .index)
   return ⟨columns, p.coefficients⟩
 
-/-- Run the matrix kernel within the remaining parent allowances. Its validated
-input payload is already live, so only workspace and output payload are newly
-charged to the cumulative allocation counter. -/
-private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
-    (monic independent : Bool) :
-    Computation (Array BasisElement) := do
-  spend limits matrix.columns.size
-  let mut positions : Std.HashMap Nat Nat := {}
-  for i in [:matrix.columns.size] do positions := positions.insert matrix.columns[i]! i
+private structure Input where
+  reducers : Array SparseRow
+  targets : Array SparseRow
+  sugars : Array Nat
+  entries : Nat
+  inputBytes : Nat
+
+private def translate (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
+    (independent : Bool := false) : Computation Input := do
+  if matrix.columns.size > 4294967295 then throw (.representation .index)
+  let positions ← ColumnMap.build limits matrix.columns
   let mut reducers := #[]
   let mut targets := #[]
   let mut entries := 0
@@ -133,7 +119,7 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     reducers := reducers.push r
   let orderedTargets ← if independent || matrix.targets.size ≤ 1 then pure matrix.targets else do
-    spend limits (matrix.targets.size * (matrix.targets.size + 1).log2)
+    spend limits (2 * matrix.targets.size * (matrix.targets.size + 1).log2 * positions.lookupCost)
     pure ((matrix.targets.toList.mergeSort
       (fun a b =>
         let x := a.polynomial
@@ -149,19 +135,51 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     targets := targets.push r
   let s ← get
   let rows := reducers.size + targets.size
-  if matrix.columns.size > 4294967295 || rows > 4294967295 then throw (.representation .index)
+  if rows > 4294967295 then throw (.representation .index)
   if matrix.columns.size * (context.field.width.bytes + 4) ≥ USize.size then
     throw (.representation .address)
   if s.statistics.matrixRows + rows > limits.matrixRows then throw (.exhausted .matrixRows)
   if s.statistics.matrixEntries + entries > limits.matrixEntries then
     throw (.exhausted .matrixEntries)
+  return ⟨reducers,targets,sugars,entries,inputBytes⟩
+
+private def decode (context : Context) (limits : Limits) (columns : Array Nat)
+    (row : SparseRow) (multiplier : UInt64) (sugar : Nat) (monic := true) :
+    Computation BasisElement := do
+  spend limits row.size
+  allocate limits row.columns.size
+  let mut support := ByteArray.emptyWithCapacity row.columns.size
+  for i in [:row.size] do
+    let column := (Packed.read .u32 row.columns i).toNat
+    support := Packed.push .u32 support columns[column]!.toUInt64
+  let p : Polynomial := { support, coefficients := row.coefficients }
+  let p ← if monic || multiplier == 1 then pure p else do
+    let factor ← inverse context.field limits multiplier
+    p.scale context limits factor
+  return ⟨p,sugar⟩
+
+/-- Run the matrix kernel within the remaining parent allowances. Its validated
+input payload is already live, so only workspace and output payload are newly
+charged to the cumulative allocation counter. -/
+private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
+    (monic independent : Bool) :
+    Computation (Array BasisElement) := do
+  let input ← translate context limits matrix independent
+  let reducers := input.reducers
+  let targets := input.targets
+  let sugars := input.sugars
+  let entries := input.entries
+  let inputBytes := input.inputBytes
+  let rows := reducers.size+targets.size
+  let s ← get
   let remainingBytes := limits.packedBytes - s.statistics.allocatedBytes - s.table.bytes
   let matrixLimits : MatrixLimits := {
     columns := limits.monomials, rows := limits.matrixRows - s.statistics.matrixRows
     inputEntries := entries
     outputEntries := limits.matrixEntries - s.statistics.matrixEntries - entries
     packedBytes := remainingBytes + inputBytes
-    work := limits.work - s.statistics.work }
+    work := limits.work - s.statistics.work
+    densePivots := limits.densePivots, binaryPivots := limits.binaryPivots }
   let (result, stats) := if independent then
     let outcome := reduceRowsWith context.field matrixLimits matrix.columns.size reducers targets false sugars limits.nativeRows
     (outcome.result.map (fun e => e.rows.map fun r => (r.row, (1 : UInt64), r.sugar)), outcome.stats)
@@ -169,14 +187,8 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     let outcome := eliminateWith context.field matrixLimits matrix.columns.size reducers targets false sugars limits.nativeRows
     (outcome.result.map (fun e => e.rows.filterMap fun r =>
       if r.fromTarget then some (r.row, r.multiplier, r.sugar) else none), outcome.stats)
-  set { s with statistics := { s.statistics with
-    work := s.statistics.work + stats.work
-    allocatedBytes := s.statistics.allocatedBytes + (stats.packedBytes - inputBytes)
-    matrixEntries := s.statistics.matrixEntries + stats.inputEntries + stats.outputEntries
-    matrixRows := s.statistics.matrixRows + rows
-    matrixCalls := s.statistics.matrixCalls + 1
-    peakMatrixRows := max s.statistics.peakMatrixRows rows
-    peakMatrixEntries := max s.statistics.peakMatrixEntries (stats.inputEntries + stats.outputEntries) } }
+  set { s with statistics := (s.statistics.recordMatrix stats
+    (inputBytes := inputBytes) (rows := rows) (targets := targets.size)) }
   let rows ← match result with
     | .ok e => pure e
     | .error (.exhausted r) => match r with
@@ -190,18 +202,8 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
       | .traceNodes => throw (.matrix (.exhausted .traceNodes))
     | .error e => throw (.matrix e)
   let mut output := #[]
-  for (row, multiplier, sugar) in rows do
-    spend limits row.size
-    allocate limits row.columns.size
-    let mut support := ByteArray.emptyWithCapacity row.columns.size
-    for i in [:row.size] do
-      let column := (Packed.read .u32 row.columns i).toNat
-      support := Packed.push .u32 support matrix.columns[column]!.toUInt64
-    let p : Polynomial := { support, coefficients := row.coefficients }
-    let p ← if monic || multiplier == 1 then pure p else do
-      let factor ← inverse context.field limits multiplier
-      p.scale context limits factor
-    output := output.push ⟨p, sugar⟩
+  for (row,multiplier,sugar) in rows do
+    output := output.push (← decode context limits matrix.columns row multiplier sugar monic)
   return output
 
 /-- Joint target elimination. Return new target rows spanning the quotient by

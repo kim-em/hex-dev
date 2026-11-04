@@ -78,6 +78,11 @@ structure InternResult where
   result : Except MonomialFailure Nat
   table : MonomialTable
 
+/-- A monomial-product slice retains the complete table on success or failure. -/
+structure ProductResult where
+  result : Except MonomialFailure ByteArray
+  table : MonomialTable
+
 namespace MonomialTable
 
 private def metaWord (bytes : @& ByteArray) (index : Nat) : UInt64 :=
@@ -422,6 +427,112 @@ theorem combineOwned_spec (table : MonomialTable) (operation : Operation) (a b :
 /-- info: 'Hex.Groebner.MonomialTable.combineOwned_spec' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms combineOwned_spec
+
+/-- Reference multiplication of a bounded support slice by one interned monomial.
+Input identifiers use little-endian UInt32 storage. A failure retains exactly the
+same charged table prefix as the corresponding scalar operations. -/
+@[expose]
+def productsReference (table : MonomialTable) (support : ByteArray)
+    (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) : ProductResult := Id.run do
+  let stop := min (support.size / 4) (start+count)
+  let mut table := table
+  let mut output := ByteArray.emptyWithCapacity ((stop-start)*4)
+  for i in [start:stop] do
+    let next := table.combineOwned .product (Packed.read .u32 support i).toNat monomial
+      maxCount maxBytes maxWork native
+    table := next.table
+    match next.result with
+    | .error failure => return ⟨.error failure,table⟩
+    | .ok id => output := Packed.push .u32 output id.toUInt64
+  return ⟨.ok output,table⟩
+
+/-- A batch either returns its complete successful scalar result or leaves the
+owned table unchanged for ordinary Lean fallback. -/
+inductive ProductAttempt where
+  | accepted (result : ProductResult)
+  | deferred (table : MonomialTable)
+
+/-- A bounded batch may look up or insert stable identifiers without rehashing
+or widening. All input identifiers belong to the initial table, at most 64 are
+returned, and all charged visits and insertions fit a 4096-unit quantum. -/
+@[expose] def productsAttemptPortable (table : MonomialTable) (support : ByteArray)
+    (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) : ProductAttempt := Id.run do
+  let small := fun n : Nat => n < USize.size / 2
+  let stop := min (support.size / 4) (start+count)
+  let shape := table.exponents.size == table.count * table.arity * table.width.bytes &&
+    table.metadata.size == table.count * 24 && table.index.shape table.count
+  if !native || !small table.arity || !small table.count || !small table.hashBits ||
+      !small table.work || !small monomial || !small start || !small count ||
+      !small maxBytes || !small maxWork || table.arity == 0 || table.arity > 2047 ||
+      table.count == 0 || table.count > 4294967295 || table.hashBits > 64 ||
+      monomial ≥ table.count || start ≥ stop || stop-start > 64 || !shape ||
+      table.work > maxWork || table.bytes > maxBytes then return .deferred table
+  if !(List.range (stop-start)).all (fun i =>
+      (Packed.read .u32 support (start+i)).toNat < table.count) then return .deferred table
+  let outcome := table.productsReference support monomial start count maxCount maxBytes maxWork true
+  match outcome.result with
+  | .error _ => return .deferred table
+  | .ok _ =>
+    if outcome.table.width != table.width ||
+        outcome.table.index.heads.size != table.index.heads.size ||
+        outcome.table.count > 4294967295 || outcome.table.work-table.work > 4096 ||
+        (outcome.table.count != table.count &&
+          (!small maxCount || outcome.table.bytes+1 ≥ USize.size)) then
+      return .deferred table
+    return .accepted outcome
+
+/-- The pure attempt completes the scalar result or preserves its input. -/
+theorem productsAttemptPortable_spec (table : MonomialTable) (support : ByteArray)
+    (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) :
+    match productsAttemptPortable table support monomial start count maxCount maxBytes maxWork native with
+    | .accepted result => result = table.productsReference support monomial start count maxCount maxBytes maxWork true
+    | .deferred returned => returned = table := by
+  unfold productsAttemptPortable
+  simp only [Id.run, pure]
+  split <;> rename_i h
+  all_goals
+    repeat' first | split at h | (cases h <;> rfl)
+
+/-- Bounded lookup/insertion batch. The native ABI consumes the eight-object
+field table (trailing Width byte), borrows little-endian UInt32 support ids,
+and returns the complete scalar result or the unchanged owned table. Planning
+uses bounded private scratch; success acquires each arena once, preserving
+shared snapshots and support aliases. Unsupported widths, index growth, limits
+or slices defer before publishing any mutation. -/
+@[expose, extern "lean_hex_monomial_products_attempt"]
+def productsAttempt (table : MonomialTable) (support : @& ByteArray)
+    (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) : ProductAttempt :=
+  productsAttemptPortable table support monomial start count maxCount maxBytes maxWork native
+
+/-- Multiply a support slice with portable work outside the native frame. -/
+@[expose] def productsWith (table : MonomialTable) (support : ByteArray)
+    (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) : ProductResult :=
+  if !native then productsReference table support monomial start count maxCount maxBytes maxWork false
+  else match productsAttempt table support monomial start count maxCount maxBytes maxWork true with
+    | .accepted result => result
+    | .deferred returned => returned.productsReference support monomial start count maxCount maxBytes maxWork true
+
+/-- The wrapper preserves the scalar result and complete failure state.
+Agreement of the C provider with its pure attempt model is tested separately. -/
+theorem productsWith_spec (table : MonomialTable) (support : ByteArray)
+    (monomial start count maxCount maxBytes maxWork : Nat) (native : Bool) :
+    productsWith table support monomial start count maxCount maxBytes maxWork native =
+      productsReference table support monomial start count maxCount maxBytes maxWork native := by
+  cases native with
+  | false => rfl
+  | true =>
+    change (match productsAttempt table support monomial start count maxCount maxBytes maxWork true with
+      | .accepted result => result
+      | .deferred returned => returned.productsReference support monomial start count maxCount maxBytes maxWork true) = _
+    have contract := productsAttemptPortable_spec table support monomial start count maxCount maxBytes maxWork true
+    change (match productsAttempt table support monomial start count maxCount maxBytes maxWork true with
+      | .accepted result => result = table.productsReference support monomial start count maxCount maxBytes maxWork true
+      | .deferred returned => returned = table) at contract
+    cases h : productsAttempt table support monomial start count maxCount maxBytes maxWork true with
+    | accepted result => simpa only [h] using contract
+    | deferred returned =>
+      have eq : returned = table := by simpa only [h] using contract
+      simp only [eq]
 
 /-- Convenience projection of the ownership-preserving monomial operation. -/
 def combine (table : MonomialTable) (operation : Operation) (a b : Nat)

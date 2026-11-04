@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Native
+public import HexGroebner.NativeDense
 public import HexGroebner.Packed
 public import HexGroebner.Elimination
 public import HexGroebner.Monomial
@@ -16,6 +17,7 @@ public import HexGroebner.Reducer
 public import HexGroebner.Symbolic
 public import HexGroebner.Pairs
 public import HexGroebner.F4
+public import HexGroebner.Sampled
 
 public import HexGroebner.Certificate
 public import HexGroebner.CertificateOrder

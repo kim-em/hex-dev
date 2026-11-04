@@ -126,13 +126,15 @@ def resumeWith (limits : Limits) (nodeLimit : Nat) (initial : State)
   if state.checkpoint.basis.size > limits.basis then return fail state (.exhausted .basis)
   if state.derivation.nodes.size > nodeLimit then return .traceExhausted state
   for _ in [:limits.rounds+4] do
+    let workspace := state.workspace
+    state := { state with workspace := { table := { arity := state.context.variables } } }
     if state.checkpoint.phase == .complete then
-      let (result,execution) := (decode state limits).run ⟨state.workspace,state.derivation⟩
+      let (result,execution) := (decode state limits).run ⟨workspace,state.derivation⟩
       match result with
       | .ok candidate => return .candidate candidate execution.workspace.statistics
       | .error error => return traceFailure { state with workspace := execution.workspace, derivation.allocatedTerms := execution.derivation.allocatedTerms, derivation.maxExponentBits := execution.derivation.maxExponentBits } error
     let (result,execution) := (step state.context limits nodeLimit state.generators state.checkpoint).run
-      ⟨state.workspace,state.derivation⟩
+      ⟨workspace,state.derivation⟩
     match result with
     | .ok checkpoint => state := { state with workspace := execution.workspace, checkpoint,derivation := execution.derivation }
     | .error error => return traceFailure { state with workspace := execution.workspace, derivation.allocatedTerms := execution.derivation.allocatedTerms, derivation.maxExponentBits := execution.derivation.maxExponentBits } error
@@ -143,7 +145,7 @@ def resumeWith (limits : Limits) (nodeLimit : Nat) (initial : State)
 retain this choice; pass `scheduling := .sugar` here to start a sugar computation. -/
 def begin (context : Context) (generators : Array RawPolynomial) (statistics : Statistics := {})
     (scheduling : Scheduling := .degree) : State :=
-  ⟨context,generators,⟨{ arity := context.variables },statistics⟩,{},{},scheduling⟩
+  ⟨context,generators,{ table := { arity := context.variables }, statistics := statistics },{},{},scheduling⟩
 
 def computeWith (context : Context) (limits : Limits) (nodeLimit : Nat)
     (generators : Array RawPolynomial) : Outcome :=

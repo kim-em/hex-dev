@@ -353,3 +353,193 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_search_monomial(uint8_t width,
 #endif
 
 #include "trie_lookup.h"
+
+#ifndef HEX_GROEBNER_NO_LEAN
+/* Reserve once, preserving marked-linear ownership on exclusive growth or an
+   explicitly supported borrowed/output alias. Other sharing uses ordinary COW. */
+static lean_object *remap_reserve(lean_obj_arg bytes,size_t size,int alias) {
+    size_t old=lean_sarray_size(bytes);
+    if(!alias && lean_is_exclusive(bytes) && lean_sarray_capacity(bytes)>=size) return bytes;
+    size_t capacity=old<=SIZE_MAX/2?old*2:size;
+    if(capacity<size) capacity=size;
+    if(alias || lean_is_exclusive(bytes)) {
+        int linear=lean_sarray_is_marked_linear(bytes);
+        bytes=lean_copy_sarray(bytes,capacity);
+        if(linear) lean_sarray_mark_linear_core(bytes);
+    } else bytes=lean_copy_sarray_nonlinear(bytes,capacity);
+    return bytes;
+}
+
+/* Native.Columns.remapPortable: borrowed little-endian u32 buffers and an
+   owned output prefix. Validate and write <=4096 entries past the logical end;
+   commit the new size only on success. Invalid input never changes a borrowed
+   buffer or the observable prefix. Borrowed/output aliases retain their owner. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_remap_columns(
+        b_lean_obj_arg positions,b_lean_obj_arg support,
+        b_lean_obj_arg start_arg,b_lean_obj_arg count_arg,lean_obj_arg output) {
+    size_t pb=lean_sarray_size(positions),sb=lean_sarray_size(support);
+    size_t start=0,count=0,old=lean_sarray_size(output);
+    const uint8_t *ps=lean_sarray_cptr(positions),*ss=lean_sarray_cptr(support);
+    lean_object *alias=NULL,*result;
+    uint8_t *target;
+    if(pb%4 || !lean_is_scalar(start_arg) || !lean_is_scalar(count_arg)) goto invalid;
+    start=lean_unbox(start_arg);count=lean_unbox(count_arg);
+    if(count>4096 || start>sb/4 || count>sb/4-start || count*4>SIZE_MAX-old) goto invalid;
+    if(count) {
+        if(output==positions || output==support) {alias=output;lean_inc(alias);}
+        output=remap_reserve(output,old+count*4,alias!=NULL);
+        target=lean_sarray_cptr(output)+old;
+        for(size_t i=0;i<count;++i) {
+            uint64_t id=read_le(ss+(start+i)*4,4),value;
+            if(id>=pb/4) goto invalid;
+            value=read_le(ps+(size_t)id*4,4);
+            if(!value) goto invalid;
+            write_le(target+i*4,4,value-1);
+        }
+        lean_sarray_set_size(output,old+count*4);
+    }
+    if(alias) lean_dec(alias);
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
+invalid:
+    if(alias) lean_dec(alias);
+    lean_dec(output);return lean_box(0);
+}
+static uint64_t column_hash(uint64_t h) {
+    h=(h^(h>>30))*UINT64_C(0xbf58476d1ce4e5b9);
+    h=(h^(h>>27))*UINT64_C(0x94d049bb133111eb);
+    return h^(h>>31);
+}
+
+/* Exact bounded probing. Empty value zero is distinct from key ID zero.
+   Only a successful lookup commits appended bytes; borrowed aliases survive. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_remap_index(
+        b_lean_obj_arg slots,b_lean_obj_arg support,b_lean_obj_arg start_arg,
+        b_lean_obj_arg count_arg,b_lean_obj_arg probes_arg,lean_obj_arg output) {
+    size_t pb=lean_sarray_size(slots),sb=lean_sarray_size(support),capacity=pb/8;
+    size_t start=0,count=0,probes=0,old=lean_sarray_size(output);
+    const uint8_t *ps=lean_sarray_cptr(slots),*ss=lean_sarray_cptr(support);
+    uint8_t *target;
+    lean_object *alias=NULL,*result;
+    if(pb%8 || !capacity || (capacity&(capacity-1)) || !lean_is_scalar(start_arg) ||
+       !lean_is_scalar(count_arg) || !lean_is_scalar(probes_arg)) goto invalid_index;
+    start=lean_unbox(start_arg);count=lean_unbox(count_arg);probes=lean_unbox(probes_arg);
+    if(probes>64 || count>4096 || start>sb/4 || count>sb/4-start || count*4>SIZE_MAX-old)
+        goto invalid_index;
+    if(count) {
+        if(output==slots || output==support) {alias=output;lean_inc(alias);}
+        output=remap_reserve(output,old+count*4,alias!=NULL);
+        target=lean_sarray_cptr(output)+old;
+        for(size_t i=0;i<count;++i) {
+            uint64_t id=read_le(ss+(start+i)*4,4),value=0;
+            size_t bucket=(size_t)(column_hash(id)&(capacity-1));
+            for(size_t j=0;j<probes;++j) {
+                uint64_t v=read_le(ps+bucket*8+4,4);
+                if(!v) goto invalid_index;
+                if(read_le(ps+bucket*8,4)==id) {value=v;break;}
+                bucket=(bucket+1)&(capacity-1);
+            }
+            if(!value) goto invalid_index;
+            write_le(target+i*4,4,value-1);
+        }
+        lean_sarray_set_size(output,old+count*4);
+    }
+    if(alias) lean_dec(alias);
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
+invalid_index:
+    if(alias) lean_dec(alias);
+    lean_dec(output);return lean_box(0);
+}
+
+LEAN_EXPORT lean_obj_res lean_hex_groebner_append_zeros(lean_obj_arg output,b_lean_obj_arg count_arg) {
+    size_t old=lean_sarray_size(output),count;
+    lean_object *result;
+    if(!lean_is_scalar(count_arg)) {lean_dec(output);return lean_box(0);}
+    count=lean_unbox(count_arg);
+    if(count>4096 || count>SIZE_MAX-old) {lean_dec(output);return lean_box(0);}
+    if(count) {
+        output=remap_reserve(output,old+count,0);
+        memset(lean_sarray_cptr(output)+old,0,count);
+        lean_sarray_set_size(output,old+count);
+    }
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
+}
+
+/* Queueing/clearing does not grow the bitmap. Shared copies need precisely
+   its logical size; explicit borrowed aliases preserve the linear mark. */
+static lean_object *support_own(lean_obj_arg bits,int alias) {
+    if(!alias && lean_is_exclusive(bits)) return bits;
+    size_t size=lean_sarray_size(bits);
+    if(alias) {
+        int linear=lean_sarray_is_marked_linear(bits);
+        bits=lean_copy_sarray(bits,size);
+        if(linear)lean_sarray_mark_linear_core(bits);
+    } else bits=lean_copy_sarray_nonlinear(bits,size);
+    return bits;
+}
+
+/* Native.Support.queuePortable. Validate the entire bounded slice before any
+   writes; retain a borrowed alias while copy-on-write replaces the bitmap. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_queue_support(uint64_t count,
+        b_lean_obj_arg ids,b_lean_obj_arg start_arg,b_lean_obj_arg terms_arg,
+        lean_obj_arg bits,lean_obj_arg pending) {
+    size_t start,terms,bytes=lean_sarray_size(ids),bit_bytes=lean_sarray_size(bits);
+    const uint8_t *source=lean_sarray_cptr(ids);
+    lean_object *alias=NULL,*pair,*result;
+    if(count>UINT64_C(4294967296) || (count+7)/8>bit_bytes || bytes%4 ||
+       !lean_is_scalar(start_arg) || !lean_is_scalar(terms_arg)) goto invalid_support;
+    start=lean_unbox(start_arg);terms=lean_unbox(terms_arg);
+    if(terms>4096 || start>bytes/4 || terms>bytes/4-start) goto invalid_support;
+    for(size_t i=0;i<terms;++i)
+        if(read_le(source+(start+i)*4,4)>=count) goto invalid_support;
+    if(terms) {
+        if(bits==ids) {alias=bits;lean_inc(alias);}
+        bits=support_own(bits,alias!=NULL);
+        uint8_t *target=lean_sarray_cptr(bits);
+        for(size_t i=0;i<terms;++i) {
+            uint64_t id=read_le(source+(start+i)*4,4);
+            uint8_t mask=(uint8_t)(1u<<(id%8));
+            if(!(target[id/8]&mask)) {
+                target[id/8]|=mask;
+                pending=lean_array_push(pending,lean_unsigned_to_nat((unsigned)id));
+            }
+        }
+    }
+    if(alias) lean_dec(alias);
+    pair=lean_alloc_ctor(0,2,0);lean_ctor_set(pair,0,bits);lean_ctor_set(pair,1,pending);
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,pair);return result;
+invalid_support:
+    lean_dec(bits);lean_dec(pending);return lean_box(0);
+}
+
+
+/* Clear a bounded visited-ID slice. Nat conversion is exact after the u32
+   check, including boxed u32 values on 32-bit hosts. Validate before writes. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_clear_support(lean_obj_arg bits,
+        b_lean_obj_arg queue,b_lean_obj_arg start_arg,b_lean_obj_arg terms_arg) {
+    size_t start,terms,n=lean_array_size(queue),bytes=lean_sarray_size(bits);
+    lean_object *max_id,*result;
+    if(!lean_is_scalar(start_arg) || !lean_is_scalar(terms_arg)) goto invalid_clear;
+    start=lean_unbox(start_arg);terms=lean_unbox(terms_arg);
+    if(terms>4096 || start>n || terms>n-start) goto invalid_clear;
+    max_id=lean_unsigned_to_nat(UINT32_MAX);
+    for(size_t i=0;i<terms;++i) {
+        lean_object *id=lean_array_cptr(queue)[start+i];
+        if(!lean_nat_dec_le(id,max_id) || lean_uint64_of_nat(id)/8>=bytes) {
+            lean_dec(max_id);goto invalid_clear;
+        }
+    }
+    lean_dec(max_id);
+    if(terms) {
+        bits=support_own(bits,0);
+        uint8_t *target=lean_sarray_cptr(bits);
+        for(size_t i=0;i<terms;++i) {
+            uint64_t id=lean_uint64_of_nat(lean_array_cptr(queue)[start+i]);
+            target[id/8]&=(uint8_t)~(1u<<(id%8));
+        }
+    }
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,bits);return result;
+invalid_clear:
+    lean_dec(bits);return lean_box(0);
+}
+
+#endif

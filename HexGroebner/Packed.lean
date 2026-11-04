@@ -29,7 +29,9 @@ inductive Width where
   | .u32 => 4
 
 /-- Finite prime-field metadata, with actual prime evidence. This is an encoding
-context for the existing `ZMod64` field, not another field hierarchy. -/
+context for the existing `ZMod64` field, not another field hierarchy.
+`ffi/matrix_eliminate.c` relies on this structure erasing to its UInt64 modulus;
+adding runtime fields changes that ABI. -/
 structure PrimeField where
   modulus : UInt64
   prime : Hex.Nat.Prime modulus.toNat
@@ -152,11 +154,18 @@ index and a scalar fitting the selected width; matrix callers validate these. -/
   | .u32 => ((data.set! (offset + 1) (value >>> 8).toUInt8).set!
       (offset + 2) (value >>> 16).toUInt8).set! (offset + 3) (value >>> 24).toUInt8
 
+/-- Replacing packed scalars preserves the logical buffer length, including
+out-of-range byte updates in the total portable definition. -/
+@[simp] theorem size_set (width : Width) (data : ByteArray) (index : Nat) (value : UInt64) :
+    (set width data index value).size = data.size := by
+  cases width <;> simp [set]
+
 end Packed
 
 /-- Sparse row in a fixed column map. Columns are increasing unsigned 32-bit
 indices; coefficients have the width selected by the field. Empty rows encode
-zero. Raw construction is allowed; elimination always validates it. -/
+zero. Raw construction is allowed; elimination always validates it.
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure SparseRow where
   columns : ByteArray := ByteArray.empty
   coefficients : ByteArray := ByteArray.empty

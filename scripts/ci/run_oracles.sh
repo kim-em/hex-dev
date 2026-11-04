@@ -205,7 +205,7 @@ for entry in "${FILTERED_ORACLES[@]}"; do
   emits+=("$emit")
 done
 if library_selected HexGroebner; then
-  emits+=("hexgroebner_compute" "hexgroebner_compute_full")
+  emits+=("hexgroebner_compute" "hexgroebner_compute_full" "hexgroebner_sample" "hexgroebner_sample_full" "hexgroebner_sampling_checks")
 fi
 if library_selected HexRealClosure; then
   emits+=("hexrealclosure_trivial_tests")
@@ -343,12 +343,19 @@ run_tuple() {
     fi
   fi
   if [ "$oracle" = "scripts/oracle/groebner_sympy.py" ]; then
+    if ! .lake/build/bin/hexgroebner_sampling_checks ||
+        ! python3 scripts/ci/check_groebner_sampling.py ||
+        ! python3 scripts/ci/check_groebner_initialization.py --default .lake/build/bin/hexgroebner_sample --reference .lake/build/bin/hexgroebner_sample_full; then
+      echo "FAIL: HexGroebner :: sampled candidate/certification conformance"
+      return 1
+    fi
     if ! python3 scripts/ci/check_groebner_initialization.py ||
         ! python3 scripts/ci/check_groebner_driver.py; then
       echo "FAIL: HexGroebner :: standalone candidate driver conformance"
       return 1
     fi
-    if ! python3 -m unittest scripts.oracle.test_groebner_sympy scripts.oracle.test_groebner_singular; then
+    if ! python3 -m unittest scripts.oracle.test_groebner_sympy scripts.oracle.test_groebner_singular \
+        scripts.bench.test_groebner_capsule; then
       echo "FAIL: $lib :: Groebner oracle rejection checks failed"
       return 1
     fi

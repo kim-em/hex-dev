@@ -118,11 +118,11 @@ namespace Hex.Groebner.Producer.AllocationTest
 #guard match (do
     Computation.allocate { packedBytes := USize.size*2 } (USize.size/2)
     Computation.allocate { packedBytes := USize.size*2 } (USize.size/2)).run
-    ⟨{ arity := 0 },{}⟩ with
+    { table := { arity := 0 }, statistics := {} } with
   | (.ok _,workspace) => workspace.statistics.allocatedBytes == USize.size
   | _ => false
 #guard match (Computation.allocate { packedBytes := USize.size*2 } USize.size).run
-    ⟨{ arity := 0 },{}⟩ with
+    { table := { arity := 0 }, statistics := {} } with
   | (.error (.representation .address),workspace) => workspace.statistics.allocatedBytes == 0
   | _ => false
 

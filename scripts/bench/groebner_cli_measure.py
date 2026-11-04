@@ -28,9 +28,20 @@ def main():
     parser.add_argument("--suite", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--hex", type=Path, required=True)
+    parser.add_argument("--sampled", action="store_true")
+    parser.add_argument("--seed", type=int, default=10987)
+    parser.add_argument("--block-rows", type=int, default=32)
+    parser.add_argument("--zero-tests", type=int, default=3)
+    parser.add_argument("--min-targets", type=int, default=0)
+    parser.add_argument("--baseline-min-targets", type=int)
     parser.add_argument("--hex-scheduling", choices=["degree", "sugar"])
+    parser.add_argument("--hex-dense-pivots", choices=["true", "false"])
+    parser.add_argument("--baseline-dense-pivots", choices=["true", "false"])
+    parser.add_argument("--hex-binary-pivots", choices=["true", "false"])
+    parser.add_argument("--baseline-binary-pivots", choices=["true", "false"])
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--baseline-sampled", action="store_true")
     parser.add_argument("--baseline-manifest", type=Path)
     parser.add_argument("--baseline-scheduling", choices=["degree", "sugar"])
     parser.add_argument("--msolve", type=Path)
@@ -38,12 +49,36 @@ def main():
     parser.add_argument("--msolve-mode", type=int, choices=[2, 42], default=2)
     parser.add_argument("--time", default=shutil.which("time"))
     args = parser.parse_args()
+    if not 0 <= args.seed < 2**64 or not 1 <= args.block_rows <= 4096 or args.zero_tests < 1 or args.min_targets < 0 or (args.baseline_min_targets is not None and args.baseline_min_targets < 0):
+        parser.error("invalid sampling controls")
+    if args.baseline_min_targets is not None and not args.baseline_sampled:
+        parser.error("--baseline-min-targets requires --baseline-sampled")
+    if args.min_targets and not args.sampled:
+        parser.error("--min-targets requires --sampled")
+    candidate_key = "sample" if args.sampled else "compute"
+    if args.baseline_sampled and not (args.sampled and args.baseline):
+        parser.error("--baseline-sampled requires --sampled and --baseline")
+
+    def minimum_targets(arm):
+        return args.baseline_min_targets if arm == "A" and args.baseline_sampled and args.baseline_min_targets is not None else args.min_targets
+
+    def sampled_arm(arm):
+        return args.sampled and not (args.baseline and arm == "A" and not args.baseline_sampled)
+
     if sum(map(bool, [args.reference, args.baseline, args.msolve])) != 1:
         parser.error("select exactly one of --reference, --baseline or --msolve")
     if bool(args.baseline) != bool(args.baseline_manifest):
         parser.error("--baseline and --baseline-manifest are required together")
     if args.baseline_scheduling and not args.baseline:
         parser.error("--baseline-scheduling requires --baseline")
+    if args.baseline_dense_pivots is not None and not args.baseline:
+        parser.error("--baseline-dense-pivots requires --baseline")
+    if args.baseline_binary_pivots is not None and not args.baseline:
+        parser.error("--baseline-binary-pivots requires --baseline")
+    if args.sampled and (args.hex_binary_pivots is not None or args.baseline_binary_pivots is not None):
+        parser.error("binary pivot controls require the deterministic driver")
+    if args.sampled and (args.hex_dense_pivots is not None or args.baseline_dense_pivots is not None):
+        parser.error("dense pivot controls require the deterministic driver")
     if args.msolve and not args.msolve_source:
         parser.error("--msolve requires --msolve-source for provenance")
     if not args.time:
@@ -83,12 +118,12 @@ def main():
     cpu, lease = cpu_lease()
     os.sched_setaffinity(0, {cpu})
     env = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1")
-    if sha(args.hex.resolve()) != manifest["binary_sha256"]["compute"]:
+    if sha(args.hex.resolve()) != manifest["binary_sha256"][candidate_key]:
         parser.error("Hex binary differs from frozen manifest")
     if (
         args.reference
         and sha(args.reference.resolve())
-        != manifest["binary_sha256"]["compute-reference"]
+        != manifest["binary_sha256"][candidate_key+"-reference"]
     ):
         parser.error("reference binary differs from frozen manifest")
     baseline_manifest = None
@@ -96,7 +131,7 @@ def main():
         baseline_manifest = json.loads(args.baseline_manifest.read_text())
         if (
             sha(args.baseline.resolve())
-            != baseline_manifest["binary_sha256"]["compute"]
+            != baseline_manifest["binary_sha256"]["sample" if args.baseline_sampled else "compute"]
         ):
             parser.error("baseline binary differs from its frozen manifest")
     inputs = out / "inputs"
@@ -157,6 +192,14 @@ def main():
         else args.hex_scheduling,
         "B": None if mode else args.hex_scheduling,
     }
+    dense_pivots = {
+        "A": args.hex_dense_pivots if mode or not args.baseline else args.baseline_dense_pivots,
+        "B": None if mode else args.hex_dense_pivots,
+    }
+    binary_pivots = {
+        "A": args.hex_binary_pivots if mode or not args.baseline else args.baseline_binary_pivots,
+        "B": None if mode else args.hex_binary_pivots,
+    }
     if mode:
         library_path = str(args.msolve_source.resolve() / "src/neogb/.libs")
         inherited = environments["B"].get("LD_LIBRARY_PATH", "")
@@ -168,6 +211,8 @@ def main():
         "cpu": cpu,
         "threads": 1,
         "requested_scheduling": scheduling,
+        "requested_dense_pivots": dense_pivots,
+        "requested_binary_pivots": binary_pivots,
         "host": os.uname().nodename,
         "load_start": os.getloadavg(),
         "suite_sha256": sha(args.suite),
@@ -183,6 +228,10 @@ def main():
         "script": Path(__file__).read_text(),
         "samples": [],
         "msolve_mode": mode,
+        "sampled": args.sampled,
+        "baseline_sampled": args.baseline_sampled,
+        "sampling_controls": {"seed": args.seed,"block_rows": args.block_rows,"total_zero_tests": args.zero_tests,"minimum_targets": args.min_targets} if args.sampled else None,
+        "baseline_sampling_min_targets": minimum_targets("A") if args.baseline_sampled else None,
         "binary_sha256": {a: sha(f) for a, f in binaries.items()},
         "time_version": time_version,
         "time_sha256": sha(Path(args.time).resolve()),
@@ -232,8 +281,10 @@ def main():
     }
     if args.baseline:
         m["contract"] = (
-            "Full unchecked reduced candidates from two separately frozen source snapshots; algorithm statistics and explicit degree/sugar scheduling may differ, but complete reduced bases and all other field/order/batch/random-state metadata must agree. Requested and returned scheduling are retained for each arm; older baselines without that field use their archived source's default. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
+            "Full unchecked reduced candidates with recorded frozen source manifests and explicit controls; algorithm statistics, dense-pivot admission and degree/sugar scheduling may differ, but complete reduced bases and all other field/order/batch/random-state metadata must agree. Requested dense-pivot controls and requested/returned scheduling are retained for each arm; older baselines without that field use their archived source's default. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
         )
+    if args.sampled:
+        m["contract"] = ("Full unchecked reduced candidates, with explicit sampled F4 using SplitMix64 full-field rejection draws and total-zero stopping, without a probability bound. The --baseline arm uses the recorded deterministic or sampled producer; --reference compares two initializers of the same sampled driver; an msolve arm retains its recorded mode. Random-state and sampling metadata are checked against each producer's controls. Complete mathematical bases and common field/order/batch metadata must agree outside timing. Candidate timing includes canonicalization, F4 and interreduction. Process timing also includes initialization, parsing, full output and identical GNU-time wrappers. Certificate generation, independent certification and kernel checking are excluded; no checked-computation speedup is claimed. One algorithm thread, matched resource caps, adjacent AB then BA, all completed samples retained.")
     if mode:
         ms = args.msolve_source.resolve()
         assert args.msolve.resolve() == (ms / ".libs/msolve").resolve(), (
@@ -297,11 +348,15 @@ def main():
                         else [
                             str(binaries[arm]),
                             *cliargs,
+                            *(["--seed",str(args.seed),"--block-rows",str(args.block_rows),"--zero-tests",str(args.zero_tests),*(["--min-targets",str(minimum_targets(arm))] if minimum_targets(arm) else [])]
+                              if sampled_arm(arm) else []),
                             *(
                                 ["--scheduling", scheduling[arm]]
                                 if scheduling[arm]
                                 else []
                             ),
+                            *(["--dense-pivots",dense_pivots[arm]] if dense_pivots[arm] is not None else []),
+                            *(["--binary-pivots",binary_pivots[arm]] if binary_pivots[arm] is not None else []),
                             str(root / (case["name"] + ".json")),
                         ]
                     )
@@ -390,7 +445,20 @@ def main():
                                     assert selected == scheduling[arm], (
                                         "requested scheduling was ignored"
                                     )
+                                if sampled_arm(arm):
+                                    assert payload["algorithm"] == "f4-sampled"
+                                    assert (payload["seed"],payload["blockRows"],payload["totalZeroTests"]) == (args.seed,args.block_rows,args.zero_tests)
+                                    assert payload["randomState"] == (args.seed+payload["sampling"]["randomWords"]*0x9e3779b97f4a7c15) % 2**64
+                                    assert payload.get("minimumTargets",0) == minimum_targets(arm)
+                                    record["sampling"] = payload["sampling"]
+                                    record["random_state"] = payload["randomState"]
+                                elif args.sampled:
+                                    assert payload["randomState"] == 0
                                 record["scheduling"] = selected
+                                if binary_pivots[arm] is not None:
+                                    assert payload["binaryPivots"] == (binary_pivots[arm] == "true"), "requested binary pivot control was ignored"
+                                elif "binaryPivots" in payload:
+                                    assert payload["binaryPivots"] is False, "unexpected binary pivot policy"
                                 bases[arm] = canonical(payload["basis"])
                                 results[arm] = {
                                     k: v
@@ -402,11 +470,16 @@ def main():
                                             "candidateNanos",
                                             "statistics",
                                             "scheduling",
+                                            "binaryPivots",
                                         ]
                                         if args.baseline
                                         else ["basis", "candidateNanos"]
                                     )
                                 }
+                                if args.baseline_sampled:
+                                    results[arm].setdefault("minimumTargets",0)
+                                    results[arm]["statistics"] = payload["statistics"]
+                                    results[arm]["scheduling"] = selected
                                 record["statistics"] = {
                                     **payload["statistics"],
                                     "candidate_nanos": payload["candidateNanos"],
@@ -426,7 +499,11 @@ def main():
                     print(prefix, record["status"], round(elapsed / 1e6, 2), flush=True)
                 equal = len(bases) == 2 and bases["A"] == bases["B"]
                 if not mode and len(results) == 2:
-                    equal = equal and results["A"] == results["B"]
+                    if args.sampled and args.baseline and (not args.baseline_sampled or minimum_targets("A") != minimum_targets("B")):
+                        common = ["kind","p","variables","order","batchSize"]
+                        equal = equal and all(results["A"][key] == results["B"][key] for key in common)
+                    else:
+                        equal = equal and results["A"] == results["B"]
                 for sample in m["samples"][-2:]:
                     sample["complete_basis_equal"] = equal
     finally:

@@ -34,6 +34,14 @@ namespace Hex.Groebner.Native
   | 0 => bytes
   | n + 1 => write (bytes.set! offset (UInt8.ofNat value)) n (offset + 1) (value / 256)
 
+/-- Packed writes preserve the logical buffer length, including out-of-range
+writes whose portable byte update leaves the corresponding byte unchanged. -/
+@[simp] theorem size_write (bytes : ByteArray) (width offset value : Nat) :
+    (write bytes width offset value).size = bytes.size := by
+  induction width generalizing bytes offset value with
+  | zero => rfl
+  | succ width ih => simp only [write,ih,ByteArray.size_set!]
+
 /-- Structurally recursive logical update. Row reads use the original borrowed
 buffers, while dense reads observe all preceding updates. -/
 @[expose] def update (modulus factor width : Nat) (columns coefficients : @& ByteArray)
@@ -324,5 +332,153 @@ def search (width : UInt8) (arity count hash link quantum : UInt64)
 
 
 end Monomial
+
+namespace Columns
+
+/-- Translate at most 4096 packed monomial IDs using packed positions plus one.
+Zero and out-of-range positions are absent. Source buffers are borrowed and may
+alias the owned output prefix. A failed call returns `none` without changing
+any observable input. Input support may have unused trailing bytes. -/
+@[expose] def remapPortable (positions support : @& ByteArray)
+    (start count : @& Nat) (output : ByteArray) : Option ByteArray := Id.run do
+  if positions.size % 4 != 0 || count > 4096 || start > support.size / 4 ||
+      count > support.size / 4 - start || output.size + count * 4 >= USize.size then
+    return none
+  let mut output := output
+  for i in [:count] do
+    let id := read support 4 ((start + i) * 4)
+    if id >= positions.size / 4 then return none
+    let value := read positions 4 (id * 4)
+    if value == 0 then return none
+    let column := (value - 1).toUInt64
+    output := (((output.push column.toUInt8).push (column >>> 8).toUInt8).push
+      (column >>> 16).toUInt8).push (column >>> 24).toUInt8
+  return some output
+
+/-- Native translation has the same complete slice checks and alias semantics.
+The provider reserves once, validates each selected access, and writes past the
+logical end before committing its new size. Calls perform at most 8192 checked
+u32 reads and 4096 u32 writes, preserving the original prefix on failure. -/
+@[expose, extern "lean_hex_groebner_remap_columns"]
+def remap (positions support : @& ByteArray) (start count : @& Nat)
+    (output : ByteArray) : Option ByteArray := remapPortable positions support start count output
+
+/-- SplitMix64 finalizer for packed monomial-ID hash slots. -/
+@[expose] def slot (id : UInt64) (capacity : Nat) : Nat :=
+  let h := (id ^^^ (id >>> 30)) * 0xbf58476d1ce4e5b9
+  let h := (h ^^^ (h >>> 27)) * 0x94d049bb133111eb
+  ((h ^^^ (h >>> 31)) &&& (capacity - 1).toUInt64).toNat
+
+/-- Exact open-addressed lookup. Each eight-byte bucket contains a u32 ID and
+u32 column plus one; zero values are empty. The builder records the longest
+successful probe chain, at most 64, so absence is also bounded. -/
+@[expose] def lookup (slots : @& ByteArray) (probes id : Nat) : Option Nat := Id.run do
+  let capacity := slots.size / 8
+  if slots.size % 8 != 0 || capacity == 0 || capacity &&& (capacity - 1) != 0 ||
+      probes > 64 || id >= 4294967296 then return none
+  let mut bucket := slot id.toUInt64 capacity
+  for _ in [:probes] do
+    let value := read slots 4 (bucket * 8 + 4)
+    if value == 0 then return none
+    if read slots 4 (bucket * 8) == id then return some (value - 1)
+    bucket := (bucket + 1) &&& (capacity - 1)
+  return none
+
+/-- Translate at most 4096 IDs through a packed exact hash table. At most 64
+probes per ID bounds the native call even under adversarial hash collisions. -/
+@[expose] def remapIndexPortable (slots support : @& ByteArray)
+    (start count probes : @& Nat) (output : ByteArray) : Option ByteArray := Id.run do
+  let capacity := slots.size / 8
+  if slots.size % 8 != 0 || capacity == 0 || capacity &&& (capacity - 1) != 0 ||
+      probes > 64 || count > 4096 || start > support.size / 4 ||
+      count > support.size / 4 - start || output.size + count * 4 >= USize.size then
+    return none
+  let mut output := output
+  for i in [:count] do
+    let id := read support 4 ((start + i) * 4)
+    let some column := lookup slots probes id | return none
+    let column := column.toUInt64
+    output := (((output.push column.toUInt8).push (column >>> 8).toUInt8).push
+      (column >>> 16).toUInt8).push (column >>> 24).toUInt8
+  return some output
+
+/-- Exact native hash translation, consuming only the output buffer. It
+preserves borrowed/output aliases, reserves once and commits size on success. -/
+@[expose, extern "lean_hex_groebner_remap_index"]
+def remapIndex (slots support : @& ByteArray) (start count probes : @& Nat)
+    (output : ByteArray) : Option ByteArray :=
+  remapIndexPortable slots support start count probes output
+
+/-- Append at most 4096 zero bytes to an owned prefix with checked addressability. -/
+@[expose] def zerosPortable (output : ByteArray) (count : @& Nat) : Option ByteArray := Id.run do
+  if count > 4096 || output.size + count >= USize.size then return none
+  let mut output := output
+  for _ in [:count] do output := output.push 0
+  return some output
+
+/-- Bounded zero initialization with ordinary copy-on-write and linear growth. -/
+@[expose, extern "lean_hex_groebner_append_zeros"]
+def zeros (output : ByteArray) (count : @& Nat) : Option ByteArray :=
+  zerosPortable output count
+
+end Columns
+
+
+namespace Support
+
+/-- Queue the previously unseen u32 arena IDs in one slice, preserving first
+occurrence order. The bitmap has at least ceil(arena count/8) bytes. Pending is
+an arbitrary prefix; its contents do not seed the bitmap. A slice contains at
+most 4096 terms. Malformed geometry, out-of-range IDs or a larger slice return
+none. Existing bitmap bits and pending entries are retained. -/
+@[expose] def queuePortable (count : UInt64) (ids : @& ByteArray) (start terms : Nat)
+    (bits : ByteArray) (pending : Array Nat) : Option (ByteArray × Array Nat) := Id.run do
+  let count := count.toNat
+  if count > 4294967296 || bits.size < (count+7)/8 || ids.size%4 != 0 ||
+      terms > 4096 || start > ids.size/4 || terms > ids.size/4-start then return none
+  let mut bits := bits
+  let mut pending := pending
+  for i in [start:start+terms] do
+    let id := read ids 4 (4*i)
+    if id ≥ count then return none
+    let pos := id/8
+    let mask : UInt8 := 1 <<< (id%8).toUInt8
+    let value := bits[pos]!
+    if value &&& mask == 0 then
+      bits := bits.set! pos (value ||| mask)
+      pending := pending.push id
+  return some (bits,pending)
+
+/-- Bounded native support queue. The ID slice is borrowed; bitmap and pending
+are consumed, with copy-on-write for shared storage and borrowed aliases.
+Validation precedes mutation. No pointer is retained and byte order is explicit. -/
+@[expose, extern "lean_hex_groebner_queue_support"]
+def queue (count : UInt64) (ids : @& ByteArray) (start terms : @& Nat)
+    (bits : ByteArray) (pending : Array Nat) : Option (ByteArray × Array Nat) :=
+  queuePortable count ids start terms bits pending
+
+
+/-- Clear only a visited slice of u32 IDs. The bitmap is consumed and the
+queue is borrowed. Invalid slices, IDs outside u32 or positions outside the
+bitmap return none; at most 4096 entries are visited. Other bits are preserved. -/
+@[expose] def clearPortable (bits : ByteArray) (queue : @& Array Nat) (start terms : Nat) :
+    Option ByteArray := Id.run do
+  if terms > 4096 || start > queue.size || terms > queue.size-start then return none
+  let mut bits := bits
+  for i in [start:start+terms] do
+    let id := queue[i]!
+    if id ≥ 4294967296 || id/8 ≥ bits.size then return none
+    let pos := id/8
+    let mask : UInt8 := 1 <<< (id%8).toUInt8
+    bits := bits.set! pos (bits[pos]! &&& ~~~mask)
+  return some bits
+
+/-- Bounded native clearing with complete prevalidation and copy-on-write for
+shared bitmaps. The visited array is borrowed and no pointers are retained. -/
+@[expose, extern "lean_hex_groebner_clear_support"]
+def clear (bits : ByteArray) (queue : @& Array Nat) (start terms : @& Nat) : Option ByteArray :=
+  clearPortable bits queue start terms
+
+end Support
 
 end Hex.Groebner.Native

@@ -31,12 +31,17 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
           let p ← Polynomial.normalize context limits k #[⟨exponents,1⟩]
           basis := basis.push ⟨p,0⟩
         let index ← ReducerIndex.build context limits basis
-        if n ≤ 513 && index.packed.isNone then return false
-        if n > 513 && index.packed.isSome then return false
+        if n ≤ 2047 && index.packed.isNone then return false
+        if n > 4096 && index.packed.isSome then return false
         for k in [:5] do
           let values := (Array.range n).map fun i => (base+(k+2*i+seed)%4).toUInt64
           let monomial ← intern limits values
           let state ← get
+          let (plain,plainWork) := ReducerIndex.findPortable context index basis state.table monomial
+            state.statistics.work limits.work false
+          let (pruned,prunedWork) := ReducerIndex.findPortable context index basis state.table monomial
+            state.statistics.work limits.work
+          if !equal plain pruned || prunedWork > plainWork then return false
           for allowance in [0,1,2,5,17,1000,4096,100000,2^90] do
             let budget := { limits with work := state.statistics.work+allowance }
             let (expected,work) := ReducerIndex.findPortable context index basis state.table monomial
@@ -45,17 +50,17 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
             if !equal actual expected || next.statistics.work != work then return false
             if let some view := index.packed then
               let a := Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64
-                monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 4096).toUInt64
+                monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 32768).toUInt64
               let b := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64
-                monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 4096).toUInt64
+                monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 32768).toUInt64
               if a.status == 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
         return true
-      match trial.run ⟨{arity := n},{}⟩ with
+      match trial.run { table := { arity := n }, statistics := {} } with
       | (.ok true,_) => pure ()
       | _ => return false
   return true
 
-/-- Maximum admitted tree, reaching 4095 charged visits and edge tests. -/
+/-- A 2048-node chain exercises the previous format boundary and 4095 units. -/
 def boundaryChecks : Bool := Id.run do
   let context : Context := ⟨field,2047,.grevlex⟩
   let trial : Computation Bool := do
@@ -70,9 +75,9 @@ def boundaryChecks : Bool := Id.run do
     let monomial := p.monomial 0
     for allowance in [0,1,2,3,4093,4094,4095,4096,2^90] do
       let a := Native.Trie.lookup view 4 state.table.count.toUInt64 monomial.toUInt64
-        state.table.exponents state.table.metadata (min allowance 4096).toUInt64
+        state.table.exponents state.table.metadata (min allowance 32768).toUInt64
       let b := Native.Trie.lookupPortable view 4 state.table.count.toUInt64 monomial.toUInt64
-        state.table.exponents state.table.metadata (min allowance 4096).toUInt64
+        state.table.exponents state.table.metadata (min allowance 32768).toUInt64
       if a.status == 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
       if allowance ≥ 4095 && (a.status != 1 || a.work != 4095 || a.reducer != some 0) then return false
     for viewData in [view.nodes.extract 0 (view.nodes.size-1),
@@ -80,7 +85,8 @@ def boundaryChecks : Bool := Id.run do
         Native.write view.nodes 4 8 2,Native.write view.nodes 4 12 1,
         Native.write view.nodes 4 (24*(index.nodes.size-1)+16) 0,
         Native.write view.nodes 4 (24*(index.nodes.size-1)+20) (view.maxLeading.toNat+1),
-        Native.write view.nodes 4 28 0] do
+        Native.write view.nodes 4 28 0,Native.write view.nodes 4 40 0,
+        Native.write view.nodes 4 40 2,Native.write view.nodes 4 16 2] do
       if (Native.Trie.View.check view.arity viewData view.edges view.maxLeading).isSome then return false
       if Native.Trie.valid view.arity viewData view.edges view.maxLeading !=
           Native.Trie.validPortable view.arity viewData view.edges view.maxLeading then return false
@@ -102,9 +108,103 @@ def boundaryChecks : Bool := Id.run do
         arena state.table.metadata 4096
       if a.status != 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
     return true
-  match trial.run ⟨{arity := 2047},{}⟩ with
+  match trial.run { table := { arity := 2047 }, statistics := {} } with
   | (.ok true,_) => return true
   | _ => return false
+
+/-- Large views run natively within the format-wide quantum. Every parent
+allowance has the exact portable prefix without discarded traversal work. -/
+def largeChecks : Bool := Id.run do
+  let context : Context := ⟨field,1,.grevlex⟩
+  let trial : Computation Bool := do
+    let mut basis : Array BasisElement := #[]
+    for k in [:2100] do
+      let p ← Polynomial.normalize context limits k #[⟨#[k],1⟩]
+      basis := basis.push ⟨p,0⟩
+    let index ← ReducerIndex.build context limits basis
+    let some view := index.packed | return false
+    if index.nodes.size != 2101 then return false
+    -- Root 2 equals a child bound but is not the minimum of all children.
+    let wrong := Native.write view.nodes 4 16 2
+    if Native.Trie.valid view.arity wrong view.edges view.maxLeading ||
+        Native.Trie.validPortable view.arity wrong view.edges view.maxLeading then return false
+    if Native.Trie.valid view.arity view.nodes view.edges view.maxLeading !=
+        Native.Trie.validPortable view.arity view.nodes view.edges view.maxLeading then return false
+    let state ← get
+    for query in [0,2000,2099] do
+      let monomial := basis[query]!.polynomial.monomial 0
+      for allowance in [0,1,2099,2100,2101,2102,4095,4096,4200,4201,32767,32768,100000,2^90] do
+        let raw := Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
+          state.table.exponents state.table.metadata (min allowance 32768).toUInt64
+        let model := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
+          state.table.exponents state.table.metadata (min allowance 32768).toUInt64
+        if raw.reducer != model.reducer || raw.work != model.work || raw.status != model.status then return false
+        if raw.status == 3 then return false
+        let budget := { limits with work := state.statistics.work+allowance }
+        let (expected, work) := ReducerIndex.findPortable context index basis state.table monomial
+          state.statistics.work budget.work
+        let (actual, next) := (index.find context budget basis monomial).run state
+        if !equal actual expected || next.statistics.work != work then return false
+        if allowance ≥ 100000 && !equal actual (.ok (some query)) then return false
+    return true
+  match trial.run { table := { arity := 1 }, statistics := {} } with
+  | (.ok true,_) => return true
+  | _ => return false
+
+/-- The maximum admitted star needs all 32767 node/edge visits: its sparsest
+reducer is visited last. This checks the parent cap as well as the packed model. -/
+def maximumChecks : Bool := Id.run do
+  let context : Context := ⟨field,1,.grevlex⟩
+  let trial : Computation Bool := do
+    let mut basis : Array BasisElement := #[]
+    for k in [:16383] do
+      let raw := if k == 0 then #[RawTerm.mk #[1] 1]
+        else #[RawTerm.mk #[k+1] 1,RawTerm.mk #[0] 1]
+      let p ← Polynomial.normalize context limits k raw
+      basis := basis.push ⟨p,0⟩
+    let index ← ReducerIndex.build context limits basis
+    let some view := index.packed | return false
+    if index.nodes.size != 16384 then return false
+    let state ← get
+    let monomial := basis.back!.polynomial.monomial 0
+    for allowance in [32766,32767,32768,2^90] do
+      let a := Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64
+        monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 32768).toUInt64
+      let b := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64
+        monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 32768).toUInt64
+      if a.status == 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
+      if allowance ≥ 32767 && (a.status != 1 || a.work != 32767 || a.reducer != some 0) then return false
+      let budget := { limits with work := state.statistics.work+allowance }
+      let (expected,work) := ReducerIndex.findPortable context index basis state.table monomial
+        state.statistics.work budget.work
+      let (actual,next) := (index.find context budget basis monomial).run state
+      if !equal actual expected || next.statistics.work != work then return false
+    return true
+  match trial.run { table := { arity := 1 }, statistics := {} } with
+  | (.ok true,_) => return true
+  | _ => return false
+
+/-- Malformed cached bounds agree in C and Lean: understated/overstated
+minima, unknown descendants, empty cached branches and unkeyed terminal nodes. -/
+def cacheChecks (seed : Nat) : Bool := Id.run do
+  let pack (words : Array Nat) := words.foldl (fun bytes n => Packed.push .u32 bytes n.toUInt64) {}
+  let priority := 2+seed%3
+  let nodes := pack #[0,0,1,0,priority,0, 1,1,0,1,priority,0]
+  let edges := pack #[0,1]
+  if !Native.Trie.valid 1 nodes edges 0 || !Native.Trie.validPortable 1 nodes edges 0 then return false
+  for bytes in [Native.write nodes 4 16 (priority-1), Native.write nodes 4 16 (priority+1),
+      Native.write nodes 4 40 0, Native.write nodes 4 36 0] do
+    let a := Native.Trie.valid 1 bytes edges 0
+    let b := Native.Trie.validPortable 1 bytes edges 0
+    if a || a != b then return false
+  let empty := pack #[0,0,1,0,0,0, 1,1,0,0,0,0]
+  for arity in [1,2] do
+    if !Native.Trie.valid arity empty edges 0 || !Native.Trie.validPortable arity empty edges 0 then return false
+    for bytes in [Native.write empty 4 40 1, Native.write empty 4 16 1] do
+      let a := Native.Trie.valid arity bytes edges 0
+      let b := Native.Trie.validPortable arity bytes edges 0
+      if a || a != b then return false
+  return true
 
 /-- Independent preference cases force a later visited leaf to win by sparsity
 or degree, and distinguish LIFO ties from basis-index order. -/
@@ -129,6 +229,11 @@ def policyChecks : Bool := Id.run do
           state.table.count.toUInt64 monomial.toUInt64 state.table.exponents state.table.metadata 4096
         let (reference, _) := ReducerIndex.findPortable context index basis state.table
           monomial state.statistics.work (state.statistics.work+4096)
+        let (plain, plainWork) := ReducerIndex.findPortable context index basis state.table
+          monomial state.statistics.work (state.statistics.work+100000) false
+        let (pruned, prunedWork) := ReducerIndex.findPortable context index basis state.table
+          monomial state.statistics.work (state.statistics.work+100000)
+        if !equal plain pruned || prunedWork > plainWork then return false
         if actual.status != 1 || !equal (.ok actual.reducer) reference then return false
         if query == #[3,3] && actual.reducer != some expected then return false
         for allowance in [:32] do
@@ -138,10 +243,16 @@ def policyChecks : Bool := Id.run do
           let (value, next) := (index.find context budget basis monomial).run state
           if !equal value reference || next.statistics.work != work then return false
       return true
-    match trial.run ⟨{ arity := 2 },{}⟩ with
+    match trial.run { table := { arity := 2 }, statistics := {} } with
     | (.ok true,_) => pure ()
     | _ => return false
   return true
+
+#guard cacheChecks 0
+
+#guard largeChecks
+
+#guard maximumChecks
 
 #guard policyChecks
 

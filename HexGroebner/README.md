@@ -11,6 +11,22 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
+Symbolic support membership uses a bitmap of stable arena identifiers. It grows
+as reducer products are interned and preserves first-occurrence queue order.
+The workspace retains the bitmap across preparations and checkpoints. Growth
+counts against the parent work and packed-byte limits once; the next preparation
+clears only the previously visited identifiers and charges that clearing work.
+Cache hits and separate-tail normal forms reuse the paid-for bitmap payload.
+Deterministic, sampled and certificate-producing loops move the workspace out
+of the old round state before running the next computation. Column sorting
+consumes the visited queue; the sorted columns also identify bits to clear.
+Externally retained checkpoints and shared raw buffers preserve their snapshots
+through ordinary copy-on-write.
+With `nativeMonomials := true`, a bounded operation validates and queues slices
+of at most 4096 packed identifiers. Shared and borrowed buffers retain their
+contents; disabling native monomial operations selects the portable definition.
+The [support-queue measurements](../reports/bench-results/hexgroebner-support.md)
+separate primitive timings, complete F4 candidate timings and independent checks.
 Joint matrix elimination stably orders targets by decreasing leading-column
 index, then increasing support size, retaining input order for equal keys.
 This starts with smaller leading monomials in the decreasing monomial column
@@ -27,7 +43,25 @@ A bounded owned native operation can complete lookup or insertion within the
 current width and index capacity, for up to 2047 variables and 4096 additional
 work units. Unsupported shapes, widening, index growth and tight allowances
 return the unchanged table; portable continuation starts after the native frame
-returns. Shared and aliased buffers retain their original contents. Field/order metadata is checked before
+returns. Multiplied polynomial supports use slices of at most 64 identifiers,
+reduced to `max(1, floor(4096/(3*arity+4)))` as arity grows, leaving room
+for extra collision-chain headers. A one-term slice retains the scalar loop
+to reuse its workspace; this starts at arity 682.
+A native batch can complete product lookups and same-width, same-capacity
+insertions within 4096 total charged work units, returning stable identifiers
+and the complete final workspace and table work. Errors, widening, index growth
+and unsupported geometry defer the unchanged table to scalar operations.
+Every slice uses the remaining parent allowances. Conformance compares the
+complete slice loop with the original scalar failure prefixes.
+`productsWith_spec` proves the pure wrapper equal to its scalar model;
+conformance checks the C provider's result and exact admission decisions.
+Explicit borrowed-support aliases use controlled copies that preserve the linear
+mark, including when the table is shared. Other arena sharing retains Lean's
+nonlinearity diagnostics. The private exponent plan uses the conservative
+4096-coordinate scratch bound; successful insertion bytes are at most 5460,
+since `terms*(3*arity+1) ≤ 4096` and each coordinate uses at most four bytes.
+The complete private plan remains below 32 KiB.
+Shared and aliased buffers retain their original contents. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
 hit checks the complete base polynomial, comparing at most 4096 bytes per native
 call; basis changes cannot silently reuse a different row. Sugar and certificate
@@ -107,7 +141,126 @@ basis size, cumulative matrix rows/entries, monomials and variables have
 separate bounds.
 Batch size has a minimum of one. Nested hashing, widening, sorting, polynomial
 arithmetic and matrix work share the remaining parent allowance. These are
-operational counters, not predictions of elapsed time.
+operational counters, not predictions of elapsed time. `Statistics.matrixTargets`
+counts target rows in calls that reach the elimination kernel; `matrixReductions` counts
+completed pivot applications, and `matrixZeroRows` counts rows found zero. These
+include failed-call prefixes and repeated work after an atomic-stage retry.
+Zero rows include inputs that were already empty. F4 symbolic reducers have
+distinct leading columns, so successful F4 calls count zero rows only among
+targets. The conformance corpus checks matrix-counter agreement between
+successful uninterrupted traced and unchecked computations with the same
+strategy. Exhaustion and resumption can produce different prefixes and repeated
+work. These counts describe algebraic work rather than elapsed time or the
+probability of a sampling miss.
+
+`Sampled.computeWith context limits generators random config` selects seeded
+candidate production with random combinations in pair rounds. Input normalization
+and final interreduction retain deterministic F4. `Sampling.Config` fixes block
+size (1–4096) and a positive total-zero stopping count; the count does not reset
+after a new pivot. Full-field coefficients use `Hex.Rand` rejection draws. No
+uniformity, independence or rank-preservation probability is asserted for this
+pseudorandom generator. Block sugar labels bound all contributing rows.
+
+The optional `minimumTargets` argument selects deterministic elimination for
+pair matrices below that target count, after the same pair selection and symbolic
+preprocessing. Its default is zero. The sealed continuation and candidate retain
+the policy; deterministic batches consume parent allowances without drawing random
+words. `hexgroebner_sample --min-targets N` exposes the same option. This does
+not turn sampled candidates into checked bases. Final certification remains
+independent. The cutoff can improve small-matrix costs, but is not a universal
+performance choice across fields and systems.
+
+When a minimum target count is requested, a smaller pair matrix uses atomic
+deterministic elimination within its preparation slice. The `matrixSteps`
+quantum applies to sampled matrices. A deterministic batch can contain many
+reducers even when its target count is small; exhaustion retries selection,
+preprocessing and elimination, charging repeated work. A changed resumed
+batch-size cap can change the cutoff decision. Pending sampled matrices retain
+their selected rows and advanced random state.
+
+`Sampled.Result.candidate` carries an unchecked `Sampled.Candidate`, ordinary work
+statistics and separate sampling counts. The candidate retains the initial random
+state, sampling controls and monomial-arena counts alongside the advanced state.
+Independent complete-basis certification
+remains necessary. The current route exposes candidate production and separate
+`certifyWith` validation; a checked retry/fallback driver remains to be implemented.
+The conformance corpus includes deliberate rank misses that certification rejects.
+The [sampling measurements](../reports/bench-results/hexgroebner-sampling.md)
+retain the negative and inconclusive development campaigns. Sampling remains
+slower overall than deterministic F4 on that suite and is explicitly opt-in.
+
+A sealed `Sampled.State` fixes context, inputs, scheduling and sampling controls.
+It preserves the selected pair batch, column map, advanced random state, accepted
+coefficient and partial combination/scan/gather on exhaustion. Resumption charges
+only new matrix work; atomic output decoding or basis-update retries charge their
+repeated work. `Sampled.resumeWith` also accepts a scheduling quantum: its
+`suspended` result retains unfinished work without claiming budget exhaustion.
+Each call performs at most one million outer slices, each with at most 64 matrix
+phases. The optional matrix quantum is clamped to 1–64 phases. Library callers
+continue `.suspended` states when they want completion; the CLI does this
+automatically. Native combination, scan and gather calls inspect at most 4096 entries.
+Combination bounds omit untouched columns and extend when reducers introduce a
+later column. Inversion reserves its multiplication cost and the gather column-sweep charge
+before charging work, so phase resumption does not repeat an inverse prefix.
+Gather normalization is charged incrementally as output entries are appended.
+
+Sampling charges random words, combination updates, validation, initialization,
+elimination, output and subsequent F4 work to the parent allowances. The row
+allowance and matrix row/target counters include original inputs and generated
+combinations. `Sampled.Statistics.inputTargets` and `combinations` separate these
+classes. A generated row is counted when submitted to elimination; a pending
+combination retains its consumed words if the row allowance is exhausted.
+`Sampling.next_spec` and `advance_spec` prove agreement with scalar phases;
+compiled native/scalar and sanitizer checks cover actual foreign execution.
+
+`Limits.densePivots` optionally prepares checked dense pivot buffers for
+untraced deterministic M31 matrices (`p = 2147483647`). It defaults to `false`;
+the driver accepts `--dense-pivots true|false`. Other fields, certificate
+production and sampled computation retain their existing sparse kernels.
+Admission requires 128–4096 nonzero entries, at most 65536 matrix columns,
+a non-contiguous span at least three-quarter full, and sufficient parent work
+and packed-byte allowances. Fully contiguous pivots use the existing sparse
+kernel's contiguous SIMD path. Matrices without any admitted cache also keep
+that path.
+
+Each cache retains its immutable sparse source. The typed cache proves exact
+coefficient equality, source-array correspondence and whether any dense buffer
+is active. Preparation reserves its entire bounded cost before traversing the
+row. Dense updates preserve zero gaps, every intermediate cursor and the first
+malformed-target prefix; partial pending reductions use locally bounded dense packets or sparse updates. A call
+advances at most 4096 logical updates and 8192 dense cells. Cache preparation
+and payload count against the same parent allowances as elimination. The
+continuation and whole-eliminator correspondence proofs include these charges.
+Bulk elimination retains its ordinary frame eligibility. Its validated monic
+rows determine exact preparation charges without materializing unused caches;
+the same parent-budget refusal rules and fixed work quantum still apply.
+The low-level `MatrixLimits.densePivots` also charges requested preparation in
+reference and traced calls, preserving the exact shared counter contract; those
+routes discard caches. Scalar row updates remain scalar, while explicitly
+requested preparation uses its bounded native provider. The polynomial
+certificate producer does not enable that low-level policy.
+This option does not establish a full-system speedup or the performance milestone.
+
+`Limits.binaryPivots` optionally uses private bit-packed pivots and an accumulator
+in untraced ordinary F2 matrix frames. It defaults to `false`; the deterministic
+driver accepts `--binary-pivots true|false` and records the requested policy.
+This preserves ordinary polynomial semantics, including distinct monomials
+`x` and `x²`. Other fields retain their existing route. Admission permits at
+most 16384 columns, 16384 reducers and 1024 targets, with bounds of `2^32`
+reference work and `2^28` packing/scalar/word visits. The private bitmap stores
+at most the lesser of the row and column counts in pivot rows, plus one
+accumulator. Its complete payload fits the remaining packed-byte allowance
+alongside the complete sparse-reference charges. Those logical counters remain
+identical; the private buffers never escape the call. Sparse wide pivots toggle
+their explicit entries, while denser pivots use exact word XOR. Word scans and
+gathers decode the same byte layout on every host.
+
+A byte-allowance refusal can discard a partially or fully processed native frame
+before the reference continuation succeeds. Speculation is bounded per frame;
+multiple matrix calls can incur it. The reservation is conservative: reference workspace charges coexist with the
+private accumulator allowance, and empty or sparse-only pivots still reserve
+bitmap rows. The certificate producer leaves this low-level policy disabled.
+This policy has no fastest-open-source claim.
 
 The packed-payload allowance is not a process-memory limit: it excludes
 hash tables, tree nodes, object headers and allocator capacity. Structural
@@ -120,12 +273,17 @@ semantic hash and support mask. Hash buckets use full exponent equality checks.
 Exponent storage widens from 8 to 16 to 32 bits before overflow, preserving
 identifiers and hashes. Larger exponents produce representation exhaustion.
 Divisibility masks only reject candidates; trie paths inspect exact exponents.
-Small immutable reducer indices also retain a validated packed tree. Read-only
-native lookup admits at most 2048 nodes and 2047 edges, preserving sparse-row
-preference, higher-degree tie breaking and LIFO traversal ties.
+Immutable reducer indices also retain a validated packed tree when small enough.
+The validated format admits at most 16384 nodes and 16383 edges. Lookup preserves
+sparse-row preference, higher-degree tie breaking and LIFO traversal ties.
 Lean assigns explicit priorities once; native lookup selects the least admitted
-priority without implementing the F4 preference policy.
-Its fixed stack and at most 4095 charged node/edge visits bound each call.
+priority without implementing the F4 preference policy. Checked descendant
+priority bounds skip non-improving subtrees; a divisor attaining the root bound
+ends the search because no remaining leaf can improve its priority.
+Its fixed 16384-entry stack and 32768-unit query quantum cover every complete
+walk of at most 32767 node/edge visits. Unsupported formats decline before
+traversal; larger indices retain ordinary traversal under the parent allowance.
+Validation separately inspects at most 32767 node/edge records.
 Encoding and validation charge the parent work and packed-byte allowances;
 insufficient preparation allowances and larger trees retain ordinary traversal.
 Queries use the current arena and exponent width, so stable IDs remain valid
@@ -156,7 +314,9 @@ zero and larger arities use it automatically. Both routes preserve stable IDs,
 exact overflow rejection and successful work counters. Both backends reserve the same workspace payload after the first monomial,
 including when the physical buffer has not yet been allocated or was consumed
 by a failed operation. Byte and monomial-count exhaustion are explicit distinct
-errors. Shared states copy the workspace before mutation; unique owners reuse it. Native primitives have transparent portable bodies,
+errors. The single-monomial operation copies shared workspaces and reuses
+uniquely owned buffers. A successful lookup batch allocates a fresh final
+workspace and result slice. Native primitives have transparent portable bodies,
 check geometry before access and preserve borrowed source bytes under aliasing.
 The `*Arrays` benchmarks compare complete candidates on these two routes.
 
@@ -176,7 +336,12 @@ Outputs are monic echelon rows in the original column order. `fromTarget`
 identifies added row-space dimension. The retained reducer rows span the input
 reducer space. Pivot metadata retains the normalization scalar and propagated
 sugar, allowing ordinary remainders to preserve their original coefficients.
-Native scan and row-extraction calls process at most 4096 transitions or
+Untraced native elimination first tries a complete matrix frame on the 64-bit
+ABI, with at most 4096 columns, 1024 known reducers, 64 targets and a conservative
+`2^20` work quantum. Unsupported shapes continue outside the native frame.
+Cancellation is observed between these bounded calls; the whole-matrix quantum
+is coarser than a scan or gather chunk. Native scan and row-extraction calls
+within this frame or the ordinary route process at most 4096 transitions or
 columns. A scan transition visits a column, updates one sparse entry, or completes
 one reduction; a long row resumes with its work already reserved. Row extraction
 normalizes nonzero entries and clears the accumulator. Both operations retain
@@ -188,12 +353,49 @@ also support ordinary-kernel replay independently of the C implementation.
 Owned accumulator/output buffers use copy-on-write when aliased; input pivot
 buffers remain borrowed.
 
+The ordinary matrix loop also uses native validation for rows of at most 65,537
+entries and at most 2^32−1 ambient columns on 64-bit hosts, with input counters
+below 2^62. Calls decline before charges outside that geometry. Native zeroed
+buffer allocation admits at most one MiB per call; larger buffers use the
+portable allocator. Both bindings borrow inputs and return fresh owned results.
+`Matrix.validateWith_spec` and `Matrix.zerosWith_spec` equate their Lean models
+to the original operations, including exact first errors and charge prefixes.
+The C implementations are audited and compared independently. Disabling native
+rows also disables these validation/allocation calls. The existing column-map
+builder separately uses the 4096-byte append-zero provider in chunks.
+
+The five Groebner native objects use the host `cc` by default. To choose a
+specific compiler, run `lake -R -KhexGroebnerCC=/absolute/path/to/clang build HexGroebner`.
+The compiler path string and flags are part of the object build traces; compiler
+contents and PATH resolution are not. Prefer absolute immutable paths, and clean
+native objects and any enabled artifact cache after upgrading a compiler in place.
+Set `TMPDIR` to a writable directory when the build environment restricts `/tmp`. Other
+libraries and Lean-generated C retain their own compiler choices. Lake retains
+this setting across later plain builds; use `-R` when changing it.
+`lake -R build` restores defaults and
+resets other `-K` settings too. The freeze tool's `--native-cc` option makes
+compiler commands absolute before detached builds while preserving symlink invocation
+names. It records compiler identities and any `--compiler-input` files supplied.
+[Compiler observations](../reports/bench-results/hexgroebner-compiler.md) keep
+Groebner-only and broader compiler changes separate, with no overall speed claim.
+
 The native scan dispatches once per bounded call to specialized one-, two- or
-four-byte scalar loops. Scalar products use uint128 Barrett reduction when
+four-byte scalar loops. In characteristic two, validated subtraction uses exact
+XOR. Other scalar products use uint128 Barrett reduction when
 available and exact word remainder otherwise. One- and two-byte residues use a
 32-bit reciprocal; four-byte residues use a 64-bit reciprocal. Products fit below
 `p² < 2^62`; subtraction uses an unsigned wrap mask.
+[Scalar F2 observations](../reports/bench-results/hexgroebner-xor.md) retain
+matched development comparisons and the remaining msolve gap.
 On x86 with runtime AVX2 support, odd moduli use eight exact products at a time.
+Sixteen-lane dispatch is opt-in: run
+`lake -R -KhexGroebnerAVX512=true build` to enable it, and `lake -R build`
+to restore the default. Lake retains these settings for later plain builds;
+reconfiguration resets other `-K` settings too, so supply any you need again.
+With that option, AVX-512F/DQ/BW/VL and the corresponding
+OS register state available, the ordinary sparse scan first attempts sixteen exact products. Refused packets
+continue through the eight-lane and scalar paths in order. The optional dense
+pivot cache retains its existing AVX2 path.
 One- and two-byte coefficients use a 32-bit Barrett reciprocal: the product is
 below `2^32`, so the approximate quotient is low by at most one. Four-byte
 coefficients use Montgomery products. The factor alone is temporarily converted
@@ -201,8 +403,8 @@ to Montgomery form; stored coefficients remain canonical residues. For
 `R = 2^32`, the unreduced numerator is below `p² + R*p < 3*2^62`, so unsigned
 64-bit lanes cannot overflow and one correction suffices.
 
-For `p = 2^31 - 1`, a separate dispatch uses exact Mersenne folding on contiguous
-vectors and Montgomery products on scattered vectors. The folded product is below
+For `p = 2^31 - 1`, a separate dispatch uses exact Mersenne folding on both contiguous
+and scattered vectors. The folded product is below
 `2*p`, so one subtraction gives the canonical residue. The native harness counts
 these folds inside complete F4 calls and checks both vector layouts separately. Contiguous columns
 use vector loads/stores; other supports use gathers and scalar stores. Narrow
@@ -211,17 +413,23 @@ entire read lies within the logical buffer. Boundary vectors use scalar updates.
 A vector is validated before mutation; a malformed vector falls back to scalar handling
 so the exact failure prefix is preserved. Other architectures and CPUs use the
 scalar implementation. No floating-point arithmetic or global ISA flag is
-required. CPU detection checks CPUID and the OS-enabled YMM state, caches the
+required. CPU detection checks CPUID and the OS-enabled YMM/ZMM state, caches the
 result atomically and needs no compiler-runtime CPU model symbols.
+The internal `HEX_GROEBNER_NO_AVX512` test define retains AVX2 dispatch;
+`HEX_GROEBNER_NO_AVX2` disables both vector providers. [Matched observations](../reports/bench-results/hexgroebner-avx512.md)
+show kernel improvements on the measured Zen 5 host without an overall F4 speed claim.
+Performance on other microarchitectures and unmeasured coefficient widths remains
+unevaluated; the default remains AVX2 or scalar.
 
 `scripts/ci/check_groebner_rows.sh` runs the standalone native tests and the
-compiled matrix harness. `scripts/ci/check_groebner_matrix.py` compares all four
-SIMD/scalar and Barrett/remainder build combinations with the portable model,
+compiled matrix harness. `scripts/ci/check_groebner_matrix.py` compares all six
+opt-in/forced-AVX2/scalar and Barrett/remainder build combinations with the portable model,
 including valid strided vectors and even moduli. Native call counters ensure
 that the linked test implementations actually run; successful contiguous and
 strided SIMD calls are counted separately at each of the three coefficient
 widths. `HEX_GROEBNER_REQUIRE_AVX2=1` requires
-hardware SIMD coverage. Set `HEX_GROEBNER_SANITIZE=1` for UBSan and ASan on
+hardware SIMD coverage. `HEX_GROEBNER_REQUIRE_AVX512=1` requires actual
+sixteen-lane execution in the automatic variants. Set `HEX_GROEBNER_SANITIZE=1` for UBSan and ASan on
 C-owned memory (the kernel buffers themselves are Lean sarrays), and
 `HEX_GROEBNER_NATIVE_LOG_DIR` to retain its generated Lake project. The compiled
 variant harness uses ELF linker wrapping on Linux; ordinary Lean conformance
@@ -243,6 +451,23 @@ becomes a pivot for another target. Final interreduction shares symbolic closure
 across nonzero tails and uses this mode. `Limits.batchInterreduce := false`
 retains separate tail calls. The `*Separate` lean-bench registrations compare
 these routes under identical fields, inputs and allowances.
+
+`ColumnMap` assigns matrix positions using packed u32 positions plus one for
+identifier prefixes with at most eight slots per column, or exact open-addressed
+u32 key/value buckets for sparse IDs. Full keys resolve every hash collision.
+Geometry alone selects the representation; unsupported IDs, addressability and
+insertion chains beyond 64 probes retain the hash-map route. Every attempted
+probe and initialized packed payload is charged, including a discarded index.
+Rows reserve the maximum recorded probe count per entry; sorting reserves
+two such lookups per comparison. Consequently this
+conservative work model and cumulative packed-byte charges can exhaust earlier
+than the old unit-cost hash map. Both candidate and certificate row construction
+use the same map. Bounded native translation consumes at most 4096 IDs per call;
+`nativeRows := false` retains its scalar Lean model. Marked borrowed/output
+alias handling is defensive support for C callers with one output owner; it
+does not extend Lean’s marked-linearity contract to shared marked values. The
+encoder creates fresh unmarked output. Kernel benchmarks cover
+construction, translation and complete map/output hashing over fixed sizes.
 
 `MatrixLimits` bounds one call's columns, rows, input/output nonzeros, packed
 payload, work and optional provenance nodes. Packed payload counts input,
@@ -475,11 +700,22 @@ Reducer-trie traversal caches node depths and keeps node IDs alone on its stacks
 retain all successful and unsuccessful variants and their complete samples.
 
 `Limits.gebauerMoller` enables minimal-LCM pair installation and proper-LCM
-chain pruning by default. Set it to false for the product/resolved-chain
-reference. Omitted obligations remain distinct from completed pairs, and the
-basis is not deleted or renumbered. [Matched pair-management measurements](../reports/bench-results/hexgroebner-gm.md)
+chain pruning by default. When a newer leading monomial divides an older one,
+the older index retires from future pair generation after installation of their
+connecting pair obligation. Its polynomial remains available as a reducer and
+all existing queued pairs remain. Equal-LCM retirement chains require a
+retirement-depth component in the outstanding pair-coverage proof.
+Set the option to false at the start for the product/resolved-chain reference.
+A mid-run change preserves the existing queue and retirements; it does not
+reconstruct a fresh reference run. Omitted obligations remain distinct from
+completed pairs, and the basis is not deleted or renumbered.
+The `pairs` statistic and allowance count considered pairs: retired indices
+produce no future pair attempts under GM. [Matched pair-management measurements](../reports/bench-results/hexgroebner-gm.md)
 include the small-system regression and full raw samples. Full F4 invariant
 and termination proofs remain required.
+[Retirement measurements](../reports/bench-results/hexgroebner-retirement.md)
+retain both tested data structures, per-family regressions and the matched
+remaining gap to msolve.
 
 GM installation interns LCMs even for pairs later omitted by its criteria.
 Those stable monomials remain in the arena and count against `monomials` and
@@ -557,6 +793,8 @@ characteristic two.
 Successful output has `kind: "unchecked_candidate"`, explicit field/order
 metadata, `scheduling: "degree"` or `"sugar"`, the complete candidate basis and cumulative statistics. It is not a
 checked basis receipt. Use `certifyWith` or `basisWith` for checked results.
+Consumers must compare parsed JSON values: object field order and whitespace
+are not part of the output contract. The driver emits `basis` after its metadata.
 Malformed input, exhausted allowances, representation exhaustion and internal
 matrix failures have distinct kinds: exit 2 is invalid input, 3 exhaustion,
 4 representation exhaustion and 5 an internal matrix error. Uncaught IO failures
@@ -580,3 +818,72 @@ Matched development sweeps use `scripts/bench/groebner_cli_measure.py`; its help
 requires that frozen binary/source manifest, a suite and explicit output directory.
 msolve comparisons require its `.libs/msolve` ELF and a clean source tree.
 It retains raw samples and inputs, checks full outputs and applies no timing gate.
+
+Import `HexGroebnerStateNative` to use the matrix continuation separately.
+`MatrixState` provides an owned continuation for untraced matrix elimination.
+`start` fixes the field, inputs, column map and resource limits. `advance`
+returns an exact paused state or a terminal result; its phase count is bounded
+by the matrix shape. Saved snapshots and input buffers remain immutable.
+The 64-bit native frame admits up to 65,536 columns and input rows; other
+shapes use ordinary Lean scheduling with bounded native scan/gather. The
+scalar `advancePortable` is independent of those kernels. `advance_spec`
+relates their Lean models; agreement with C is a tested native obligation.
+
+The continuation has a separate native carrier. Untraced F4 matrix calls retain
+the small bounded bulk frame. When it declines, calls within the native
+scheduler's 65,536-column/input-row limits use the continuation; larger frames
+retain the reference's bounded native scan/gather kernels.
+`MatrixState.finish_reference` proves that completion returns exactly the
+`Elimination.reference` result and counters for every input, budget, quantum and
+provider choice. Import `HexGroebner.EliminationDispatchProof` for
+`Elimination.run_spec`, which covers production dispatch without adding proof
+modules to the executable import graph.
+Conformance compares complete rows, metadata, intermediate states and charged
+counters. `finishState_done` proves that the shape-based allowance suffices for
+terminal completion, including suspended scan/gather states. Per-row scan/gather
+quantum exhaustion can still produce `rowUpdate`; these quantum counts and
+error boundaries match the reference, and neither implementation currently has
+a proof excluding that error on validated inputs. Standalone matrix kernel
+benchmarks make no full-system performance claim.
+
+Terminal continuations retain their workspace for inspection of exact phase
+state and charged prefixes. `finishState` returns this terminal state with its
+workspace attached; `finishWith` extracts the result and statistics and releases
+the state. Manual drivers should drop terminal-state references after extracting
+the result.
+The build-time `MatrixLayout` conformance check compares the listed matrix records and tags with the layout table mirrored
+from `matrix_state.c`, including field names, object slots, scalar offsets
+and same-type swaps.
+
+Within the admitted 64-bit geometry, native validation admits at most
+`columns+1` entries per phase, bounding charge amounts as well as reads and preserves the first error's row/entry indices
+and resource prefix. Larger well-shaped rows use the checked Lean phase.
+Malformed packed lengths fail before the entry loop. `validate_ok` and
+`validate_error` state the corresponding successful and failed Lean model
+transitions; agreement with C is checked by native conformance.
+
+The admitted native workspace phase charges packed bytes and work before
+allocating its zeroed dense and slot buffers. At most 524,288 bytes are
+allocated for the admitted column/width geometry. Exhaustion retains the
+exact charged prefix and leaves the previous buffers unchanged.
+Every Lean workspace phase in `advanceKernels` or the exported `next` uses
+`Matrix.zerosWith` for each buffer: a native zeroing call admits at most one MiB, with larger buffers falling
+back to portable initialization. Address and cumulative byte/work checks precede
+both allocations. `advancePortable` retains independent scalar initialization.
+[Wide-frame measurements](../reports/bench-results/hexgroebner-workspace-zero.md)
+report the effect separately from full-system F4 timings.
+
+`MatrixValidation.validateFrom_zero` equates combined-cursor validation with the
+reference's reducer-then-target loops, including first errors and charged
+prefixes. `Native.Scan.untraced_events` proves that an untraced scalar scan produces
+no derivation events. `State.valid` combines workspace geometry and the
+terminal-result invariant, preserved by `next_valid`, `advance_valid` and
+`finishState_valid`. `finishState_result` guarantees a stored success or error,
+excluding the empty-result fallback. `finishState_schedule` proves exact whole-state
+agreement for arbitrary completion quanta and either provider's Lean definition;
+`finishState_resume` proves exact agreement after arbitrary bounded suspension.
+`advance_one` identifies single-phase calls, and `finishState_next` supplies their
+resumption corollary. Native C agreement remains separately audited and tested.
+Equivalence with `Elimination.reference` remains required before integration.
+Excluding per-row quantum exhaustion on validated inputs is a separate proof
+obligation shared with the reference.

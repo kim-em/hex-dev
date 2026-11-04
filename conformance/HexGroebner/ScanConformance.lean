@@ -135,6 +135,7 @@ private def malformed : Bool := Id.run do
       row #[0,1] #[2,3] 0,row #[0,1] #[1,7] 0,
       row #[0,1] #[1,0] 0,⟨packed 1 #[0,1],packed 1 #[1],0⟩] do
     cases := cases.push (7,slots,#[bad],initial)
+    cases := cases.push (7,slots,#[bad],{ initial with pending := 1,entry := 0 })
   for (p,s,r,input) in cases do
     for quantum in [0,1,2,3,8,4096,4097,2^90] do
       if !equal (transition p s r input quantum 1000 100 true)

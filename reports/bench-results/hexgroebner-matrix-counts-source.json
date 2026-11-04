@@ -1,0 +1,20 @@
+{
+  "reviewed_head": "35af84c30151ab69b91c8989d7d0ac004add710f",
+  "rebased_head": "ada9744bd5720302c9b9894a75cf020d99cf06ff",
+  "tree_before": "9a37fdee77e36a5c1a996e4101a0ee170ed7cecf",
+  "tree_after": "9a37fdee77e36a5c1a996e4101a0ee170ed7cecf",
+  "whole_tree_identical": true,
+  "runtime_source_fingerprint": "b6822c6a5f65",
+  "frozen_source_snapshot": "07725c22cb07eec781d9f04dd71e51b94a1fee14",
+  "frozen_source_commit": "285a8a09902b81731fcedf14af06499091724b0d",
+  "full_check_commit": "285a8a09902b81731fcedf14af06499091724b0d",
+  "extra_failure_guard_commit": "ef129f7da3b1f28869f3ff4240d40278d360d169",
+  "rebase_base": "2cffd7059740e342e32f7c980ac371f61f7ce1db",
+  "scope": "Initial whole-tree rebase preserves the frozen diagnostic source. Later contract comments and named arguments change the runtime source fingerprint; fresh builds at the reviewed runtime commit produce both drivers byte-identically. The validation capsule binds the builds, stronger guards and complete project checks. No timing claim is made.",
+  "binding": "Historical source IDs are snapshot identifiers. Replay uses the retained source.patch against public PR11019 head958daf17b8 (tree-identical to main2cff), tree hashes and the per-blob manifest; no additional hosted archive tag is required.",
+  "reviewed_runtime_commit": "983eb622ba4d651c7c5a0b7256d96bf0e37e7b75",
+  "reviewed_runtime_fingerprint": "ff6634c1918f",
+  "reviewed_binaries_identical_to_frozen": true,
+  "reviewed_validation_capsule": "raw/f4-matrix-counts-review-983eb622ba4d.tar.gz",
+  "reviewed_validation_sha256": "2535cd85ef911a328fd8750707d0b77c4789958e553bc6337fc202c40eea6f9c"
+}

@@ -37,6 +37,26 @@ IMPORT_ALL_RE = re.compile(
 # every owning exception must be an exact reviewed path rather than a suffix or
 # directory convention. The ECM diagnostic observes private preparation costs.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
+    # Owning proofs inspect phase bodies and workspace updates. Replay creates
+    # states only through public start; consumers retain the constructor seal.
+    # These proof modules must not expose public unchecked State builders.
+    "HexGroebner.MatrixState": frozenset({
+        Path("HexGroebner/MatrixStateProof.lean"),
+        Path("HexGroebner/MatrixStateFuel.lean"),
+        Path("HexGroebner/MatrixStateSchedule.lean"),
+        Path("HexGroebner/EliminationOutcome.lean"),
+        Path("HexGroebner/EliminationWorkProof.lean"),
+        Path("HexGroebner/EliminationValidationProof.lean"),
+        Path("HexGroebner/EliminationPhaseProof.lean"),
+        Path("HexGroebner/EliminationGatherStep.lean"),
+        Path("HexGroebner/EliminationScanStep.lean"),
+        Path("HexGroebner/EliminationScanLoop.lean"),
+        Path("HexGroebner/EliminationOrderProof.lean"),
+        Path("HexGroebner/EliminationInputProof.lean"),
+        Path("HexGroebner/EliminationInvariant.lean"),
+        Path("HexGroebner/EliminationProof.lean"),
+        Path("HexGroebner/EliminationGatherProof.lean"),
+        Path("conformance/HexGroebner/MatrixStateReplay.lean")}),
     "HexIntFactor.EcmStage2": frozenset({
         Path("bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean")}),
     # Ordinary-kernel replay of the actual validated native context needs the
@@ -241,6 +261,22 @@ def import_closure_in_library(
     return seen
 
 
+def check_groebner_imports(root: Path) -> list[str]:
+    """Keep optional phase/dispatch proofs out of executable library roots."""
+    modules: set[str] = set()
+    for entry in ["HexGroebner", "HexGroebner.Elimination"]:
+        modules |= import_closure_in_library(root, entry, "HexGroebner")
+    optional = {
+        module_name_for(path)
+        for path in SEALED_IMPORT_ALL_ALLOWLIST["HexGroebner.MatrixState"]
+        if path.parts[0] == "HexGroebner"
+    } | {"HexGroebner.EliminationDispatchProof"}
+    return [
+        f"HexGroebner executable imports optional proof module {module}"
+        for module in sorted(modules & optional)
+    ]
+
+
 def check_umbrella_completeness(
     root: Path, libraries, build_roots: set[str]
 ) -> list[str]:
@@ -396,6 +432,7 @@ def main() -> int:
 
     lean_files = project_lean_files(root)
     errors.extend(check_sealed_import_all(root, lean_files))
+    errors.extend(check_groebner_imports(root))
     errors.extend(check_adapter_imports(root, lean_files, libraries))
 
     for rel_path in lean_files:
