@@ -124,9 +124,14 @@ target hexgroebnerStateO pkg : FilePath := do
     (extraDepTrace := do addLeanTrace; addPureTrace groebnerCompiler.toString "compiler"; pure BuildTrace.nil)
 
 target hexgroebnerEliminationO pkg : FilePath := do
-  let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_eliminate.c"
-  let header ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "matrix_runtime.h"
-  let inputs := source.zipWith (fun source _ => source) header
+  let directory := pkg.dir / "HexGroebner" / "ffi"
+  let source ← inputTextFile (directory / "matrix_eliminate.c")
+  let header ← inputTextFile (directory / "matrix_runtime.h")
+  let simd ← inputTextFile (directory / "matrix_simd.h")
+  let delayed ← inputTextFile (directory / "matrix_delayed.h")
+  let inputs := (source.zipWith (fun source _ => source) header).zipWith
+    (fun source _ => source) simd
+  let inputs := inputs.zipWith (fun source _ => source) delayed
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_eliminate.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]

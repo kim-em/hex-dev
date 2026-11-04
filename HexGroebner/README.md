@@ -255,10 +255,12 @@ certificate producer does not enable that low-level policy.
 This option does not establish a full-system speedup or the performance milestone.
 
 `Limits.delayedReduction` optionally uses exact UInt64 accumulators for untraced
-matrices over primes `3 ≤ p < 2^16`. It defaults to `false`; the deterministic
+matrices over primes `3 ≤ p < 2^31`. It defaults to `false`; the deterministic
 driver accepts `--delayed-reduction true|false` and records the requested policy.
 Each leading column is visited once, so each accumulator cell receives at most
-`columns` products bounded by `(p-1)^2`. Residues are taken before zero tests,
+`columns` products bounded by `(p-1)^2` for primes below `2^16`. Wider primes
+keep each cell below `p^2`; a product and cell sum is below `2*p^2 < 2^63`,
+and one exact correction preserves its residue modulo `p`. Residues are taken before zero tests,
 inversion and normalization. AVX2 processes exact four-lane products and sums,
 with guarded contiguous loads/stores or gathers; other hosts use scalar updates.
 All outputs, labels and logical counters agree with the reference route.

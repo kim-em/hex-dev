@@ -105,7 +105,7 @@ structure Limits where
   densePivots : Bool := false
   /-- Optional private packed F2 pivots in bounded untraced matrix frames. -/
   binaryPivots : Bool := false
-  /-- Optional exact delayed reduction for untraced prime-field matrices with p < 2^16. -/
+  /-- Optional exact delayed reduction for untraced prime-field matrices. -/
   delayedReduction : Bool := false
   /-- Use bounded packed monomial preparation and exact collision comparison. -/
   nativeMonomials : Bool := true

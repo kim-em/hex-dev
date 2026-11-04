@@ -277,9 +277,9 @@ def reference (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
 def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
   limits.binaryPivots && field.modulus == 2
 
-/-- Exact UInt64 accumulation is bounded for these explicitly requested fields. -/
+/-- Exact modular UInt64 accumulation for explicitly requested prime fields. -/
 def delayedEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
-  limits.delayedReduction && field.modulus > 2 && field.modulus ≤ 65536
+  limits.delayedReduction && field.modulus > 2
 
 /-- Additional accumulator bytes and flat borrowed-pivot metadata. -/
 def delayedBytes (field : PrimeField) (columns reducers targets : Nat) : Nat :=
@@ -358,10 +358,12 @@ the sparse computation. Optional dense preparation adds separately charged work;
 `attemptPortable` also checks the final total against the selected frame quantum.
 Opt-in F2 frames additionally bound packing, scanning and word updates by `2^34`
 visits and reserve their complete temporary payload against the packed-byte allowance.
-Opt-in delayed frames over primes below `2^16` use these same dimension ceilings
+Opt-in delayed frames over primes below `2^31` use these same dimension ceilings
 and a `2^38` conservative admission bound; successful reference work is at most
 `2^34`. Each accumulator cell receives at most one product per column, so it
-stays below `(p-1)+columns*(p-1)^2 < 2^50`. Private UInt64 accumulation and
+stays below `(p-1)+columns*(p-1)^2 < 2^50` for primes below `2^16`.
+Wider primes keep each cell below `p^2`; every sum is below `2*p^2 < 2^63`,
+and one correction preserves the residue modulo `p`. Private UInt64 accumulation and
 forty-byte pivot descriptors are reserved against the parent payload. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do

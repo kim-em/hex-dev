@@ -49,7 +49,7 @@ try a complete frame under `Elimination.fits`, which specifies separate dimensio
 ceilings and joint work bounds for ordinary and explicitly requested packed F2
 frames. Private bitmap and metadata bytes additionally fit the packed-byte allowance.
 Explicit `delayedReduction` permits the wider frame dimensions for primes below
-`2^16`, with exact UInt64 accumulation, a `2^38` admission bound and at most
+`2^31`, with exact UInt64 modular accumulation, a `2^38` admission bound and at most
 `2^34` charged reference work. Additional accumulator and pivot metadata bytes
 fit the same parent allowance. Both optimizations preserve every logical counter.
 Declined frames with at most 65536 columns and total input rows
