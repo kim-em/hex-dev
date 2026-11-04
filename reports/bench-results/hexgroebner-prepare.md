@@ -2,11 +2,11 @@
 
 The native product planner prepares independent monomials together, keeping their FNV accumulators in parallel while preserving exact hashes, collision comparisons, stable identifiers, output bytes and logical charges. Preparation reserves its full coordinate work before traversal. Scratch stays below 32 KiB, native work stays within 4096 units, and refusal preserves the input table for scalar continuation.
 
-Baseline `294f219094cd`; candidate `3d6488148183`. The measured runtime delta is confined to `HexGroebner/ffi/monomial_hit.c`. Native compiler Clang 21.1.8, generated-C compiler SDK Clang 23.1.0, toolchain, native flags and benchmark inputs match between arms. Complete compiler identities and host context are retained in the capsule.
+Baseline `294f219094cd`; candidate `3d6488148183`. The measured runtime delta is confined to `HexGroebner/ffi/monomial_hit.c`. Native compiler `clang version 21.1.8`, generated-C compiler `clang version 23.1.0` (SDK), toolchain, native flags and benchmark inputs match between arms. Complete compiler identities and host context are retained in the capsule.
 
 ## Isolated kernels
 
-CPU 81, one algorithm thread, four-second inner targets, three fixed trial-major complexity trials, then adjacent AB/BA matched samples. Preparation is excluded; product lookup, any insertion, validation and result hashing are included. The hit kernels consume complete support/workspace results; the insertion kernel also consumes every arena, metadata and index byte. Independently compiled checks validate all three functions against scalar results at ten sizes, including slice boundaries.
+CPU 81, one algorithm thread, four-second inner targets, three fixed trial-major complexity trials, then adjacent AB/BA matched samples. Benchmark input setup (table interning and support construction) is excluded; monomial preparation, product lookup, any insertion, validation and result hashing are included. The hit kernels consume complete support/workspace results; the insertion kernel also consumes every arena, metadata and index byte. Independently compiled checks validate all three functions against scalar results at ten sizes, including slice boundaries.
 
 | Kernel | n | New / previous time | Below-signal flags |
 |---|---:|---:|---:|
@@ -20,7 +20,7 @@ CPU 81, one algorithm thread, four-second inner targets, three fixed trial-major
 | productMisses | 1024 | 0.750600 | 0 |
 | productMisses | 4096 | 0.736844 | 0 |
 
-`monomialProducts` uses three variables and existing products; `productWide` uses 22 variables and shorter adaptive slices. `productMisses` lacks the last product of each complete 64-term slice. These fixed workloads do not establish an equal full-system improvement.
+`monomialProducts` uses three variables and existing products; `productWide` uses 22 variables and shorter adaptive slices. `productMisses` lacks the last product of each complete 64-term slice. These fixed workloads do not establish an equal full-system improvement. All rows are prepared before lookup, so early refusal can discard the full preparation reservation, still within the 4096-work call bound. The last-term insertion kernel does not measure early-refusal performance.
 
 ## Full-system observations
 
@@ -55,7 +55,7 @@ Raw capsule `f4-product-prepare-3d6488148183.tar.xz`: SHA-256 `12cb7f73af07e0333
 ```bash
 python3 scripts/bench/groebner_prepare_report.py \
   --archive reports/bench-results/raw/f4-product-prepare-3d6488148183.tar.xz \
-  --report reports/bench-results/hexgroebner-prepare.md --check --current
+  --report reports/bench-results/hexgroebner-prepare.md --check
 ```
 
 [Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.

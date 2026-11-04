@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench.groebner_capsule import Capsule
 from scripts.bench.groebner_checks import source_identity
 from scripts.bench.groebner_comparator_report import msolve
+from scripts.bench.groebner_prepare_report import compiler_name
 from scripts.bench.groebner_tables_report import checks
 from scripts.bench.groebner_trie_report import require, source
 
@@ -43,11 +44,13 @@ def main():
                     output['order'] == inp['order'] == 'grevlex' and output['scheduling'] == 'degree' and
                     output['binaryPivots'] and not output.get('densePivots', False) and
                     int(output['randomState']) == 0, 'candidate contract differs')
+    largest = sorted(result['per_family'].items(), key=lambda pair: pair[1], reverse=True)[:2]
+    gaps = ' and '.join(f'`{family}` ({ratio:.6f}×)' for family, ratio in largest)
     lines = ['# F₂ comparator gap after batched preparation', '',
         f'The frozen implementation `{manifest["source_fingerprint"]}` remains slower than pinned msolve '
         f'overall on this diagnostic suite: process geometric mean {result["geomean"]:.6f}×, '
         f'equal-family geometric mean {result["family_balanced_geomean"]:.6f}×. '
-        'Cyclic7 and Eco11 retain the largest family gaps. These observations do not establish '
+        f'The largest family ratios are {gaps}. These observations do not establish '
         'performance leadership or identify a necessary language/runtime change. '
         '[Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.', '',
         f'CPU {meta["cpu"]}, one algorithm thread, adjacent AB/BA comparisons. All forty processes '
@@ -60,7 +63,8 @@ def main():
         'Certificate generation, independent final verification and kernel replay remain distinct and '
         'are excluded from these timing ratios. This ten-case diagnostic suite does not satisfy the '
         'SPEC’s field coverage, balanced/held-out suite or fastest-open-source acceptance requirements.', '',
-        f'Hex native C uses Clang 21.1.8; generated C uses SDK Clang 23.1.0. The comparator is msolve '
+        f'Hex native C uses `{compiler_name(manifest, "native")}`; generated C uses '
+        f'`{compiler_name(manifest, "lean")}` (SDK). The comparator is msolve '
         f'commit `{meta["msolve_commit"]}`, built using Clang 23.1.3 with `-O3 -march=native`. '
         'The source state, engine/shared-library and executable digests, recorded compile commands, '
         'toolchain and ISA context are retained. Compiler/tuning differences are part of this measured gap.', '',
@@ -79,7 +83,7 @@ def main():
         f'Raw capsule `{cap.path.name}`: SHA-256 `{cap.sha256}`.', '', '```bash',
         'python3 scripts/bench/groebner_prepare_comparator.py \\',
         f'  --archive reports/bench-results/raw/{cap.path.name} \\',
-        '  --report reports/bench-results/hexgroebner-prepare-msolve.md --check --current', '```', '']
+        '  --report reports/bench-results/hexgroebner-prepare-msolve.md --check', '```', '']
     text = '\n'.join(lines)
     if args.check:
         require(args.report.read_text() == text, 'report differs; regenerate it')

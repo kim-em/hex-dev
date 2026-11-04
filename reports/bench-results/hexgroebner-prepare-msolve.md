@@ -1,12 +1,12 @@
 # F₂ comparator gap after batched preparation
 
-The frozen implementation `3d6488148183` remains slower than pinned msolve overall on this diagnostic suite: process geometric mean 1.169067×, equal-family geometric mean 1.135642×. Cyclic7 and Eco11 retain the largest family gaps. These observations do not establish performance leadership or identify a necessary language/runtime change. [Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.
+The frozen implementation `3d6488148183` remains slower than pinned msolve overall on this diagnostic suite: process geometric mean 1.169067×, equal-family geometric mean 1.135642×. The largest family ratios are `cyclic` (2.272471×) and `eco` (2.219818×). These observations do not establish performance leadership or identify a necessary language/runtime change. [Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.
 
 CPU 12, one algorithm thread, adjacent AB/BA comparisons. All forty processes completed and all twenty paired complete reduced bases agree. Inputs use ordinary F₂, grevlex and explicit degree scheduling for Hex; msolve uses full reduced output (`-g 2`), linear algebra mode 2 and one thread. This is the first observation of this implementation against this comparator. No unchanged repeat is collected.
 
 Both arms use the same GNU time wrapper for peak RSS. Process time includes launch, initialization, parsing, computation and complete output. Candidate production returns unchecked candidates. Certificate generation, independent final verification and kernel replay remain distinct and are excluded from these timing ratios. This ten-case diagnostic suite does not satisfy the SPEC’s field coverage, balanced/held-out suite or fastest-open-source acceptance requirements.
 
-Hex native C uses Clang 21.1.8; generated C uses SDK Clang 23.1.0. The comparator is msolve commit `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built using Clang 23.1.3 with `-O3 -march=native`. The source state, engine/shared-library and executable digests, recorded compile commands, toolchain and ISA context are retained. Compiler/tuning differences are part of this measured gap.
+Hex native C uses `clang version 21.1.8`; generated C uses `clang version 23.1.0` (SDK). The comparator is msolve commit `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built using Clang 23.1.3 with `-O3 -march=native`. The source state, engine/shared-library and executable digests, recorded compile commands, toolchain and ISA context are retained. Compiler/tuning differences are part of this measured gap.
 
 | Process Hex / msolve | Equal-family Hex / msolve | Min / median / max | Peak RSS Hex / msolve (KiB) |
 |---:|---:|---|---|
@@ -30,5 +30,5 @@ Raw capsule `f4-prepare-msolve-3d6488148183.tar.xz`: SHA-256 `fd34b004cadc9200bd
 ```bash
 python3 scripts/bench/groebner_prepare_comparator.py \
   --archive reports/bench-results/raw/f4-prepare-msolve-3d6488148183.tar.xz \
-  --report reports/bench-results/hexgroebner-prepare-msolve.md --check --current
+  --report reports/bench-results/hexgroebner-prepare-msolve.md --check
 ```

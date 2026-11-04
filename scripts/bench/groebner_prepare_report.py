@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Verify retained batched monomial preparation samples and render their report."""
 import argparse
-import hashlib
 from pathlib import Path
 import sys
 
@@ -74,27 +73,38 @@ def kernels(cap, before, after, identity, *, digest_commit=None):
     return values, rows[0]['cpu']
 
 
-def render(cap, before, after, records, values, cpu):
-    lines = ['# Batched monomial preparation', '',
-        'The native product planner prepares independent monomials together, keeping their FNV accumulators '
+def compiler_name(manifest, key):
+    return manifest['compilers'][key]['version'].splitlines()[0].split(' (', 1)[0]
+
+
+def render(cap, before, after, records, values, cpu, *, title='Batched monomial preparation',
+           intro=None, script='groebner_prepare_report.py', report='hexgroebner-prepare.md', current=False):
+    if intro is None:
+        intro = ('The native product planner prepares independent monomials together, keeping their FNV accumulators '
         'in parallel while preserving exact hashes, collision comparisons, stable identifiers, output bytes '
         'and logical charges. Preparation reserves its full coordinate work before traversal. Scratch stays '
-        'below 32 KiB, native work stays within 4096 units, and refusal preserves the input table for scalar continuation.', '',
+        'below 32 KiB, native work stays within 4096 units, and refusal preserves the input table for scalar continuation.')
+    lines = ['# ' + title, '', intro, '',
         f'Baseline `{before["source_fingerprint"]}`; candidate `{after["source_fingerprint"]}`. '
         'The measured runtime delta is confined to `HexGroebner/ffi/monomial_hit.c`. Native compiler '
-        'Clang 21.1.8, generated-C compiler SDK Clang 23.1.0, toolchain, native flags and benchmark inputs '
+        f'`{compiler_name(after, "native")}`, generated-C compiler `{compiler_name(after, "lean")}` (SDK), '
+        'toolchain, native flags and benchmark inputs '
         'match between arms. Complete compiler identities and host context are retained in the capsule.', '',
         '## Isolated kernels', '',
         f'CPU {cpu}, one algorithm thread, four-second inner targets, three fixed trial-major complexity '
-        'trials, then adjacent AB/BA matched samples. Preparation is excluded; product lookup, any insertion, '
-        'validation and result hashing are included. The hit kernels consume complete support/workspace results; '
+        'trials, then adjacent AB/BA matched samples. Benchmark input setup (table interning and support '
+        'construction) is excluded; monomial preparation, product lookup, any insertion, validation and '
+        'result hashing are included. The hit kernels consume complete support/workspace results; '
         'the insertion kernel also consumes every arena, metadata and index byte. Independently compiled '
         'checks validate all three functions against scalar results at ten sizes, including slice boundaries.', '',
         '| Kernel | n | New / previous time | Below-signal flags |', '|---|---:|---:|---:|']
     lines += [f'| {f} | {n} | {ratio:.6f} | {flags} |' for f, n, ratio, flags in values]
     lines += ['', '`monomialProducts` uses three variables and existing products; `productWide` uses 22 '
         'variables and shorter adaptive slices. `productMisses` lacks the last product of each complete '
-        '64-term slice. These fixed workloads do not establish an equal full-system improvement.', '',
+        '64-term slice. These fixed workloads do not establish an equal full-system improvement. '
+        'All rows are prepared before lookup, so early refusal can discard the full preparation '
+        'reservation, still within the 4096-work call bound. The last-term insertion '
+        'kernel does not measure early-refusal performance.', '',
         '## Full-system observations', '',
         'Each pass alternates adjacent AB/BA pairs on one leased CPU, with one algorithm thread, degree '
         'scheduling, grevlex and complete reduced output. F₂ enables binary pivots in both arms; prime '
@@ -127,9 +137,9 @@ def render(cap, before, after, records, values, cpu):
         '4096-work boundary. The committed sources, check manifests, complete logs, inputs, raw samples '
         'and collector programs are bound by per-file SHA-256 hashes.', '',
         f'Raw capsule `{cap.path.name}`: SHA-256 `{cap.sha256}`.', '', '```bash',
-        'python3 scripts/bench/groebner_prepare_report.py \\',
+        f'python3 scripts/bench/{script} \\',
         f'  --archive reports/bench-results/raw/{cap.path.name} \\',
-        '  --report reports/bench-results/hexgroebner-prepare.md --check --current', '```', '',
+        f'  --report reports/bench-results/{report} --check' + (' --current' if current else ''), '```', '',
         '[Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.', '']
     return '\n'.join(lines)
 

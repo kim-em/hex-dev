@@ -2,11 +2,11 @@
 
 The native planner validates each source identifier and precomputes its row pointer before coordinate traversal. This removes repeated row-index multiplications from the inner loop. The private pointer array stays within the existing 32 KiB scratch bound. Exact hashes, collision comparisons, output bytes, work charges, overflow checks and atomic refusal are unchanged. The independently compiled digest checks use the preceding provider and validate every matched and complexity result of both arms against its successful scalar comparison.
 
-Baseline `3d6488148183`; candidate `8fbb55cf8788`. The measured runtime delta is confined to `HexGroebner/ffi/monomial_hit.c`. Native compiler Clang 21.1.8, generated-C compiler SDK Clang 23.1.0, toolchain, native flags and benchmark inputs match between arms. Complete compiler identities and host context are retained in the capsule.
+Baseline `3d6488148183`; candidate `8fbb55cf8788`. The measured runtime delta is confined to `HexGroebner/ffi/monomial_hit.c`. Native compiler `clang version 21.1.8`, generated-C compiler `clang version 23.1.0` (SDK), toolchain, native flags and benchmark inputs match between arms. Complete compiler identities and host context are retained in the capsule.
 
 ## Isolated kernels
 
-CPU 95, one algorithm thread, four-second inner targets, three fixed trial-major complexity trials, then adjacent AB/BA matched samples. Preparation is excluded; product lookup, any insertion, validation and result hashing are included. The hit kernels consume complete support/workspace results; the insertion kernel also consumes every arena, metadata and index byte. Independently compiled checks validate all three functions against scalar results at ten sizes, including slice boundaries.
+CPU 95, one algorithm thread, four-second inner targets, three fixed trial-major complexity trials, then adjacent AB/BA matched samples. Benchmark input setup (table interning and support construction) is excluded; monomial preparation, product lookup, any insertion, validation and result hashing are included. The hit kernels consume complete support/workspace results; the insertion kernel also consumes every arena, metadata and index byte. Independently compiled checks validate all three functions against scalar results at ten sizes, including slice boundaries.
 
 | Kernel | n | New / previous time | Below-signal flags |
 |---|---:|---:|---:|
@@ -20,7 +20,7 @@ CPU 95, one algorithm thread, four-second inner targets, three fixed trial-major
 | productMisses | 1024 | 0.958747 | 0 |
 | productMisses | 4096 | 0.963178 | 0 |
 
-`monomialProducts` uses three variables and existing products; `productWide` uses 22 variables and shorter adaptive slices. `productMisses` lacks the last product of each complete 64-term slice. These fixed workloads do not establish an equal full-system improvement.
+`monomialProducts` uses three variables and existing products; `productWide` uses 22 variables and shorter adaptive slices. `productMisses` lacks the last product of each complete 64-term slice. These fixed workloads do not establish an equal full-system improvement. All rows are prepared before lookup, so early refusal can discard the full preparation reservation, still within the 4096-work call bound. The last-term insertion kernel does not measure early-refusal performance.
 
 ## Full-system observations
 

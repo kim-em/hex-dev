@@ -11,6 +11,7 @@ from scripts.bench.groebner_binary_guards import blobs
 from scripts.bench.groebner_binary_report import sweep
 from scripts.bench.groebner_capsule import Capsule
 from scripts.bench.groebner_retirement_report import listing
+from scripts.bench.groebner_prepare_report import compiler_name
 from scripts.bench.groebner_tables_report import checks
 from scripts.bench.groebner_trie_report import require, source
 
@@ -93,13 +94,17 @@ def main():
     cap = Capsule(args.archive)
     before = source(cap, 'baseline')
     require(before['source_fingerprint'] == '294f219094cd', 'baseline differs')
+    require('"-target-cpu" "x86-64"' in cap.text('diagnostics/tuned-native-target.stderr') and
+            '"-target-cpu" "znver5"' in cap.text('diagnostics/native-cpu-target.stderr'),
+            'effective compiler targets differ')
     lines = ['# Unselected F4 optimizations and compiler profiles', '',
         'These independent experiments do not establish overall performance leadership. Their implementations '
         'and compiler profiles remain unselected. Every completed sample, outlier, failure, source snapshot '
         'and command is retained. Each full-system experiment has a first pass and its sole unchanged repeat; '
         'no further unchanged repeat is collected.', '',
-        'The baseline is the four-row packed provider `294f219094cd`, using native Clang 21.1.8 and '
-        'SDK Clang 23.1.0 for generated C. All comparisons use degree scheduling, grevlex, complete reduced '
+        f'The baseline is the four-row packed provider `294f219094cd`, using native '
+        f'`{compiler_name(before, "native")}` and `{compiler_name(before, "lean")}` (SDK) for generated C. '
+        'All comparisons use degree scheduling, grevlex, complete reduced '
         'bases, one leased CPU per sweep and one algorithm thread. Adjacent comparisons alternate AB/BA. '
         'F₂ enables binary pivots in both arms; the prime controls disable them at p = 32003 and 2147483647. '
         'Each experiment retains 192 completed processes and 96 equal paired complete bases and logical statistics. '
@@ -136,6 +141,8 @@ def main():
             compiler_checks(view, after)
             require(a == b and before['compilers']['lean'] == after['compilers']['lean'],
                     'compiler profile changed sources or generated-C compiler')
+            require('clang version 23.1.3' in after['compilers']['native']['version'],
+                    'measured compiler differs')
         lines += ['## ' + title, '', description, '',
             f'Runtime `{after["source_fingerprint"]}`. ' +
             ('All twelve Clang/GCC sanitized variants and all nine project checks passed.'
@@ -145,14 +152,28 @@ def main():
              'under this alternative compiler profile is claimed.'), '',
             '| Pass | CPU | Process B/A | Family balanced B/A | Candidate B/A | Min / median / max |',
             '|---|---:|---:|---:|---:|---|']
+        passes = []
         for name, count, flag in [('f2-false', 10, 'true'), ('f2-false-repeat', 10, 'true'),
                                   ('prime-control', 14, None), ('prime-control-repeat', 14, None)]:
             r = sweep(view, 'candidate/' + name, before, after, count, {'A': flag, 'B': flag})
             v, m = r['recorded'], r['meta']
+            passes.append(v)
             lines.append(f'| {name} | {m["cpu"]} | {v["geomean"]:.6f} | '
                 f'{v["family_balanced_geomean"]:.6f} | {r["candidate"]:.6f} | '
                 f'{v["minimum"]:.6f} / {v["median"]:.6f} / {v["maximum"]:.6f} |')
         lines.append('')
+        reasons = {
+            'overlay': f'The prime-control process ratio changes from {passes[2]["geomean"]:.6f} '
+                f'to {passes[3]["geomean"]:.6f}; the repeated control regression and flagged insertion '
+                'kernels do not support selecting this implementation for a broad performance gain.',
+            'lazy': f'The F₂ process ratio changes from {passes[0]["geomean"]:.6f} '
+                f'to {passes[1]["geomean"]:.6f}. The overall gain does not reproduce.',
+            'clang23': 'The compiler profile remains a candidate pending the complete nine-gate project '
+                'audit under this compiler. Its observed gains remain documented separately from the '
+                'runtime implementation; compiler selection is configurable.',
+            'native-cpu': 'No repeatable family-balanced F₂ gain is established. The complete project '
+                'audit was also not run under this alternative compiler/ISA profile.'}
+        lines += [reasons[label], '']
     owners = cap.json('ownership/status.json')['observations']
     require(len(owners) == 10 and all(r['exit_code'] == 0 and r['complete_basis_and_stats_equal'] and
             all(int(v) == 0 for v in r['counters'][4:]) for r in owners), 'ownership diagnostic differs')
@@ -162,7 +183,7 @@ def main():
         'by the benchmark’s one-second per-call cap. All sixteen matched samples in each pass had '
         'signal flags. All records are retained; independently compiled checks validate the complete '
         'result hashes at every matched size. '
-        'no kernel speed claim is made from those passes.', '',
+        'No kernel speed claim is made from those passes.', '',
         'A separate non-timed ownership probe observed all ten F₂ cases. Complete outputs and logical '
         'statistics matched the frozen provider. Accepted inserting calls forced no shared table, arena '
         'or workspace copies. This rules out that particular copy hypothesis on these inputs; it does '

@@ -37,18 +37,15 @@ def main():
                for label, count, flag in [('f2-false', 10, 'true'), ('f2-false-repeat', 10, 'true'),
                                           ('prime-control', 14, None), ('prime-control-repeat', 14, None)]]
     values, cpu = kernels(cap, before, after, identity, digest_commit=before['commit'])
-    text = render(cap, before, after, records, values, cpu)
-    start = text.index('The native product planner')
-    end = text.index('\n\nBaseline', start)
-    text = text[:start] + ('The native planner validates each source identifier and precomputes its row pointer '
+    intro = ('The native planner validates each source identifier and precomputes its row pointer '
         'before coordinate traversal. This removes repeated row-index multiplications from the inner loop. '
         'The private pointer array stays within the existing 32 KiB scratch bound. Exact hashes, collision '
         'comparisons, output bytes, work charges, overflow checks and atomic refusal are unchanged. '
         'The independently compiled digest checks use the preceding provider and validate every matched '
-        'and complexity result of both arms against its successful scalar comparison.') + text[end:]
-    text = text.replace('# Batched monomial preparation', '# Precomputed source rows in monomial preparation', 1)
-    text = text.replace('groebner_prepare_report.py', 'groebner_pointer_report.py')
-    text = text.replace('hexgroebner-prepare.md', 'hexgroebner-pointers.md')
+        'and complexity result of both arms against its successful scalar comparison.')
+    text = render(cap, before, after, records, values, cpu,
+                  title='Precomputed source rows in monomial preparation', intro=intro,
+                  script='groebner_pointer_report.py', report='hexgroebner-pointers.md', current=True)
     if args.check:
         require(args.report.read_text() == text, 'report differs; regenerate it')
     else:
