@@ -623,7 +623,7 @@ static uint64_t delayed_quantum=UINT64_C(1)<<34,delayed_refused_work=0;
 #define HEX_GROEBNER_DELAYED_DEFERRED(work) (delayed_refused_work+=(work))
 #define HEX_GROEBNER_DELAYED_FRAME() (++delayed_frames)
 static uint64_t delayed_packet_widths[3]={0};
-#define HEX_GROEBNER_DELAYED_UPDATE(width) (++delayed_updates,(width)?(++delayed_vectors,++delayed_packet_widths[(width)==1?0:(width)==2?1:2]):0)
+#define HEX_GROEBNER_DELAYED_UPDATE(width) do { ++delayed_updates; if(width) { ++delayed_vectors; ++delayed_packet_widths[(width)==1?0:(width)==2?1:2]; } } while(0)
 #define HEX_GROEBNER_DELAYED_TARGET(context) do { \
  if(delayed_offset_enabled) { \
   matrix_context *ctx=(context); \
