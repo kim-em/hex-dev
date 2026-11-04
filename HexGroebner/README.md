@@ -65,7 +65,9 @@ since `terms*(3*arity+1) ≤ 4096` and each coordinate uses at most four bytes.
 The complete private plan remains below 32 KiB. Independent product rows are
 prepared together, interleaving their exact FNV hash accumulators. The planner
 reserves all coordinate work before traversal and retains each prepared row in
-private scratch until collision lookup and insertion planning finish. A failed
+private scratch until collision lookup and insertion planning finish. Source row
+pointers are computed once after identifier validation; the coordinate loop
+then reuses them without repeating row-index multiplications. A failed
 reservation or preparation leaves the table unchanged for scalar continuation.
 Successful batches retain the scalar model's complete final workspace and work.
 Shared and aliased buffers retain their original contents. Field/order metadata is checked before

@@ -19,7 +19,7 @@ FUNCTIONS = ['monomialProducts', 'productWide', 'productMisses']
 SIZES = [256, 1024, 4096]
 
 
-def kernels(cap, before, after, identity):
+def kernels(cap, before, after, identity, *, digest_commit=None):
     status = cap.json('candidate/kernel-status.json')
     require(status['identity'] == identity and status['threads'] == 1 and
             status['manifest'] == {'A': before, 'B': after} and
@@ -34,7 +34,7 @@ def kernels(cap, before, after, identity):
             'kernel schedule or CPU differs')
     digest = cap.json('digest/status.json')
     require(digest['exit_code'] == 0 and digest['kind'] == 'products' and
-            digest['source_commit'] == identity['source_commit'] and
+            digest['source_commit'] == (identity['source_commit'] if digest_commit is None else digest_commit) and
             digest['sizes'] == [0, 1, 63, 64, 65, 256, 512, 1024, 2048, 4096] and
             cap.text('digest/run.stderr') == '', 'independent digest checks differ')
     digests = digest['digests']
