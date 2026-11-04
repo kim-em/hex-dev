@@ -68,8 +68,9 @@ def check(binary: Path) -> list[dict]:
         assert default["scheduling"] == "degree" and default["basis"] == [[[[0], 1]]]
         assert default["delayedReduction"] is False
         for modulus in [2,3,251,257,65521,65537,2147483647]:
-            enabled = invoke({**unit,"p":modulus}, ["--delayed-reduction","true"])
-            disabled = invoke({**unit,"p":modulus}, ["--delayed-reduction","false"])
+            canonical = {**unit,"p":modulus,"generators":[[[[0],1]]]}
+            enabled = invoke(canonical, ["--delayed-reduction","true"])
+            disabled = invoke(canonical, ["--delayed-reduction","false"])
             assert enabled["delayedReduction"] is True and disabled["delayedReduction"] is False
             assert {k:v for k,v in enabled.items() if k not in ["candidateNanos","delayedReduction"]} == {
                 k:v for k,v in disabled.items() if k not in ["candidateNanos","delayedReduction"]}
