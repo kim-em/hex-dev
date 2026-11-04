@@ -15,8 +15,8 @@
 #endif
 
 #define MATRIX_QUANTUM UINT64_C(1048576)
-#define BINARY_LOGICAL_QUANTUM (UINT64_C(1)<<32)
-#define BINARY_WORD_QUANTUM (UINT64_C(1)<<28)
+#define BINARY_LOGICAL_QUANTUM (UINT64_C(1)<<38)
+#define BINARY_WORD_QUANTUM (UINT64_C(1)<<34)
 #ifndef HEX_GROEBNER_BINARY_GROUPS
 #define HEX_GROEBNER_BINARY_GROUPS(n) ((void)(n))
 #endif
@@ -141,7 +141,7 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
             packed[col>>3]|=(uint8_t)(1u<<(col&7));
         }
         /* Private little-endian (entry count, final column, sugar) records.
-           Canonical nonempty rows have at most columns <= 16384 entries. */
+           Canonical nonempty rows have at most columns <= 131072 entries. */
         uint8_t *meta=lean_sarray_cptr(c->binary_meta)+id*16;
         matrix_write(meta,4,n);
         matrix_write(meta+4,4,matrix_read(lean_sarray_cptr(ids)+(n-1)*4,4));
@@ -514,8 +514,8 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    Array Nat. independent is uint8 Bool. Limits above Nat's scalar range saturate
    above every possible accepted total; sugars must be scalar Nats.
    Ordinary 64-bit frames admit <=4096 columns/1024 reducers/64 targets.
-   Opt-in F2 frames admit <=16384/16384/1024, with <=2^32 logical work,
-   <=2^28 packing/scalar/word visits, and the complete private payload reserved
+   Opt-in F2 frames admit <=131072/131072/4096, with <=2^38 logical work,
+   <=2^34 packing/scalar/word visits, and the complete private payload reserved
    against the parent peak. Distinct reducer heads and logical bounds are checked
    before private allocation. A physical floor bounds validation/installation;
    the table bound is refined after known installation, before target reduction.
@@ -545,7 +545,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     c.quantum=c.binary?BINARY_LOGICAL_QUANTUM:MATRIX_QUANTUM;
     c.cache=p==INT32_MAX && lean_ctor_get_uint8(limits,7*sizeof(void*));
     size_t nr=lean_array_size(reducers),nt=lean_array_size(targets);
-    if(c.columns>(c.binary?16384:4096) || nr>(c.binary?16384:1024) || nt>(c.binary?1024:64)) goto defer;
+    if(c.columns>(c.binary?131072:4096) || nr>(c.binary?131072:1024) || nt>(c.binary?4096:64)) goto defer;
     size_t rows=nr+nt,ns=lean_array_size(sugars);
     if(ns && ns!=rows) goto defer;
     for(unsigned i=0;i<7;++i) {
@@ -583,7 +583,8 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         uint64_t floor=c.physical-(c.project?nt*nr*c.words:0);
         if(floor>BINARY_WORD_QUANTUM) goto defer;
     }
-    uint8_t seen[2048]={0};
+    uint8_t seen[16384];
+    memset(seen,0,(size_t)((c.columns+7)/8));
     for(size_t i=0;i<nr;++i) {
         lean_object *cs=lean_ctor_get(lean_array_cptr(reducers)[i],0);
         if(!lean_sarray_size(cs)) continue;

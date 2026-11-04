@@ -883,8 +883,8 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_eliminate_matrix(uint64_t p,
   lean_object *cap=lean_ctor_get(limits,4);
   uint64_t allowance=lean_is_scalar(cap)?lean_unbox(cap):UINT64_MAX/2;
   int accepted=!lean_is_scalar(result);
-  const char *reason=accepted?"accepted":nc>16384||nr>16384||nt>1024?"shape":
-    logical>(UINT64_C(1)<<32)?"logical":physical>(UINT64_C(1)<<28)?"physical":
+  const char *reason=accepted?"accepted":nc>131072||nr>131072||nt>4096?"shape":
+    logical>(UINT64_C(1)<<38)?"logical":physical>(UINT64_C(1)<<34)?"physical":
     byte_upper<=allowance?"other_without_byte_refusal":"other_possible_byte_refusal";
   FILE *stream=fopen(path,"a");
   if(!stream) abort();

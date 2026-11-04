@@ -259,8 +259,8 @@ in untraced ordinary F2 matrix frames. It defaults to `false`; the deterministic
 driver accepts `--binary-pivots true|false` and records the requested policy.
 This preserves ordinary polynomial semantics, including distinct monomials
 `x` and `x²`. Other fields retain their existing route. Admission permits at
-most 16384 columns, 16384 reducers and 1024 targets, with bounds of `2^32`
-reference work and `2^28` packing/scalar/word visits. The private bitmap stores
+most 131072 columns, 131072 reducers and 4096 targets, with bounds of `2^38`
+reference work and `2^34` packing/scalar/word visits. The private bitmap stores
 at most the lesser of the row and column counts in pivot rows, plus one
 accumulator. Each pivot also stores its length, final column and sugar in a
 private 16-byte metadata record, avoiding repeated object traversal during word
@@ -277,7 +277,7 @@ Each group replaces at most four full-width known-row updates by one table
 update. Admission deducts that exact worst-case saving while retaining table
 construction and mask-selection charges. An early lower bound rejects frames
 whose prefix alone exceeds the cap; the complete check follows known-pivot
-installation and precedes target elimination. The physical cap remains `2^28`.
+installation and precedes target elimination. The physical cap is `2^34`.
 The bitmap and metadata payload fits the remaining packed-byte allowance
 alongside the complete sparse-reference charges. Those logical counters remain
 identical; the private buffers never escape the call. Sparse wide pivots toggle

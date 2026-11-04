@@ -279,7 +279,7 @@ def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
 
 /-- Logical reference work cap, distinct from the physical word-operation cap. -/
 def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
-  if binaryEnabled field limits then 2^32 else 2^20
+  if binaryEnabled field limits then 2^38 else 2^20
 
 /-- Large F2 frames project targets through known reducers in column order. -/
 def binaryProject (columns reducers targets : Nat) : Bool :=
@@ -348,16 +348,16 @@ target because scanning advances through its leading column. The final
 `columns` covers pivot ordering. These deliberately overlapping bounds cover
 the sparse computation. Optional dense preparation adds separately charged work;
 `attemptPortable` also checks the final total against the selected frame quantum.
-Opt-in F2 frames additionally bound packing, scanning and word updates by `2^28`
+Opt-in F2 frames additionally bound packing, scanning and word updates by `2^34`
 visits and reserve their complete temporary payload against the packed-byte allowance. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
   let rows := reducers.size + targets.size
   if USize.size != 2^64 then return false
   let binary := binaryEnabled field limits
-  if columns > (if binary then 16384 else 4096) ||
-      reducers.size > (if binary then 16384 else 1024) ||
-      targets.size > (if binary then 1024 else 64) ||
+  if columns > (if binary then 131072 else 4096) ||
+      reducers.size > (if binary then 131072 else 1024) ||
+      targets.size > (if binary then 4096 else 64) ||
       columns > limits.columns || rows > limits.rows ||
       (!sugars.isEmpty && sugars.size != rows) then return false
   if !(sugars.all (· < USize.size / 2)) then return false
@@ -372,7 +372,7 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
   let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
     targets.size * (entries + (targets.size + 3) * columns + 64) + columns
   if bound > frameQuantum field limits then return false
-  if binary && binaryCost columns reducers targets entries > 2^28 then return false
+  if binary && binaryCost columns reducers targets entries > 2^34 then return false
   let mut seen := Array.replicate columns false
   for row in reducers do
     if row.size != 0 then
@@ -398,8 +398,8 @@ is an unboxed Boolean. `Result` holds an `Except` matrix/remainder pair and eigh
 `Nat` counters. Native code returns `some` only for a complete successful
 reference result, including exact rows, aliases, sugars and counters. It admits
 ordinary frames with at most 4096 columns, 1024 known reducers, 64 targets and
-`2^20` charged work. Opt-in F2 frames admit at most 16384 columns, 16384 reducers
-and 1024 targets, with a `2^32` logical-work bound and a separate `2^28` bound
+`2^20` charged work. Opt-in F2 frames admit at most 131072 columns, 131072 reducers
+and 4096 targets, with a `2^38` logical-work bound and a separate `2^34` bound
 on packing/scalar/word visits. Their private pivot/accumulator bytes must fit
 the packed-byte allowance in addition to the complete reference payload. Known leading
 columns are distinct. Large limits saturate above all
