@@ -8,6 +8,7 @@ module
 public meta import HexRCF.Tactic
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.AlgebraicBounds
+public meta import HexRCF.RealCoefficients.PolynomialLiteral
 public import HexRCF.RealCoefficients.Registration
 public meta import Mathlib.Tactic.Linarith
 public meta import Mathlib.Tactic.NormNum.RealSqrt
@@ -371,10 +372,42 @@ private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
     unless rest.isEmpty do throwError "rcf: supplied bounds did not establish the goal"
   return ← instantiateMVars goal
 
-/-- Propose an ordinary proof from frozen containment facts. Nonlinear proof
-search is bounded by Lean's execution limits and may fail without a verdict.
-It neither calls root search nor assumes an ordered field of registered values. -/
+/-- Assemble complete real-cell evidence after source, provider and original
+divisor preparation. A frozen replay proof supplies the shared source formula. -/
+private def buildPolynomial (prepared : Prepared)
+    (formula : Hex.RealFormula.QF (prepared.source.coefficients.size + 1))
+    (quantifier : Hex.RealFormula.Quantifier) : MetaM Certificate := do
+  let n := prepared.source.coefficients.size
+  if size : prepared.coefficients.size = n then
+    let bounds : Fin n → Bounds := fun i => prepared.coefficients[i.val]'(by omega) |>.bounds
+    let fallback ← mkAppM ``Bounds.singleton #[← ratExpr 0]
+    let boundsExpr ← FieldLiteral.finiteExpr (mkConst ``Bounds)
+      (prepared.coefficients.map (·.literal)) fallback
+    let matrix ← whnf (← whnf prepared.source.formula).getAppArgs.back!
+    let formulaExpr := matrix.getAppArgs.back!
+    let containmentType ← withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit n)) fun i => do
+      mkForallFVars #[i] (← mkAppM ``Contains
+        #[mkApp boundsExpr i, mkApp prepared.source.valuation i])
+    let contained ← FieldLiteral.proveFinCases containmentType (prepared.coefficients.map (·.proof))
+    let depth := FieldLiteral.rcf.algebraic.directDepth.get (← getOptions)
+    let some data := PolynomialBuild.build bounds formula depth |
+      throwError "rcf: polynomial root/sign search exhausted supplied bounds or isolation depth"
+    let proof ← PolynomialLiteral.check bounds formula quantifier data boundsExpr
+      prepared.source.valuation contained formulaExpr
+    return ⟨prepared, proof⟩
+  else throwError "rcf: prepared coefficient count differs from the source"
+
+/-- Select proof construction before search. The direct containment path uses
+ordinary nonlinear arithmetic; the cell path checks a complete finite proposal. -/
 private def buildCore (prepared : Prepared) : MetaM Certificate := do
+  let sourceFormula ← FieldRuntime.evalFormula prepared.source.coefficients.size prepared.source.formula
+  let .quant quantifier (.matrix formula) := sourceFormula |
+    throwError "rcf: expected one real quantifier over a matrix"
+  let degree := formula.degree (Fin.last prepared.source.coefficients.size)
+  -- Choose before either proof search starts. Existing bound proofs retain
+  -- their path; nonlinear existential roots and higher-degree atoms use cells.
+  if (quantifier == .existsReal && 1 < degree) || 2 < degree then
+    return ← buildPolynomial prepared formula quantifier
   -- Preserve only source variables and the hypotheses used by its checked
   -- alias equivalence. Unrelated caller hypotheses cannot settle the search.
   let roots := #[prepared.source.original, prepared.source.proof,

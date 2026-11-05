@@ -5,9 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRCF.RealCoefficients.LiteralSign
 public import HexRCF.RealCoefficients.IsolationCheck
-public import HexRCF.Soundness
+public import HexRCF.CellsCheck
 public import HexRealRoots.SignOperands
 
 public section

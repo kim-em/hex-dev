@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Isolations
+public import HexRCF.RealCoefficients.CellCheck
 public import HexRCF.RealCoefficients.CellFormula
 
 public section
@@ -16,17 +17,6 @@ open Hex.RealFormula HexPolyTheory.Interpret HexRealRootsTheory
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
-
-/-- Read root signs from their checked rows and sector signs at the listed
-ordinary point. The specialization is supplied independently of its semantics. -/
-@[expose] def cellSign (sign : E → Int) (point : Dyadic → E)
-    (polynomial : RealFormula.Poly n → DensePoly E) (cert : IsolationReplay E Ctx)
-    (rootValue : Fin cert.isolations.intervals.size → RealFormula.Poly n → Int)
-    (cell : Cell cert.isolations.intervals.size) (atom : RealFormula.Poly n) : Option Sign :=
-  match cell with
-  | .open cut => some <| Sign.ofInt <| sign <|
-      (polynomial atom).eval (point (cert.isolations.openPoint cut))
-  | .root i => some <| Sign.ofInt (rootValue i atom)
 
 private theorem sign_cast_sign (y : ℝ) :
     SignType.sign (((SignType.sign y : Int) : ℝ)) = SignType.sign y := by

@@ -5,9 +5,11 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRCF.RealCoefficients.FieldRootSigns
+public import HexRCF.RealCoefficients.CellCheck
+public import HexRCF.RealCoefficients.Decision
 public import HexRCF.RealCoefficients.IsolationTransport
 public import HexRCF.RealCoefficients.RepresentationCarrier
+public import HexRCF.RealCoefficients.Radical
 public section
 
 namespace Hex.RCF.RealCoefficients.QueryCells
@@ -15,45 +17,6 @@ open Hex Hex.RealFormula Hex.RealClosure HexPolyTheory.Interpret
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
-
-/-- Bind every original row and check its sign at the same isolated root.
-Repeated atom occurrences remain in the checked inventory. -/
-@[expose] def checkRows (lookup : E → Option Int) (point : Dyadic → E)
-    (context : Ctx) (head : DensePoly E) (intervals : Vector DyadicInterval roots)
-    (query : RealFormula.Poly n → DensePoly E) (formula : QF n)
-    (rows : FieldRootSigns.Table E Ctx n roots) : Bool :=
-  rows.checkRows formula fun atom i cert =>
-    let interval := intervals[i]
-    QueryReplay.check lookup context head (query atom)
-      (.finite (point interval.lower)) (.finite (point interval.upper)) cert.value cert
-
-/-- Complete finite cell checking over stored coefficients with ordinary
-arithmetic. Coefficient evidence is authenticated by the caller; no field,
-inverse, global zero reflection or numerical search is required here. -/
-@[expose] def check (lookup : E → Option Int) (point : Dyadic → E) (context : Ctx)
-    (query : RealFormula.Poly n → DensePoly E) (formula : QF n)
-    (radical : RadicalCert E Ctx) (cert : IsolationReplay E Ctx)
-    (rows : FieldRootSigns.Table E Ctx n cert.isolations.intervals.size) : Bool :=
-  formula.polys.all (fun atom => QueryReplay.leading lookup (query atom)) &&
-    radical.check context (RepresentationCarrier.product (formula.polys.map query)) &&
-    IsolationTransport.check lookup point context radical.core cert &&
-    checkRows lookup point context radical.core cert.isolations.intervals.toVector query formula rows &&
-    QueryReplay.covered lookup (SignInputs.openSamples point cert (formula.polys.map query))
-
-/-- Sign operands of the actual formula, root queries and ordinary sectors.
-Original source bindings and divisor conditions remain the caller's inventory. -/
-@[expose] def keys (point : Dyadic → E)
-    (query : RealFormula.Poly n → DensePoly E) (formula : QF n)
-    (head : DensePoly E) (cert : IsolationReplay E Ctx)
-    (rows : FieldRootSigns.Table E Ctx n cert.isolations.intervals.size) : List E :=
-  formula.polys.map (fun atom => (query atom).coeff ((query atom).size - 1)) ++
-    IsolationTransport.keys point head cert ++
-    rows.entries.flatMap (fun row =>
-      (List.finRange cert.isolations.intervals.size).flatMap fun i =>
-        let interval := cert.isolations.intervals[i]
-        QueryReplay.keys head (.finite (point interval.lower))
-          (.finite (point interval.upper)) row.evidence[i]) ++
-    SignInputs.openSamples point cert (formula.polys.map query)
 
 variable (lookup : E → Option Int) (read : E → ℝ)
 variable (closed : Transport.Closed read (fun _ => True))

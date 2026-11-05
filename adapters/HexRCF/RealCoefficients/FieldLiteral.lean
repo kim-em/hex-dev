@@ -89,7 +89,8 @@ private def optionLit (ty : Expr) : Option Expr → Expr
   | none => mkApp (mkConst ``Option.none [Level.zero]) ty
   | some value => mkApp2 (mkConst ``Option.some [Level.zero]) ty value
 
-private def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr := do
+/-- Quote a literal vector and its exact constructor length. -/
+meta def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr := do
   let data := arrayLit ty xs.toArray.toList
   let proof ← mkAppM ``Eq.refl #[mkNatLit n]
   mkAppM ``Vector.mk #[data, proof]
@@ -272,7 +273,8 @@ meta def isolationExpr {E : Type} [Zero E] [DecidableEq E]
   mkAppM ``IsolationReplay.mk
     #[isolation, total, ← vectorLit queryTy counts]
 
-private def radicalExpr {E : Type} [Zero E] [DecidableEq E]
+/-- Quote the supplied root-preserving identities without invoking their producer. -/
+meta def radicalExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : RadicalCert E Unit) : MetaM Expr := do
   mkAppM ``RadicalCert.mk
     #[mkConst ``Unit.unit, ← denseExpr elem cert.core,
@@ -331,19 +333,17 @@ private def atomAtExpr (formulaExpr : Expr) (n index : Nat) : MetaM Expr := do
   let fallback := mkApp2 (mkConst ``Zero.zero [Level.zero]) atomTy zeroInst
   mkAppM ``List.getD #[polys, mkNatLit index, fallback]
 
-private def rootSignsExpr {p : ZPoly} {root : SimpleRoot p} {n roots : Nat}
-    (pExpr rootExpr formulaExpr : Expr) (polys : List (RealFormula.Poly n))
-    (table : FieldRootSigns.Table (PolyQuot p root) Unit n roots) : MetaM Expr := do
+/-- Quote every retained atom row in its original source order. -/
+meta def rowsExpr {E : Type} [Zero E] [DecidableEq E] {n roots : Nat}
+    (elem : E → MetaM Expr) (formulaExpr : Expr) (polys : List (RealFormula.Poly n))
+    (table : FieldRootSigns.Table E Unit n roots) : MetaM Expr := do
   unless table.entries.length = polys.length do
     throwError "rcf: root-sign row count differs from the source formula"
-  let ty ← inferType (← fieldExpr pExpr rootExpr (0 : PolyQuot p root))
-  let zeroClass ← synthInstance (mkApp (mkConst ``Zero [Level.zero]) ty)
-  let eqClass := mkApp2 (mkConst ``PolyQuot.instDecidableEq) pExpr rootExpr
-  let queryTy := mkAppN (mkConst ``TarskiCertificate
-    [Level.zero, Level.zero, Level.zero])
-    #[ty, ty, mkConst ``Unit, zeroClass, eqClass]
-  let entryTy := mkAppN (mkConst ``FieldRootSigns.Entry [Level.zero, Level.zero])
-    #[ty, mkConst ``Unit, mkNatLit n, mkNatLit roots, zeroClass, eqClass]
+  let ty ← inferType (← elem (0 : E))
+  let queryTy ← mkAppOptM ``TarskiCertificate
+    #[some ty, some ty, some (mkConst ``Unit), none, none]
+  let entryTy ← mkAppOptM ``FieldRootSigns.Entry
+    #[some ty, some (mkConst ``Unit), some (mkNatLit n), some (mkNatLit roots), none, none]
   let mut rows := []
   let mut index := 0
   for row in table.entries do
@@ -352,11 +352,17 @@ private def rootSignsExpr {p : ZPoly} {root : SimpleRoot p} {n roots : Nat}
     unless row.atom = expected do
       throwError "rcf: root-sign atom order differs from the source formula"
     let atom ← atomAtExpr formulaExpr n index
-    let certs ← row.evidence.mapM (tarskiExpr (fieldExpr pExpr rootExpr))
+    let certs ← row.evidence.mapM (tarskiExpr elem)
     let evidence ← vectorLit queryTy certs
     rows := (← mkAppM ``FieldRootSigns.Entry.mk #[atom, evidence]) :: rows
     index := index + 1
   mkAppM ``FieldRootSigns.Table.mk #[listLit entryTy rows.reverse]
+
+
+private def rootSignsExpr {p : ZPoly} {root : SimpleRoot p} {n roots : Nat}
+    (pExpr rootExpr formulaExpr : Expr) (polys : List (RealFormula.Poly n))
+    (table : FieldRootSigns.Table (PolyQuot p root) Unit n roots) : MetaM Expr :=
+  rowsExpr (fieldExpr pExpr rootExpr) formulaExpr polys table
 
 /-- Embed all four parts of a successful fixed-field result without importing
 the producer into the proof term. The checker independently validates every

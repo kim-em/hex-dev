@@ -846,10 +846,15 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.RepresentationSpecialize,
     `HexRCF.RealCoefficients.IsolationTransport,
     `HexRCF.RealCoefficients.QueryCells,
+    `HexRCF.RealCoefficients.CellCheck,
     `HexRCF.RealCoefficients.PolynomialBounds,
     `HexRCF.RealCoefficients.PolynomialBoundsSoundness,
     `HexRCF.RealCoefficients.PolynomialSigns,
     `HexRCF.RealCoefficients.PolynomialSignsSoundness,
+    `HexRCF.RealCoefficients.PolynomialRadical,
+    `HexRCF.RealCoefficients.PolynomialBuild,
+    `HexRCF.RealCoefficients.PolynomialSoundness,
+    `HexRCF.RealCoefficients.PolynomialLiteral,
     `HexRCF.RealCoefficients.Samples, `HexRCF.RealCoefficients.Gather, `HexRCF.RealCoefficients.GatherCells, `HexRCF.RealCoefficients.AlgebraicCells,
     `HexRCF.RealCoefficients.RegisteredGather, `HexRCF.RealCoefficients.ReconciledGather,
     `HexRCF.RealCoefficients.SelectedFormula,
@@ -1539,7 +1544,7 @@ lean_lib HexConformance where
       `HexRCF.ProofPaths
     ].map Glob.one
 
-    ++ #[`HexRCF.PolynomialSignsConformance, `HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
+    ++ #[`HexRCF.PolynomialTactic, `HexRCF.PolynomialTacticProofs, `HexRCF.PolynomialRestore, `HexRCF.PolynomialBuildConformance, `HexRCF.PolynomialRadicalConformance, `HexRCF.PolynomialSignsConformance, `HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
       `HexRCF.FiniteFieldSource, `HexRCF.FiniteFieldGuards,
       `HexRCF.FiniteFieldCompatibility, `HexRCF.FiniteFieldProofs,
       `HexRCF.FiniteFieldCompile, `HexRCF.FiniteFieldCompileProofs,

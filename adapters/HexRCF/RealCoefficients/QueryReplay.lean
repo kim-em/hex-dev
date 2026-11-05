@@ -5,22 +5,16 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRCF.RealCoefficients.SignInputs
+public import HexRCF.RealCoefficients.CellCheck
 public import HexRealClosureTheory.TransportClosedQuery
+public import Mathlib.Basic.Real.Basic
+public import Mathlib.Basic.Sign.Basic
 public section
 
 namespace Hex.RCF.RealCoefficients.QueryReplay
 open Hex.RealClosure
 
 variable {E : Type u}
-
-/-- Every coefficient sign read by replay must have an explicit entry. -/
-@[expose] def covered (lookup : E → Option Int) (keys : List E) : Bool :=
-  keys.all fun x => (lookup x).isSome
-
-/-- Executable retrieval after coverage preflight. The missing-entry branch
-cannot contribute to an accepted query. -/
-@[expose] def cached (lookup : E → Option Int) (x : E) : Int := (lookup x).getD 0
 
 /-- Semantic completion used only in proofs. Executable replay uses `cached`,
 and coverage proves that both functions agree at every demanded key. -/
@@ -44,14 +38,6 @@ theorem cached_eq (lookup : E → Option Int) (keys : List E)
 
 variable [Zero E] [DecidableEq E]
 
-/-- Preserve a stored degree by authenticating its nonzero top coefficient.
-The representation need not reflect zero under real evaluation. -/
-@[expose] def leading (lookup : E → Option Int) (q : DensePoly E) : Bool :=
-  if q.size = 0 then true
-  else match lookup (q.coeff (q.size - 1)) with
-    | none => false
-    | some observed => observed != 0
-
 theorem leading_spec (lookup : E → Option Int) (read : E → ℝ)
     (sound : ∀ x value, lookup x = some value → value = (SignType.sign (read x) : Int))
     (q : DensePoly E) (accepted : leading lookup q = true) :
@@ -69,24 +55,6 @@ theorem leading_spec (lookup : E → Option Int) (read : E → ℝ)
       simp [found, observedZero] at accepted
 
 variable [Add E] [Sub E] [Mul E] [One E] [NatCast E]
-
-/-- Finite sign and leading-coefficient checks over a coefficient ring.
-Replay performs no division, normalization or certificate production. -/
-@[expose] def check {C : Type v} [DecidableEq C] (lookup : E → Option Int) (context : C)
-    (head test : DensePoly E) (a b : Endpoint E) (value : Int)
-    (cert : TarskiCertificate E E C) : Bool :=
-  covered lookup (SignInputs.certificate head a b cert) &&
-    leading lookup head &&
-    cert.squarefree.chain.all (leading lookup) &&
-    cert.remainders.chain.all (leading lookup) &&
-    Sturm.check (cached lookup) context head test a b value cert
-
-/-- The complete inventory includes the signs used by degree preservation. -/
-@[expose] def keys {C : Type v} (head : DensePoly E) (a b : Endpoint E)
-    (cert : TarskiCertificate E E C) : List E :=
-  SignInputs.certificate head a b cert ++ [head.coeff (head.size - 1)] ++
-    cert.squarefree.chain.toList.map (fun q => q.coeff (q.size - 1)) ++
-    cert.remainders.chain.toList.map (fun q => q.coeff (q.size - 1))
 
 /-- Transfer existing Tarski evidence through a total ring interpretation.
 Finite leading guards replace global zero reflection; no source field or

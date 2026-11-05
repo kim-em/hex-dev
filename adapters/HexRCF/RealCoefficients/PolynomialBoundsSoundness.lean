@@ -8,6 +8,7 @@ module
 public import HexRCF.RealCoefficients.PolynomialBounds
 public import HexRCF.RealCoefficients.QueryReplay
 public import HexMvPolyTheory.Aeval
+public import HexOrderedFnTheory.Oracle
 public section
 
 namespace Hex.RCF.RealCoefficients.PolynomialBounds
@@ -87,5 +88,64 @@ theorem sign_spec (bounds : Fin n → Bounds) (values : Fin n → ℝ)
     (observed : Int) (accepted : sign? bounds p = some observed) :
     observed = (SignType.sign (value values p) : Int) :=
   (enclose_sound bounds values contained p).exactSign accepted
+
+section Native
+attribute [local instance 2500] MvPoly.instZero MvPoly.instOneOfLawfulBEq
+  MvPoly.instAddOfLawfulBEq
+  MvPoly.instMulOfAddOfLawfulBEq MvPoly.instNegOfLawfulBEq MvPoly.instSubOfAddOfNegOfLawfulBEq
+  MvPoly.instNatCast
+
+/-- Interpret the computational operations captured by the Mathlib-free
+compiler, independently of Mathlib's bundled polynomial ring instances. -/
+theorem closed_native (values : Fin n → ℝ) :
+    Hex.RealClosure.Transport.Closed (value values) (fun _ => True) := by
+  exact {
+    zero := trivial, one := trivial
+    add := fun _ _ _ _ => trivial, mul := fun _ _ _ _ => trivial
+    sub := fun _ _ _ _ => trivial, natCast := fun _ => trivial
+    read_zero := by
+      unfold value
+      rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+      simp
+    read_one := by
+      unfold value
+      rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+      simp
+    read_add := by
+      intro a b _ _
+      unfold value
+      rw [← HexMvPolyTheory.eval₂_toMvPolynomial, HexMvPolyTheory.toMvPolynomial_add,
+        MvPolynomial.eval₂_add, HexMvPolyTheory.eval₂_toMvPolynomial,
+        HexMvPolyTheory.eval₂_toMvPolynomial]
+    read_mul := by
+      intro a b _ _
+      unfold value
+      rw [← HexMvPolyTheory.eval₂_toMvPolynomial, HexMvPolyTheory.toMvPolynomial_mul,
+        MvPolynomial.eval₂_mul, HexMvPolyTheory.eval₂_toMvPolynomial,
+        HexMvPolyTheory.eval₂_toMvPolynomial]
+    read_sub := by
+      intro a b _ _
+      unfold value
+      rw [← HexMvPolyTheory.eval₂_toMvPolynomial, HexMvPolyTheory.toMvPolynomial_sub,
+        MvPolynomial.eval₂_sub, HexMvPolyTheory.eval₂_toMvPolynomial,
+        HexMvPolyTheory.eval₂_toMvPolynomial]
+    read_natCast := by
+      intro k
+      have literal : (k : Poly n) = MvPoly.C (k : Rat) := by
+        apply MvPoly.ext
+        intro m
+        rw [MvPoly.coeff_natCast, MvPoly.coeff_C]
+      rw [literal]
+      unfold value
+      rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+      simp }
+
+theorem value_neg (values : Fin n → ℝ) (p : Poly n) :
+    value values (-p) = -value values p := by
+  unfold value
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial, HexMvPolyTheory.toMvPolynomial_neg,
+    MvPolynomial.eval₂_neg, HexMvPolyTheory.eval₂_toMvPolynomial]
+
+end Native
 
 end Hex.RCF.RealCoefficients.PolynomialBounds

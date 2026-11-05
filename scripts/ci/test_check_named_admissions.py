@@ -81,6 +81,19 @@ class AdmissionScannerTests(unittest.TestCase):
         self.assertIsNone(ADMISSION.search(code_only("structure Approximation where\n  constant : Rat → Bounds\n")))
         self.assertIsNotNone(ADMISSION.search(code_only("private constant hidden : False\n")))
 
+    def test_constant_as_multiplicative_factor(self):
+        source = """have hone : constant * inverse = 1 := by
+  calc
+    constant * inverse = inverse * constant := mul_comm ..
+    _ = 1 := hinverse.symm
+"""
+        self.assertIsNone(ADMISSION.search(code_only(source)))
+        for declaration in ("constant α : False", "constant «hidden value» : False",
+                            "private constant Namespace.hidden : False",
+                            "constant\n  α : False"):
+            with self.subTest(declaration=declaration):
+                self.assertIsNotNone(ADMISSION.search(code_only(declaration)))
+
     def test_interpolated_admission_fails_closed(self):
         for prefix in ("s!", "m!", "f!"):
             with self.subTest(prefix=prefix), self.assertRaises(ValueError):

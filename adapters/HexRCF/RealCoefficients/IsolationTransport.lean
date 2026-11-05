@@ -15,27 +15,6 @@ open Hex.RealClosure
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
 
-/-- Authenticate complete and per-interval counts through finite sign lookup.
-The point embedding is fixed before producing or checking the certificate. -/
-@[expose] def check (lookup : E → Option Int) (point : Dyadic → E)
-    (context : Ctx) (head : DensePoly E) (cert : IsolationReplay E Ctx) : Bool :=
-  cert.isolations.checkGaps &&
-    QueryReplay.check lookup context head 1 .negInf .posInf
-      cert.isolations.intervals.size cert.total &&
-    (List.finRange cert.isolations.intervals.size).all fun i =>
-      let interval := cert.isolations.intervals[i]
-      QueryReplay.check lookup context head 1
-        (.finite (point interval.lower)) (.finite (point interval.upper)) 1 cert.counts[i]
-
-/-- All sign operands, including the finite leading-coefficient guards. -/
-@[expose] def keys (point : Dyadic → E) (head : DensePoly E)
-    (cert : IsolationReplay E Ctx) : List E :=
-  QueryReplay.keys head .negInf .posInf cert.total ++
-    (List.finRange cert.isolations.intervals.size).flatMap fun i =>
-      let interval := cert.isolations.intervals[i]
-      QueryReplay.keys head (.finite (point interval.lower))
-        (.finite (point interval.upper)) cert.counts[i]
-
 /-- Retain the exact literal intervals and root counts under interpretation. -/
 @[expose, reducible] noncomputable def map (read : E → ℝ)
     (cert : IsolationReplay E Ctx) : IsolationReplay ℝ Ctx where

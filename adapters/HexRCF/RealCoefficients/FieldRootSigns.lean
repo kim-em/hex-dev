@@ -5,7 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRCF.RealCoefficients.FieldDecision
+public import HexRealFormula
+public import HexRCF.RealCoefficients.IsolationCheck
 
 public section
 
@@ -128,6 +129,30 @@ theorem query_checked (table : Table E Ctx n roots) (sign : E → Int)
       (.finite (point intervals[i].lower)) (.finite (point intervals[i].upper))
       (table.value fallback i atom) (table.evidence fallback i atom) = true :=
   table.query_checkedWith formula _ h i atom ha fallback
+
+/-- Produce every atom row using an explicit signed-remainder normalizer.
+Each atom's remainder chain is shared across its root intervals. No coefficient
+inverse or field instance is needed. The complete retained inventory is checked. -/
+@[expose] def buildWith [Neg E] (sign : E → Int) (point : Dyadic → E)
+    (normalize : DensePoly E → E × DensePoly E)
+    (context : Ctx) (head : DensePoly E)
+    (cert : IsolationReplay E Ctx) (query : RealFormula.Poly n → DensePoly E)
+    (formula : QF n) : Option (Table E Ctx n cert.isolations.intervals.size) :=
+  let entries := formula.polys.map fun atom =>
+    let q := query atom
+    let remainders := SignedRemainderChain.build sign normalize head q
+    (⟨atom, Vector.ofFn fun i =>
+      let interval := cert.isolations.intervals[i]
+      TarskiCertificate.fromChains sign (EndpointSigns.ofSign sign) context head q
+        (.finite (point interval.lower)) (.finite (point interval.upper))
+        cert.total.squarefree remainders⟩ : Entry E Ctx n cert.isolations.intervals.size)
+  let table : Table E Ctx n cert.isolations.intervals.size := ⟨entries⟩
+  if table.checkRows formula (fun atom i evidence =>
+      let interval := cert.isolations.intervals[i]
+      Sturm.check sign context head (query atom)
+        (.finite (point interval.lower)) (.finite (point interval.upper)) evidence.value evidence) then
+    some table
+  else none
 
 /-- Produce one literal query per formula atom and root cell. Successful
 construction returns only a table accepted by the same checker used in replay. -/

@@ -686,7 +686,7 @@ libraries:
     # The existing shared-formula dependency and pins are retained for compatibility.
     deps: [HexRealRoots, HexRealRootsTheory, HexPolyZ, HexPolyZTheory, HexRealFormulaTheory]
     # Extra imports are confined to adapters/HexRCF; published pins stay unchanged.
-    adapter_deps: [HexRealAlgebraicTheory, HexSturm, HexSturmTheory, HexNumberFieldTheory, HexOrderedFnTheory, HexRealClosureTheory]
+    adapter_deps: [HexRealAlgebraicTheory, HexSturm, HexSturmTheory, HexNumberFieldTheory, HexOrderedFnTheory, HexRealClosureTheory, HexMvGcd]
     mathlib: true
     done_through: 7
     status: active
