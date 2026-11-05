@@ -1392,6 +1392,9 @@ private def checkBinaryBuffers : IO Unit := do
     match Hex.Groebner.SparseBinaryConformance.checkRuntime (sparseSeed+(if offsets then 7 else 0)) with
     | .error message => throw (IO.userError message)
     | .ok () => pure ()
+    match Hex.Groebner.SparseBinaryConformance.checkSelection (sparseSeed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
   sparseOffsets false
   if !Hex.Groebner.SparseBinaryConformance.shapeChecks ||
       !Hex.Groebner.SparseBinaryConformance.cardinalityChecks ||
