@@ -27,7 +27,9 @@ Verification records all nine project gates and 36 strict Clang/GCC ASan/UBSan c
 
 Certificate generation, independent native certification, kernel checking and full checked calls are excluded from these candidate timings. Finite-extension adapters, deterministic producer correctness/termination, full balanced and held-out comparator acceptance, equal-thread parallel comparisons and the overall-fastest gap remain open under issue #10987. Scientific claims use manual shared-host observations, never CI timings.
 
-Raw capsule `f4-sparse-production-5fd07b982681.tar.xz` has SHA-256 `1ba690dd06b07eda1d0a2e220fe6671593ea69551f1337c6509dcbded4533715`. Its per-payload hashes, exact runtime/check-source manifests, all 64 full-output comparisons and actual gate receipts are replayed by this generator. `--current` additionally requires the checkout’s runtime and verification sources to match the recorded snapshot. CI uses `--current-runtime` to bind runtime sources while replaying the recorded verification snapshot; updated gate receipts are assembled after those gates finish.
+Raw capsule `f4-sparse-production-5fd07b982681.tar.xz` has SHA-256 `40fbf83897c6d2fb1472a7fe72f867ba937849cf9b7328cf5b0003b9a505d3b2`. Its per-payload hashes, exact runtime/check-source manifests, all 64 full-output comparisons and actual gate receipts are replayed by this generator. `--current` additionally requires the checkout’s runtime and verification sources to match the recorded snapshot. CI uses `--current-runtime` to bind runtime sources while replaying the recorded verification snapshot; updated gate receipts are assembled after those gates finish.
+Seeded sparse frames exercise dozens of reducers and targets, reducer chains, reused target pivots and independent remainders. The committed profile generator records its source identity, probe compiler version, exact probe variant flags and hashes of generated drivers, probe source and Lake configuration.
+
 
 | Private in-sample Eco-14 experiment | Candidate B/A | Process B/A | Pair ratios |
 |---|---:|---:|---|
