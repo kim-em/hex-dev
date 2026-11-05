@@ -1,5 +1,11 @@
 # Supplied irreducibility proof construction cost
 
+The measurements below belong to the pinned whole-field proof route. The
+current automatic common-field handler uses finite replay independently of a
+new common-field irreducibility instance. The current construction-cost probes
+explicitly call `Coefficients.prepare` and `Environment.prove`; no timing at
+that later source is inferred from these historical samples.
+
 This fixed experiment answers the question of where to construct the supplied
 irreducibility theorem for the degree-eight common field of the selected quartic
 α and √2. Both arms prove `∀ x : ℝ, x² + α + √2 > 0` using the same `rcf`
@@ -12,7 +18,7 @@ imports, including the factorizer's private executable closure and the imported
 construction module. This measures the cost of repeating construction, not the
 smaller ordinary-import consumer cone. The separate ordinary-import
 [regression](../conformance/HexRCF/SuppliedIrreducibleProofs.lean) establishes
-that the shipped frontend can reuse the proof without those private imports.
+that explicit certification can reuse the proof without those private imports.
 Native common-field construction during tactic search is unchanged.
 
 The clean source is `9b6dbba8f515a1dd3db0dbe5633f6a11ca19eb70` on `chungus2`,

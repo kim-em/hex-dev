@@ -880,6 +880,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.FieldReplay,
     `HexRCF.RealCoefficients.FieldRefinement,
     `HexRCF.RealCoefficients.FieldLiteral,
+    `HexRCF.RealCoefficients.FiniteLiteral, `HexRCF.RealCoefficients.FiniteIndex,
     `HexRCF.RealCoefficients.FieldRuntime,
     `HexRCF.RealCoefficients.Preparation,
     `HexRCF.RealCoefficients.FiniteReplay, `HexRCF.RealCoefficients.FiniteSigns,
@@ -1437,7 +1438,9 @@ lean_lib HexRCFProofProbeMeasurements where
   srcDir := "bench"
   globs := #[`HexRCF.ProofProbe.Supplied.Reconstruct,
     `HexRCF.ProofProbe.Supplied.Reuse,
-    `HexRCF.ProofProbe.Points.Section, `HexRCF.ProofProbe.Points.Point].map Glob.one
+    `HexRCF.ProofProbe.Points.Section, `HexRCF.ProofProbe.Points.Point,
+    `HexRCF.ProofProbe.FiniteSigns.Linear,
+    `HexRCF.ProofProbe.FiniteSigns.Indexed].map Glob.one
 
 -- Deliberately explicit: the four-boundary enlarged-tower stress case is
 -- retained without adding its multi-minute producer cost to every CI build.
@@ -1525,7 +1528,12 @@ lean_lib HexConformance where
 
     ++ #[`HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
       `HexRCF.FiniteFieldSource, `HexRCF.FiniteFieldGuards,
-      `HexRCF.FiniteFieldCompatibility, `HexRCF.FiniteFieldProofs].map Glob.one
+      `HexRCF.FiniteFieldCompatibility, `HexRCF.FiniteFieldProofs,
+      `HexRCF.FiniteFieldCompile, `HexRCF.FiniteFieldCompileProofs,
+      `HexRCF.FiniteCoordinates, `HexRCF.FiniteSourceTactic,
+      `HexRCF.FiniteSourceProofs, `HexRCF.FiniteIndexChecks,
+      `HexRCF.FiniteNestedSources, `HexRCF.FiniteDefault,
+      `HexRCF.FiniteDefaultProofs, `HexRCF.FiniteEvidence].map Glob.one
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
       `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicTheory.FieldSignConformance].map Glob.one

@@ -53,6 +53,17 @@ theorem real (table : LiteralSign.Table E)
     exact checked.1.2
   exact Field.literalRep_real p s hw hp reality
 
+/-- A nonzero recorded sign proves the original interpreted denominator is
+nonzero, without global zero reflection for the coordinate representation. -/
+theorem nonzero (table : LiteralSign.Table E)
+    (checked : Field.checkSignTable p s hw hp table = true) (a : E) (observed : Int)
+    (hit : table.lookup? a = some observed) (nonzero : observed ≠ 0) :
+    Field.value (Field.literalRep p s hw hp) a ≠ 0 := by
+  intro zero
+  have sign := Field.checkSignTable_lookup p s hw hp table checked a observed hit
+  rw [zero] at sign
+  exact nonzero (by simpa using sign)
+
 /-- Rational dyadic points use the same fixed selected real embedding. -/
 theorem point (table : LiteralSign.Table E)
     (checked : Field.checkSignTable p s hw hp table = true) (d : Dyadic) :
@@ -63,18 +74,21 @@ theorem point (table : LiteralSign.Table E)
       (Field.literalRep_mk p s hw hp) (real table checked) d.toRat
 
 /-- Require a recorded nonzero sign for each nonempty polynomial's top coefficient. -/
-@[expose] def leadingCheck (table : LiteralSign.Table E) (q : DensePoly E) : Bool :=
+@[expose] def leadingWith (lookup : E → Option Int) (q : DensePoly E) : Bool :=
   if q.size = 0 then true
-  else match table.lookup? (q.coeff (q.size - 1)) with
+  else match lookup (q.coeff (q.size - 1)) with
     | none => false
     | some observed => observed != 0
+
+@[expose] def leadingCheck (table : LiteralSign.Table E) (q : DensePoly E) : Bool :=
+  leadingWith table.lookup? q
 
 theorem leading (table : LiteralSign.Table E)
     (checked : Field.checkSignTable p s hw hp table = true) (q : DensePoly E)
     (accepted : leadingCheck table q = true) :
     Transport.Leading (Field.value (Field.literalRep p s hw hp)) q := by
   intro positive zero
-  unfold leadingCheck at accepted
+  unfold leadingCheck leadingWith at accepted
   split at accepted
   · omega
   · rename_i nonempty

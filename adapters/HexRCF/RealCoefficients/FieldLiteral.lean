@@ -9,6 +9,7 @@ public meta import HexRCF.RealCoefficients.FieldDecisionProgress
 public meta import HexRCF.RealCoefficients.FieldBuildBudget
 public meta import HexRCF.RealCoefficients.FiniteReplay
 public meta import HexRCF.RealCoefficients.FieldRefinement
+public meta import HexRCF.RealCoefficients.FieldCells
 public meta import HexRCF.RealCoefficients.FieldIndex
 public meta import HexRealAlgebraicTheory.Laws
 public meta import Lean
@@ -68,7 +69,7 @@ register_option rcf.algebraic.indexSigns : Bool := {
   descr := "retrieve fixed-field replay signs through a checked positional index"
 }
 
-private def indexExpr : LiteralSign.Index → Expr
+meta def indexExpr : LiteralSign.Index → Expr
   | .empty => mkConst ``LiteralSign.Index.empty
   | .node position left right =>
       mkApp3 (mkConst ``LiteralSign.Index.node) (mkNatLit position)
@@ -96,7 +97,13 @@ private def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr :=
 /-- Shared literal evidence reductions for tactic and explicit finite replay.
 Each caller supplies its own envelope and verdict equations. -/
 meta def evidenceLemmas : MetaM (TSyntaxArray ``Parser.Tactic.simpLemma) := do
-  return #[← `(Parser.Tactic.simpLemma| Field.checkSignTable),
+  return #[← `(Parser.Tactic.simpLemma| FieldCells.checkWith),
+    ← `(Parser.Tactic.simpLemma| FieldIsolation.checkWith),
+    ← `(Parser.Tactic.simpLemma| FieldRootSigns.Table.checkTransportWith),
+    ← `(Parser.Tactic.simpLemma| FieldQuery.checkWith),
+    ← `(Parser.Tactic.simpLemma| FieldQuery.coveredWith),
+    ← `(Parser.Tactic.simpLemma| FieldTransport.leadingWith),
+    ← `(Parser.Tactic.simpLemma| Field.checkSignTable),
     ← `(Parser.Tactic.simpLemma| LiteralSign.Table.check),
     ← `(Parser.Tactic.simpLemma| LiteralSign.Window.check),
     ← `(Parser.Tactic.simpLemma| LiteralSign.Entry.check),
@@ -428,9 +435,9 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
-    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) (preview : Bool := true) :
     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
-  checkPreview values formula quantifier extraSignKeys validate data
+  if preview then checkPreview values formula quantifier extraSignKeys validate data
   let certificate ← profileitM Exception "rcf literal quotation" (← getOptions) do
     resultExpr pExpr rootExpr formulaExpr formula data
   let indexed := rcf.algebraic.indexSigns.get (← getOptions)
@@ -547,15 +554,16 @@ search budgets. The complete library producer is separate. Accepted false,
 exhaustion and invalid replay remain terminal; search is absent from proofs.
 Cancellation is checked before and after native production. Individual native
 root computations do not check Lean cancellation or elaboration heartbeats. -/
-meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
+meta def produceRefining {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
-    (pExpr rootExpr valuesExpr formulaExpr : Expr)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
-    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
-    MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ())
+    (required : FieldBuild.Result p s hw hp Unit (n + 1) →
+      List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := fun _ => []) :
+    MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
   if real : s.meetsRealAxis = true then
     let options ← getOptions
     Core.checkInterrupted
@@ -572,15 +580,37 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
         throwError "rcf: algebraic certificate construction or replay failed"
     | .ok data =>
         Core.checkInterrupted
+        let requiredKeys := required data
+        let data ← if requiredKeys.all (fun key => (data.signs.lookup? key).isSome) then pure data else do
+          let keys := data.signs.entries.map (·.key) ++ extraSignKeys ++ requiredKeys
+          let some signs := FieldBuild.buildTable p s hw hp keys |
+            throwError "rcf: additional finite sign production failed"
+          pure {data with signs}
         let data ← refineCertificate values formula quantifier extraSignKeys validate data
         unless rcf.algebraic.intervalSigns.get (← getOptions) do
           checkPreview values formula quantifier extraSignKeys validate data
         let signs ← prepareSigns data.signs
         let data := {data with signs}
         Core.checkInterrupted
-        return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
-          quantifier extraSignKeys validate data
+        checkPreview values formula quantifier extraSignKeys validate data
+        return data
   else throwError "rcf: selected square does not name a real coefficient field"
+
+/-- Produce and quote through the legacy fixed-field interpretation laws. -/
+meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    [ZPoly.CheckedIrreducible p] {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+    (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
+    MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+  let data ← produceRefining values formula quantifier extraSignKeys validate
+  -- The exact returned data has just passed the producer's final preview.
+  -- Supplied frozen results still use quoteCertificate's mandatory default.
+  quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
+    quantifier extraSignKeys (fun _ => pure ()) data (preview := false)
 
 /-- Construct the checked fixed-field proof when no additional sign queries
 are needed by an enclosing coefficient-presentation checker. -/

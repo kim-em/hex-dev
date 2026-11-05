@@ -8,6 +8,8 @@ module
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Replay
 public meta import HexRCF.RealCoefficients.FieldLiteral
+public meta import HexRCF.RealCoefficients.FiniteLiteral
+public meta import HexRCF.RealCoefficients.FieldCompile
 public meta import HexRCF.RealCoefficients.FieldRuntime
 public meta import HexRCF.Tactic
 
@@ -20,9 +22,10 @@ open Hex Lean Meta Qq
 
 /-- Fixed-field coordinates in original coefficient order, with ordinary-kernel
 source identities and all original divisor proofs. This is prepared frontend
-input, not a verdict or a checked root/cell certificate. Expressions remain in
-the source's local context; the internal irreducibility binder is closed. -/
-structure Environment where
+input, not a verdict or a checked root/cell certificate. The native field
+instance supports search; no expression quoting its proof is required. Expressions
+remain in the source's local context. -/
+structure Coordinates where
   source : Reify.Source
   polynomial : ZPoly
   square : DyadicSquare
@@ -38,7 +41,6 @@ structure Environment where
   rootExpr : Expr
   valuesExpr : Expr
   formulaExpr : Expr
-  irreducibleExpr : Expr
   /-- Equality between interpreted coordinates and `source.valuation`. -/
   valuationProof : Expr
   /-- Proofs of nonvanishing for `source.divisors`, in the original order. -/
@@ -50,16 +52,21 @@ structure Environment where
   /-- Coordinate interpretation equals the corresponding original divisor. -/
   divisorIdentities : Array Expr
 
-namespace Environment
+/-- Legacy prepared input additionally retains a quoted global field proof.
+Its public methods validate that proof independently of finite source evidence. -/
+structure Environment extends Coordinates where
+  irreducibleExpr : Expr
+
+namespace Coordinates
 
 private meta def closed (expression : Expr) : MetaM Expr := do
   let expression ← instantiateMVars expression
   if expression.hasMVar then throwError "rcf: prepared environment contains unresolved metavariables"
-  Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.Coefficients.Environment.input expression
+  Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.Coefficients.Coordinates.input expression
 
 /-- Instantiate all expression data before discarding temporary frontend state.
 Unresolved data cannot be assigned while accepting an externally supplied proof. -/
-meta def instantiate (prepared : Environment) : MetaM Environment := do
+meta def instantiate (prepared : Coordinates) : MetaM Coordinates := do
   let source := prepared.source
   let source := {source with
     original := ← closed source.original
@@ -76,7 +83,6 @@ meta def instantiate (prepared : Environment) : MetaM Environment := do
     rootExpr := (← closed prepared.rootExpr).consumeMData
     valuesExpr := ← closed prepared.valuesExpr
     formulaExpr := ← closed prepared.formulaExpr
-    irreducibleExpr := ← closed prepared.irreducibleExpr
     valuationProof := ← closed prepared.valuationProof
     divisorProofs := ← prepared.divisorProofs.mapM closed
     divisorExpressions := ← prepared.divisorExpressions.mapM closed
@@ -96,7 +102,7 @@ private meta def restoreOnFailure (action : MetaM α) : MetaM α := do
 
 /-- Bind runtime proposal inputs to their stored source expressions before a
 native diagnostic verdict. Acceptance still requires the ordinary kernel. -/
-private meta def checkBindings (prepared : Environment) : MetaM Unit := do
+private meta def checkBindings (prepared : Coordinates) : MetaM Unit := do
   unless (← FieldRuntime.evalZPoly prepared.polynomialExpr) == prepared.polynomial do
     throwError "rcf: invalid prepared polynomial binding"
   let root := prepared.rootExpr.consumeMData
@@ -131,7 +137,9 @@ private meta def checkBindings (prepared : Environment) : MetaM Unit := do
 
 /-- Bind runtime input to its expressions and authenticate required source,
 field, valuation and original-divisor proofs before any production shortcut. -/
-meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure do
+meta def checkDomains (prepared : Coordinates)
+    (owner : Name := `Hex.RCF.RealCoefficients.Coefficients.Coordinates) : MetaM Unit :=
+    restoreOnFailure do
   let prepared ← prepared.instantiate
   prepared.checkBindings
   let .ok original ← Reify.guards prepared.source.original |
@@ -146,35 +154,32 @@ meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure 
       prepared.divisorExpressions.size == prepared.source.divisors.size &&
       prepared.divisorIdentities.size == prepared.source.divisors.size do
     throwError "rcf: prepared coefficient environment omitted an original divisor"
-  let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-    `Hex.RCF.RealCoefficients.Coefficients.Environment.irreducible
-    (← mkAppM ``ZPoly.CheckedIrreducible #[prepared.polynomialExpr]) prepared.irreducibleExpr
   let sentence ← mkAppM ``RealFormula.Prenex.toProp
     #[prepared.source.formula, prepared.source.valuation]
   let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-    `Hex.RCF.RealCoefficients.Coefficients.Environment.source
+    (owner ++ `source)
     (← mkAppM ``Iff #[sentence, prepared.source.original]) prepared.source.proof
   let rep ← mkAppM ``Field.literalRep prepared.rootExpr.getAppArgs
   let interpreted ← withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit prepared.arity)) fun i => do
     mkLambdaFVars #[i] (← mkAppM ``Field.value #[rep, mkApp prepared.valuesExpr i])
   let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-    `Hex.RCF.RealCoefficients.Coefficients.Environment.valuation
+    (owner ++ `valuation)
     (← mkEq interpreted prepared.source.valuation) prepared.valuationProof
   for i in [:prepared.source.divisors.size] do
     let divisor : Q(ℝ) := prepared.source.divisors[i]!
     let proof := prepared.divisorProofs[i]!
     let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-      `Hex.RCF.RealCoefficients.Coefficients.Environment.guard q($divisor ≠ 0) proof
+      (owner ++ `guard) q($divisor ≠ 0) proof
     let identity := prepared.divisorIdentities[i]!
     let interpreted ← mkAppM ``Field.value #[rep, prepared.divisorExpressions[i]!]
     let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
-      `Hex.RCF.RealCoefficients.Coefficients.Environment.identity
+      (owner ++ `identity)
       (← mkEq interpreted divisor) identity
 
 /-- Compose a checked fixed-field sentence proof with authenticated source
 coefficients and the original-goal equivalence. Check the complete proof and
 its original target, including every transitive axiom dependency. -/
-private meta def compose (prepared : Environment) (fixed : Expr) : MetaM Expr := do
+private meta def compose (prepared : Coordinates) (fixed : Expr) : MetaM Expr := do
   let fixed ← closed fixed
   let prepared ← prepared.instantiate
   let source := prepared.source
@@ -183,10 +188,82 @@ private meta def compose (prepared : Environment) (fixed : Expr) : MetaM Expr :=
     mkAppM ``congrArg #[← mkLambdaFVars #[ρ] body, prepared.valuationProof]
   let specialized ← mkAppM ``Eq.mp #[congr, fixed]
   let proof ← mkAppM ``Iff.mp #[source.proof, specialized]
-  Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Coefficients.Environment.transport
+  Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Coefficients.Coordinates.transport
     source.original proof
 
 /-- Transport only after checking all original domain obligations. -/
+meta def transport (prepared : Coordinates) (fixed : Expr) : MetaM Expr := restoreOnFailure do
+  prepared.checkDomains
+  prepared.compose fixed
+
+/-- Reuse an original divisor proof while compiling the same closed source.
+The equality between its stored coordinate and the proposed denominator is
+checked in the final proof; no additional sign search or inverse law is used. -/
+meta def nonzero (prepared : Coordinates)
+    (value : FieldCompile.Result prepared.polynomial
+      (SimpleRoot.ofSquare prepared.polynomial prepared.square prepared.witness prepared.precision)) :
+    MetaM Expr := do
+  for (divisor, i) in prepared.divisors.zipIdx do
+    if divisor = value.value then
+      let some expression := prepared.divisorExpressions[i]? |
+        throwError "rcf: missing prepared divisor expression"
+      let some identity := prepared.divisorIdentities[i]? |
+        throwError "rcf: missing prepared divisor identity"
+      let some guard := prepared.divisorProofs[i]? |
+        throwError "rcf: missing prepared divisor proof"
+      let some original := prepared.source.divisors[i]? |
+        throwError "rcf: missing original divisor"
+      let rep ← mkAppM ``Field.literalRep prepared.rootExpr.getAppArgs
+      let equality ← mkDecideProof (← mkEq value.expression expression)
+      let interpretation ← withLocalDeclD `a (← inferType expression) fun a => do
+        mkLambdaFVars #[a] (← mkAppM ``Field.value #[rep,a])
+      let same ← mkEqTrans (← mkAppM ``congrArg #[interpretation,equality]) identity
+      let read : Q(ℝ) ← mkAppM ``Field.value #[rep,value.expression]
+      let original : Q(ℝ) ← pure original
+      let same : Q($read = $original) ← pure same
+      let guard : Q($original ≠ 0) ← pure guard
+      return q(fun h : $read = 0 => $guard (Eq.trans (Eq.symm $same) h))
+  throwError "rcf: arithmetic denominator is absent from the original divisor inventory"
+
+/-- Produce a finite real-cell proof and compose it with the authenticated
+source. Native search uses the actual field; quotation uses finite guards.
+Every original divisor is checked before production or a false verdict. -/
+meta def prove (prepared : Coordinates) : MetaM Expr := restoreOnFailure do
+  prepared.checkDomains
+  let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked
+  let fixed ← FiniteLiteral.prove prepared.polynomialExpr prepared.rootExpr
+    prepared.valuesExpr prepared.formulaExpr prepared.values prepared.formula
+    prepared.quantifier
+  prepared.compose fixed
+
+end Coordinates
+
+namespace Environment
+
+private meta def closed := Coordinates.closed
+private meta def restoreOnFailure (action : MetaM α) : MetaM α :=
+  Coordinates.restoreOnFailure action
+
+/-- Instantiate inherited source data and the additional legacy proof. -/
+meta def instantiate (prepared : Environment) : MetaM Environment := do
+  let coordinates ← prepared.toCoordinates.instantiate
+  return {
+    toCoordinates := coordinates
+    irreducibleExpr := ← closed prepared.irreducibleExpr
+  }
+
+/-- Preserve the legacy global certificate check alongside all source guards. -/
+meta def checkDomains (prepared : Environment) : MetaM Unit := restoreOnFailure do
+  let prepared ← prepared.instantiate
+  prepared.toCoordinates.checkDomains `Hex.RCF.RealCoefficients.Coefficients.Environment
+  let _ ← withoutModifyingEnv <| Hex.RCF.checkProof
+    `Hex.RCF.RealCoefficients.Coefficients.Environment.irreducible
+    (← mkAppM ``ZPoly.CheckedIrreducible #[prepared.polynomialExpr]) prepared.irreducibleExpr
+
+private meta def compose (prepared : Environment) (fixed : Expr) : MetaM Expr :=
+  prepared.toCoordinates.compose fixed
+
+/-- Transport after validating the additional legacy proof and all guards. -/
 meta def transport (prepared : Environment) (fixed : Expr) : MetaM Expr := restoreOnFailure do
   prepared.checkDomains
   prepared.compose fixed

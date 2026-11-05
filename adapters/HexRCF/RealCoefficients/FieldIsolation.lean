@@ -22,16 +22,20 @@ local notation "E" => PolyQuot p (SimpleRoot.ofSquare p s hw hp)
 /-- Retain the proposed intervals and independently check their complete count
 and each count-one query, including all finite sign and leading guards.
 The enclosing checker authenticates the shared sign table once. -/
-@[expose] def check (table : LiteralSign.Table E) (context : Ctx)
+@[expose] def checkWith (lookup : E → Option Int) (context : Ctx)
     (head : DensePoly E) (cert : IsolationReplay E Ctx) : Bool :=
   cert.isolations.checkGaps &&
-    FieldQuery.check table context head 1 .negInf .posInf
+    FieldQuery.checkWith lookup context head 1 .negInf .posInf
       cert.isolations.intervals.size cert.total &&
     (List.finRange cert.isolations.intervals.size).all fun i =>
       let interval := cert.isolations.intervals[i]
-      FieldQuery.check table context head 1
+      FieldQuery.checkWith lookup context head 1
         (.finite (PolyQuot.ofRat interval.lower.toRat))
         (.finite (PolyQuot.ofRat interval.upper.toRat)) 1 cert.counts[i]
+
+@[expose] def check (table : LiteralSign.Table E) (context : Ctx)
+    (head : DensePoly E) (cert : IsolationReplay E Ctx) : Bool :=
+  checkWith table.lookup? context head cert
 
 /-- Exact finite sign inventory for the complete count and every root interval. -/
 @[expose] def keys (head : DensePoly E) (cert : IsolationReplay E Ctx) : List E :=
@@ -59,7 +63,7 @@ theorem checked (table : LiteralSign.Table E)
     (map cert).check (fun x : ℝ => (SignType.sign x : Int))
       HexRealRootsTheory.Dyadic.toReal context
       (Transport.polynomial (Field.value (Field.literalRep p s hw hp)) head) = true := by
-  simp only [check, Bool.and_eq_true] at accepted
+  simp only [check, checkWith, Bool.and_eq_true] at accepted
   obtain ⟨⟨gaps, total⟩, counts⟩ := accepted
   have real := FieldTransport.real table tableChecked
   let read : E → ℝ := Field.value (Field.literalRep p s hw hp)

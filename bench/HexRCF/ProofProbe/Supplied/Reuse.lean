@@ -156,11 +156,24 @@ separately by `SuppliedIrreducibleProofs`. No runtime benchmark imports this fil
 public section
 open Hex Hex.RCF Hex.RCF.RealCoefficients
 set_option maxRecDepth 32768
+
+-- Exercise the explicit whole-field interface in both construction-cost arms.
+-- The automatic finite handler does not consume a common-field instance.
+open Lean Meta in
+local elab "legacy_field_proof" : tactic => do
+  let goal ← Lean.Elab.Tactic.getMainGoal
+  let target ← goal.getType
+  let .ok prepared ← Coefficients.prepare target |
+    throwError "legacy field preparation declined the supplied cost fixture"
+  let proof ← prepared.prove
+  goal.assign (← Hex.RCF.checkProof `suppliedCost target proof)
+  Lean.Elab.Tactic.replaceMainGoal []
+
 namespace Hex.RCF.ProofProbe.Supplied.Reuse
 open scoped Hex.RCF.SuppliedIrreducible
 
 theorem positive : ∀ x : ℝ,
-    x ^ 2 + CertificationInputs.realAlgebraic.toReal + Real.sqrt 2 > 0 := by rcf
+    x ^ 2 + CertificationInputs.realAlgebraic.toReal + Real.sqrt 2 > 0 := by legacy_field_proof
 /-- info: 'Hex.RCF.ProofProbe.Supplied.Reuse.positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms positive

@@ -142,8 +142,23 @@ identities still bind each coordinate to its original selected coefficient;
 checks both its polynomial equation and its selected enclosure. Original
 divisor guards remain a frontend obligation before applying these formula laws.
 
-These operations form an explicit certificate interface. The automatic
-common-field handler uses its separate irreducibility-based proof path.
-These explicit APIs require source preparation, divisor authentication and
-ordinary-kernel quotation; they add no automatic source syntax or algebraic
-decision completeness claim.
+The automatic common-field handler uses this finite replay boundary. Source
+preparation authenticates each selected coefficient and retains every original
+divisor before normalization. A proposed quotient is checked by multiplication
+and a proof that its original denominator is nonzero. The accepted proof needs
+no global inverse or zero-reflection law for the common presentation. Native
+production still uses its actual checked number field; certificates for the
+original selected input values remain legitimate source evidence.
+
+{name Hex.RCF.RealCoefficients.FieldCells.checkIndex}`FieldCells.checkIndex`
+uses a positional index to retrieve recorded signs. The index is untrusted:
+{name Hex.RCF.RealCoefficients.FieldCells.checkIndex_eq}`checkIndex_eq` proves
+the same Boolean result as the original checker for every packet, including
+malformed routes and missing signs. Indexing does not skip any retained row
+or authenticate a claim by its hash. Set `rcf.algebraic.indexSigns` to `false`
+to use linear lookup with the same mathematical acceptance conditions.
+
+The explicit APIs also remain available for supplied certificates. They require
+source preparation, divisor authentication and ordinary-kernel quotation.
+Finite replay soundness does not establish general algebraic production or
+decision completeness under an unbounded resource schedule.

@@ -469,72 +469,72 @@ run_meta do
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.fraction
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.fraction (Lean.mkConst `Hex.RCF.RationalRoots.fraction)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.square
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.square
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.square (Lean.mkConst `Hex.RCF.RationalRoots.square)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.cube
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.cube
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.cube (Lean.mkConst `Hex.RCF.RationalRoots.cube)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.fourth
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.fourth
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.fourth (Lean.mkConst `Hex.RCF.RationalRoots.fourth)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.inverse_exponent
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.inverse_exponent
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.inverse_exponent (Lean.mkConst `Hex.RCF.RationalRoots.inverse_exponent)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.direct_power
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.direct_power
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.direct_power (Lean.mkConst `Hex.RCF.RationalRoots.direct_power)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.field_root
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.field_root
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.field_root (Lean.mkConst `Hex.RCF.RationalRoots.field_root)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.guarded_division
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.guarded_division
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.guarded_division (Lean.mkConst `Hex.RCF.RationalRoots.guarded_division)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.half_open
       (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
     throwError "rational-root proof did not authenticate the new selected embedding"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.RationalRoots.half_open
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula ||
+        e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.exists_formula) do
     throwError "rational-root proof did not use fixed-field literal replay"
   Hex.RCF.checkAxioms `Hex.RCF.RationalRoots.half_open (Lean.mkConst `Hex.RCF.RationalRoots.half_open)
 

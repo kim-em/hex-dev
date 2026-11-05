@@ -16,24 +16,36 @@ variable {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
 local notation "E" => PolyQuot p (SimpleRoot.ofSquare p s hw hp)
 
 /-- Every sign dependency must have an explicit table entry, including exact zero. -/
-@[expose] def covered (table : LiteralSign.Table E) (keys : List E) : Bool :=
-  keys.all fun x => (table.lookup? x).isSome
+@[expose] def coveredWith (lookup : E → Option Int) (keys : List E) : Bool :=
+  keys.all fun x => (lookup x).isSome
 
 /-- Executable lookup used only after complete coverage preflight. Its default
 branch cannot contribute to acceptance, as `missing_rejects` establishes. -/
-@[expose] def cached (table : LiteralSign.Table E) (x : E) : Int := (table.lookup? x).getD 0
+@[expose] def cachedWith (lookup : E → Option Int) (x : E) : Int := (lookup x).getD 0
 
 /-- Check the original query and all finite signs and degree guards. The enclosing
 checker authenticates the sign table once before checking its queries. No
 root, sign or inverse producer is called during replay. -/
+@[expose] def checkWith {C : Type u} [DecidableEq C] (lookup : E → Option Int) (context : C)
+    (head test : DensePoly E) (a b : Endpoint E) (value : Int)
+    (cert : TarskiCertificate E E C) : Bool :=
+  coveredWith lookup (SignInputs.certificate head a b cert) &&
+    FieldTransport.leadingWith lookup head &&
+    cert.squarefree.chain.all (FieldTransport.leadingWith lookup) &&
+    cert.remainders.chain.all (FieldTransport.leadingWith lookup) &&
+    Sturm.check (cachedWith lookup) context head test a b value cert
+
+/-- Linear retrieval retains the original public checker interface. -/
+@[expose] def covered (table : LiteralSign.Table E) (keys : List E) : Bool :=
+  coveredWith table.lookup? keys
+
+@[expose] def cached (table : LiteralSign.Table E) (x : E) : Int :=
+  cachedWith table.lookup? x
+
 @[expose] def check {C : Type u} [DecidableEq C] (table : LiteralSign.Table E) (context : C)
     (head test : DensePoly E) (a b : Endpoint E) (value : Int)
     (cert : TarskiCertificate E E C) : Bool :=
-  covered table (SignInputs.certificate head a b cert) &&
-    FieldTransport.leadingCheck table head &&
-    cert.squarefree.chain.all (FieldTransport.leadingCheck table) &&
-    cert.remainders.chain.all (FieldTransport.leadingCheck table) &&
-    Sturm.check (cached table) context head test a b value cert
+  checkWith table.lookup? context head test a b value cert
 
 /-- Every sign used by a query, including semantic leading-coefficient guards. -/
 @[expose] def keys {C : Type u} (head : DensePoly E) (a b : Endpoint E)
@@ -48,7 +60,7 @@ theorem cached_eq (table : LiteralSign.Table E) (keys : List E)
   have present := List.all_eq_true.mp coverage x member
   cases hit : table.lookup? x with
   | none => simp [hit] at present
-  | some value => simp [cached, LiteralSign.Table.sign, hit]
+  | some value => simp [cached, cachedWith, LiteralSign.Table.sign, hit]
 
 theorem checked {C : Type u} [DecidableEq C]
     (table : LiteralSign.Table E)
@@ -62,12 +74,13 @@ theorem checked {C : Type u} [DecidableEq C]
       (Transport.endpoint (Field.value (Field.literalRep p s hw hp)) a)
       (Transport.endpoint (Field.value (Field.literalRep p s hw hp)) b)
       value (Transport.query (Field.value (Field.literalRep p s hw hp)) id cert) = true := by
-  simp only [check, Bool.and_eq_true] at accepted
+  simp only [check, checkWith, Bool.and_eq_true] at accepted
   obtain ⟨⟨⟨⟨coverage, headChecked⟩, squarefree⟩, remainders⟩, accepted⟩ := accepted
   have real := FieldTransport.real table tableChecked
   have same := SignInputs.certificate_check_congr (cached table)
     (table.sign (Field.value (Field.literalRep p s hw hp))) context head test a b value cert
     (fun x member => cached_eq table _ coverage x member _)
+  change Sturm.check (cached table) context head test a b value cert = true at accepted
   rw [same] at accepted
   exact FieldTransport.query table tableChecked real context head test a b value cert headChecked
     (fun r member => Array.all_eq_true_iff_forall_mem.mp squarefree r member)
@@ -85,6 +98,7 @@ theorem missing_rejects {C : Type u} [DecidableEq C]
     | true =>
       have present := List.all_eq_true.mp h x member
       simp [missing] at present
-  simp [check, absent]
+  change coveredWith table.lookup? (SignInputs.certificate head a b cert) = false at absent
+  simp [check, checkWith, absent]
 
 end Hex.RCF.RealCoefficients.FieldQuery

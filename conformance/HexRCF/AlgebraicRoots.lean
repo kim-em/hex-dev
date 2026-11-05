@@ -88,15 +88,16 @@ run_elab do
             ``Replay.build, ``Replay.buildTotal, ``Field.prepareSign,
             ``Sturm.queryPrepared, ``Sturm.certifyPrepared,
             ``RealAlgebraicNumber.ofAlgebraic?, ``PolyQuot.toAlgebraicNumber,
-            ``AlgebraicRoot.identify,
+            ``AlgebraicRoot.identify, ``AlgebraicRoot.identifyCoordinates,
+            ``FiniteLiteral.prove,
             ``QAdjoin.common, ``RealAlgebraicNumber.approxBall,
             ``HexBerlekampZassenhaus.FactorTactic.searchWitness,
             ``Hex.certifyIrreducible?, ``Hex.QuadraticNormCertificate.certify?].contains n)) then
       throwError "tactic proof transitively includes native production"
     unless ← Hex.RCF.ProofEvidence.contains name (fun e =>
-        e.isConstOf ``FieldBuild.Result.checkForall_sound ||
-        e.isConstOf ``FieldBuild.Result.checkExists_sound) do
-      throwError "tactic proof omitted ordinary cell replay soundness"
+        e.isConstOf ``FieldCells.forall_formula ||
+        e.isConstOf ``FieldCells.exists_formula) do
+      throwError "tactic proof omitted finite cell replay soundness"
 
 /-- info: 'Hex.RCF.AlgebraicRoots.square' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

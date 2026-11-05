@@ -32,13 +32,13 @@ example : ∀ x : ℝ,
 open Lean Meta Qq in
 run_meta do
   for (name,soundness,coefficient) in #[
-      (``multiple_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
+      (``multiple_positive, ``Hex.RCF.RealCoefficients.FieldCells.forall_formula,
         q((2 : ℝ) * Real.sqrt 2)),
-      (``sum_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
+      (``sum_positive, ``Hex.RCF.RealCoefficients.FieldCells.forall_formula,
         q(Real.sqrt 2 + Real.sqrt 3)),
-      (``square_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
+      (``square_positive, ``Hex.RCF.RealCoefficients.FieldCells.forall_formula,
         q((Real.sqrt 2 + Real.sqrt 3)^2)),
-      (``negative_witness, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound,
+      (``negative_witness, ``Hex.RCF.RealCoefficients.FieldCells.exists_formula,
         q(-(Real.sqrt 2 + Real.sqrt 3)))] do
     let .thmInfo declaration ← getConstInfo name | throwError "missing maximal coefficient proof"
     let .ok source ← Hex.RCF.RealCoefficients.Reify.prepare declaration.type

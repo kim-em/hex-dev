@@ -1508,27 +1508,37 @@ sentence fragment. Prove construction correctness and certificate acceptance;
 the tactic closes only true sentences. Its execution limits do not weaken
 the completeness theorem for the underlying mathematical procedure.
 
-The current frontend does not yet implement that full completeness contract.
-Its available common-polynomial irreducibility certificates can reject an
-irreducible algebraic presentation: the pinned degree-eight example and its
-prime-factor patterns are recorded in
-[`CertificationProofs.lean`](../../conformance/HexRCF/CertificationProofs.lean).
-For a new common polynomial, the frontend first reuses a matching
+The automatic algebraic frontend uses finite replay without quoting a new
+irreducibility theorem for the combined coefficient field. Native production
+uses the checked number field; accepted proofs establish the required source
+identities, signs, nonzero leading coefficients and complete root/cell
+evidence through ring-preserving transport. Original algebraic inputs retain
+their own certificates. The ordinary tactic goals in
+[`FiniteDefault.lean`](../../conformance/HexRCF/FiniteDefault.lean) and
+[`FiniteNestedSources.lean`](../../conformance/HexRCF/FiniteNestedSources.lean)
+exercise combined degree-eight and nested degree-sixteen presentations.
+
+The explicit legacy `Coefficients.prepare`/`Environment` interface still
+requires common-polynomial irreducibility. It first reuses a matching
 `ZPoly.CheckedIrreducible` instance for the exact quoted `DensePoly.ofCoeffs`
-literal, checking its runtime binding, type,
-axiom dependencies and ordinary-kernel validity. Rejected instances and
-instance-search resource failures are terminal; only absence of an instance
-enters the existing certificate producers. A supplied instance can cover a
-particular common polynomial without completing automatic certification.
-A focused build-only experiment measures the cost of reconstructing that
-irreducibility theorem versus reusing it across modules, for the same
-degree-eight tactic goal and matched private executable imports. It informs
-where to place proof construction; it does not measure automatic certification
-or the smaller ordinary-import consumer cone.
-This is a certificate-language gap, not an elaborator resource limit. The
-[owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358#issuecomment-5968366163)
-records the concrete owner prerequisite. Finite accepted proofs remain sound;
-no total algebraic acceptance claim is warranted until the gap is closed.
+literal, checking its runtime binding, type, axiom dependencies and
+ordinary-kernel validity. Rejected instances and instance-search resource
+failures are terminal; only absence of an instance enters its certificate
+producers. Those producers can reject an irreducible presentation: the
+degree-eight example and prime-factor patterns are recorded in
+[`CertificationProofs.lean`](../../conformance/HexRCF/CertificationProofs.lean).
+[`SuppliedIrreducibleProofs.lean`](../../conformance/HexRCF/SuppliedIrreducibleProofs.lean)
+checks both automatic finite success and the separate legacy contract. The
+source-pinned construction-cost experiment concerns that legacy certificate
+interface, not the automatic finite tactic.
+
+Finite accepted proofs do not yet establish the full completeness contract.
+Public preparation/build/replay alignment and proofs that valid algebraic
+production terminates and its certificates are accepted remain obligations
+of the [owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358).
+Execution limits do not weaken those mathematical obligations. The finite
+path does not require a new general common-polynomial irreducibility
+quotation API before supported automatic algebraic goals can be proved.
 
 A total transcendental tower requires correct convergent user-supplied
 approximations and transcendence of each constant over its **embedded

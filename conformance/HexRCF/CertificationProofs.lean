@@ -81,6 +81,8 @@ abbrev cubicRoot : RealAlgebraicNumber :=
 
 -- This genuine degree-six compositum has a new polynomial. The first two
 -- frontend certificate languages decline; the public multi-prime route succeeds.
+set_option maxRecDepth 8192 in
+set_option maxHeartbeats 5000000 in
 open Lean Meta Qq in
 run_meta do
   let (_, _, quadratic) ← FieldRuntime.coefficient q(Real.sqrt 37)
@@ -92,6 +94,12 @@ run_meta do
       (HexBerlekampZassenhaus.FactorTactic.searchWitness p).isNone &&
       (certifyIrreducible? p).isSome do
     throwError "common polynomial did not reach the multi-prime certificate language"
+  let expression : Q(ZPoly) ← FieldLiteral.zpolyExpr p
+  let degree ← mkDecideProof q(0 < ($expression).natDegree)
+  let proof ← CommonTactic.certify p expression degree
+  addDecl (.thmDecl {
+    name := `Hex.RCF.CertificationProofs.multiprime_certificate
+    levelParams := [], type := ← inferType proof, value := proof })
 
 set_option maxRecDepth 8192 in
 set_option maxHeartbeats 5000000 in
@@ -99,9 +107,12 @@ theorem common_multiprime : ∀ x : ℝ,
     x ^ 2 + cubicRoot.toReal + Real.sqrt 37 > 0 := by rcf
 
 run_meta do
-  unless ← Hex.RCF.ProofEvidence.contains ``common_multiprime
+  unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.CertificationProofs.multiprime_certificate
       (·.isConstOf ``HexBerlekampZassenhausTheory.zpolyIrreducible_of_checkMultiPrimeCert) do
-    throwError "common-field proof did not retain its multi-prime certificate"
+    throwError "explicit common-field certificate omitted the multi-prime checker"
+  unless ← Hex.RCF.ProofEvidence.contains ``common_multiprime
+      (·.isConstOf ``FieldCells.forall_formula) do
+    throwError "common-field tactic proof omitted finite cell replay"
 
 abbrev quadraticRoot : RealAlgebraicNumber :=
   Selected.real SquareTwo.polynomial SquareTwo.square (by decide) (by decide)
@@ -110,7 +121,8 @@ abbrev quadraticRoot : RealAlgebraicNumber :=
 -- The current certificate languages do not cover every irreducible common
 -- presentation. Pin this input and its first three good-prime patterns;
 -- each pattern permits a degree-two factor, so these blocks cannot certify it.
--- Refusal is not a mathematical reducibility claim.
+-- This producer refusal is not a reducibility claim; the automatic tactic
+-- instead uses finite replay, as exercised by common_positive below.
 run_meta do
   let common := QAdjoin.common #[realAlgebraic.toAlgebraic, quadraticRoot.toAlgebraic]
   let p := common.generator.p
@@ -131,7 +143,7 @@ run_meta do
       throwError "unexpected factor pattern at {prime}"
 
 -- Exercise failures without leaving failed declarations or proof admissions.
-private meta def expectError (expected : String) (hint : Option String := none) :
+private meta def expectError (expected : String) :
     Lean.Elab.Tactic.TacticM Unit := do
   let saved ← Lean.Elab.Tactic.saveState
   let observed ← try
@@ -139,17 +151,11 @@ private meta def expectError (expected : String) (hint : Option String := none) 
     pure none
   catch error => pure (some (← error.toMessageData.toString))
   saved.restore
-  let agrees := match observed, hint with
-    | some actual, some hint => actual.startsWith expected && (actual.splitOn hint).length > 1
-    | actual, none => actual == some expected
-    | none, some _ => false
-  unless agrees do
+  unless observed == some expected do
     throwError "unexpected rcf result: {observed}"
   Lean.Elab.Tactic.evalTactic (← `(tactic| exact False.elim (by assumption)))
 
 local elab "expect_certificate_error " message:str : tactic => expectError message.getString
-local elab "expect_certificate_hint " message:str " containing " hint:str : tactic =>
-  expectError message.getString (some hint.getString)
 
 example (_impossible : False) : ∀ x : ℝ, x ^ 2 + realAlgebraic.toReal < 0 := by
   expect_certificate_error "rcf: the universal sentence is false on the prepared cells"
@@ -158,10 +164,28 @@ example (_impossible : False) : ∀ x : ℝ,
     x ^ 2 + 0 / (realAlgebraic.toReal - realAlgebraic.toReal) ≥ 0 := by
   expect_certificate_error "rcf: original closed divisor is zero"
 
-example (_impossible : False) : ∀ x : ℝ,
-    x ^ 2 + realAlgebraic.toReal + quadraticRoot.toReal > 0 := by
-  expect_certificate_hint "rcf: no checked irreducibility witness for this common field"
-    containing "CheckedIrreducible"
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 5000000 in
+theorem common_positive : ∀ x : ℝ,
+    x ^ 2 + realAlgebraic.toReal + quadraticRoot.toReal > 0 := by rcf
+
+-- The editable legacy environment still requests a whole-field certificate;
+-- its refusal remains distinct from automatic finite replay's success above.
+set_option maxRecDepth 32768 in
+open Lean Meta Qq in
+run_meta do
+  let before := (← getEnv).constants.map₂.toList.length
+  let rejected ← try
+    let _ ← Coefficients.prepare q(∀ x : ℝ,
+      x^2 + realAlgebraic.toReal + quadraticRoot.toReal > 0)
+    pure none
+  catch error => pure (some (← error.toMessageData.toString))
+  let some message := rejected | throwError "legacy preparation unexpectedly accepted the octic"
+  unless message.startsWith "rcf: no checked irreducibility witness for this common field" &&
+      (message.splitOn "CheckedIrreducible").length > 1 do
+    throwError "unexpected legacy preparation refusal: {message}"
+  unless (← getEnv).constants.map₂.toList.length == before do
+    throwError "legacy refusal retained temporary declarations"
 
 end Hex.RCF.CertificationProofs
 
@@ -192,3 +216,11 @@ end Hex.RCF.CertificationProofs
 /-- info: 'Hex.RCF.CertificationProofs.common_multiprime' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RCF.CertificationProofs.common_multiprime
+
+/-- info: 'Hex.RCF.CertificationProofs.multiprime_certificate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.CertificationProofs.multiprime_certificate
+
+/-- info: 'Hex.RCF.CertificationProofs.common_positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RCF.CertificationProofs.common_positive
