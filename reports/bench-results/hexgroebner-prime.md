@@ -51,7 +51,7 @@ Final local verification includes twelve Clang/GCC ASan/UBSan variants; exact gu
 
 These observations measure unchecked candidate production or matrix elimination. Certificate generation, independent native certification, kernel checking and complete checked calls remain separate costs. The fastest-open-source milestone, solved-coverage acceptance, full balanced and held-out comparisons, parallel comparator sweeps and the overall-fastest gap remain open.
 
-Production evidence: `f4-prime-current-c4cb8197a53d.tar.xz` (SHA-256 `5136c528c6f30d90db6e71073f7417e7623ad4aa631c4dfa007f3b4134be1703`). Isolated replay evidence: `f4-delayed-m31-replay-fa4f77c3cf24.tar.xz` (SHA-256 `289d184211f8f2e7c14c039c5c86338b57b4902a115cbf2fef4aa7c36a195f63`). Payload manifests, source blobs, complete outputs, counters, controls, unique schedule positions and coverage are replayed by this report generator.
+Production evidence: `f4-prime-current-c4cb8197a53d.tar.xz` (SHA-256 `aa9a26bfcb3ce1d2ccc5af05aba75e3c24713112629649391910b68a74125c24`). Isolated replay evidence: `f4-delayed-m31-replay-fa4f77c3cf24.tar.xz` (SHA-256 `289d184211f8f2e7c14c039c5c86338b57b4902a115cbf2fef4aa7c36a195f63`). Payload manifests, source blobs, complete outputs, counters, controls, unique schedule positions and coverage are replayed by this report generator.
 All nine recorded project gates passed, including independent oracles and downstream kernel replay.
 
 The first 120-process system sweep was inconclusive because the unchanged-path control varied. Its sole unchanged repeat is combined with it here: all 240 samples contribute, with no filtering and no further unchanged system reruns.
