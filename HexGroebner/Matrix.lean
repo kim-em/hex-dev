@@ -48,7 +48,7 @@ inductive MatrixError where
 /-- Bounds for one matrix call. All sizes use `Nat` arithmetic, so size products
 are checked before narrowing or allocation. There is no unbounded fallback.
 Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`:
-seven object fields followed by the densePivots and binaryPivots Bools. -/
+seven object fields followed by densePivots, binaryPivots and delayedReduction Bools. -/
 structure MatrixLimits where
   columns : Nat := 1000000
   rows : Nat := 100000
@@ -61,6 +61,8 @@ structure MatrixLimits where
   densePivots : Bool := false
   /-- Optional private packed F2 pivots in bounded untraced matrix frames. -/
   binaryPivots : Bool := false
+  /-- Optional exact delayed reduction for untraced prime-field matrices. -/
+  delayedReduction : Bool := false
   deriving Inhabited
 
 /-- Charged work is retained on failure as well as success.

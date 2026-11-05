@@ -614,6 +614,32 @@ LEAN_EXPORT lean_obj_res hex_test_dense_counts(lean_obj_arg world) {
  return lean_io_result_mk_ok(out);
 }
 
+static uint64_t delayed_frames=0,delayed_updates=0,delayed_overflows=0,delayed_vectors=0;
+static int delayed_offset_enabled=0;
+static uint64_t delayed_quantum=UINT64_C(1)<<34,delayed_refused_work=0;
+#define HEX_GROEBNER_DELAYED_QUANTUM delayed_quantum
+#define HEX_GROEBNER_DELAYED_DEFERRED(work) (delayed_refused_work+=(work))
+#define HEX_GROEBNER_DELAYED_FRAME() (++delayed_frames)
+static uint64_t delayed_packet_widths[3]={0};
+#define HEX_GROEBNER_DELAYED_UPDATE(width) do { ++delayed_updates; if(width) { ++delayed_vectors; ++delayed_packet_widths[(width)==1?0:(width)==2?1:2]; } } while(0)
+#define HEX_GROEBNER_DELAYED_RESET(context) do { \
+ matrix_context *ctx=(context); \
+ if(delayed_offset_enabled) memset(lean_sarray_cptr(ctx->dense),0,(size_t)ctx->columns*8); \
+ else for(uint64_t col=0;col<ctx->columns;++col) assert(delayed_read(ctx,col)==0); \
+} while(0)
+#define HEX_GROEBNER_DELAYED_TARGET(context) do { \
+ if(delayed_offset_enabled) { \
+  matrix_context *ctx=(context); \
+  uint64_t offset; \
+  if(ctx->width==4) offset=(ctx->p-2)*ctx->p; \
+  else { \
+   uint64_t room=(ctx->columns+1)*(ctx->p-1)*(ctx->p-1)+(ctx->p-1); \
+   offset=((UINT64_MAX-room)/ctx->p)*ctx->p; \
+  } \
+  for(uint64_t col=0;col<ctx->columns;++col) delayed_write(ctx,col,delayed_read(ctx,col)+offset); \
+  ++delayed_overflows; \
+ } \
+} while(0)
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
 static uint64_t binary_groups=0,binary_installed=0,binary_initialized=0;
@@ -775,6 +801,81 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
  lean_ctor_set(tail,0,lean_box_uint64(binary_scans));lean_ctor_set(tail,1,lean_box_uint64(binary_bytes));
  lean_ctor_set(out,0,lean_box_uint64(binary_frames));lean_ctor_set(out,1,tail);
  return lean_io_result_mk_ok(out);
+}
+#include <sys/mman.h>
+#include <unistd.h>
+
+/* Put each borrowed array's final byte immediately before a protected page.
+   The private kernel must read exactly four coefficients/indices per packet. */
+static int delayed_guard_test(void) {
+#if HEX_GROEBNER_AVX2
+ if(!hex_avx2_available()) return 1;
+ size_t page=(size_t)sysconf(_SC_PAGESIZE);
+ for(unsigned width=1;width<=4;width*=2) for(unsigned stride=1;stride<=6;stride+=5)
+  for(unsigned n=1;n<=10;++n) {
+   uint8_t *cm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+   uint8_t *vm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+   if(cm==MAP_FAILED || vm==MAP_FAILED) return 0;
+   if(mprotect(cm+page,page,PROT_NONE)||mprotect(vm+page,page,PROT_NONE)) return 0;
+   uint8_t *cols=cm+page-n*4,*vals=vm+page-n*width;
+   matrix_context ctx={0};ctx.columns=64;ctx.width=width;ctx.p=width==1?251:width==2?65521:INT32_MAX;ctx.modulus_squared=ctx.p*ctx.p;
+   ctx.dense=matrix_zeros(64*8);
+   uint64_t expected[64],factor=ctx.p-1;
+   for(unsigned col=0;col<64;++col) {
+    expected[col]=width==4?ctx.modulus_squared-ctx.p-col:UINT64_MAX-(UINT64_C(1)<<40)+col;
+    delayed_write(&ctx,col,expected[col]);
+   }
+   for(unsigned j=0;j<n;++j) {
+    matrix_write(cols+j*4,4,j*stride);
+    matrix_write(vals+j*width,width,ctx.p-1-j);
+    if(j) {
+     expected[j*stride]+=factor*(ctx.p-1-j);
+     if(width==4 && expected[j*stride]>=ctx.modulus_squared) expected[j*stride]-=ctx.modulus_squared;
+    }
+   }
+   uint8_t cb[40],vb[40];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
+   delayed_pivot pivot={cols,vals,n,(n-1)*stride,0};
+   if(width==4) delayed_update_wide_avx2(&ctx,&pivot,factor);
+   else delayed_update_avx2(&ctx,&pivot,factor);
+   for(unsigned col=0;col<64;++col) if(delayed_read(&ctx,col)!=expected[col]) return 0;
+   if(memcmp(cb,cols,n*4)||memcmp(vb,vals,n*width)) return 0;
+   lean_dec(ctx.dense);munmap(cm,page*2);munmap(vm,page*2);
+  }
+#endif
+ return 1;
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_guard(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box(delayed_guard_test()));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_width_packets(uint8_t width,lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(delayed_packet_widths[width==1?0:width==2?1:2]));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_vectors(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(delayed_vectors));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_available(lean_obj_arg world) {
+ (void)world;
+#if HEX_GROEBNER_AVX2
+ return lean_io_result_mk_ok(lean_box(hex_avx2_available()));
+#else
+ return lean_io_result_mk_ok(lean_box(0));
+#endif
+}
+
+LEAN_EXPORT lean_obj_res hex_test_delayed_quantum(uint64_t cap,lean_obj_arg world) {
+ (void)world;delayed_quantum=cap;return lean_io_result_mk_ok(lean_box(0));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_refused(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(delayed_refused_work));
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_counts(lean_obj_arg world) {
+ (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(delayed_updates));lean_ctor_set(tail,1,lean_box_uint64(delayed_overflows));
+ lean_ctor_set(out,0,lean_box_uint64(delayed_frames));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
+}
+LEAN_EXPORT lean_obj_res hex_test_delayed_offsets(uint8_t enabled,lean_obj_arg world) {
+ (void)world;delayed_offset_enabled=enabled;return lean_io_result_mk_ok(lean_box(0));
 }
 LEAN_EXPORT lean_obj_res hex_test_binary_installed(lean_obj_arg world) {
  (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
@@ -1038,6 +1139,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let hit ← inputTextFile (FilePath.mk HITCODE)
   let runtimeHeader ← inputTextFile (FilePath.mk RUNTIME_HEADER)
   let whole ← inputTextFile (FilePath.mk WHOLECODE)
+  let delayed ← inputTextFile (FilePath.mk DELAYED_HEADER)
   let continuation ← inputTextFile (FilePath.mk STATECODE)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
   let inputs := inputs.zipWith (fun s _ => s) wide
@@ -1045,6 +1147,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let inputs := inputs.zipWith (fun s _ => s) hit
   let inputs := (inputs.zipWith (fun s _ => s) whole).zipWith (fun s _ => s) continuation
   let inputs := inputs.zipWith (fun s _ => s) runtimeHeader
+  let inputs := inputs.zipWith (fun s _ => s) delayed
   buildO (pkg.dir / defaultBuildDir / (name ++ ".o")) inputs
     #["-isystem", (← getLeanIncludeDir).toString] flags
     (compiler := FilePath.mk COMPILER)
@@ -1054,6 +1157,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
             "WIDE_HEADER", json.dumps(str(source.parent / "matrix_avx512.h"))).replace(
             "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c"))).replace("STATECODE", json.dumps(str(source.parent / "matrix_state.c"))).replace("WHOLECODE", json.dumps(str(source.parent / "matrix_eliminate.c")))
+        config = config.replace("DELAYED_HEADER", json.dumps(str(source.parent / "matrix_delayed.h")))
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING", "-DHEX_GROEBNER_ENABLE_AVX512"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
@@ -1076,6 +1180,15 @@ import HexGroebner.SupportConformance
 import HexGroebner.SampledConformance
 import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
+import HexGroebner.DelayedConformance
+@[extern "hex_test_delayed_counts"] opaque delayedCounts : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_delayed_quantum"] opaque delayedQuantum (cap : UInt64) : IO Unit
+@[extern "hex_test_delayed_refused"] opaque delayedRefused : IO UInt64
+@[extern "hex_test_delayed_guard"] opaque delayedGuard : IO Bool
+@[extern "hex_test_delayed_vectors"] opaque delayedVectors : IO UInt64
+@[extern "hex_test_delayed_width_packets"] opaque delayedWidthPackets (width : UInt8) : IO UInt64
+@[extern "hex_test_delayed_available"] opaque delayedAvailable : IO Bool
+@[extern "hex_test_delayed_offsets"] opaque delayedOffsets (enabled : Bool) : IO Unit
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_subtract_count"] opaque subtractCount : IO UInt64
 @[extern "hex_test_copy_bytes"] opaque copyBytes (input : @& ByteArray) : IO ByteArray
@@ -1109,6 +1222,7 @@ import HexGroebner.DenseMatrixConformance
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
 @[extern "hex_test_whole_modes"] opaque wholeModes : IO (UInt64 × UInt64)
 @[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+@[extern "hex_test_delayed_refused"] opaque delayedRefusedWork : IO UInt64
 @[extern "hex_test_byte_count"] opaque byteCount : IO UInt64
 @[extern "hex_test_search_count"] opaque searchCount : IO UInt64
 @[extern "hex_test_accept_count"] opaque acceptedCount : IO UInt64
@@ -1239,6 +1353,57 @@ private def checkSupport : IO Unit := do
   checkSupportSystems
 
 private def checkBinaryBuffers : IO Unit := do
+  if !(← delayedGuard) then throw (IO.userError "delayed exact packet/guard-page test failed")
+  let vectorsBefore ← delayedVectors
+  let widePacketsBefore ← delayedWidthPackets 4
+  let delayedBefore ← delayedCounts
+  let delayedSeed ← Hex.Groebner.NativeChecks.readSeed
+  for offsets in [false,true] do
+    delayedOffsets offsets
+    if !Hex.Groebner.DelayedConformance.runtimeChecks (delayedSeed+(if offsets then 7 else 0)) then
+      throw (IO.userError "delayed native/reference rows, inputs or budget cuts differ")
+  delayedOffsets false
+  if !Hex.Groebner.DelayedConformance.boundaryChecks delayedSeed ||
+      !Hex.Groebner.DelayedConformance.producerChecks delayedSeed then
+    throw (IO.userError "delayed high columns or full producer differs")
+  if !Hex.Groebner.DelayedConformance.denseChecks delayedSeed then
+    throw (IO.userError "delayed dense preparation charge or cap differs")
+  if !Hex.Groebner.DelayedConformance.scalarChecks delayedSeed then
+    throw (IO.userError "delayed matrix differs from fully scalar Lean")
+  for wide in [false,true] do
+    let some work := Hex.Groebner.DelayedConformance.wideChecks delayedSeed (2^34) wide |
+      throw (IO.userError "delayed widened coefficient/reducer counts differ")
+    delayedQuantum (work-1).toUInt64
+    if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+17) (work-1) wide).isNone then
+      throw (IO.userError "delayed widened coefficient work refusal differs")
+    delayedQuantum work.toUInt64
+    if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+34) work wide).isNone then
+      throw (IO.userError "delayed widened coefficient exact cap declined")
+    delayedQuantum (2^34)
+  let some wideWork := Hex.Groebner.DelayedConformance.wideChecks delayedSeed |
+    throw (IO.userError "delayed newly admitted reductions differ")
+  let refusedBefore ← delayedRefused
+  delayedQuantum (wideWork-1).toUInt64
+  if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+17) (wideWork-1)).isNone then
+    throw (IO.userError "delayed late work refusal differs from capped reference")
+  if (← delayedRefused) ≤ refusedBefore then
+    throw (IO.userError "delayed late work refusal did no charged work")
+  delayedQuantum wideWork.toUInt64
+  if (Hex.Groebner.DelayedConformance.wideChecks (delayedSeed+34) wideWork).isNone then
+    throw (IO.userError "delayed exact work cap was declined")
+  delayedQuantum (2^34)
+  let delayedAfter ← delayedCounts
+  let vectorsAfter ← delayedVectors
+  if (← delayedAvailable) then
+    if (← delayedWidthPackets 4) ≤ widePacketsBefore then
+      throw (IO.userError "delayed wide four-lane packets unused")
+    if vectorsAfter ≤ vectorsBefore then throw (IO.userError "delayed AVX2 packet unused")
+  else if vectorsAfter != vectorsBefore then
+    throw (IO.userError "delayed unavailable AVX2 packet executed")
+  if delayedAfter.1 ≤ delayedBefore.1 || delayedAfter.2.1 ≤ delayedBefore.2.1 ||
+      delayedAfter.2.2 ≤ delayedBefore.2.2 then
+    throw (IO.userError "delayed frames, row updates or near-overflow controls unused")
+  IO.println s!"delayed frames/updates/near-overflow targets: {delayedAfter}"
   let allocationBefore ← binaryCounts
   let targetBefore ← binaryPaths
   let targetSeed ← Hex.Groebner.NativeChecks.readSeed
@@ -1669,6 +1834,7 @@ lean_exe {target} where
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_dense_admitted"] opaque denseAdmitted : IO UInt64
 @[extern "hex_test_whole_counts"] opaque wholeCounts : IO (UInt64 × UInt64)
+@[extern "hex_test_delayed_refused"] opaque delayedRefusedWork : IO UInt64
 @[extern "hex_test_avx512_count"] opaque avx512Count : IO UInt64
 def main (args : List String) : IO UInt32 := do
   let status ← Hex.Groebner.Driver.run args
@@ -1676,9 +1842,11 @@ def main (args : List String) : IO UInt32 := do
   let packets ← avx512Count
   let admitted ← denseAdmitted
   let (accepted,declined) ← wholeCounts
+  let refusedWork ← delayedRefusedWork
   (← IO.getStderr).putStrLn (Lean.Json.mkObj [
     ("avx512Packets",Lean.toJson packets),("prepares",Lean.toJson prepares),("admitted",Lean.toJson admitted),
     ("scans",Lean.toJson scans),("updates",Lean.toJson updates),
+    ("delayedRefusedWork",Lean.toJson refusedWork),
     ("bulkAccepted",Lean.toJson accepted),("bulkDeclined",Lean.toJson declined)]).compress
   return status
 ''')

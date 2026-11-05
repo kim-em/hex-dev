@@ -215,7 +215,9 @@ jobs:
           # Keep room for the unpacked caches and generated native objects.
           df -h "$GITHUB_WORKSPACE"
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet \
-            /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/swift
+            /opt/ghc /usr/local/.ghcup /usr/share/swift
+          python3 -m unittest scripts.ci.test_reclaim_runner_disk
+          python3 scripts/ci/reclaim_runner_disk.py --apply
           df -h "$GITHUB_WORKSPACE"
       - name: Install system dependencies
         if: steps.classify.outputs.docs_only != 'true'
@@ -288,7 +290,17 @@ jobs:
           done
       - name: Verify Mathlib cache populated (hard fail on miss)
         if: steps.classify.outputs.docs_only != 'true'
-        run: bash scripts/ci/check_no_mathlib_rebuild.sh
+        run: |
+          bash scripts/ci/check_no_mathlib_rebuild.sh
+      - name: Reclaim downloaded dependency caches
+        if: steps.classify.outputs.docs_only != 'true'
+        run: |
+          # clean! removes downloaded .ltar archives, preserving extracted imports.
+          lake exe cache 'clean!'
+          if python3 -m pip cache dir >/dev/null 2>&1; then
+            python3 -m pip cache purge
+          fi
+          df -h "$GITHUB_WORKSPACE"
       - name: Configure Lean shared library path
         if: steps.classify.outputs.docs_only != 'true'
         run: |

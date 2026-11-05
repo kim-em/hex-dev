@@ -19,7 +19,8 @@ CHECKS = Family(
              "scripts/release/check_released_manifest.py", "scripts/release/released.yml",
              "scripts/check_copyright_headers.py", "scripts/check_file_line_counts.py",
              "scripts/ci/check_bench_verify_budget.sh", "libraries.yml",
-             ".github/workflows/ci.yml"),
+             ".github/workflows/ci.yml", "scripts/ci/reclaim_runner_disk.py",
+             "scripts/ci/test_reclaim_runner_disk.py"),
     exclude=(),
 )
 

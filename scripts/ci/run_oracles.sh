@@ -366,6 +366,21 @@ run_tuple() {
       echo "FAIL: $lib :: fixed Groebner corpus validation failed"
       return 1
     fi
+    if ! python3 scripts/bench/groebner_prime_report.py \
+        --archive reports/bench-results/raw/f4-prime-current-c4cb8197a53d.tar.xz \
+        --replay reports/bench-results/raw/f4-delayed-m31-replay-fa4f77c3cf24.tar.xz \
+        --report reports/bench-results/hexgroebner-prime.md --check --current; then
+      echo "FAIL: $lib :: delayed prime-field evidence replay failed"
+      return 1
+    fi
+    if ! python3 scripts/bench/groebner_delayed_report.py \
+        --archive reports/bench-results/raw/f4-delayed-p16-5d76c73aac25.tar.xz \
+        --replay reports/bench-results/raw/f4-delayed-replay-11e6d0100e34.tar.xz \
+        --audit reports/bench-results/raw/f4-delayed-config-dd9d311285d9.tar.xz \
+        --report reports/bench-results/hexgroebner-delayed.md --check; then
+      echo "FAIL: $lib :: historical small-prime evidence replay failed"
+      return 1
+    fi
   fi
 
   if [ "$oracle" = "scripts/oracle/sturm_flint.py" ]; then

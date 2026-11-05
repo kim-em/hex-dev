@@ -277,9 +277,17 @@ def reference (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
 def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
   limits.binaryPivots && field.modulus == 2
 
+/-- Exact modular UInt64 accumulation for explicitly requested prime fields. -/
+def delayedEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
+  limits.delayedReduction && field.modulus > 2
+
+/-- Additional accumulator bytes and flat borrowed-pivot metadata. -/
+def delayedBytes (field : PrimeField) (columns reducers targets : Nat) : Nat :=
+  (8-field.width.bytes)*columns+40*min (reducers+targets) columns
+
 /-- Logical reference work cap, distinct from the physical word-operation cap. -/
 def frameQuantum (field : PrimeField) (limits : MatrixLimits) : Nat :=
-  if binaryEnabled field limits then 2^38 else 2^20
+  if binaryEnabled field limits then 2^38 else if delayedEnabled field limits then 2^34 else 2^20
 
 /-- Large F2 frames project targets through known reducers in column order. -/
 def binaryProject (columns reducers targets : Nat) : Bool :=
@@ -349,15 +357,24 @@ target because scanning advances through its leading column. The final
 the sparse computation. Optional dense preparation adds separately charged work;
 `attemptPortable` also checks the final total against the selected frame quantum.
 Opt-in F2 frames additionally bound packing, scanning and word updates by `2^34`
-visits and reserve their complete temporary payload against the packed-byte allowance. -/
+visits and reserve their complete temporary payload against the packed-byte allowance.
+Opt-in delayed frames over primes below `2^31` use these same dimension ceilings
+and a `2^38` conservative admission bound; successful reference work is at most
+`2^34`. Each accumulator cell receives at most one product per column, so it
+stays below `(p-1)+columns*(p-1)^2 < 2^50` for primes below `2^16`.
+Wider primes keep each cell below `p^2`; every sum is below `2*p^2 < 2^63`,
+and one correction preserves the residue modulo `p`. Private UInt64 accumulation and
+forty-byte pivot descriptors are reserved against the parent payload. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
   let rows := reducers.size + targets.size
   if USize.size != 2^64 then return false
   let binary := binaryEnabled field limits
-  if columns > (if binary then 131072 else 4096) ||
-      reducers.size > (if binary then 131072 else 1024) ||
-      targets.size > (if binary then 4096 else 64) ||
+  let delayed := delayedEnabled field limits
+  let wide := binary || delayed
+  if columns > (if wide then 131072 else 4096) ||
+      reducers.size > (if wide then 131072 else 1024) ||
+      targets.size > (if wide then 4096 else 64) ||
       columns > limits.columns || rows > limits.rows ||
       (!sugars.isEmpty && sugars.size != rows) then return false
   if !(sugars.all (· < USize.size / 2)) then return false
@@ -371,7 +388,7 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
       entries := entries + row.size
   let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
     targets.size * (entries + (targets.size + 3) * columns + 64) + columns
-  if bound > frameQuantum field limits then return false
+  if bound > (if delayed then 2^38 else frameQuantum field limits) then return false
   if binary && binaryCost columns reducers targets entries > 2^34 then return false
   let mut seen := Array.replicate columns false
   for row in reducers do
@@ -390,7 +407,9 @@ def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     let result := reference field limits columns reducers targets sugars independent
     if result.result.isOk && result.stats.work ≤ frameQuantum field limits &&
         (!binaryEnabled field limits || result.stats.packedBytes+
-          binaryBytes columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
+          binaryBytes columns reducers.size targets.size ≤ limits.packedBytes) &&
+        (!delayedEnabled field limits || result.stats.packedBytes+
+          delayedBytes field columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
 
 /-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
 column count, row arrays and sugars are borrowed Lean objects, and `independent`
@@ -400,7 +419,10 @@ reference result, including exact rows, aliases, sugars and counters. It admits
 ordinary frames with at most 4096 columns, 1024 known reducers, 64 targets and
 `2^20` charged work. Opt-in F2 frames admit at most 131072 columns, 131072 reducers
 and 4096 targets, with a `2^38` logical-work bound and a separate `2^34` bound
-on packing/scalar/word visits. Their private pivot/accumulator bytes must fit
+on packing/scalar/word visits. Delayed frames over every prime `3 ≤ p < 2^31`
+use the same dimension ceilings, a `2^38` conservative bound and `2^34` charged
+work cap. Requested M31 dense-pivot preparation retains the reference charges
+only within its existing 65536-column limit. Their private pivot/accumulator bytes must fit
 the packed-byte allowance in addition to the complete reference payload. Known leading
 columns are distinct. Large limits saturate above all
 possible accepted totals; non-machine-size sugars use checked Lean arithmetic.
@@ -410,8 +432,11 @@ shared reducer/target arrays. Unsupported shapes return `none` without changing
 inputs, and a reference-equivalent continuation runs after the native frame. A declined
 attempt's physical work is unreported; the continuation retains the reference counters. Ordinary-frame
 speculation is bounded by the remaining logical allowance and `2^20`; opt-in
-F2 packing and word visits have their separate shape bound. Without dense
-preparation or private F2 payload, the shape bound makes a charged decline imply
+F2 packing and word visits have their separate shape bound. Delayed frames
+have a `2^34` logical-work cap. Scan and gather leave the private accumulator
+zero for reuse. Their UInt64 accumulator and flat pivot metadata can
+also cause a late byte refusal, followed by the reference-equivalent continuation. Without dense
+preparation, private F2 payload or delayed frames, the shape bound makes a charged decline imply
 reference failure. F2 payload admission can decline a successful reference. With dense preparation, a successful reference may
 exceed the frame quantum and continue outside the frame. Such a declined
 prefix costs less than that frame's reference work; this can occur on multiple

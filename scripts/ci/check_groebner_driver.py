@@ -66,6 +66,15 @@ def check(binary: Path) -> list[dict]:
         unit = {"p": 7, "variables": 1, "order": "grevlex", "generators": [[[[0], 2]]]}
         default = invoke(unit)
         assert default["scheduling"] == "degree" and default["basis"] == [[[[0], 1]]]
+        assert default["delayedReduction"] is False
+        for modulus in [2,3,251,257,65521,65537,2147483647]:
+            canonical = {**unit,"p":modulus,"generators":[[[[0],1]]]}
+            enabled = invoke(canonical, ["--delayed-reduction","true"])
+            disabled = invoke(canonical, ["--delayed-reduction","false"])
+            assert enabled["delayedReduction"] is True and disabled["delayedReduction"] is False
+            assert {k:v for k,v in enabled.items() if k not in ["candidateNanos","delayedReduction"]} == {
+                k:v for k,v in disabled.items() if k not in ["candidateNanos","delayedReduction"]}
+
         assert invoke(unit, ["--scheduling", "sugar", "--scheduling", "degree"])["scheduling"] == "degree"
         assert invoke({**unit, "generators": []})["basis"] == []
         assert invoke({**unit, "generators": [[]]})["basis"] == []
@@ -92,7 +101,7 @@ def check(binary: Path) -> list[dict]:
         assert invoke({**unit, "variables": 10001, "generators": []},
                       ["--variables", "10001"])["basis"] == []
         assert invoke(unit, ["--basis", "1"])["basis"] == [[[[0], 1]]]
-        for options in [["--scheduling", "unknown"], ["--unknown", "1"], ["--work", "bad"], ["--work", "-1"]]:
+        for options in [["--delayed-reduction", "unknown"], ["--scheduling", "unknown"], ["--unknown", "1"], ["--work", "bad"], ["--work", "-1"]]:
             invoke(unit, options, code=2, kind="invalid_input")
         result = subprocess.run([str(binary), str(path.with_name("missing.json"))],
                                 capture_output=True, text=True, timeout=30)

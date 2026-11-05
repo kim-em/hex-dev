@@ -179,7 +179,7 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     outputEntries := limits.matrixEntries - s.statistics.matrixEntries - entries
     packedBytes := remainingBytes + inputBytes
     work := limits.work - s.statistics.work
-    densePivots := limits.densePivots, binaryPivots := limits.binaryPivots }
+    densePivots := limits.densePivots, binaryPivots := limits.binaryPivots, delayedReduction := limits.delayedReduction }
   let (result, stats) := if independent then
     let outcome := reduceRowsWith context.field matrixLimits matrix.columns.size reducers targets false sugars limits.nativeRows
     (outcome.result.map (fun e => e.rows.map fun r => (r.row, (1 : UInt64), r.sugar)), outcome.stats)

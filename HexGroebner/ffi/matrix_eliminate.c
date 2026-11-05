@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "matrix_runtime.h"
+#include "matrix_simd.h"
 
 #ifndef HEX_GROEBNER_MATRIX_ACCEPTED
 #define HEX_GROEBNER_MATRIX_ACCEPTED() ((void)0)
@@ -14,7 +15,28 @@
 #define HEX_GROEBNER_MATRIX_DEFERRED() ((void)0)
 #endif
 
+#ifndef HEX_GROEBNER_DELAYED_FRAME
+#define HEX_GROEBNER_DELAYED_FRAME() ((void)0)
+#endif
+#ifndef HEX_GROEBNER_DELAYED_UPDATE
+#define HEX_GROEBNER_DELAYED_UPDATE(vectorized) ((void)(vectorized))
+#endif
+#ifndef HEX_GROEBNER_DELAYED_TARGET
+#define HEX_GROEBNER_DELAYED_TARGET(context) ((void)(context))
+#endif
+#ifndef HEX_GROEBNER_DELAYED_RESET
+#define HEX_GROEBNER_DELAYED_RESET(context) ((void)(context))
+#endif
+
 #define MATRIX_QUANTUM UINT64_C(1048576)
+#define DELAYED_LOGICAL_QUANTUM (UINT64_C(1)<<38)
+#ifndef HEX_GROEBNER_DELAYED_QUANTUM
+#define HEX_GROEBNER_DELAYED_QUANTUM (UINT64_C(1)<<34)
+#endif
+#define DELAYED_WORK_QUANTUM HEX_GROEBNER_DELAYED_QUANTUM
+#ifndef HEX_GROEBNER_DELAYED_DEFERRED
+#define HEX_GROEBNER_DELAYED_DEFERRED(work) ((void)(work))
+#endif
 #define BINARY_LOGICAL_QUANTUM (UINT64_C(1)<<38)
 #define BINARY_WORD_QUANTUM (UINT64_C(1)<<34)
 #ifndef HEX_GROEBNER_BINARY_GROUPS
@@ -43,9 +65,18 @@
 #endif
 
 typedef struct {
-    uint64_t limits[7],stats[8],p,columns,quantum,scratch,words,capacity,physical;
+    const uint8_t *columns,*coefficients;
+    uint64_t size,end,sugar;
+} delayed_pivot;
+#if UINTPTR_MAX == UINT64_MAX
+_Static_assert(sizeof(delayed_pivot)==40,"delayed pivot layout");
+#endif
+
+typedef struct {
+    uint64_t limits[7],stats[8],p,modulus_squared,columns,quantum,scratch,words,capacity,physical;
     unsigned width;
-    uint8_t cache,binary,project;
+    uint8_t cache,binary,project,delayed;
+    lean_object *delayed_meta;
     lean_object *dense,*slots,*pivots,*native_pivots,*remainders,*binary_rows,*binary_meta,*project_rows,*project_meta,*project_table;
     uint64_t rank;
 } matrix_context;
@@ -60,6 +91,12 @@ static void matrix_write(uint8_t *p,unsigned w,uint64_t x) {
     p[0]=(uint8_t)x;
     if(w>1) p[1]=(uint8_t)(x>>8);
     if(w>2) {p[2]=(uint8_t)(x>>16);p[3]=(uint8_t)(x>>24);}
+}
+static uint64_t delayed_read(matrix_context *c,uint64_t col) {
+    uint64_t n;memcpy(&n,lean_sarray_cptr(c->dense)+(size_t)col*8,8);return n;
+}
+static void delayed_write(matrix_context *c,uint64_t col,uint64_t n) {
+    memcpy(lean_sarray_cptr(c->dense)+(size_t)col*8,&n,8);
 }
 static int matrix_charge(uint64_t *count,uint64_t amount,uint64_t limit) {
     if(*count>limit || amount>limit-*count) return 0;
@@ -103,6 +140,7 @@ static int matrix_inverse(matrix_context *c,uint64_t a,uint64_t *inverse) {
     *inverse=value;return 1;
 }
 static void matrix_cleanup(matrix_context *c) {
+    if(c->delayed_meta) lean_dec(c->delayed_meta);
     if(c->project_table) lean_dec(c->project_table);
     if(c->project_meta) lean_dec(c->project_meta);
     if(c->project_rows) lean_dec(c->project_rows);
@@ -117,9 +155,9 @@ static void matrix_cleanup(matrix_context *c) {
 /* Installed rows are already canonical and monic. Thus the optional factory's
    exact acceptance and charges are known without allocating an unused cache.
    Parent-budget refusal costs zero, as in Matrix.preparePivot. A work-cap
-   decline occurs only when the same reference charge exceeds MATRIX_QUANTUM. */
+   decline occurs when the same reference charge exceeds the selected frame cap. */
 static int matrix_prepare(matrix_context *c,b_lean_obj_arg row) {
-    if(!c->cache) return 1;
+    if(!c->cache || c->columns>65536) return 1;
     uint64_t n=lean_sarray_size(lean_ctor_get(row,0))/4;
     if(n<128 || n>4096) return 1;
     const uint8_t *ids=lean_sarray_cptr(lean_ctor_get(row,0));
@@ -137,6 +175,15 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
         uint64_t inverse,uint64_t sugar,uint8_t from_target) {
     if(column>=c->columns || !matrix_prepare(c,row)) {lean_dec(row);return 0;}
     size_t id=lean_array_size(c->pivots);
+    if(c->delayed) {
+        if(id>=c->capacity) {lean_dec(row);return 0;}
+        lean_object *cs=lean_ctor_get(row,0),*vs=lean_ctor_get(row,1);
+        uint64_t n=lean_sarray_size(cs)/4;
+        if(!n || n>c->columns) {lean_dec(row);return 0;}
+        delayed_pivot pivot={lean_sarray_cptr(cs),lean_sarray_cptr(vs),n,
+            matrix_read(lean_sarray_cptr(cs)+(size_t)(n-1)*4,4),sugar};
+        memcpy(lean_sarray_cptr(c->delayed_meta)+id*sizeof(pivot),&pivot,sizeof(pivot));
+    }
     if(c->binary) {
         if(id>=c->capacity) {lean_dec(row);return 0;}
         uint8_t *packed=lean_sarray_cptr(c->binary_rows)+(size_t)id*c->words*8;
@@ -166,7 +213,7 @@ static int matrix_install(matrix_context *c,lean_obj_arg row,uint64_t column,
     }
     /* Packed F2 scans use their private metadata and the existing pivot's row.
        Only ordinary scans need the separate native pivot representation. */
-    if(!c->binary) {
+    if(!c->binary && !c->delayed) {
         lean_object *native=lean_alloc_ctor(0,3,0);
         lean_ctor_set(native,0,matrix_take(row,0));
         lean_ctor_set(native,1,matrix_take(row,1));
@@ -454,8 +501,11 @@ static lean_object *matrix_gather_binary(matrix_context *c,uint64_t first,uint64
 /* The accumulator moves into each existing bounded scan call. Borrowed input
    rows and pivot buffers remain immutable. Only the returned owned accumulator
    is recovered; intermediate result/state headers are released immediately. */
+#include "matrix_delayed.h"
+
 static int matrix_scan(matrix_context *c,uint64_t first,uint64_t *last,
         uint64_t *leading,uint64_t *sugar) {
+    if(c->delayed) return delayed_scan(c,first,last,leading,sugar);
     if(c->binary) return matrix_scan_binary(c,first,last,leading,sugar);
     lean_object *state=lean_alloc_ctor(0,8,8);
     lean_ctor_set(state,0,c->dense);c->dense=NULL;
@@ -492,6 +542,7 @@ static int matrix_scan(matrix_context *c,uint64_t first,uint64_t *last,
 }
 static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t last,
         uint64_t inverse) {
+    if(c->delayed) return delayed_gather(c,column,last,inverse);
     if(c->binary) return matrix_gather_binary(c,column,last);
     if(!matrix_work(c,last+1-column)) return NULL;
     lean_object *state=lean_alloc_ctor(0,4,0);
@@ -524,7 +575,7 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
 }
 
 /* ABI: PrimeField is its unboxed uint64 modulus (prime 2 <= p < 2^31).
-   All five object arguments are borrowed: MatrixLimits has seven Nat fields and dense/binary Bool bytes,
+   All five object arguments are borrowed: MatrixLimits has seven Nat fields and dense/binary/delayed Bool bytes,
    columns is Nat, rows are Lean Arrays of SparseRow(two ByteArrays), sugars is
    Array Nat. independent is uint8 Bool. Limits above Nat's scalar range saturate
    above every possible accepted total; sugars must be scalar Nats.
@@ -534,6 +585,9 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    against the parent peak. Distinct reducer heads and logical bounds are checked
    before private allocation. A physical floor bounds validation/installation;
    the table bound is refined after known installation, before target reduction.
+   Opt-in delayed frames over primes below 2^31 use the same wider dimensions,
+   a 2^38 admission bound and 2^34 charged-work cap. Their UInt64 accumulator
+   and 40-byte pivot descriptors reserve the additional private payload.
    Canonical row validation precedes elimination.
    Dense workspace is owned; inputs, including overlapping arrays, are immutable.
    Some(Result(Except.ok(Prod(Echelon(rows,rank,emptyTrace),remainders)),stats))
@@ -544,7 +598,8 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    its explicit shape bound. With optional preparation, the reference
    may succeed above the frame quantum. A declined prefix then costs less than
    its own reference computation; this per-frame overhead can recur on multiple
-   matrices. Without dense preparation or private F2 payload, the shape bound
+   matrices. Without dense preparation, private F2 payload or
+   delayed frames, the shape bound
    makes a charged decline imply reference failure. Private-payload admission
    can decline an otherwise successful reference.
    Scan/gather symbols come from HexGroebnerMatrixNative. Lake links its complete
@@ -557,10 +612,14 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
        !lean_is_scalar(column_arg)) goto defer;
     c.p=p;c.width=p<=256?1:p<=65536?2:4;c.columns=lean_unbox(column_arg);
     c.binary=p==2 && lean_ctor_get_uint8(limits,7*sizeof(void*)+1);
-    c.quantum=c.binary?BINARY_LOGICAL_QUANTUM:MATRIX_QUANTUM;
+    c.delayed=p>2 && lean_ctor_get_uint8(limits,7*sizeof(void*)+2);
+    c.modulus_squared=p*p;
+    c.quantum=c.binary?BINARY_LOGICAL_QUANTUM:c.delayed?DELAYED_WORK_QUANTUM:MATRIX_QUANTUM;
     c.cache=p==INT32_MAX && lean_ctor_get_uint8(limits,7*sizeof(void*));
     size_t nr=lean_array_size(reducers),nt=lean_array_size(targets);
-    if(c.columns>(c.binary?131072:4096) || nr>(c.binary?131072:1024) || nt>(c.binary?4096:64)) goto defer;
+    int wide=c.binary || c.delayed;
+    if(c.columns>(wide?131072:4096) || nr>(wide?131072:1024) || nt>(wide?4096:64)) goto defer;
+    if(c.delayed && c.width<4 && c.columns && (p-1)*(p-1)>(UINT64_MAX-(p-1))/c.columns) goto defer;
     size_t rows=nr+nt,ns=lean_array_size(sugars);
     if(ns && ns!=rows) goto defer;
     for(unsigned i=0;i<7;++i) {
@@ -570,6 +629,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     if(c.columns>c.limits[0] || rows>c.limits[1]) goto defer;
     c.words=(c.columns+63)/64;c.capacity=rows<c.columns?rows:c.columns;
     c.project=c.binary && c.columns>=64 && nr>=4 && nt>=64;
+    if(c.delayed) c.scratch=(8-c.width)*c.columns+sizeof(delayed_pivot)*c.capacity;
     if(c.binary) c.scratch=(c.capacity+1)*c.words*8+16*c.capacity;
     if(c.project) c.scratch+=nt*(c.words*8+16)+16*c.words*8;
     if(c.scratch>c.limits[4]) goto defer;
@@ -582,13 +642,14 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         size_t cb=lean_sarray_size(lean_ctor_get(row,0));
         size_t vb=lean_sarray_size(lean_ctor_get(row,1));
         size_t n=cb/4;
-        if(cb%4 || n>c.quantum/2 || entries>c.quantum/2-n ||
+        uint64_t entry_bound=c.delayed?DELAYED_LOGICAL_QUANTUM:c.quantum;
+        if(cb%4 || n>entry_bound/2 || entries>entry_bound/2-n ||
            vb!=n*c.width) goto defer;
         entries+=n;
     }
     uint64_t bound=rows*65+2*entries+workspace+
         nt*(entries+(nt+3)*c.columns+64)+c.columns;
-    if(bound>c.quantum) goto defer;
+    if(bound>(c.delayed?DELAYED_LOGICAL_QUANTUM:c.quantum)) goto defer;
     if(c.binary) {
         c.physical=rows*(c.words+8)+3*entries+4*nt*c.columns+5*c.columns+
             nt*(rows*c.words+64)+c.columns;
@@ -642,7 +703,11 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         }
         HEX_GROEBNER_BINARY_PIVOTS_USED(c.scratch);
     }
-    c.dense=matrix_zeros(c.binary?0:(size_t)c.columns*c.width);
+    if(c.delayed) {
+        c.delayed_meta=matrix_zeros((size_t)c.capacity*sizeof(delayed_pivot));
+        HEX_GROEBNER_DELAYED_FRAME();
+    }
+    c.dense=matrix_zeros(c.binary?0:(size_t)c.columns*(c.delayed?8:c.width));
     c.slots=matrix_zeros((size_t)c.columns*4);
     c.pivots=matrix_empty();c.native_pivots=matrix_empty();c.remainders=matrix_empty();
     for(size_t i=0;i<rows;++i) {
@@ -684,12 +749,17 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
             if(!matrix_install(&c,output,first,inverse,sugar,0)) goto defer;
         } else {
             if(!c.project && !matrix_work(&c,n)) goto defer;
+            /* Scan and gather leave every production cell zero. Test-only
+               offsets can reset their private accumulator before scattering. */
+            if(c.delayed) HEX_GROEBNER_DELAYED_RESET(&c);
             for(size_t j=0;!c.project && j<n;++j) {
                 uint64_t col=matrix_read(lean_sarray_cptr(cs)+j*4,4);
                 if(c.binary) matrix_binary_dense(&c)[col>>3]|=(uint8_t)(1u<<(col&7));
+                else if(c.delayed) delayed_write(&c,col,matrix_read(lean_sarray_cptr(vs)+j*c.width,c.width));
                 else matrix_write(lean_sarray_cptr(c.dense)+(size_t)col*c.width,c.width,
                     matrix_read(lean_sarray_cptr(vs)+j*c.width,c.width));
             }
+            if(c.delayed) HEX_GROEBNER_DELAYED_TARGET(&c);
             uint64_t last=matrix_read(lean_sarray_cptr(cs)+(n-1)*4,4),leading=0;
             if(c.project) {
                 uint64_t t=i-nr;
@@ -703,7 +773,8 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
                 uint64_t col=leading-1,inverse=1;
                 if(col>=c.columns || last>=c.columns || col>last) goto defer;
                 if(!independent && !c.binary && !matrix_inverse(&c,
-                    matrix_read(lean_sarray_cptr(c.dense)+(size_t)col*c.width,c.width),&inverse))
+                    (c.delayed?delayed_read(&c,col)%c.p:
+                        matrix_read(lean_sarray_cptr(c.dense)+(size_t)col*c.width,c.width)),&inverse))
                     goto defer;
                 lean_object *output=matrix_gather(&c,col,last,inverse);
                 if(!output) goto defer;
@@ -741,6 +812,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,result);
     matrix_cleanup(&c);HEX_GROEBNER_MATRIX_ACCEPTED();return some;
 defer:
+    if(c.delayed) HEX_GROEBNER_DELAYED_DEFERRED(c.stats[0]);
     matrix_cleanup(&c);HEX_GROEBNER_MATRIX_DEFERRED();return lean_box(0);
 }
 
