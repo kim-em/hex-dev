@@ -640,6 +640,16 @@ static uint64_t delayed_packet_widths[3]={0};
   ++delayed_overflows; \
  } \
 } while(0)
+static uint64_t sparse_frames=0,sparse_updates=0,sparse_zero_checks=0,sparse_done_checks=0;
+static uint64_t sparse_quantum=UINT64_C(1)<<34,sparse_refused_work=0;
+static int sparse_offset_enabled=0;
+#define HEX_GROEBNER_SPARSE_QUANTUM sparse_quantum
+#define HEX_GROEBNER_SPARSE_FRAME() (++sparse_frames)
+#define HEX_GROEBNER_SPARSE_UPDATE() (++sparse_updates)
+#define HEX_GROEBNER_SPARSE_DEFERRED(work) (sparse_refused_work+=(work))
+#define HEX_GROEBNER_SPARSE_RESET(context) do { matrix_context *ctx=(context); if(sparse_offset_enabled) memset(lean_sarray_cptr(ctx->dense),0,(size_t)ctx->columns*8); else for(uint64_t col=0;col<ctx->columns;++col) assert(delayed_read(ctx,col)==0); ++sparse_zero_checks; } while(0)
+#define HEX_GROEBNER_SPARSE_TARGET(context) do { if(sparse_offset_enabled) { matrix_context *ctx=(context); for(uint64_t col=0;col<ctx->columns;++col) delayed_write(ctx,col,delayed_read(ctx,col)+(UINT64_MAX-UINT64_C(1))); } } while(0)
+#define HEX_GROEBNER_SPARSE_DONE(context) do { matrix_context *ctx=(context); for(uint64_t col=0;col<ctx->columns;++col) assert(sparse_offset_enabled?(delayed_read(ctx,col)&1)==0:delayed_read(ctx,col)==0); ++sparse_done_checks; } while(0)
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
 static uint64_t binary_groups=0,binary_installed=0,binary_initialized=0;
@@ -753,6 +763,21 @@ LEAN_EXPORT lean_obj_res hex_test_continuation_bounds(lean_obj_arg world) {
 #undef lean_hex_matrix_validate
 #undef lean_hex_matrix_zeros
 #undef lean_hex_groebner_eliminate_matrix
+LEAN_EXPORT lean_obj_res hex_test_sparse_offsets(uint8_t enabled,lean_obj_arg world) {
+ (void)world;sparse_offset_enabled=enabled;return lean_io_result_mk_ok(lean_box(0));
+}
+LEAN_EXPORT lean_obj_res hex_test_sparse_quantum(uint64_t cap,lean_obj_arg world) {
+ (void)world;sparse_quantum=cap;return lean_io_result_mk_ok(lean_box(0));
+}
+LEAN_EXPORT lean_obj_res hex_test_sparse_counts(lean_obj_arg world) {
+ (void)world;lean_object *last=lean_alloc_ctor(0,2,0),*third=lean_alloc_ctor(0,2,0);
+ lean_object *second=lean_alloc_ctor(0,2,0),*first=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(last,0,lean_box_uint64(sparse_done_checks));lean_ctor_set(last,1,lean_box_uint64(sparse_refused_work));
+ lean_ctor_set(third,0,lean_box_uint64(sparse_zero_checks));lean_ctor_set(third,1,last);
+ lean_ctor_set(second,0,lean_box_uint64(sparse_updates));lean_ctor_set(second,1,third);
+ lean_ctor_set(first,0,lean_box_uint64(sparse_frames));lean_ctor_set(first,1,second);
+ return lean_io_result_mk_ok(first);
+}
 static uint64_t primitive_validations=0,primitive_zeros=0;
 static uint64_t primitive_validate_admitted=0,primitive_validate_declined=0;
 static uint64_t primitive_zero_admitted=0,primitive_zero_declined=0;
@@ -1181,6 +1206,10 @@ import HexGroebner.SampledConformance
 import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
 import HexGroebner.DelayedConformance
+import HexGroebner.SparseBinaryConformance
+@[extern "hex_test_sparse_counts"] opaque sparseCounts : IO (UInt64 × UInt64 × UInt64 × UInt64 × UInt64)
+@[extern "hex_test_sparse_offsets"] opaque sparseOffsets (enabled : Bool) : IO Unit
+@[extern "hex_test_sparse_quantum"] opaque sparseQuantum (cap : UInt64) : IO Unit
 @[extern "hex_test_delayed_counts"] opaque delayedCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_delayed_quantum"] opaque delayedQuantum (cap : UInt64) : IO Unit
 @[extern "hex_test_delayed_refused"] opaque delayedRefused : IO UInt64
@@ -1356,6 +1385,36 @@ private def checkBinaryBuffers : IO Unit := do
   if !(← delayedGuard) then throw (IO.userError "delayed exact packet/guard-page test failed")
   let vectorsBefore ← delayedVectors
   let widePacketsBefore ← delayedWidthPackets 4
+  let sparseBefore ← sparseCounts
+  let sparseSeed ← Hex.Groebner.NativeChecks.readSeed
+  for offsets in [false,true] do
+    sparseOffsets offsets
+    match Hex.Groebner.SparseBinaryConformance.checkRuntime (sparseSeed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+  sparseOffsets false
+  if !Hex.Groebner.SparseBinaryConformance.shapeChecks ||
+      !Hex.Groebner.SparseBinaryConformance.cardinalityChecks ||
+      !Hex.Groebner.SparseBinaryConformance.malformedChecks then
+    throw (IO.userError "sparse F2 shape/cardinality/malformed boundary differs")
+  let some sparseWork := Hex.Groebner.SparseBinaryConformance.capChecks sparseSeed |
+    throw (IO.userError "sparse F2 ordinary quantum differs")
+  let refusedBefore := (← sparseCounts).2.2.2.2
+  sparseQuantum (sparseWork-1).toUInt64
+  if (Hex.Groebner.SparseBinaryConformance.capChecks (sparseSeed+7) (sparseWork-1)).isNone then
+    throw (IO.userError "sparse F2 bounded refusal/fallback differs")
+  let refusedAfter := (← sparseCounts).2.2.2.2
+  if refusedAfter ≤ refusedBefore || refusedAfter-refusedBefore > 2*(sparseWork-1).toUInt64 then
+    throw (IO.userError "sparse F2 discarded work missing or unbounded")
+  sparseQuantum sparseWork.toUInt64
+  if (Hex.Groebner.SparseBinaryConformance.capChecks (sparseSeed+14) sparseWork).isNone then
+    throw (IO.userError "sparse F2 exact native work boundary differs")
+  sparseQuantum (2^34)
+  let sparseAfter ← sparseCounts
+  if sparseAfter.1 ≤ sparseBefore.1 || sparseAfter.2.1 ≤ sparseBefore.2.1 ||
+      sparseAfter.2.2.1 ≤ sparseBefore.2.2.1 || sparseAfter.2.2.2.1 ≤ sparseBefore.2.2.2.1 then
+    throw (IO.userError "sparse F2 frames/updates/reset/final-state checks unused")
+  IO.println s!"sparse F2 frames/updates/reset/final-state/refused: {sparseAfter}"
   let delayedBefore ← delayedCounts
   let delayedSeed ← Hex.Groebner.NativeChecks.readSeed
   for offsets in [false,true] do

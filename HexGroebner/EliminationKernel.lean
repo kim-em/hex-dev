@@ -273,9 +273,13 @@ def reference (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (eliminate field limits columns reducers targets false sugars true independent).run {}
   ⟨result, stats⟩
 
-/-- A private bit matrix is used only by explicitly requested F2 frames. -/
+/-- Specialized F2 frames are used only when explicitly requested. -/
 def binaryEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
   limits.binaryPivots && field.modulus == 2
+
+/-- Beyond the packed-frame dimensions, requested F2 frames use sparse pivots. -/
+def sparseBinary (field : PrimeField) (limits : MatrixLimits) (columns reducers : Nat) : Bool :=
+  binaryEnabled field limits && (columns > 131072 || reducers > 131072)
 
 /-- Exact modular UInt64 accumulation for explicitly requested prime fields. -/
 def delayedEnabled (field : PrimeField) (limits : MatrixLimits) : Bool :=
@@ -365,15 +369,16 @@ stays below `(p-1)+columns*(p-1)^2 < 2^50` for primes below `2^16`.
 Wider primes keep each cell below `p^2`; every sum is below `2*p^2 < 2^63`,
 and one correction preserves the residue modulo `p`. Private UInt64 accumulation and
 forty-byte pivot descriptors are reserved against the parent payload. -/
-def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+private def fitsWith (sparse : Bool) (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
   let rows := reducers.size + targets.size
   if USize.size != 2^64 then return false
-  let binary := binaryEnabled field limits
+  if sparse && !binaryEnabled field limits then return false
+  let binary := binaryEnabled field limits && !sparse
   let delayed := delayedEnabled field limits
-  let wide := binary || delayed
-  if columns > (if wide then 131072 else 4096) ||
-      reducers.size > (if wide then 131072 else 1024) ||
+  let wide := binary || delayed || sparse
+  if columns > (if sparse then 2^20 else if wide then 131072 else 4096) ||
+      reducers.size > (if sparse then 2^20 else if wide then 131072 else 1024) ||
       targets.size > (if wide then 4096 else 64) ||
       columns > limits.columns || rows > limits.rows ||
       (!sugars.isEmpty && sugars.size != rows) then return false
@@ -388,7 +393,7 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
       entries := entries + row.size
   let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
     targets.size * (entries + (targets.size + 3) * columns + 64) + columns
-  if bound > (if delayed then 2^38 else frameQuantum field limits) then return false
+  if bound > (if delayed || sparse then 2^38 else frameQuantum field limits) then return false
   if binary && binaryCost columns reducers targets entries > 2^34 then return false
   let mut seen := Array.replicate columns false
   for row in reducers do
@@ -398,18 +403,42 @@ def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
       seen := seen.set! column true
   return true
 
+/-- Native admission for the selected packed, sparse F2 or delayed prime frame. -/
+def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool :=
+  fitsWith (sparseBinary field limits columns reducers.size) field limits columns reducers targets sugars
+
+/-- Sparse F2 admission, also used to compare the backend on smaller matrices. -/
+def fitsSparse (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool :=
+  fitsWith true field limits columns reducers targets sugars
+
 /-- A successful bulk attempt has the complete reference result; unsupported
 inputs and reference failures retain the ordinary matrix boundary. -/
+private def attemptWith (sparse : Bool) (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    Option Result :=
+  if !(fitsWith sparse field limits columns reducers targets sugars) then none else
+    let result := reference field limits columns reducers targets sugars independent
+    if result.result.isOk && result.stats.work ≤ (if sparse then 2^34 else frameQuantum field limits) &&
+        (!binaryEnabled field limits || result.stats.packedBytes+
+          (if sparse then delayedBytes field columns reducers.size targets.size
+            else binaryBytes columns reducers.size targets.size) ≤ limits.packedBytes) &&
+        (!delayedEnabled field limits || result.stats.packedBytes+
+          delayedBytes field columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
+
+/-- A complete successful attempt has the deterministic reference result. -/
 def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
     Option Result :=
-  if !(fits field limits columns reducers targets sugars) then none else
-    let result := reference field limits columns reducers targets sugars independent
-    if result.result.isOk && result.stats.work ≤ frameQuantum field limits &&
-        (!binaryEnabled field limits || result.stats.packedBytes+
-          binaryBytes columns reducers.size targets.size ≤ limits.packedBytes) &&
-        (!delayedEnabled field limits || result.stats.packedBytes+
-          delayedBytes field columns reducers.size targets.size ≤ limits.packedBytes) then some result else none
+  attemptWith (sparseBinary field limits columns reducers.size) field limits columns
+    reducers targets sugars independent
+
+/-- Portable sparse F2 backend, including exact payload and charged-work caps. -/
+def attemptSparsePortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    Option Result :=
+  attemptWith true field limits columns reducers targets sugars independent
 
 /-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
 column count, row arrays and sugars are borrowed Lean objects, and `independent`
@@ -419,7 +448,11 @@ reference result, including exact rows, aliases, sugars and counters. It admits
 ordinary frames with at most 4096 columns, 1024 known reducers, 64 targets and
 `2^20` charged work. Opt-in F2 frames admit at most 131072 columns, 131072 reducers
 and 4096 targets, with a `2^38` logical-work bound and a separate `2^34` bound
-on packing/scalar/word visits. Delayed frames over every prime `3 ≤ p < 2^31`
+on packing/scalar/word visits. Requested F2 frames above either packed dimension
+use sparse borrowed pivot descriptors and UInt64 parity accumulators: at most
+`2^20` columns/reducers and 4096 targets, a `2^38` shape bound and `2^34` charged
+work. Their additional payload is `7*columns + 40*min(rows,columns)`. Duplicate
+heads decline at installation without allocating a larger bitmap. Delayed frames over every prime `3 ≤ p < 2^31`
 use the same dimension ceilings, a `2^38` conservative bound and `2^34` charged
 work cap. Requested M31 dense-pivot preparation retains the reference charges
 only within its existing 65536-column limit. Their private pivot/accumulator bytes must fit
@@ -432,7 +465,10 @@ shared reducer/target arrays. Unsupported shapes return `none` without changing
 inputs, and a reference-equivalent continuation runs after the native frame. A declined
 attempt's physical work is unreported; the continuation retains the reference counters. Ordinary-frame
 speculation is bounded by the remaining logical allowance and `2^20`; opt-in
-F2 packing and word visits have their separate shape bound. Delayed frames
+F2 packing and word visits have their separate shape bound. Sparse F2 frames
+can discard at most the smaller of remaining parent work and `2^34` charged
+units before falling back; their private payload is released on every decline.
+Delayed frames
 have a `2^34` logical-work cap. Scan and gather leave the private accumulator
 zero for reuse. Their UInt64 accumulator and flat pivot metadata can
 also cause a late byte refusal, followed by the reference-equivalent continuation. Without dense
@@ -452,9 +488,13 @@ theorem attemptPortable_spec (field : PrimeField) (limits : MatrixLimits) (colum
     (attemptPortable field limits columns reducers targets sugars independent).getD
       (reference field limits columns reducers targets sugars independent) =
       reference field limits columns reducers targets sugars independent := by
-  unfold attemptPortable
-  split <;> simp only [Option.getD_none]
-  split <;> rfl
+  have choose (test : Bool) (value : Result) :
+      (if test then some value else none).getD value = value := by
+    cases test <;> rfl
+  unfold attemptPortable attemptWith
+  split
+  · rfl
+  · exact choose _ _
 
 end Elimination
 

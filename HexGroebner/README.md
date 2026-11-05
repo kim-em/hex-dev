@@ -275,11 +275,11 @@ Cancellation is observed between calls. Other fields retain their existing route
 Measured kernels, full-system cases, source bindings and raw samples are described
 in [the prime-field elimination report](../reports/bench-results/hexgroebner-prime.md).
 
-`Limits.binaryPivots` optionally uses private bit-packed pivots and an accumulator
-in untraced ordinary F2 matrix frames. It defaults to `false`; the deterministic
+`Limits.binaryPivots` optionally uses specialized private workspaces
+in untraced ordinary F₂ matrix frames. It defaults to `false`; the deterministic
 driver accepts `--binary-pivots true|false` and records the requested policy.
 This preserves ordinary polynomial semantics, including distinct monomials
-`x` and `x²`. Other fields retain their existing route. Admission permits at
+`x` and `x²`. Other fields retain their existing route. Packed admission permits at
 most 131072 columns, 131072 reducers and 4096 targets as separate dimension
 ceilings, subject to joint bounds of `2^38`
 reference work and `2^34` packing/scalar/word visits. The private bitmap stores
@@ -310,6 +310,15 @@ The accumulator initializes separately. The complete virtual payload remains
 reserved against the parent allowance. Native conformance fills the initially
 uninitialized storage with a nonzero pattern to expose accidental sparse-row reads.
 Word scans and gathers decode the same byte layout on every host.
+
+Requested F₂ frames beyond 131072 columns or known reducers use sparse borrowed
+pivot descriptors and UInt64 parity accumulators. Their limits are `2^20`
+columns/reducers and 4096 targets, a `2^38` conservative shape bound and `2^34`
+charged work. Extra payload is `7*columns + 40*min(rows,columns)`, reserved against
+the parent allowance. Duplicate heads decline during installation; validation
+uses no larger stack bitmap. Other F₂ frames keep their packed implementation.
+Sparse-frame refusal releases the workspace and continues through the reference
+matrix path; the discarded charged prefix is bounded per frame.
 
 A byte-allowance refusal can discard a partially or fully processed native frame
 before the reference continuation succeeds. Speculation is bounded per frame;

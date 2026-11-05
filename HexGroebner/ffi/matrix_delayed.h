@@ -146,4 +146,37 @@ static lean_object *delayed_gather(matrix_context *c,uint64_t first,uint64_t las
     return matrix_row(cs,vs);
 }
 
+
+/* Every validated nonzero F2 coefficient is one. XOR preserves parity even
+   under test-only even accumulator offsets; normalization precedes each test. */
+static int sparse_scan(matrix_context *c,uint64_t first,uint64_t *last,
+        uint64_t *leading,uint64_t *sugar) {
+    uint64_t charged=first;
+    for(uint64_t col=first;col<c->columns && col<=*last;++col) {
+        if(col>=charged) {
+            uint64_t stop=col+64<*last+1?col+64:*last+1;
+            if(!matrix_work(c,stop-col)) return 0;
+            charged=stop;
+        }
+        uint64_t a=delayed_read(c,col)&UINT64_C(1);
+        delayed_write(c,col,a);
+        if(!a) continue;
+        uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+(size_t)col*4,4);
+        if(!slot) {if(!*leading) *leading=col+1;continue;}
+        delayed_pivot pivot;
+        memcpy(&pivot,lean_sarray_cptr(c->delayed_meta)+(size_t)(slot-1)*sizeof(pivot),sizeof(pivot));
+        if(pivot.end>*last) *last=pivot.end;
+        if(pivot.sugar>*sugar) *sugar=pivot.sugar;
+        if(!matrix_work(c,pivot.size)) return 0;
+        HEX_GROEBNER_SPARSE_UPDATE();
+        for(uint64_t j=1;j<pivot.size;++j) {
+            uint64_t k=matrix_read(pivot.columns+(size_t)j*4,4);
+            delayed_write(c,k,delayed_read(c,k)^UINT64_C(1));
+        }
+        delayed_write(c,col,0);
+        ++c->stats[6];
+    }
+    return 1;
+}
+
 #endif

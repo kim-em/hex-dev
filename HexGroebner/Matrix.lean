@@ -59,7 +59,7 @@ structure MatrixLimits where
   traceNodes : Nat := 1000000
   /-- Optional checked M31 dense pivot buffers, charged to these same bounds. -/
   densePivots : Bool := false
-  /-- Optional private packed F2 pivots in bounded untraced matrix frames. -/
+  /-- Optional private packed or sparse F2 pivots in bounded untraced frames. -/
   binaryPivots : Bool := false
   /-- Optional exact delayed reduction for untraced prime-field matrices. -/
   delayedReduction : Bool := false
