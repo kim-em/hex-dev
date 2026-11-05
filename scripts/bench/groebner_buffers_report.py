@@ -14,10 +14,41 @@ from scripts.bench.groebner_capsule import Capsule
 from scripts.bench.groebner_sparse_report import verification,fixed_inputs,systems,comparator,mean
 from scripts.bench.groebner_trie_report import source,require
 
-CHECKPOINT='5511cb5c3fc2dda7e4174963137756189528c4ef5f40c9c6dfff128fdcb75707'
+CHECKPOINT='c08492f62a6f06728106980b7cafc88acc93466acd33192b21beb925674dcc14'
 
 
 def digest(data):return hashlib.sha256(data).hexdigest()
+
+
+
+def execution(cap,candidate):
+    measured=source(cap,'measured')
+    require(candidate['compilers']==measured['compilers'] and
+            candidate['native_options']==measured['native_options'] and
+            candidate['compiler_inputs']==measured['compiler_inputs'],
+            'measured compiler configuration differs')
+    for name in ['compute','compute-reference','bench']:
+        require(candidate['binary_sha256'][name]==measured['binary_sha256'][name],
+                'measured executable identity differs')
+    def listing(manifest):
+        return {line.split('\t',1)[1]:line.split(' ',2)[1]
+                for line in manifest['source_manifest'].splitlines()}
+    a=listing(candidate);b=listing(measured)
+    changed={path for path in a.keys()|b.keys()if a.get(path)!=b.get(path)}
+    allowed='bench/HexGroebner/Bench/SparseBinary.lean'
+    require(changed <= {allowed,'lakefile.lean'}, 'runtime source changes exceed the execution bridge')
+    if 'lakefile.lean' in changed:
+        require((b['lakefile.lean'],a['lakefile.lean'])==
+                ('f5d84133663d5296b92cbc611e0c1602c613e607',
+                 '1fbef2521c139867cced94d2492ee8a911c5f13e'),
+                'unrecognized upstream Lake registration change')
+    if allowed in changed:
+        current=cap.text('candidate/root-sources/'+allowed).splitlines()
+        old=cap.text('measured/root-sources/'+allowed).splitlines()
+        require(len(current)==len(old) and all(x==y or
+                (x.lstrip().startswith('--') and y.lstrip().startswith('--'))
+                for x,y in zip(current,old)), 'executable source changed in comment bridge')
+    return measured
 
 
 def functional(cap,candidate):
@@ -77,6 +108,36 @@ def functional(cap,candidate):
     require(digest(wrapper)==candidate['compilers']['lean']['sha256'],'compiler wrapper differs')
 
 
+def kernels(cap,measured):
+    lines=['', '| Kernel campaign | Function | Verdict | Flagged samples |',
+           '|---|---|---|---:|']
+    hashes={}
+    for campaign in ['first','longer']:
+        prefix='measurements/kernels/'+campaign
+        meta=cap.json(prefix+'/metadata.json')
+        require(meta['manifest']==measured and meta['exit_code']==0 and
+                meta['threads']==1 and meta['sources_unchanged'] and
+                meta['source_bindings']==meta['source_bindings_after'] and
+                meta['source_bindings'][meta['command'][0]]==measured['binary_sha256']['bench'],
+                'kernel executable/source identity differs')
+        results=cap.json(prefix+'/results.json')['results']
+        require([r['function']for r in results]==['Hex.Groebner.Bench.sparseBinary',
+                'Hex.Groebner.Bench.sparseBinaryReference'],'kernel selection differs')
+        for row in results:
+            params=[64,128,256,512,1024,2048]if row['function'].endswith('.sparseBinary')else[64,128,256]
+            require(row['complexity_formula']=='131073+n*n' and
+                    row['config']['outer_trials']==3 and row['config']['signal_floor_multiplier']==10 and
+                    [(v['trial_index'],v['param'])for v in row['points']]==
+                    [(trial,n)for trial in range(3)for n in params], 'kernel schedule differs')
+            for point in row['points']:
+                require(point['status']=='ok','kernel process failed')
+                n=point['param'];value=point['result_hash']
+                require(hashes.setdefault(n,value)==value,'kernel output hash differs')
+            flags=sum(v['below_signal_floor']for v in row['points'])
+            lines.append(f"| {campaign} | {row['function'].rsplit('.',1)[1]} | {row['verdict']} | {flags}/{len(row['points'])} |")
+    return lines+['', 'Both ordinary complexity campaigns are retained, including the sole longer-batch repeat and all signal-floor flags. Their verdicts are inconclusive; no empirical complexity acceptance or matched implementation speed ratio is inferred.', '']
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--archive',type=Path,required=True)
@@ -88,20 +149,21 @@ def main():
     current.add_argument('--current-runtime',action='store_true')
     args=parser.parse_args();cap=Capsule(args.archive)
     candidate=source(cap,'candidate');baseline=source(cap,'baseline')
+    measured=execution(cap,candidate)
     functional(cap,candidate);checks=None
     if cap.sha256==CHECKPOINT:
         require(cap.json('scope.json')['kind']=='functional-checkpoint','checkpoint scope differs')
         text='\n'.join(['# Sparse matrix buffers: functional checkpoint','',
-            f"Frozen runtime `{candidate['source_fingerprint']}` produces unchecked finite-field F4 candidates. Its computation and full-initialization drivers are byte-identical to the independently checked preceding snapshot; the benchmark executable includes the new sparse kernels.",'',
+            f"Current runtime source `{candidate['source_fingerprint']}` reproduces all three executables from measured source `{measured['source_fingerprint']}` byte for byte. Their source differences are a checked benchmark cost-model comment and the exact pinned upstream Lake registrations for unrelated HexRCF targets. The computation and full-initialization drivers also match the preceding independently checked snapshot; the benchmark executable includes the new sparse kernels.",'',
             'Both exact driver executables passed all 1,134 corpus and resource/input-boundary cases. The complete Eco-14 basis, metadata and all logical counters agree with the retained reference output. All 85 frozen benchmark verifications pass. Four Clang/GCC ASan/UBSan index-load checks each cover 327,680 aligned/unaligned boundary cases, including the bytewise fallback.','',
             'This capsule records functional evidence only. It contains no comparative timing or final 36-configuration/nine-gate receipt claim. Candidate production remains separate from certificate generation, independent certification and kernel checking. The fastest-open-source milestone and remaining issue #10987 obligations are not established.','',
             f'Capsule SHA-256: `{cap.sha256}`. Source blobs, compiler and executable identities, complete outputs and functional records are replayed independently. Only this exact capsule is accepted as a functional checkpoint.',''])
     else:
         require(cap.json('scope.json')['kind']=='performance','performance scope missing')
         checks=verification(cap,candidate);fixed=fixed_inputs(cap)
-        ratios,samples=systems(cap,candidate,baseline,fixed)
+        ratios,samples=systems(cap,measured,baseline,fixed)
         lines=['# Sparse matrix buffers: measured snapshot','',
-            f"Frozen runtime `{candidate['source_fingerprint']}` is compared directly with `{baseline['source_fingerprint']}`. The native F₂ scan resolves its stable private buffers once, and loads packed UInt32 indices with unaligned-safe native loads only on known little-endian hosts. Other hosts retain bytewise decoding. Mathematical results, row order, labels, budgets and all eight logical counters are preserved.",'',
+            f"Measured runtime `{measured['source_fingerprint']}` is compared directly with `{baseline['source_fingerprint']}`. Current source `{candidate['source_fingerprint']}` reproduces the computation, full-initialization and benchmark executables byte for byte; source differences are a checked cost-model comment and exact pinned upstream Lake registrations for unrelated HexRCF targets. The native F₂ scan resolves its stable private buffers once, and loads packed UInt32 indices with unaligned-safe native loads only on known little-endian hosts. Other hosts retain bytewise decoding. Mathematical results, row order, labels, budgets and all eight logical counters are preserved.",'',
             'All 128 processes and 64 adjacent AB/BA pairs have identical complete outputs and counters. The fixed sweep covers the first size of ten primary families over F₂, F₃₂₀₀₃ and F₂₁₄₇₄₈₃₆₄₇, plus Eco-14/Eco-15 over F₂. Runs use one leased CPU, one thread, degree scheduling, batch size 1024, binary pivots and delayed reduction enabled, and dense pivots disabled.','',
             '| Field | Candidate B/A | Process B/A | Candidate pair range | Peak RSS A/B, KiB |',
             '|---|---:|---:|---:|---:|']
@@ -120,12 +182,13 @@ def main():
         lines+=['','These are descriptive point estimates. Every completed observation, outlier and failure is retained; ratios from preliminary optimization stages are not multiplied. Host activity is recorded on the shared AMD EPYC 9455. Production native code uses Clang 21.1.8 and generated C uses SDK Clang 23.1.0 with Lean 4.35.0-rc3. Both builds disable the opt-in AVX-512 route; existing exact AVX2 dispatch remains available. Limits are 300 seconds, 8 GiB address space and 256 MiB per output file, with explicit fixed-corpus parent allowances. The measurements do not establish default-budget admission or complete balanced/parallel acceptance.','',
             'All nine project gates and 36 strict Clang/GCC ASan/UBSan configurations are source-bound, including regular, forced-sparse and packed-only profiles. Compiler families, actual Lake compiler/flag declarations, generated driver templates, source manifests and all complete functional outputs are replayed. Native and portable wide-sparse kernels are registered with lean-bench using the O(C+n²) operation model, C=131073, eight targets and complete output/counter consumption. All 85 frozen benchmark verifications pass.','',
             f'Production capsule SHA-256: `{cap.sha256}`. Candidate production, certificate generation, independent native certification and kernel checking remain separate costs. Ordinary F₂ polynomial exponents retain their usual meaning; x and x² are distinct.','']
+        lines+=kernels(cap,measured)
         text='\n'.join(lines)
         del cap;gc.collect()
         require(args.heldout is not None,'held-out evidence missing')
         from scripts.bench.groebner_parts import load_capsule
         held=load_capsule(args.heldout)
-        result=comparator(held,candidate,[c for c in fixed if c['split']=='heldout'])
+        result=comparator(held,measured,[c for c in fixed if c['split']=='heldout'])
         lines=['','| Held-out family | Hex/msolve process ratio |','|---|---:|']
         for family,value in result['per_family'].items():lines.append(f'| {family} | {value:.4f} |')
         lines+=['',f"All 27 fixed held-out inputs have 108 successful processes, 54 equal complete bases and no missing/failed observations. The family-balanced process ratio is {result['family_balanced_geomean']:.4f}× Hex/msolve. Peak RSS is {result['peak_rss_kib']['A']}/{result['peak_rss_kib']['B']} KiB. These observations do not establish a language/runtime limitation.",'',
