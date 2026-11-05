@@ -79,6 +79,52 @@ static void delayed_update_wide_avx2(matrix_context *c,const delayed_pivot *pivo
 }
 #endif
 
+#if HEX_GROEBNER_AVX2 && !defined(HEX_GROEBNER_NO_AVX512)
+static int delayed_avx512_available(void) {
+    static atomic_uint cached=0;
+    unsigned known=atomic_load_explicit(&cached,memory_order_relaxed);
+    if(known) return known==2;
+    unsigned a,b,c,d,lo,hi;int available=0;
+    if(hex_avx2_available()) {
+        __asm__ volatile("xgetbv" : "=a"(lo),"=d"(hi) : "c"(0));
+        (void)hi;
+        if((lo&0xe6)==0xe6 && __get_cpuid_count(7,0,&a,&b,&c,&d) && (b&(1u<<16))) available=1;
+    }
+    atomic_store_explicit(&cached,available?2:1,memory_order_relaxed);
+    return available;
+}
+
+/* Canonical columns are distinct, in bounds and below 2^31. Every lane keeps
+   a residue below p^2; adding a product stays below 2*p^2 < 2^63. */
+__attribute__((target("avx512f")))
+static void delayed_update_wide_avx512(matrix_context *c,const delayed_pivot *pivot,uint64_t factor) {
+    __m512i factors=_mm512_set1_epi64((long long)factor);
+    __m512i modulus=_mm512_set1_epi64((long long)c->modulus_squared);
+    __m512i threshold=_mm512_set1_epi64((long long)(c->modulus_squared-1));
+    uint8_t *data=lean_sarray_cptr(c->dense);
+    uint64_t j=1;
+    for(;j+8<=pivot->size;j+=8) {
+        HEX_GROEBNER_DELAYED_UPDATE(c->width);
+        __m256i ids=_mm256_loadu_si256((const __m256i_u*)(pivot->columns+(size_t)j*4));
+        __m512i coefficients=_mm512_cvtepu32_epi64(_mm256_loadu_si256(
+            (const __m256i_u*)(pivot->coefficients+(size_t)j*4)));
+        __m512i products=_mm512_mul_epu32(coefficients,factors);
+        __m512i current=_mm512_i32gather_epi64(ids,(const void*)data,8);
+        __m512i updated=_mm512_add_epi64(current,products);
+        __mmask8 correction=_mm512_cmpgt_epi64_mask(updated,threshold);
+        updated=_mm512_mask_sub_epi64(updated,correction,updated,modulus);
+        _mm512_i32scatter_epi64((void*)data,ids,updated,8);
+    }
+    for(;j<pivot->size;++j) {
+        uint64_t k=matrix_read(pivot->columns+(size_t)j*4,4);
+        uint64_t b=matrix_read(pivot->coefficients+(size_t)j*4,4);
+        uint64_t value=delayed_read(c,k)+factor*b;
+        if(value>=c->modulus_squared) value-=c->modulus_squared;
+        delayed_write(c,k,value);
+    }
+}
+#endif
+
 /* Small fields receive at most columns products and stay below 2^50.
    Wider fields keep residues modulo p^2; each step is below 2*p^2 < 2^63,
    so one correction restores acc<p^2 and preserves the residue modulo p. */
@@ -102,6 +148,11 @@ static int delayed_scan(matrix_context *c,uint64_t first,uint64_t *last,
         if(pivot.sugar>*sugar) *sugar=pivot.sugar;
         if(!matrix_work(c,pivot.size)) return 0;
         uint64_t factor=c->p-a;
+#if HEX_GROEBNER_AVX2 && !defined(HEX_GROEBNER_NO_AVX512)
+        if(c->width==4 && delayed_avx512_available())
+            delayed_update_wide_avx512(c,&pivot,factor);
+        else
+#endif
 #if HEX_GROEBNER_AVX2
         if(hex_avx2_available()) {
             if(c->width==4) delayed_update_wide_avx2(c,&pivot,factor);
