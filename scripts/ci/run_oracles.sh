@@ -369,7 +369,7 @@ run_tuple() {
     if ! python3 scripts/bench/groebner_prime_report.py \
         --archive reports/bench-results/raw/f4-prime-current-c4cb8197a53d.tar.xz \
         --replay reports/bench-results/raw/f4-delayed-m31-replay-fa4f77c3cf24.tar.xz \
-        --report reports/bench-results/hexgroebner-prime.md --check --current; then
+        --report reports/bench-results/hexgroebner-prime.md --check --snapshot; then
       echo "FAIL: $lib :: delayed prime-field evidence replay failed"
       return 1
     fi
