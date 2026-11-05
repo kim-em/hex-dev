@@ -350,6 +350,39 @@ def binaryCost (columns : Nat) (reducers targets : Array SparseRow) (entries : N
     full-3*((columns+63)/64)*targets.size*(binaryGroups columns reducers)
   else full
 
+/-- Select sparse F2 only when packed private payload or a conservative lower
+bound proves that the packed frame must decline. Each four-row table consumes
+four dense known rows, so their count divided by four bounds all possible table
+savings. Header work is bounded by the packed dimension caps and parent work. -/
+private def preferSparse (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) : Bool := Id.run do
+  let rows := reducers.size + targets.size
+  if columns > 131072 || reducers.size > 131072 || targets.size > 4096 ||
+      columns > limits.columns || rows > limits.rows ||
+      limits.work < 2*rows+5*columns || limits.packedBytes < 5*columns then return false
+  let mut entries := 0
+  let mut dense := 0
+  for fromTarget in [false,true] do
+    for row in (if fromTarget then targets else reducers) do
+      if row.columns.size % 4 != 0 || row.size > 2^37 || entries+row.size > 2^37 then
+        return false
+      entries := entries+row.size
+      if !fromTarget && row.size != 0 then
+        let head := (Packed.read .u32 row.columns 0).toNat
+        let last := (Packed.read .u32 row.columns (row.size-1)).toNat
+        if head ≥ columns || last ≥ columns || last < head then return false
+        if row.size > last/64-head/64+1 then dense := dense+1
+  let saved := if binaryProject columns reducers.size targets.size then
+      3*((columns+63)/64)*targets.size*(dense/4) else 0
+  return binaryBytes columns reducers.size targets.size > limits.packedBytes ||
+    binaryBound columns reducers.size targets.size entries-saved > 2^34
+
+/-- Prefer sparse pivots for wide requested F2 frames and definite packed refusals. -/
+def selectSparse (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) : Bool :=
+  binaryEnabled field limits &&
+    (sparseBinary field limits columns reducers.size || preferSparse limits columns reducers targets)
+
 /-- Known reducers have distinct leading columns. The conservative work bound
 uses `65 * rows` for row visits and inversion products, `2 * entries` for
 validation, sparse scaling and scattering, and `columns * (width + 4)` for
@@ -406,7 +439,7 @@ private def fitsWith (sparse : Bool) (field : PrimeField) (limits : MatrixLimits
 /-- Native admission for the selected packed, sparse F2 or delayed prime frame. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool :=
-  fitsWith (sparseBinary field limits columns reducers.size) field limits columns reducers targets sugars
+  fitsWith (selectSparse field limits columns reducers targets) field limits columns reducers targets sugars
 
 /-- Sparse F2 admission, also used to compare the backend on smaller matrices. -/
 def fitsSparse (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
@@ -431,7 +464,7 @@ private def attemptWith (sparse : Bool) (field : PrimeField) (limits : MatrixLim
 def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
     Option Result :=
-  attemptWith (sparseBinary field limits columns reducers.size) field limits columns
+  attemptWith (selectSparse field limits columns reducers targets) field limits columns
     reducers targets sugars independent
 
 /-- Portable sparse F2 backend, including exact payload and charged-work caps. -/
@@ -439,6 +472,13 @@ def attemptSparsePortable (field : PrimeField) (limits : MatrixLimits) (columns 
     (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
     Option Result :=
   attemptWith true field limits columns reducers targets sugars independent
+
+/-- Packed F2 admission retained separately for backend conformance. -/
+def attemptPackedPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    Option Result :=
+  if binaryEnabled field limits then
+    attemptWith false field limits columns reducers targets sugars independent else none
 
 /-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
 column count, row arrays and sugars are borrowed Lean objects, and `independent`
@@ -448,8 +488,8 @@ reference result, including exact rows, aliases, sugars and counters. It admits
 ordinary frames with at most 4096 columns, 1024 known reducers, 64 targets and
 `2^20` charged work. Opt-in F2 frames admit at most 131072 columns, 131072 reducers
 and 4096 targets, with a `2^38` logical-work bound and a separate `2^34` bound
-on packing/scalar/word visits. Requested F2 frames above either packed dimension
-use sparse borrowed pivot descriptors and UInt64 parity accumulators: at most
+on packing/scalar/word visits. Requested F2 frames above either packed dimension,
+or with a definite packed payload/word-bound refusal, use sparse borrowed pivot descriptors and UInt64 parity accumulators: at most
 `2^20` columns/reducers and 4096 targets, a `2^38` shape bound and `2^34` charged
 work. Their additional payload is `7*columns + 40*min(rows,columns)`. Duplicate
 heads decline at installation without allocating a larger bitmap. Delayed frames over every prime `3 ≤ p < 2^31`

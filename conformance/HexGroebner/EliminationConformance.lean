@@ -495,9 +495,9 @@ def binaryTableBoundary (seed : Nat) : Bool := Id.run do
     SparseRow.ofEntries field 2055 (#[ (i,(1:UInt64)) ] ++
       (Array.range 1024).map fun j => (tail+j,(1:UInt64)))
 
-/-- Nonzero four-row table savings at adjacent sides of the current physical cap.
-Empty targets keep the accepted portable replay small. -/
-@[noinline] def binaryGroupBoundary (seed : Nat) : Option Nat := do
+/-- Packed admission at adjacent sides of the physical cap, with sparse
+completion on the refused side. Empty targets keep portable replay small. -/
+@[noinline] def binaryGroupBoundary (seed : Nat) (packedOnly : Bool := false) : Option Nat := do
   let seed := seed % 2^32
   if USize.size != 2^64 then return 0
   let field : PrimeField := ⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
@@ -511,10 +511,14 @@ Empty targets keep the accepted portable replay small. -/
     let reducers := dense ++ #[tail] ++ Array.replicate 11765 ({} : SparseRow)
     if Elimination.binaryGroups 16384 reducers != 1 ||
         Elimination.binaryCost 16384 reducers targets entries != 2^34-2+3*(entries-3226) then none
-    let expected := Elimination.attemptPortable field limits 16384 reducers targets (Array.replicate (11770+4059) seed) false
-    let actual := Elimination.attempt field limits 16384 reducers targets (Array.replicate (11770+4059) seed) false
-    if expected.isSome != (entries == 3226) || !sameAttempt actual expected then none
-  return 2
+    let sugars := Array.replicate (11770+4059) seed
+    let packed := Elimination.attemptPackedPortable field limits 16384 reducers targets sugars false
+    if packed.isSome != (entries == 3226) then none
+    let expected := if packedOnly then packed else
+      Elimination.attemptPortable field limits 16384 reducers targets sugars false
+    let actual := Elimination.attempt field limits 16384 reducers targets sugars false
+    if expected.isSome != (!packedOnly || entries == 3226) || !sameAttempt actual expected then none
+  return if packedOnly then 2 else 1
 
 /-- Dense updates, four-row tables and projection in the highest packed word,
 including a partially occupied final word and shared targets. -/
@@ -566,7 +570,10 @@ def binaryBounds : Bool := Id.run do
     let ts := Array.replicate 4068 empty
     let expected := Elimination.attemptPortable field limits 16384 rs ts #[] false
     let actual := Elimination.attempt field limits 16384 rs ts #[] false
-    if expected.isSome != (entries == 258) || !sameAttempt actual expected then return false
+    let packed := Elimination.attemptPackedPortable field limits 16384 rs ts #[] false
+    if packed.isSome != (entries == 258) || expected.isNone ||
+        Elimination.selectSparse field limits 16384 rs ts != (entries == 259) ||
+        !sameAttempt actual expected then return false
   let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
   let malformed : Array SparseRow := #[
     { row with columns := row.columns.push 0 },
@@ -588,9 +595,9 @@ def binaryBounds : Bool := Id.run do
 
 #guard binaryQuantum 0
 #guard binaryBounds
-#guard binaryGroupBoundary 0 == some (if USize.size == 2^64 then 2 else 0)
+#guard binaryGroupBoundary 0 == some (if USize.size == 2^64 then 1 else 0)
 #guard binaryHighChecks 0
-#guard binaryGroupBoundary (2^70) == some (if USize.size == 2^64 then 2 else 0)
+#guard binaryGroupBoundary (2^70) == some (if USize.size == 2^64 then 1 else 0)
 #guard binaryHighChecks (2^70)
 
 /-- A successful F2 frame with actual charged work above the old quantum and

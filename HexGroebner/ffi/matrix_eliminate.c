@@ -608,7 +608,8 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    against the parent peak. Distinct reducer heads and logical bounds are checked
    before private allocation. A physical floor bounds validation/installation;
    the table bound is refined after known installation, before target reduction.
-   Requested F2 frames above 131072 columns or reducers use sparse pivots,
+   Requested F2 frames above 131072 columns or reducers, or with a definite
+   packed payload/word-bound refusal, use sparse pivots,
    at most 1048576 columns/reducers and 4096 targets. Their shape bound is
    2^38, charged work is at most 2^34, and private payload is 7*columns plus
    40*min(rows,columns). Duplicate heads decline during installation; no larger
@@ -633,6 +634,47 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    can decline an otherwise successful reference.
    Scan/gather symbols come from HexGroebnerMatrixNative. Lake links its complete
    imported shared library; keep that carrier dependency and these ABIs intact. */
+#if !defined(HEX_GROEBNER_KEEP_PACKED_BINARY) && !defined(HEX_GROEBNER_FORCE_SPARSE_BINARY)
+/* Header-only lower bound: every four-row table consumes four dense known
+   rows. Select sparse only when even maximal savings cannot admit packed
+   elimination, or its private payload alone exceeds the parent allowance. */
+static int matrix_prefer_sparse(b_lean_obj_arg limits,b_lean_obj_arg column_arg,
+        b_lean_obj_arg reducers,b_lean_obj_arg targets) {
+ if(sizeof(void*)!=8 || !lean_is_scalar(column_arg)) return 0;
+ uint64_t columns=lean_unbox(column_arg),nr=lean_array_size(reducers),nt=lean_array_size(targets);
+ if(columns>131072 || nr>131072 || nt>4096) return 0;
+ uint64_t minimum=2*(nr+nt)+5*columns;
+ for(unsigned i=0;i<7;++i) {
+  lean_object *arg=lean_ctor_get(limits,i);uint64_t limit=lean_is_scalar(arg)?lean_unbox(arg):UINT64_MAX/2;
+  if((i==0 && columns>limit) || (i==1 && nr+nt>limit) ||
+     (i==4 && 5*columns>limit) || (i==5 && minimum>limit)) return 0;
+ }
+ uint64_t entries=0,dense=0;
+ for(size_t i=0;i<nr+nt;++i) {
+  lean_object *row=lean_array_cptr(i<nr?reducers:targets)[i<nr?i:i-nr];
+  lean_object *cs=lean_ctor_get(row,0);size_t bytes=lean_sarray_size(cs),n=bytes/4;
+  if(bytes%4 || n>(UINT64_C(1)<<37) || entries>(UINT64_C(1)<<37)-n) return 0;
+  entries+=n;
+  if(i<nr && n) {
+   uint64_t head=matrix_read(lean_sarray_cptr(cs),4),last=matrix_read(lean_sarray_cptr(cs)+(n-1)*4,4);
+   if(head>=columns || last>=columns || last<head) return 0;
+   if(n>last/64-head/64+1) ++dense;
+  }
+ }
+ uint64_t rows=nr+nt,words=(columns+63)/64,capacity=rows<columns?rows:columns;
+ uint64_t bytes=(capacity+1)*words*8+16*capacity;
+ uint64_t cost=rows*(words+8)+3*entries+4*nt*columns+6*columns+nt*(rows*words+64);
+ if(columns>=64 && nr>=4 && nt>=64) {
+  bytes+=nt*(words*8+16)+16*words*8;
+  cost+=nt*(columns+2*words+8)+((nr+3)/4)*(16*words+512)+8*nt*nr+5*columns;
+  cost-=3*words*nt*(dense/4);
+ }
+ lean_object *allowance=lean_ctor_get(limits,4);
+ uint64_t packed=lean_is_scalar(allowance)?lean_unbox(allowance):UINT64_MAX/2;
+ return bytes>packed || cost>(UINT64_C(1)<<34);
+}
+#endif
+
 LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
         b_lean_obj_arg limits,b_lean_obj_arg column_arg,b_lean_obj_arg reducers,
         b_lean_obj_arg targets,b_lean_obj_arg sugars,uint8_t independent) {
@@ -643,6 +685,10 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
     size_t nr=lean_array_size(reducers),nt=lean_array_size(targets);
     c.binary=p==2 && lean_ctor_get_uint8(limits,7*sizeof(void*)+1);
     c.sparse_binary=c.binary && (c.columns>131072 || nr>131072);
+#if !defined(HEX_GROEBNER_KEEP_PACKED_BINARY) && !defined(HEX_GROEBNER_FORCE_SPARSE_BINARY)
+    if(c.binary && !c.sparse_binary && matrix_prefer_sparse(limits,column_arg,reducers,targets))
+        c.sparse_binary=1;
+#endif
 #ifdef HEX_GROEBNER_FORCE_SPARSE_BINARY
     c.sparse_binary=c.binary;
 #endif

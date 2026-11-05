@@ -316,7 +316,14 @@ pivot descriptors and UInt64 parity accumulators. Their limits are `2^20`
 columns/reducers and 4096 targets, a `2^38` conservative shape bound and `2^34`
 charged work. Extra payload is `7*columns + 40*min(rows,columns)`, reserved against
 the parent allowance. Duplicate heads decline during installation; validation
-uses no larger stack bitmap. Other F₂ frames keep their packed implementation.
+uses no larger stack bitmap. Within the packed dimension ceilings, a bounded
+header pass also selects sparse pivots when the packed private payload exceeds
+the parent allowance, or even maximal possible table savings leave more than
+`2^34` word visits. Every four-row table consumes four dense known reducers,
+so their count divided by four bounds the possible savings. Other F₂ frames
+keep their packed implementation. Selection precedes allocation and elimination;
+each call tries one backend. Packed-only conformance retains the original
+admission boundaries independently.
 Sparse-frame refusal releases the workspace and continues through the reference
 matrix path; the discarded charged prefix is bounded per frame.
 

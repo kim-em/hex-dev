@@ -95,9 +95,6 @@ def checkRuntime (nonce : Nat) (forced : Bool := false) : Except String Unit := 
             throw s!"cut budget differs C={columns} independent={independent}"
   return ()
 
-def runtimeChecks (nonce : Nat) (forced : Bool := false) : Bool :=
-  (checkRuntime nonce forced).isOk
-
 /-- Valid matrices immediately below, at and above the conservative 2^38 bound.
 Only one reducer is nonempty and every target is empty, so replay stays small. -/
 def shapeChecks : Bool := Id.run do
@@ -175,5 +172,70 @@ def capChecks (nonce : Nat) (cap : Nat := 2^34) : Option Nat := do
   let completed := Elimination.run field limits columns rs ts false sugars true false
   if !same completed reference then failure
   return reference.stats.work
+
+/-- Definite packed payload refusals select one sparse attempt. The packed-only
+native profile retains the original refusal as an independent control. -/
+def checkSelection (nonce : Nat) (packedOnly : Bool := false) : Except String Unit := do
+  if USize.size != 2^64 then return ()
+  let columns := 16384
+  let some erow := SparseRow.ofEntries field columns #[(0,1),(columns-1,1)]
+    | throw "selection reference row"
+  let some arow := SparseRow.ofEntries field columns #[(0,1),(columns-1,1)]
+    | throw "selection native row"
+  let er := (Array.replicate 128 ({} : SparseRow)).set! 0 erow
+  let ar := (Array.replicate 128 ({} : SparseRow)).set! 0 arow
+  let sugars := (Array.range 256).map fun i => 2^40+i+nonce%17
+  for independent in [false,true] do
+    let reference := Elimination.reference field limits columns er er sugars independent
+    if !reference.result.isOk then throw "selection reference failed"
+    let bytes := reference.stats.packedBytes+Elimination.delayedBytes field columns 128 128
+    let tight : MatrixLimits := { limits with packedBytes := bytes,work := reference.stats.work }
+    if !Elimination.selectSparse field tight columns er er then throw "sparse selection missing"
+    if (Elimination.attemptPackedPortable field tight columns er er sugars independent).isSome then
+      throw "packed-only payload admitted"
+    let selected := Elimination.attemptPortable field tight columns er er sugars independent
+    if selected.isNone then throw "selected portable backend declined"
+    let budgets : List MatrixLimits := [tight,{ tight with work := reference.stats.work-1 },
+      { tight with packedBytes := bytes-1 },
+      { tight with inputEntries := reference.stats.inputEntries-1 },
+      { tight with outputEntries := reference.stats.outputEntries-1 }]
+    for budget in budgets do
+      let expected := if packedOnly then
+          Elimination.attemptPackedPortable field budget columns er er sugars independent
+        else Elimination.attemptPortable field budget columns er er sugars independent
+      let actual := Elimination.attempt field budget columns ar ar sugars independent
+      if !sameAttempt actual expected then
+        throw s!"selection budget differs independent={independent} packed={packedOnly}"
+      if !sameRows ar er then throw "selection mutated shared buffers"
+    let actual := Elimination.run field tight columns ar ar false sugars true independent
+    if !same actual reference then throw "selected complete matrix differs"
+    let disabled := { tight with binaryPivots := false }
+    if Elimination.selectSparse field disabled columns er er ||
+        (Elimination.attempt field disabled columns ar ar sugars independent).isSome then
+      throw "selection ignored binary flag"
+  let cs := arow.columns
+  let invalid : Array SparseRow := #[
+    { arow with columns := cs.push 0 },
+    { arow with columns := Packed.set .u32 cs 0 (columns-1).toUInt64 },
+    { arow with columns := Packed.set .u32 cs 1 columns.toUInt64 },
+    { arow with coefficients := ByteArray.mk #[0,1] },
+    { arow with coefficients := ByteArray.mk #[1,2] },
+    { arow with coefficients := arow.coefficients.push 0 }]
+  let budget : MatrixLimits := { limits with packedBytes := 220000 }
+  for bad in invalid do
+    let rs := ar.set! 0 bad
+    if (Elimination.attempt field budget columns rs ar #[] false).isSome ||
+        (Elimination.attemptPortable field budget columns rs ar #[] false).isSome then
+      throw "selection accepted malformed row"
+  let duplicate := ar.set! 1 arow
+  if (Elimination.attempt field budget columns duplicate ar #[] false).isSome ||
+      (Elimination.attemptPortable field budget columns duplicate ar #[] false).isSome then
+    throw "selection accepted duplicate heads"
+  let odd : PrimeField := ⟨3,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  if Elimination.selectSparse odd limits columns er er then throw "selected sparse odd field"
+  return ()
+
+def runtimeChecks (nonce : Nat) (forced : Bool := false) : Bool :=
+  (checkRuntime nonce forced).isOk && (forced || (checkSelection nonce).isOk)
 
 end Hex.Groebner.SparseBinaryConformance
