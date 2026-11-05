@@ -1,9 +1,10 @@
-"""Check that runner cleanup preserves active tools and follows no deletion links."""
+"""Check runtime retention, hosted-runner guards and exact deletion arguments."""
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from scripts.ci.reclaim_runner_disk import active_paths, unused_paths
+from scripts.ci.reclaim_runner_disk import active_paths, main, unused_paths
 
 
 class ReclaimRunnerDiskTests(unittest.TestCase):
@@ -42,6 +43,42 @@ class ReclaimRunnerDiskTests(unittest.TestCase):
     def test_missing_cache_is_empty(self):
         with tempfile.TemporaryDirectory() as temporary:
             self.assertEqual(unused_paths(Path(temporary) / "missing", set()), [])
+
+    def test_preserves_path_symlink_to_external_tool(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            cached = root / "SDK"
+            cached.mkdir()
+            tool = cached / "python3"
+            tool.symlink_to("/usr/bin/python3")
+            self.assertEqual(unused_paths(root, {tool}), [])
+
+    def test_active_paths_preserves_lexical_tool_location(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            alias = Path(temporary) / "node"
+            alias.symlink_to("/usr/bin/python3")
+            with patch("scripts.ci.reclaim_runner_disk.shutil.which", return_value=str(alias)):
+                self.assertTrue({alias, alias.resolve()}.issubset(active_paths()))
+
+    def test_rejects_self_hosted_deletion(self):
+        environment = {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "self-hosted",
+                       "RUNNER_OS": "Linux"}
+        with patch.dict("os.environ", environment, clear=True), patch("sys.argv", ["cleanup", "--apply"]):
+            with self.assertRaises(SystemExit) as error:
+                main()
+            self.assertEqual(error.exception.code, 2)
+
+    def test_deletes_only_selected_cache_entry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            unused = root / "unused"
+            unused.mkdir()
+            environment = {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted",
+                           "RUNNER_OS": "Linux", "RUNNER_TOOL_CACHE": str(root)}
+            with patch.dict("os.environ", environment, clear=True), patch("sys.argv", ["cleanup", "--apply"]):
+                with patch("scripts.ci.reclaim_runner_disk.subprocess.run") as run:
+                    main()
+                    run.assert_called_once_with(["sudo", "rm", "-rf", "--", str(unused)], check=True)
 
     def test_active_python_is_retained(self):
         import sys

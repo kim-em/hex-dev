@@ -292,9 +292,14 @@ jobs:
         if: steps.classify.outputs.docs_only != 'true'
         run: |
           bash scripts/ci/check_no_mathlib_rebuild.sh
+      - name: Reclaim downloaded dependency caches
+        if: steps.classify.outputs.docs_only != 'true'
+        run: |
           # clean! removes downloaded .ltar archives, preserving extracted imports.
           lake exe cache 'clean!'
-          python3 -m pip cache purge
+          if python3 -m pip cache dir >/dev/null 2>&1; then
+            python3 -m pip cache purge
+          fi
           df -h "$GITHUB_WORKSPACE"
       - name: Configure Lean shared library path
         if: steps.classify.outputs.docs_only != 'true'

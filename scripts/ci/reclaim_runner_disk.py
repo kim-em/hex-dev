@@ -14,29 +14,34 @@ TOOLS = ("python", "python3", "node", "npm", "cmake", "ninja", "make", "cc", "c+
 
 
 def active_paths() -> set[Path]:
-    paths = {Path(sys.executable).resolve()}
+    paths = {Path(sys.executable).absolute(), Path(sys.executable).resolve()}
     for name in TOOLS:
         executable = shutil.which(name)
         if executable:
-            paths.add(Path(executable).resolve())
+            paths.update((Path(executable).absolute(), Path(executable).resolve()))
     return paths
 
 
 def unused_paths(cache: Path, active: set[Path]) -> list[Path]:
     if not cache.is_dir():
         return []
-    active = {path.resolve() for path in active}
+    active = {variant for path in active for variant in (path.absolute(), path.resolve())}
     return [path for path in sorted(cache.iterdir())
-            if not any(item.is_relative_to(path.resolve()) for item in active)]
+            if not any(item.is_relative_to(prefix) for item in active
+                       for prefix in (path.absolute(), path.resolve()))]
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
-    if args.apply and os.environ.get("GITHUB_ACTIONS") != "true":
-        parser.error("--apply requires the GitHub Actions runner environment")
-    cache = Path("/opt/hostedtoolcache")
+    if args.apply and not (os.environ.get("GITHUB_ACTIONS") == "true" and
+                           os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted" and
+                           os.environ.get("RUNNER_OS") == "Linux"):
+        parser.error("--apply requires a GitHub-hosted Linux runner")
+    cache = Path(os.environ.get("RUNNER_TOOL_CACHE", "/opt/hostedtoolcache"))
+    if not cache.is_absolute() or cache == Path("/"):
+        parser.error("RUNNER_TOOL_CACHE must name an absolute tool-cache directory")
     active = active_paths()
     for path in sorted(active):
         print(f"Retain active runtime: {path}", flush=True)
