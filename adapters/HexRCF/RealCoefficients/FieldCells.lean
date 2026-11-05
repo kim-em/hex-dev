@@ -8,6 +8,7 @@ module
 public import HexRCF.RealCoefficients.FieldRootSigns
 public import HexRCF.RealCoefficients.FieldIsolation
 public import HexRCF.RealCoefficients.RepresentationCarrier
+public import HexRCF.RealCoefficients.QueryCells
 
 public section
 
@@ -15,38 +16,6 @@ namespace Hex.RCF.RealCoefficients.FieldRootSigns
 open Hex Hex.RealFormula
 
 namespace Table
-
-/-- Bind the complete ordered row inventory and validate every retained row,
-including repeated atoms. Unused or corrupt duplicate rows cannot hide behind
-a previous matching row. -/
-@[expose] def checkRows {E : Type u} {Ctx : Type v} {n roots : Nat}
-    [Zero E] [DecidableEq E] (table : Table E Ctx n roots) (formula : QF n)
-    (accept : RealFormula.Poly n → Fin roots → TarskiCertificate E E Ctx → Bool) : Bool :=
-  Decidable.decide (table.entries.map (fun row => row.atom) = formula.polys) &&
-    table.entries.all fun row => (List.finRange roots).all fun i => accept row.atom i row.evidence[i]
-
-/-- Complete checked rows supply the existing source-atom lookup interface. -/
-theorem checkRows_checked {E : Type u} {Ctx : Type v} {n roots : Nat}
-    [Zero E] [DecidableEq E] (table : Table E Ctx n roots) (formula : QF n)
-    (accept : RealFormula.Poly n → Fin roots → TarskiCertificate E E Ctx → Bool)
-    (accepted : table.checkRows formula accept = true) : table.checkWith formula accept = true := by
-  simp only [checkRows, Bool.and_eq_true, decide_eq_true_eq] at accepted
-  unfold checkWith
-  apply List.all_eq_true.mpr
-  intro atom member
-  cases found : table.entries.find? (sameAtom atom) with
-  | none =>
-      have listed : atom ∈ table.entries.map (fun row => row.atom) := by
-        rw [accepted.1]
-        exact member
-      obtain ⟨row, rowMember, equality⟩ := List.mem_map.mp listed
-      have absent := List.find?_eq_none.mp found row rowMember
-      simp [sameAtom, equality] at absent
-  | some row =>
-      have matched : row.atom = atom := by
-        simpa [sameAtom] using List.find?_some found
-      simpa only [matched] using
-        List.all_eq_true.mp accepted.2 row (List.mem_of_find?_eq_some found)
 
 variable {p : ZPoly} {s : DyadicSquare}
 variable {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
@@ -119,12 +88,7 @@ ordinary sector sample. No numerical producer is called during this check. -/
     (radical : RadicalCert E Ctx) (cert : IsolationReplay E Ctx)
     (rows : FieldRootSigns.Table E Ctx n cert.isolations.intervals.size) : Bool :=
   Field.checkSignTable p s hw hp signs &&
-    formula.polys.all (fun atom => FieldTransport.leadingWith lookup (query atom)) &&
-    radical.check context (RepresentationCarrier.product (formula.polys.map query)) &&
-    FieldIsolation.checkWith lookup context radical.core cert &&
-    rows.checkTransportWith lookup context radical.core cert.isolations.intervals.toVector query formula &&
-    FieldQuery.coveredWith lookup (SignInputs.openSamples FieldDecision.point cert
-      (formula.polys.map query))
+    QueryCells.check lookup FieldDecision.point context query formula radical cert rows
 
 @[expose] def check (signs : LiteralSign.Table E) (context : Ctx)
     (query : RealFormula.Poly n → DensePoly E) (formula : QF n)
@@ -154,8 +118,7 @@ theorem signs_checked (signs : LiteralSign.Table E) (context : Ctx)
     (rows : FieldRootSigns.Table E Ctx n cert.isolations.intervals.size)
     (accepted : check signs context query formula radical cert rows = true) :
     Field.checkSignTable p s hw hp signs = true := by
-  simp only [check, checkWith, Bool.and_eq_true] at accepted
-  exact accepted.1.1.1.1.1
+  exact (Bool.and_eq_true_iff.mp accepted).1
 
 /-- Acceptance certifies each original atom's semantic degree, including
 literal zero atoms and structural cancellation in the shared specialization. -/
@@ -168,13 +131,12 @@ theorem degrees (signs : LiteralSign.Table E) (context : Ctx)
     (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
       (Transport.polynomial (Field.value (Field.literalRep p s hw hp)) (query atom))).natDegree =
         (query atom).natDegree := by
-  have header := signs_checked signs context query formula radical cert rows accepted
-  have real := FieldTransport.real signs header
-  have zero := Field.value_zero (Field.literalRep p s hw hp) (Field.literalRep_mk p s hw hp) real
-  simp only [check, checkWith, Bool.and_eq_true] at accepted
-  have guard := List.all_eq_true.mp accepted.1.1.1.1.2 atom member
-  rw [natDegree_interpret (fun x : ℝ => x) (fun _ => Iff.rfl)]
-  exact Transport.polynomial_degree _ zero _ (FieldTransport.leading signs header _ guard)
+  have parts := Bool.and_eq_true_iff.mp accepted
+  let rep := Field.literalRep p s hw hp
+  exact QueryCells.degrees signs.lookup? (Field.value rep)
+    (FieldTransport.closed rep (Field.literalRep_mk p s hw hp) (FieldTransport.real signs parts.1))
+    (fun x value hit => Field.checkSignTable_lookup p s hw hp signs parts.1 x value hit)
+    FieldDecision.point context query formula radical cert rows parts.2 atom member
 
 /-- The shared grouped compiler has the exact source meaning at the fixed
 selected embedding. No common-field irreducibility proof is needed. -/
@@ -213,79 +175,13 @@ theorem cells (signs : LiteralSign.Table E) (context : Ctx)
           Decision.cellSign (FieldQuery.cached signs) FieldDecision.point query cert
             (rows.value cert.total) cell atom = some observed ∧
           SignType.sign (((observed.toInt : Int) : ℝ)) = SignType.sign (atom.eval (valuation x)) := by
-  simp only [check, checkWith, Bool.and_eq_true] at accepted
-  obtain ⟨⟨⟨⟨⟨header, _⟩, radicalChecked⟩, isolationChecked⟩, rowsChecked⟩, samples⟩ := accepted
+  have parts := Bool.and_eq_true_iff.mp accepted
   let rep := Field.literalRep p s hw hp
-  let read : E → ℝ := Field.value rep
-  have same := Field.literalRep_mk p s hw hp
-  have real := FieldTransport.real signs header
-  have h0 : read 0 = 0 := Field.value_zero rep same real
-  have h1 : read 1 = 1 := Field.value_one rep same real
-  have ha : ∀ a b, read (a + b) = read a + read b := Field.value_add rep same real
-  have hm : ∀ a b, read (a * b) = read a * read b := Field.value_mul rep same real
-  have point (d : Dyadic) : read (FieldDecision.point d) = HexRealRootsTheory.Dyadic.toReal d := by
-    exact FieldTransport.point signs header d
-  have coverage : ∀ atom ∈ formula.polys,
-      interpret (fun x : ℝ => x) (fun _ => Iff.rfl) (Transport.polynomial read (query atom)) = 0 ∨
-      ∀ x, (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
-        (Transport.polynomial read (query atom))).IsRoot x →
-      (interpret (fun x : ℝ => x) (fun _ => Iff.rfl)
-        (Transport.polynomial read radical.core)).IsRoot x := by
-    intro atom member
-    rcases RepresentationCarrier.atom_roots_transport read h0 h1 ha hm
-        (formula.polys.map query) (query atom) (List.mem_map.mpr ⟨atom, member, rfl⟩) with
-      zero | roots
-    · exact Or.inl zero
-    · right
-      intro x root
-      exact (radical.roots_transport read (FieldTransport.closed rep same real) context _ radicalChecked x).mpr
-        (roots x root)
-  have queries : ∀ i atom, atom ∈ formula.polys →
-      Sturm.check (fun x : ℝ => (SignType.sign x : Int)) context
-        (Transport.polynomial read radical.core) (Transport.polynomial read (query atom))
-        (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower))
-        (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper))
-        (rows.value cert.total i atom)
-        (Transport.query read id (rows.evidence cert.total i atom)) = true := by
-    intro i atom member
-    simpa [read, rep] using rows.query_transport signs header context radical.core
-      cert.isolations.intervals.toVector query formula rowsChecked i atom member cert.total
-  have semantics := Decision.cellSign_spec (fun x : ℝ => x) (fun _ => Iff.rfl) rfl
-    (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) (fun _ => rfl)
-    (fun x : ℝ => (SignType.sign x : Int)) (fun _ => rfl)
-    HexRealRootsTheory.Dyadic.toReal (fun _ => rfl) formula valuation
-    (fun atom => Transport.polynomial read (query atom)) atom_eval context
-    (Transport.polynomial read radical.core) (FieldIsolation.map cert)
-    (FieldIsolation.checked signs header context radical.core cert isolationChecked)
-    coverage (rows.value cert.total)
-    (fun i atom => Transport.query read id (rows.evidence cert.total i atom)) queries
-  obtain ⟨roots, ordered, semantics⟩ := semantics
-  refine ⟨roots, ordered, ?_⟩
-  intro cell x region atom member
-  obtain ⟨observed, observedEq, meaning⟩ := semantics cell x region atom member
-  refine ⟨observed, ?_, meaning⟩
-  rw [← observedEq]
-  cases cell with
-  | root i => rfl
-  | «open» cut =>
-    let d := cert.isolations.openPoint cut
-    let key := (query atom).eval (FieldDecision.point d)
-    have sample : key ∈ SignInputs.openSamples FieldDecision.point cert (formula.polys.map query) := by
-      apply List.mem_flatMap.mpr
-      refine ⟨Cell.open cut, Array.mem_toList_iff.mpr (Cell.mem_all _), ?_⟩
-      exact List.mem_map.mpr ⟨query atom, List.mem_map.mpr ⟨atom, member, rfl⟩, rfl⟩
-    have sign := (FieldQuery.cached_eq signs _ samples key sample read).trans
-      (Field.checkSignTable_spec p s hw hp signs header key)
-    have evaluation := Transport.Ring.polynomial_eval read h0 (query atom) (FieldDecision.point d)
-      (fun _ _ => hm _ _) (fun _ _ => ha _ _)
-    rw [point] at evaluation
-    change some (Sign.ofInt (FieldQuery.cached signs key)) =
-      some (Sign.ofInt ((SignType.sign ((Transport.polynomial read (query atom)).eval
-        (HexRealRootsTheory.Dyadic.toReal d)) : Int)))
-    rw [sign]
-    change some (Sign.ofInt ((SignType.sign (read ((query atom).eval
-      (FieldDecision.point d))) : Int))) = _
-    rw [evaluation]
+  exact QueryCells.cells signs.lookup? (Field.value rep)
+    (FieldTransport.closed rep (Field.literalRep_mk p s hw hp) (FieldTransport.real signs parts.1))
+    (fun x value hit => Field.checkSignTable_lookup p s hw hp signs parts.1 x value hit)
+    FieldDecision.point (FieldTransport.point signs parts.1) context query formula radical cert rows
+    valuation atom_eval parts.2
 
 /-- The strict universal fold covers the whole real line. -/
 theorem forall_formula (signs : LiteralSign.Table E) (context : Ctx)

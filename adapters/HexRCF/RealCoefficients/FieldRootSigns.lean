@@ -72,6 +72,38 @@ theorem query_checkedWith (table : Table E Ctx n roots) (formula : QF n)
       have hi := List.all_eq_true.mp hrow i (List.mem_finRange i)
       simpa only [evidence, hfind, Option.map_some, Option.getD_some] using hi
 
+/-- Bind the complete ordered row inventory and validate every retained row,
+including repeated atoms. Unused or corrupt duplicate rows cannot hide behind
+a previous matching row. -/
+@[expose] def checkRows {E : Type u} {Ctx : Type v} {n roots : Nat}
+    [Zero E] [DecidableEq E] (table : Table E Ctx n roots) (formula : QF n)
+    (accept : RealFormula.Poly n → Fin roots → TarskiCertificate E E Ctx → Bool) : Bool :=
+  Decidable.decide (table.entries.map (fun row => row.atom) = formula.polys) &&
+    table.entries.all fun row => (List.finRange roots).all fun i => accept row.atom i row.evidence[i]
+
+/-- Complete checked rows supply the existing source-atom lookup interface. -/
+theorem checkRows_checked {E : Type u} {Ctx : Type v} {n roots : Nat}
+    [Zero E] [DecidableEq E] (table : Table E Ctx n roots) (formula : QF n)
+    (accept : RealFormula.Poly n → Fin roots → TarskiCertificate E E Ctx → Bool)
+    (accepted : table.checkRows formula accept = true) : table.checkWith formula accept = true := by
+  simp only [checkRows, Bool.and_eq_true, decide_eq_true_eq] at accepted
+  unfold checkWith
+  apply List.all_eq_true.mpr
+  intro atom member
+  cases found : table.entries.find? (sameAtom atom) with
+  | none =>
+      have listed : atom ∈ table.entries.map (fun row => row.atom) := by
+        rw [accepted.1]
+        exact member
+      obtain ⟨row, rowMember, equality⟩ := List.mem_map.mp listed
+      have absent := List.find?_eq_none.mp found row rowMember
+      simp [sameAtom, equality] at absent
+  | some row =>
+      have matched : row.atom = atom := by
+        simpa [sameAtom] using List.find?_some found
+      simpa only [matched] using
+        List.all_eq_true.mp accepted.2 row (List.mem_of_find?_eq_some found)
+
 /-- Check every actual atom on every isolated root against its own original
 polynomial and exact dyadic interval. Missing rows fail closed. -/
 @[expose] def check (table : Table E Ctx n roots) (sign : E → Int)

@@ -302,13 +302,16 @@ theorem FieldCells.complete {Ctx : Type u} [DecidableEq Ctx]
     simp only [FieldCells.keys, List.mem_append]
     exact Or.inr member
   change Field.checkSignTable p s hw hp signs &&
-    formula.polys.all (fun atom => FieldTransport.leadingCheck signs (query atom)) &&
+    QueryCells.check signs.lookup? FieldDecision.point context query formula radical cert rows = true
+  apply Bool.and_eq_true_iff.mpr
+  refine ⟨checked, ?_⟩
+  change (formula.polys.all (fun atom => FieldTransport.leadingCheck signs (query atom)) &&
     radical.check context (RepresentationCarrier.product (formula.polys.map query)) &&
     FieldIsolation.check signs context radical.core cert &&
     rows.checkTransport signs context radical.core cert.isolations.intervals.toVector query formula &&
     FieldQuery.covered signs (SignInputs.openSamples FieldDecision.point cert
-      (formula.polys.map query)) = true
-  simp only [checked, leading, radical_checked, isolation_checked, rows_checked, samples]
+      (formula.polys.map query))) = true
+  simp only [leading, radical_checked, isolation_checked, rows_checked, samples]
   rfl
 
 /-- Construct complete finite cell evidence directly from the grouped source

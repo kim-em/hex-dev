@@ -834,6 +834,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.AlgebraicPreparation, `HexRCF.RealCoefficients.RealModel,
     `HexRCF.RealCoefficients.Interpret,
     `HexRCF.RealCoefficients.Formula, `HexRCF.RealCoefficients.Field,
+    `HexRCF.RealCoefficients.SignData,
     `HexRCF.RealCoefficients.LiteralSign, `HexRCF.RealCoefficients.SignIndex,
     `HexRCF.RealCoefficients.FieldIndex,
     `HexRCF.RealCoefficients.IntervalSign, `HexRCF.RealCoefficients.SquareRoot,
@@ -844,8 +845,11 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.FieldSpecialize,
     `HexRCF.RealCoefficients.RepresentationSpecialize,
     `HexRCF.RealCoefficients.IsolationTransport,
+    `HexRCF.RealCoefficients.QueryCells,
     `HexRCF.RealCoefficients.PolynomialBounds,
     `HexRCF.RealCoefficients.PolynomialBoundsSoundness,
+    `HexRCF.RealCoefficients.PolynomialSigns,
+    `HexRCF.RealCoefficients.PolynomialSignsSoundness,
     `HexRCF.RealCoefficients.Samples, `HexRCF.RealCoefficients.Gather, `HexRCF.RealCoefficients.GatherCells, `HexRCF.RealCoefficients.AlgebraicCells,
     `HexRCF.RealCoefficients.RegisteredGather, `HexRCF.RealCoefficients.ReconciledGather,
     `HexRCF.RealCoefficients.SelectedFormula,
@@ -1535,7 +1539,7 @@ lean_lib HexConformance where
       `HexRCF.ProofPaths
     ].map Glob.one
 
-    ++ #[`HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
+    ++ #[`HexRCF.PolynomialSignsConformance, `HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
       `HexRCF.FiniteFieldSource, `HexRCF.FiniteFieldGuards,
       `HexRCF.FiniteFieldCompatibility, `HexRCF.FiniteFieldProofs,
       `HexRCF.FiniteFieldCompile, `HexRCF.FiniteFieldCompileProofs,

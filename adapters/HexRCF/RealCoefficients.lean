@@ -116,6 +116,7 @@ public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.QueryReplay
 public import HexRCF.RealCoefficients.IsolationTransport
 public import HexRCF.RealCoefficients.PolynomialBoundsSoundness
+public import HexRCF.RealCoefficients.PolynomialSignsSoundness
 public import HexRCF.RealCoefficients.FieldCarrier
 public import HexRCF.RealCoefficients.Carrier
 public import HexRCF.RealCoefficients.IsolationBuild

@@ -18,7 +18,9 @@ run_meta withoutExporting do
   let laws := #[``Replay.checkCells_parts, ``Replay.checkCells_domains,
     ``Replay.checkCells_spec, ``Replay.checkCells_sound, ``Replay.checkCells_original]
   let cells := #[``FieldCells.check, ``FieldCells.signs_checked, ``FieldCells.specialize,
-    ``FieldCells.forall_formula, ``FieldCells.exists_formula]
+    ``FieldCells.forall_formula, ``FieldCells.exists_formula,
+    ``QueryCells.check, ``QueryCells.rows_checked, ``QueryCells.degrees,
+    ``QueryCells.cells, ``QueryCells.forall_formula, ``QueryCells.exists_formula]
   let sources := #[``Hex.RCF.FrozenReplay.original, ``Hex.RCF.FrozenReplay.total]
   let forbidden := #[``Field.value_eq_zero, ``Field.value_inv, ``Field.value_div,
     ``Field.value_quotient, ``FieldBuild.buildTable, ``Field.prepareSign,
@@ -66,5 +68,5 @@ run_meta withoutExporting do
     let _ ← ofExceptKernelException <| (← getEnv).addDeclCore
       (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
       declaration none (doCheck := true)
-  unless bodies.size == 33 do throwError "missing finite replay law, production law or source body"
-  logInfo m!"FRESH_FROZEN_REPLAY: replay/cell laws and definitions=10; production laws/definitions=19; source bodies=4; presentations={presentations}; no common-field class or producer in source proofs; standard_axioms_only"
+  unless bodies.size == 39 do throwError "missing finite replay law, production law or source body"
+  logInfo m!"FRESH_FROZEN_REPLAY: replay/cell laws and definitions=16; production laws/definitions=19; source bodies=4; presentations={presentations}; no common-field class or producer in source proofs; standard_axioms_only"

@@ -98,6 +98,9 @@ private def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr :=
 Each caller supplies its own envelope and verdict equations. -/
 meta def evidenceLemmas : MetaM (TSyntaxArray ``Parser.Tactic.simpLemma) := do
   return #[← `(Parser.Tactic.simpLemma| FieldCells.checkWith),
+    ← `(Parser.Tactic.simpLemma| QueryCells.check),
+    ← `(Parser.Tactic.simpLemma| QueryCells.checkRows),
+    ← `(Parser.Tactic.simpLemma| IsolationTransport.check),
     ← `(Parser.Tactic.simpLemma| FieldIsolation.checkWith),
     ← `(Parser.Tactic.simpLemma| FieldRootSigns.Table.checkTransportWith),
     ← `(Parser.Tactic.simpLemma| FieldQuery.checkWith),
