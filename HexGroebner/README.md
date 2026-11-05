@@ -326,6 +326,9 @@ each call tries one backend. Packed-only conformance retains the original
 admission boundaries independently.
 Sparse-frame refusal releases the workspace and continues through the reference
 matrix path; the discarded charged prefix is bounded per frame.
+The [sparse F₂ measurements](../reports/bench-results/hexgroebner-sparse.md)
+retain complete matched outputs, packed-only controls, rejected experiments and
+the measured held-out gap to msolve.
 
 A byte-allowance refusal can discard a partially or fully processed native frame
 before the reference continuation succeeds. Speculation is bounded per frame;
