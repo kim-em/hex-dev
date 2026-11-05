@@ -147,6 +147,16 @@ static lean_object *delayed_gather(matrix_context *c,uint64_t first,uint64_t las
 }
 
 
+/* Packed monomial indices are little endian and need not be aligned.
+   Use a native word load only where that byte order is known at compile time. */
+static inline uint32_t sparse_column(const uint8_t *p) {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    uint32_t value;memcpy(&value,p,sizeof(value));return value;
+#else
+    return (uint32_t)matrix_read(p,4);
+#endif
+}
+
 /* Every validated nonzero F2 coefficient is one. XOR preserves parity even
    under test-only even accumulator offsets; normalization precedes each test. */
 static int sparse_scan(matrix_context *c,uint64_t first,uint64_t *last,
@@ -175,7 +185,7 @@ static int sparse_scan(matrix_context *c,uint64_t first,uint64_t *last,
         if(!matrix_work(c,pivot.size)) return 0;
         HEX_GROEBNER_SPARSE_UPDATE();
         for(uint64_t j=1;j<pivot.size;++j) {
-            uint64_t k=matrix_read(pivot.columns+(size_t)j*4,4);
+            uint64_t k=sparse_column(pivot.columns+(size_t)j*4);
             uint64_t value;memcpy(&value,data+(size_t)k*8,8);value^=UINT64_C(1);
             memcpy(data+(size_t)k*8,&value,8);
         }
