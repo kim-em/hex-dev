@@ -221,8 +221,11 @@ False verdicts are diagnostics, and unresolved comparisons or exhausted
 isolation depth stop the attempt. The existing direct containment examples
 retain their proof path. An existential conjunction fixing `x` by an explicit
 closed equality also retains that direct path, even with nonlinear conditions.
-Otherwise nonlinear existentials and atoms of degree above two use complete
-cells; quadratic universals and linear existentials use direct containment.
+Quadratic existential inequalities and equations already identical at the
+designated registered witness also retain direct containment. A nonlinear
+equation requiring a different witness selects complete cells, as do atoms
+of degree above two without an explicit equality witness. Quadratic universal
+and linear existential goals use direct containment.
 Selection occurs before search, and a failure never retries another method.
 This is bounded certified search; registering a
 constant alone promises neither eventual separation nor a total decision procedure.

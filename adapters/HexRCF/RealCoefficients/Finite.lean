@@ -296,14 +296,33 @@ private partial def equalityWitness? (expression : Expr) : Option Expr := do
       return value
   none
 
+private def existentialBody? (expression : Expr) : Option Expr := do
+  let expression := expression.consumeMData
+  unless expression.isAppOfArity ``Exists 2 do none
+  let .lam _ _ body _ := expression.getAppArgs[1]!.consumeMData | none
+  return body
+
+/-- Recognize an equation requiring root construction before either solver
+runs. Definitional identities at the designated witness retain direct bounds.
+This is syntax/identity recognition, not a failed proof search. -/
+private partial def needsRoot (statement witness : Expr) : MetaM Bool := do
+  let statement := statement.consumeMData
+  if statement.isAppOfArity ``And 2 || statement.isAppOfArity ``Or 2 ||
+      statement.isAppOfArity ``Iff 2 then
+    return (← needsRoot statement.getAppArgs[0]! witness) ||
+      (← needsRoot statement.getAppArgs[1]! witness)
+  if statement.isAppOfArity ``Not 1 then return ← needsRoot statement.appArg! witness
+  unless statement.isAppOfArity ``Eq 3 && statement.hasLooseBVars do return false
+  let arguments := statement.getAppArgs
+  return !(← withNewMCtxDepth <| withTransparency .reducible <|
+    isDefEq (arguments[1]!.instantiate1 witness) (arguments[2]!.instantiate1 witness))
+
 -- The supported source has exactly one quantifier. Universal goals never
 -- need a witness, and explicit equality witnesses need no default enclosure.
 private def witnessSource? (source : Reify.Source) (entries : Array (Name × Expr)) :
     MetaM (Option Expr) := do
-  let original := source.original.consumeMData
-  unless original.isAppOfArity ``Exists 2 do return none
-  if let .lam _ _ statement _ := original.getAppArgs[1]!.consumeMData then
-    if (equalityWitness? statement).isSome then return none
+  let some statement := existentialBody? source.original | return none
+  if (equalityWitness? statement).isSome then return none
   Reify.firstNamed? (entries.map Prod.snd) source.coefficients
 
 /-- Freeze supplied bounds and discharge every source guard before proof search.
@@ -414,13 +433,15 @@ private def buildCore (prepared : Prepared) : MetaM Certificate := do
   let .quant quantifier (.matrix formula) := sourceFormula |
     throwError "rcf: expected one real quantifier over a matrix"
   let degree := formula.degree (Fin.last prepared.source.coefficients.size)
-  let explicitWitness := match prepared.source.original.consumeMData with
-    | .app (.app (.const ``Exists _) _) (.lam _ _ statement _) =>
-        (equalityWitness? statement).isSome
-    | _ => false
-  -- Choose before either proof search starts. Existing bound proofs retain
-  -- their path; nonlinear existential roots and higher-degree atoms use cells.
-  if !explicitWitness && ((quantifier == .existsReal && 1 < degree) || 2 < degree) then
+  let statement := existentialBody? prepared.source.original
+  let explicitWitness := (statement.bind equalityWitness?).isSome
+  let rootEquation ← match statement, prepared.witness with
+    | some body, some witness => needsRoot body witness.source
+    | some _, none => pure (!explicitWitness)
+    | _, _ => pure false
+  -- Choose before either proof search starts. Retain quadratic default-witness
+  -- bounds, including identities such as x² = c² at x = c.
+  if !explicitWitness && ((quantifier == .existsReal && 1 < degree && rootEquation) || 2 < degree) then
     return ← buildPolynomial prepared formula quantifier
   -- Preserve only source variables and the hypotheses used by its checked
   -- alias equivalence. Unrelated caller hypotheses cannot settle the search.

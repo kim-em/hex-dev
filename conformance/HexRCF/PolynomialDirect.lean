@@ -26,17 +26,20 @@ set_option maxHeartbeats 800000
 
 theorem square : ∀ x : ℝ, x ^ 2 > Real.pi - 4 := by rcf
 theorem linear : ∃ x : ℝ, x = Real.pi ∧ 2 < x ∧ x < 4 := by rcf
+theorem designatedSquare : ∃ x : ℝ, 0 < x ∧ x ^ 2 = Real.pi ^ 2 := by rcf
+theorem designatedBounds : ∃ x : ℝ, x ^ 2 ≥ 9 ∧ x ≥ Real.pi := by rcf
+
 theorem witness : ∃ x : ℝ, x = Real.pi ∧ (x - 63 / 20) ^ 2 ≥ 0 := by rcf
 
 open Lean Meta in
 run_meta withoutExporting do
-  for root in #[``square, ``linear, ``witness] do
+  for root in #[``square, ``linear, ``witness, ``designatedSquare, ``designatedBounds] do
     let dependencies ← Hex.RCF.ProofEvidence.projectDependencies #[root]
     if dependencies.contains ``PolynomialBuild.check_sound then
       throwError "coarse-bound direct regression entered root search: {root}"
     let axioms ← collectAxioms root
     unless axioms.all (fun name => [``propext, ``Classical.choice, ``Quot.sound].contains name) do
       throwError "coarse-bound direct proof has unexpected axioms: {root}: {axioms}"
-  logInfo "POLYNOMIAL_DIRECT: coarse-bound universal, linear existential and explicit nonlinear witness retain the direct proof path"
+  logInfo "POLYNOMIAL_DIRECT: coarse-bound universal, linear, explicit and designated nonlinear witnesses retain direct proofs"
 
 end Hex.RCF.PolynomialDirect

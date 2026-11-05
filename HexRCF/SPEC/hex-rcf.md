@@ -1005,6 +1005,16 @@ literals in ordinary kernel equality proofs. Inside a registered expression,
 source divisors must be closed reals or rationals; binder-dependent and
 other-carrier divisions are outside this frontend's supported syntax.
 
+Within the supplied frontend, method selection precedes proof search. Explicit
+closed equality witnesses retain direct containment. Quadratic existential
+goals also retain their designated registered witness when their variable
+equalities are definitionally identities at that witness; inequalities alone
+do not force root isolation. A nontrivial nonlinear equation selects complete
+cells, as do atoms of degree above two without an explicit equality witness.
+Quadratic universal and linear existential goals retain direct containment.
+Recognition strips expression metadata consistently. Neither method retries
+the other after a false verdict, replay failure or execution exhaustion.
+
 Every inverse/division retains the original nonzero-divisor obligations,
 including divisions inside coefficients and divisions erased by cancellation
 or multiplication by zero. The extension requires ordinary-kernel proofs of
