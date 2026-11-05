@@ -14,7 +14,6 @@ from scripts.bench.groebner_capsule import Capsule
 from scripts.bench.groebner_sparse_report import verification,fixed_inputs,systems,comparator,mean
 from scripts.bench.groebner_trie_report import source,require
 
-CHECKPOINT='c08492f62a6f06728106980b7cafc88acc93466acd33192b21beb925674dcc14'
 
 
 def digest(data):return hashlib.sha256(data).hexdigest()
@@ -98,7 +97,13 @@ def functional(cap,candidate):
     endian=cap.json('functional/sparse-index-endian-clean-status.json')
     test=cap.read('functional/sparse-index-endian-selftest.c')
     require(len(endian)==4 and {row['mode']for row in endian}=={'native','portable'} and
-            len({row['compiler']for row in endian})==2,'index representation profiles missing')
+            len({row['compiler']for row in endian})==2 and
+            len({(row['compiler'],row['mode'])for row in endian})==4,'index representation profiles missing')
+    def implementation(text):
+        return ''.join(text.split('static inline uint32_t sparse_column',1)[1].split('\n}',1)[0].split())
+    require(implementation(test.decode())==implementation(cap.text(
+            'measured/root-sources/HexGroebner/ffi/matrix_delayed.h')),
+            'historical index selftest implementation differs')
     for row in endian:
         require(row['build_exit']==row['exit_code']==0 and
                 row['selftest_sha256']==digest(test) and
@@ -135,13 +140,14 @@ def kernels(cap,measured):
                 require(hashes.setdefault(n,value)==value,'kernel output hash differs')
             flags=sum(v['below_signal_floor']for v in row['points'])
             lines.append(f"| {campaign} | {row['function'].rsplit('.',1)[1]} | {row['verdict']} | {flags}/{len(row['points'])} |")
-    return lines+['', 'Both ordinary complexity campaigns are retained, including the sole longer-batch repeat and all signal-floor flags. Their verdicts are inconclusive; no empirical complexity acceptance or matched implementation speed ratio is inferred.', '']
+    return lines+['', 'Both historical complexity campaigns are retained, including the sole longer-batch repeat and all signal-floor flags. Their benchmark source hashes its validity flag with the complete output. Their verdicts are inconclusive; no empirical complexity acceptance, success-checked benchmark performance or matched implementation speed ratio is inferred. The asymptotic model does not assert equal costs for column scans, sparse updates and Lean output decoding.', '']
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--archive',type=Path,required=True)
     parser.add_argument('--heldout',type=Path)
+    parser.add_argument('--validation',type=Path,help='source-bound verification of an identical producer')
     parser.add_argument('--report',type=Path,required=True)
     parser.add_argument('--check',action='store_true')
     current=parser.add_mutually_exclusive_group()
@@ -151,50 +157,72 @@ def main():
     candidate=source(cap,'candidate');baseline=source(cap,'baseline')
     measured=execution(cap,candidate)
     functional(cap,candidate);checks=None
-    if cap.sha256==CHECKPOINT:
-        require(cap.json('scope.json')['kind']=='functional-checkpoint','checkpoint scope differs')
-        text='\n'.join(['# Sparse matrix buffers: functional checkpoint','',
-            f"Current runtime source `{candidate['source_fingerprint']}` reproduces all three executables from measured source `{measured['source_fingerprint']}` byte for byte. Their source differences are a checked benchmark cost-model comment and the exact pinned upstream Lake registrations for unrelated HexRCF targets. The computation and full-initialization drivers also match the preceding independently checked snapshot; the benchmark executable includes the new sparse kernels.",'',
-            'Both exact driver executables passed all 1,134 corpus and resource/input-boundary cases. The complete Eco-14 basis, metadata and all logical counters agree with the retained reference output. All 85 frozen benchmark verifications pass. Four Clang/GCC ASan/UBSan index-load checks each cover 327,680 aligned/unaligned boundary cases, including the bytewise fallback.','',
-            'This capsule records functional evidence only. It contains no comparative timing or final 36-configuration/nine-gate receipt claim. Candidate production remains separate from certificate generation, independent certification and kernel checking. The fastest-open-source milestone and remaining issue #10987 obligations are not established.','',
-            f'Capsule SHA-256: `{cap.sha256}`. Source blobs, compiler and executable identities, complete outputs and functional records are replayed independently. Only this exact capsule is accepted as a functional checkpoint.',''])
-    else:
-        require(cap.json('scope.json')['kind']=='performance','performance scope missing')
-        checks=verification(cap,candidate);fixed=fixed_inputs(cap)
-        ratios,samples=systems(cap,measured,baseline,fixed)
-        lines=['# Sparse matrix buffers: measured snapshot','',
-            f"Measured runtime `{measured['source_fingerprint']}` is compared directly with `{baseline['source_fingerprint']}`. Current source `{candidate['source_fingerprint']}` reproduces the computation, full-initialization and benchmark executables byte for byte; source differences are a checked cost-model comment and exact pinned upstream Lake registrations for unrelated HexRCF targets. The native F₂ scan resolves its stable private buffers once, and loads packed UInt32 indices with unaligned-safe native loads only on known little-endian hosts. Other hosts retain bytewise decoding. Mathematical results, row order, labels, budgets and all eight logical counters are preserved.",'',
-            'All 128 processes and 64 adjacent AB/BA pairs have identical complete outputs and counters. The fixed sweep covers the first size of ten primary families over F₂, F₃₂₀₀₃ and F₂₁₄₇₄₈₃₆₄₇, plus Eco-14/Eco-15 over F₂. Runs use one leased CPU, one thread, degree scheduling, batch size 1024, binary pivots and delayed reduction enabled, and dense pivots disabled.','',
-            '| Field | Candidate B/A | Process B/A | Candidate pair range | Peak RSS A/B, KiB |',
-            '|---|---:|---:|---:|---:|']
-        for p in [2,32003,2147483647]:
-            selected=[r for r in ratios if r['p']==p and r['case']not in ['eco14-2','eco15-2']]
-            require(len(selected)==20,'field coverage differs')
-            values=[r['candidate_ratio']for r in selected]
-            rss={arm:max(row['peak_rss_kib']for row in samples if row['p']==p and
-                     row['arm']==arm and row['case']not in ['eco14-2','eco15-2'])for arm in ['A','B']}
-            lines.append(f"| {p} | {mean(values):.4f} | {mean([r['process_ratio']for r in selected]):.4f} | {min(values):.4f}–{max(values):.4f} | {rss['A']}/{rss['B']} |")
-        lines+=['','| F₂ case | Candidate B/A | Pair ratios |','|---|---:|---|']
-        for name in ['eco14-2','eco15-2']:
-            values=[r['candidate_ratio']for r in ratios if r['case']==name]
-            require(len(values)==2,'targeted coverage differs')
-            lines.append(f"| {name} | {mean(values):.4f} | "+', '.join(f'{v:.4f}'for v in values)+' |')
-        lines+=['','These are descriptive point estimates. Every completed observation, outlier and failure is retained; ratios from preliminary optimization stages are not multiplied. Host activity is recorded on the shared AMD EPYC 9455. Production native code uses Clang 21.1.8 and generated C uses SDK Clang 23.1.0 with Lean 4.35.0-rc3. Both builds disable the opt-in AVX-512 route; existing exact AVX2 dispatch remains available. Limits are 300 seconds, 8 GiB address space and 256 MiB per output file, with explicit fixed-corpus parent allowances. The measurements do not establish default-budget admission or complete balanced/parallel acceptance.','',
-            'All nine project gates and 36 strict Clang/GCC ASan/UBSan configurations are source-bound, including regular, forced-sparse and packed-only profiles. Compiler families, actual Lake compiler/flag declarations, generated driver templates, source manifests and all complete functional outputs are replayed. Native and portable wide-sparse kernels are registered with lean-bench using the O(C+n²) operation model, C=131073, eight targets and complete output/counter consumption. All 85 frozen benchmark verifications pass.','',
-            f'Production capsule SHA-256: `{cap.sha256}`. Candidate production, certificate generation, independent native certification and kernel checking remain separate costs. Ordinary F₂ polynomial exponents retain their usual meaning; x and x² are distinct.','']
-        lines+=kernels(cap,measured)
-        text='\n'.join(lines)
-        del cap;gc.collect()
-        require(args.heldout is not None,'held-out evidence missing')
-        from scripts.bench.groebner_parts import load_capsule
-        held=load_capsule(args.heldout)
-        result=comparator(held,measured,[c for c in fixed if c['split']=='heldout'])
-        lines=['','| Held-out family | Hex/msolve process ratio |','|---|---:|']
-        for family,value in result['per_family'].items():lines.append(f'| {family} | {value:.4f} |')
-        lines+=['',f"All 27 fixed held-out inputs have 108 successful processes, 54 equal complete bases and no missing/failed observations. The family-balanced process ratio is {result['family_balanced_geomean']:.4f}× Hex/msolve. Peak RSS is {result['peak_rss_kib']['A']}/{result['peak_rss_kib']['B']} KiB. These observations do not establish a language/runtime limitation.",'',
-            'The comparator is msolve commit 3672113ee2c696a2ac9c637636e0f7214f500ba1, Clang 23.1.3, -O3 -march=native, full reduced output, linear algebra mode 2 and one thread. Full primary solved coverage, equal-thread parallel comparisons, finite-extension coverage, deterministic producer correctness/termination and the fastest-open-source milestone remain required by issue #10987.','',
-            f'Held-out stream SHA-256: `{held.sha256}`. All full bases, fixed inputs, failures, source/executable/compiler identities, raw samples, memory and family ratios are retained and independently replayed. Scientific performance claims never depend on CI timings.','']
-        text+='\n'.join(lines)
+    require(cap.json('scope.json')['kind']=='performance','performance scope missing')
+    checks=verification(cap,candidate);fixed=fixed_inputs(cap)
+    ratios,samples=systems(cap,measured,baseline,fixed)
+    lines=['# Sparse matrix buffers: measured snapshot','',
+        f"Measured runtime `{measured['source_fingerprint']}` is compared directly with `{baseline['source_fingerprint']}`. Verified snapshot `{candidate['source_fingerprint']}` records identical executable hashes for the computation, full-initialization and benchmark executables; source differences are a checked cost-model comment and exact pinned upstream Lake registrations for unrelated HexRCF targets. The native F₂ scan resolves its stable private buffers once, and loads packed UInt32 indices with unaligned-safe native loads only on known little-endian hosts. Other hosts retain bytewise decoding. Mathematical results, row order, labels, budgets and all eight logical counters are preserved.",'',
+        'All 128 processes and 64 adjacent AB/BA pairs have identical complete outputs and counters. The fixed sweep covers the first size of ten primary families over F₂, F₃₂₀₀₃ and F₂₁₄₇₄₈₃₆₄₇, plus Eco-14/Eco-15 over F₂. Runs use one leased CPU, one thread, degree scheduling, batch size 1024, binary pivots and delayed reduction enabled, and dense pivots disabled.','',
+        '| Field | Candidate B/A | Process B/A | Candidate pair range | Peak RSS A/B, KiB |',
+        '|---|---:|---:|---:|---:|']
+    for p in [2,32003,2147483647]:
+        selected=[r for r in ratios if r['p']==p and r['case']not in ['eco14-2','eco15-2']]
+        require(len(selected)==20,'field coverage differs')
+        values=[r['candidate_ratio']for r in selected]
+        rss={arm:max(row['peak_rss_kib']for row in samples if row['p']==p and
+                 row['arm']==arm and row['case']not in ['eco14-2','eco15-2'])for arm in ['A','B']}
+        lines.append(f"| {p} | {mean(values):.4f} | {mean([r['process_ratio']for r in selected]):.4f} | {min(values):.4f}–{max(values):.4f} | {rss['A']}/{rss['B']} |")
+    lines+=['','| F₂ case | Candidate B/A | Pair ratios |','|---|---:|---|']
+    for name in ['eco14-2','eco15-2']:
+        values=[r['candidate_ratio']for r in ratios if r['case']==name]
+        require(len(values)==2,'targeted coverage differs')
+        lines.append(f"| {name} | {mean(values):.4f} | "+', '.join(f'{v:.4f}'for v in values)+' |')
+    lines+=['','These are descriptive point estimates. Every completed observation, outlier and failure is retained; ratios from preliminary optimization stages are not multiplied. Host activity is recorded on the shared AMD EPYC 9455. Production native code uses Clang 21.1.8 and generated C uses SDK Clang 23.1.0 with Lean 4.35.0-rc3. Both builds disable the opt-in AVX-512 route; existing exact AVX2 dispatch remains available. Limits are 300 seconds, 8 GiB address space and 256 MiB per output file, with explicit fixed-corpus parent allowances. The measurements do not establish default-budget admission or complete balanced/parallel acceptance.','',
+        'All nine project gates and 36 strict Clang/GCC ASan/UBSan configurations are source-bound, including regular, forced-sparse and packed-only profiles. Compiler families, actual Lake compiler/flag declarations, generated driver templates, source manifests and all complete functional outputs are replayed. Native and portable wide-sparse kernels are registered with lean-bench using the O(C+n²) operation model, C=131073, eight targets and complete output/counter consumption. All 85 frozen benchmark verifications pass.','',
+        f'Production capsule SHA-256: `{cap.sha256}`. Candidate production, certificate generation, independent native certification and kernel checking remain separate costs. Ordinary F₂ polynomial exponents retain their usual meaning; x and x² are distinct.','']
+    lines+=kernels(cap,measured)
+    text='\n'.join(lines)
+    del cap;gc.collect()
+    require(args.heldout is not None,'held-out evidence missing')
+    from scripts.bench.groebner_parts import load_capsule
+    held=load_capsule(args.heldout)
+    result=comparator(held,measured,[c for c in fixed if c['split']=='heldout'])
+    lines=['','| Held-out family | Hex/msolve process ratio |','|---|---:|']
+    for family,value in result['per_family'].items():lines.append(f'| {family} | {value:.4f} |')
+    lines+=['',f"All 27 fixed held-out inputs have 108 successful processes, 54 equal complete bases and no missing/failed observations. The family-balanced process ratio is {result['family_balanced_geomean']:.4f}× Hex/msolve. Peak RSS is {result['peak_rss_kib']['A']}/{result['peak_rss_kib']['B']} KiB. These observations do not establish a language/runtime limitation.",'',
+        'The comparator is msolve commit 3672113ee2c696a2ac9c637636e0f7214f500ba1, Clang 23.1.3, -O3 -march=native, full reduced output, linear algebra mode 2 and one thread. Full primary solved coverage, equal-thread parallel comparisons, finite-extension coverage, deterministic producer correctness/termination and the fastest-open-source milestone remain required by issue #10987.','',
+        f'Held-out stream SHA-256: `{held.sha256}`. All full bases, fixed inputs, failures, source/executable/compiler identities, raw samples, memory and family ratios are retained and independently replayed. Scientific performance claims never depend on CI timings.','']
+    text+='\n'.join(lines)
+    if args.validation:
+        validated=Capsule(args.validation)
+        bound=source(validated,'candidate');checks=verification(validated,bound)
+        require(bound['compilers']==candidate['compilers'] and
+                bound['native_options']==candidate['native_options'],
+                'validation producer compiler configuration differs')
+        for name in ['compute','compute-reference']:
+            require(bound['binary_sha256'][name]==candidate['binary_sha256'][name],
+                    'validation producer executable differs')
+        for i,(name,expected)in enumerate(bound['compiler_inputs'].items()):
+            require(digest(validated.read('candidate/compiler-inputs/'+str(i)+'-'+Path(name).name))==expected,
+                    'validation compiler input differs')
+        require(len(bound['compiler_inputs'])==2 and
+                'all 85 benchmark(s) passed' in validated.text('checks/full/bench.log'),
+                'validation compiler inputs or benchmark verification missing')
+        reproduced=source(validated,'compiler-reproduction')
+        require(reproduced['source_manifest']==candidate['source_manifest'] and
+                reproduced['binary_sha256']==candidate['binary_sha256'] and
+                reproduced['compilers']==candidate['compilers'] and
+                reproduced['native_options']==candidate['native_options'],
+                'recorded compiler reproduction differs')
+        require(len(reproduced['compiler_inputs'])==2,'compiler reproduction inputs missing')
+        for i,(name,expected)in enumerate(reproduced['compiler_inputs'].items()):
+            require(digest(validated.read('compiler-reproduction/compiler-inputs/'+str(i)+'-'+Path(name).name))==expected,
+                    'reproduction compiler input differs')
+        for compiler in ['clang','gcc']:
+            require(validated.text('checks/regular/'+compiler+'.log').count(
+                    'PASS 327680 aligned/unaligned little-endian index boundaries')==2,
+                    'production index selftest modes missing')
+        candidate=bound
     if args.current or args.current_runtime:
         from scripts.bench.groebner_checks import CHECKS,source_identity
         from scripts.bench.groebner_measure import FAMILY

@@ -31,6 +31,25 @@ for variant in simd scalar; do
   "$row_probe_dir/$variant-avx512"
 done
 
+# Compile the actual production helper in both native and bytewise modes.
+# Unused FFI entry points are discarded; this standalone test needs no Lean runtime.
+row_probe_sdk="$(lean --print-prefix)"
+for variant in native portable; do
+  row_probe_flags=(-O2 -std=c11 -Wall -Wextra -Werror -ffunction-sections -fdata-sections
+    "-I$row_probe_sdk/include")
+  if [ "$(uname)" = Darwin ]; then
+    row_probe_flags+=(-Wl,-dead_strip)
+  else
+    row_probe_flags+=(-Wl,--gc-sections)
+  fi
+  if [ "$variant" = portable ]; then row_probe_flags+=(-U__BYTE_ORDER__); fi
+  if [ "${HEX_GROEBNER_SANITIZE:-0}" = 1 ]; then
+    row_probe_flags+=(-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer)
+  fi
+  "$row_probe_cc" "${row_probe_flags[@]}" HexGroebner/ffi/matrix_index_selftest.c -o "$row_probe_dir/index-$variant"
+  "$row_probe_dir/index-$variant"
+done
+
 trie_probe_flags=(-O2 -std=c11 -Wall -Wextra -Werror)
 if [ "${HEX_GROEBNER_SANITIZE:-0}" = 1 ]; then
   trie_probe_flags+=(-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer)

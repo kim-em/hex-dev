@@ -1,6 +1,6 @@
 # Sparse matrix buffers: measured snapshot
 
-Measured runtime `45745225e6b0` is compared directly with `5fd07b982681`. Current source `8dd7b08ebf35` reproduces the computation, full-initialization and benchmark executables byte for byte; source differences are a checked cost-model comment and exact pinned upstream Lake registrations for unrelated HexRCF targets. The native F₂ scan resolves its stable private buffers once, and loads packed UInt32 indices with unaligned-safe native loads only on known little-endian hosts. Other hosts retain bytewise decoding. Mathematical results, row order, labels, budgets and all eight logical counters are preserved.
+Measured runtime `45745225e6b0` is compared directly with `5fd07b982681`. Verified snapshot `8dd7b08ebf35` records identical executable hashes for the computation, full-initialization and benchmark executables; source differences are a checked cost-model comment and exact pinned upstream Lake registrations for unrelated HexRCF targets. The native F₂ scan resolves its stable private buffers once, and loads packed UInt32 indices with unaligned-safe native loads only on known little-endian hosts. Other hosts retain bytewise decoding. Mathematical results, row order, labels, budgets and all eight logical counters are preserved.
 
 All 128 processes and 64 adjacent AB/BA pairs have identical complete outputs and counters. The fixed sweep covers the first size of ten primary families over F₂, F₃₂₀₀₃ and F₂₁₄₇₄₈₃₆₄₇, plus Eco-14/Eco-15 over F₂. Runs use one leased CPU, one thread, degree scheduling, batch size 1024, binary pivots and delayed reduction enabled, and dense pivots disabled.
 
@@ -29,7 +29,7 @@ Production capsule SHA-256: `b10736f32f83593bdc95ede90bf6deb1b52425ef2fc60083f2a
 | longer | sparseBinary | inconclusive | 2/18 |
 | longer | sparseBinaryReference | inconclusive | 0/9 |
 
-Both ordinary complexity campaigns are retained, including the sole longer-batch repeat and all signal-floor flags. Their verdicts are inconclusive; no empirical complexity acceptance or matched implementation speed ratio is inferred.
+Both historical complexity campaigns are retained, including the sole longer-batch repeat and all signal-floor flags. Their benchmark source hashes its validity flag with the complete output. Their verdicts are inconclusive; no empirical complexity acceptance, success-checked benchmark performance or matched implementation speed ratio is inferred. The asymptotic model does not assert equal costs for column scans, sparse updates and Lean output decoding.
 
 | Held-out family | Hex/msolve process ratio |
 |---|---:|

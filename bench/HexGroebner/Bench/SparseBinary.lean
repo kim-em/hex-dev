@@ -20,7 +20,7 @@ structure SparseInput where
   deriving Hashable
 
 /-- Distinct known heads share a dense tail. Eight identical targets use every
-known pivot; the first installs a new final-column pivot and seven reduce to zero.
+known pivot; the first installs a new remainder pivot and seven reduce to zero.
 The final column is outside the common tail. All polynomial coefficients are F₂. -/
 def prepareSparseAt (columns n : Nat) : SparseInput := Id.run do
   let half := n/2
@@ -60,12 +60,34 @@ private def sparseResult (input : SparseInput) (native : Bool) :
     #[s.work,s.inputEntries,s.outputEntries,s.packedBytes,s.traceNodes,
       s.processedRows,s.reductions,s.zeroRows])
 
-def sparseBinary (input : SparseInput) := sparseResult input true
-def sparseBinaryReference (input : SparseInput) := sparseResult input false
+private def checkedSparse (input : SparseInput) (native : Bool) :
+    IO (Bool × Array (Bool × Array (Nat × UInt64) × Nat) × Array Nat) := do
+  let result := sparseResult input native
+  unless result.1 do throw (IO.userError "sparse matrix benchmark declined or returned invalid output")
+  return result
+
+def sparseBinary (input : SparseInput) := checkedSparse input true
+def sparseBinaryReference (input : SparseInput) := checkedSparse input false
 
 #guard (#[2,4,8,16].all fun n =>
   let input := prepareSparseAt (4*n+7) n
-  (sparseBinary input).1 && sparseBinary input == sparseBinaryReference input)
+  (sparseResult input true).1 && sparseResult input true == sparseResult input false)
+
+#guard Elimination.selectSparse sparseField { binaryPivots := true } 131073
+  (prepareSparseBinary 2).reducers (prepareSparseBinary 2).targets
+
+initialize do
+  let input := prepareSparseBinary 2
+  let native ← sparseBinary input
+  let reference ← sparseBinaryReference input
+  unless native == reference do
+    throw (IO.userError "wide sparse matrix benchmark initialization differs")
+  for native in [false,true] do
+    let rejected ← try
+      let _ ← checkedSparse { input with columns := 0 } native
+      pure false
+    catch _ => pure true
+    unless rejected do throw (IO.userError "sparse matrix benchmark accepted invalid dimensions")
 
 -- Fixed workspace width C=131073 plus O(n²) input, updates and output handling.
 setup_benchmark sparseBinary n => 131073+n*n

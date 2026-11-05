@@ -381,7 +381,7 @@ run_tuple() {
     if ! python3 scripts/bench/groebner_buffers_report.py \
         --archive reports/bench-results/raw/f4-sparse-buffers-45745225e6b0.tar.xz \
         --heldout reports/bench-results/raw/f4-buffer-heldout-45745225e6b0.parts.json \
-        --report reports/bench-results/hexgroebner-buffers.md --check --current-runtime; then
+        --report reports/bench-results/hexgroebner-buffers.md --check; then
       echo "FAIL: $lib :: sparse buffer evidence replay failed"
       return 1
     fi
