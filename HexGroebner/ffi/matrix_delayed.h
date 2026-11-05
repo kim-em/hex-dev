@@ -109,11 +109,17 @@ static void delayed_update_wide_avx512(matrix_context *c,const delayed_pivot *pi
         __m512i coefficients=_mm512_cvtepu32_epi64(_mm256_loadu_si256(
             (const __m256i_u*)(pivot->coefficients+(size_t)j*4)));
         __m512i products=_mm512_mul_epu32(coefficients,factors);
-        __m512i current=_mm512_i32gather_epi64(ids,(const void*)data,8);
+        uint32_t first=(uint32_t)_mm256_extract_epi32(ids,0);
+        __m256i consecutive=_mm256_add_epi32(_mm256_set1_epi32((int)first),
+            _mm256_setr_epi32(0,1,2,3,4,5,6,7));
+        int contiguous=_mm256_movemask_epi8(_mm256_cmpeq_epi32(ids,consecutive))==-1;
+        __m512i current=contiguous?_mm512_loadu_si512((const void*)(data+(size_t)first*8)):
+            _mm512_i32gather_epi64(ids,(const void*)data,8);
         __m512i updated=_mm512_add_epi64(current,products);
         __mmask8 correction=_mm512_cmpgt_epi64_mask(updated,threshold);
         updated=_mm512_mask_sub_epi64(updated,correction,updated,modulus);
-        _mm512_i32scatter_epi64((void*)data,ids,updated,8);
+        if(contiguous) _mm512_storeu_si512((void*)(data+(size_t)first*8),updated);
+        else _mm512_i32scatter_epi64((void*)data,ids,updated,8);
     }
     for(;j<pivot->size;++j) {
         uint64_t k=matrix_read(pivot->columns+(size_t)j*4,4);
