@@ -100,6 +100,7 @@ def functional(cap,candidate):
             len({row['compiler']for row in endian})==2 and
             len({(row['compiler'],row['mode'])for row in endian})==4,'index representation profiles missing')
     def implementation(text):
+        require('static inline uint32_t sparse_column' in text,'index helper missing')
         return ''.join(text.split('static inline uint32_t sparse_column',1)[1].split('\n}',1)[0].split())
     require(implementation(test.decode())==implementation(cap.text(
             'measured/root-sources/HexGroebner/ffi/matrix_delayed.h')),
@@ -156,7 +157,7 @@ def main():
     args=parser.parse_args();cap=Capsule(args.archive)
     candidate=source(cap,'candidate');baseline=source(cap,'baseline')
     measured=execution(cap,candidate)
-    functional(cap,candidate);checks=None
+    functional(cap,candidate)
     require(cap.json('scope.json')['kind']=='performance','performance scope missing')
     checks=verification(cap,candidate);fixed=fixed_inputs(cap)
     ratios,samples=systems(cap,measured,baseline,fixed)
@@ -218,10 +219,15 @@ def main():
         for i,(name,expected)in enumerate(reproduced['compiler_inputs'].items()):
             require(digest(validated.read('compiler-reproduction/compiler-inputs/'+str(i)+'-'+Path(name).name))==expected,
                     'reproduction compiler input differs')
+        require(bound['compiler_inputs']==reproduced['compiler_inputs'] and
+                all(bound['compiler_inputs'].get(name)==expected for name,expected in
+                    candidate['compiler_inputs'].items()), 'compiler inputs differ across snapshots')
         for compiler in ['clang','gcc']:
-            require(validated.text('checks/regular/'+compiler+'.log').count(
-                    'PASS 327680 aligned/unaligned little-endian index boundaries')==2,
-                    'production index selftest modes missing')
+            log=validated.text('checks/regular/'+compiler+'.log')
+            for mode in ['native','bytewise']:
+                require(log.count('PASS '+mode+' 327680 aligned/unaligned little-endian index boundaries')==1,
+                        'production index selftest mode missing')
+        print('PASS current validation capsule SHA-256 '+validated.sha256)
         candidate=bound
     if args.current or args.current_runtime:
         from scripts.bench.groebner_checks import CHECKS,source_identity
@@ -230,7 +236,7 @@ def main():
         source_identity()
         require(index_listing(FAMILY)==candidate['source_manifest'],'current runtime differs')
         if args.current:
-            require(checks is not None and index_listing(CHECKS)==checks,'current verification sources differ')
+            require(index_listing(CHECKS)==checks,'current verification sources differ')
     if args.check:require(args.report.read_text()==text,'report differs from evidence')
     else:args.report.write_text(text)
     print('PASS sparse buffer source/functional/measurement evidence replay')

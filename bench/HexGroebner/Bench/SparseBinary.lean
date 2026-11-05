@@ -76,6 +76,7 @@ def sparseBinaryReference (input : SparseInput) := checkedSparse input false
 #guard Elimination.selectSparse sparseField { binaryPivots := true } 131073
   (prepareSparseBinary 2).reducers (prepareSparseBinary 2).targets
 
+-- Deliberately check wide native admission and failure propagation at startup.
 initialize do
   let input := prepareSparseBinary 2
   let native ← sparseBinary input
@@ -87,7 +88,7 @@ initialize do
       let _ ← checkedSparse { input with columns := 0 } native
       pure false
     catch _ => pure true
-    unless rejected do throw (IO.userError "sparse matrix benchmark accepted invalid dimensions")
+    unless rejected do throw (IO.userError "sparse matrix benchmark failed to reject invalid output")
 
 -- Fixed workspace width C=131073 plus O(n²) input, updates and output handling.
 setup_benchmark sparseBinary n => 131073+n*n
