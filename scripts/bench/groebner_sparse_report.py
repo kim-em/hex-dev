@@ -2,6 +2,7 @@
 """Replay source-bound sparse-F2 measurements and complete candidate outputs."""
 from __future__ import annotations
 import argparse
+import ast
 import hashlib
 import gc
 import io
@@ -33,8 +34,11 @@ def profile_receipt(cap,kind,compiler,variants,status):
             'committed profile receipt differs')
     for key in ['source_commit','source_manifest_sha256','checks_manifest_sha256']:
         require(profile[key]==status[key], 'profile source binding differs')
-    require(profile['compiler']==status['compiler'] and profile['compiler_version'].strip(),
-            'profile compiler binding missing')
+    require(profile['compiler']==status['compiler'], 'profile compiler binding differs')
+    version=profile['compiler_version'].lower()
+    require(('clang version' in version) if compiler=='clang' else
+            ('gcc' in version and 'free software foundation' in version),
+            'profile compiler family differs')
     base=['-O3','-g','-Wall','-Wextra','-Werror','-fPIC','-DLEAN_EXPORTING',
           '-DHEX_GROEBNER_ENABLE_AVX512','-fsanitize=address,undefined',
           '-fno-sanitize-recover=undefined','-fno-omit-frame-pointer']
@@ -46,12 +50,30 @@ def profile_receipt(cap,kind,compiler,variants,status):
             for name,extra in zip(variants,extras)}, 'profile variant flags differ')
     generated=profile['generated_sha256']
     expected={'lakefile.lean','probe.c',*('Check'+v+'.lean'for v in variants)}
-    if kind=='regular':expected.add('Usage.lean')
+    if kind=='regular' and 'Usage.lean' in generated:expected.add('Usage.lean')
     require(set(generated)==expected,
             'profile generated inputs missing')
     for name,digest in generated.items():
         require(hashlib.sha256(cap.read(f'checks/{kind}/{compiler}/'+name)).hexdigest()==digest,
                 'profile generated input digest differs')
+
+
+    config=cap.text(f'checks/{kind}/{compiler}/lakefile.lean')
+    require(f'(compiler := FilePath.mk {json.dumps(profile["compiler"])})' in config,
+            'generated compiler differs')
+    for name,flags in profile['variant_flags'].items():
+        require(f'probeO pkg "{name}" #{json.dumps(flags)}' in config,
+                'generated probe flags differ')
+    if kind!='regular':
+        tree=ast.parse(cap.text('checks/sources/scripts/ci/check_groebner_matrix.py'))
+        template_name='FORCED_MAIN' if kind=='forced' else 'PACKED_MAIN'
+        templates=[ast.literal_eval(node.value)for node in tree.body
+                   if isinstance(node,ast.Assign) and any(isinstance(target,ast.Name) and
+                   target.id==template_name for target in node.targets)]
+        require(len(templates)==1, 'recorded profile driver template missing')
+        for name in variants:
+            require(cap.text(f'checks/{kind}/{compiler}/Check{name}.lean')==templates[0],
+                    'generated profile driver differs from recorded source')
 
 
 def verification(cap,manifest):
@@ -64,12 +86,15 @@ def verification(cap,manifest):
     checks=hashlib.sha256(listing.encode()).hexdigest()
     runtime=hashlib.sha256(manifest['source_manifest'].encode()).hexdigest()
     identity=full[0]['source_commit'];rows=full+native
-    modern='def profile_main(' in cap.text('checks/sources/scripts/ci/check_groebner_matrix.py')
+    modern=cap.sha256!='1ba690dd06b07eda1d0a2e220fe6671593ea69551f1337c6509dcbded4533715'
+    require(len({row['compiler']for row in native})==2, 'strict compilers are identical')
     if modern:
         for status in native:profile_receipt(cap,'regular',status['name'],variants,status)
     for kind in ['forced','packed']:
         for compiler in ['clang','gcc']:
             status=cap.json(f'checks/{kind}/{compiler}/{kind}-status.json')
+            require(status['compiler']==next(row['compiler']for row in native if row['name']==compiler),
+                    'compiler differs across profiles')
             if modern:
                 profile_receipt(cap,kind,compiler,variants,status)
             require(status['build_exit_code']==0 and
@@ -188,8 +213,8 @@ def render(cap):
         'Verification records all nine project gates and 36 strict Clang/GCC ASan/UBSan configurations: regular dispatch, forced sparse small/large frames and packed-only admission controls. Tests compare all rows, labels and eight counters, independent remainders, exact work/byte/input/output boundaries, malformed buffers, duplicate heads, shared inputs, near-UInt64 parity offsets and zero-accumulator reuse. Kernel replay and axiom audits remain separate from timed candidate production.','',
         'Certificate generation, independent native certification, kernel checking and full checked calls are excluded from these candidate timings. Finite-extension adapters, deterministic producer correctness/termination, full balanced and held-out comparator acceptance, equal-thread parallel comparisons and the overall-fastest gap remain open under issue #10987. Scientific claims use manual shared-host observations, never CI timings.','',
         f'Raw capsule `{cap.path.name}` has SHA-256 `{cap.sha256}`. Its per-payload hashes, exact runtime/check-source manifests, all 64 full-output comparisons and actual gate receipts are replayed by this generator. `--current` additionally requires the checkout’s runtime and verification sources to match the recorded snapshot. CI uses `--current-runtime` to bind runtime sources while replaying the recorded verification snapshot; updated gate receipts are assembled after those gates finish.','']
-    if 'def checkRandom' in cap.text('checks/sources/conformance/HexGroebner/SparseBinaryConformance.lean'):
-        lines.insert(-1, 'Seeded sparse frames exercise dozens of reducers and targets, reducer chains, reused target pivots and independent remainders. The committed profile generator records its source identity, compiler version, exact variant flags and hashes of every generated driver and build input.')
+    if cap.sha256!='1ba690dd06b07eda1d0a2e220fe6671593ea69551f1337c6509dcbded4533715':
+        lines.insert(-1, 'Seeded sparse frames exercise dozens of reducers and targets, reducer chains, reused target pivots and independent remainders. The committed profile generator records its source identity, probe compiler version, exact probe variant flags and hashes of generated drivers, probe source and Lake configuration.')
         lines.insert(-1, '')
     return '\n'.join(lines),candidate,listing,[case for case in fixed if case['split']=='heldout']
 

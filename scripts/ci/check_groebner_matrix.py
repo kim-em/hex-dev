@@ -128,6 +128,8 @@ def run() -> None:
                "packed": ["-DHEX_GROEBNER_KEEP_PACKED_BINARY"]}[profile]
     retained = os.environ.get("HEX_GROEBNER_NATIVE_LOG_DIR")
     directory = Path(retained).resolve() if retained else Path(tempfile.mkdtemp(prefix="hexgroebner-matrix-"))
+    if directory.exists() and any(directory.iterdir()):
+        raise ValueError("matrix conformance requires an empty retained directory")
     directory.mkdir(parents=True, exist_ok=True)
     cc = os.environ.get("CC", "cc")
     sanitize = os.environ.get("HEX_GROEBNER_SANITIZE", "0") == "1"
