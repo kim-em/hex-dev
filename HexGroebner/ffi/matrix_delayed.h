@@ -155,7 +155,7 @@ static int delayed_scan(matrix_context *c,uint64_t first,uint64_t *last,
         if(!matrix_work(c,pivot.size)) return 0;
         uint64_t factor=c->p-a;
 #if HEX_GROEBNER_AVX2 && !defined(HEX_GROEBNER_NO_AVX512)
-        if(c->width==4 && delayed_avx512_available())
+        if(c->width==4 && pivot.size>=9 && delayed_avx512_available())
             delayed_update_wide_avx512(c,&pivot,factor);
         else
 #endif
