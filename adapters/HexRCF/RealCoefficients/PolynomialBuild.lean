@@ -33,6 +33,15 @@ structure Certificate (n : Nat) where
   entries : Array (LiteralSign.Entry (Poly n))
   index : LiteralSign.Index
 
+/-- Construction failures remain distinct from either quantified verdict. -/
+inductive Error where
+  | radical
+  | query
+  | isolation
+  | signs
+  | replay
+  deriving DecidableEq, Repr
+
 /-- Check all coefficient evidence and the complete cell envelope, independently
 of the quantified verdict. Replay performs no gcd, root or approximation search. -/
 @[expose] def check (bounds : Fin n → Bounds) (formula : QF (n + 1))
@@ -55,14 +64,15 @@ diagnostic value; it does not prove the corresponding source goal. -/
 /-- Bounded fraction-free proposal construction from fixed coefficient bounds.
 Missing signs can influence an untrusted proposal but cannot survive the exact
 sign inventory and full replay preflight. Every atom occurrence is retained. -/
-def build (bounds : Fin n → Bounds) (formula : QF (n + 1)) (depth : Nat) :
-    Option (Certificate n) := do
+def buildResult (bounds : Fin n → Bounds) (formula : QF (n + 1)) (depth : Nat) :
+    Except Error (Certificate n) := do
   let sign := fun q : Poly n => (PolynomialBounds.sign? bounds q).getD 0
   let product := RepresentationCarrier.product (formula.polys.map query)
-  let radical ← PolynomialRadical.build () product
-  let total ← TarskiCertificate.certify sign (EndpointSigns.ofSign sign)
-    SignedRemainderChain.normalizeId () radical.core 1 .negInf .posInf
-  let intervals ← FieldIsolate.proposeWith? sign point SignedRemainderChain.normalizeId radical.core depth
+  let some radical := PolynomialRadical.build () product | throw .radical
+  let some total := TarskiCertificate.certify sign (EndpointSigns.ofSign sign)
+    SignedRemainderChain.normalizeId () radical.core 1 .negInf .posInf | throw .query
+  let some intervals := FieldIsolate.proposeWith? sign point SignedRemainderChain.normalizeId radical.core depth |
+    throw .isolation
   let isolation : IsolationReplay (Poly n) Unit := {
     isolations := intervals
     total
@@ -71,11 +81,16 @@ def build (bounds : Fin n → Bounds) (formula : QF (n + 1)) (depth : Nat) :
       TarskiCertificate.fromChains sign (EndpointSigns.ofSign sign) () radical.core 1
         (.finite (point interval.lower)) (.finite (point interval.upper))
         total.squarefree total.remainders }
-  let rows ← FieldRootSigns.Table.buildWith sign point SignedRemainderChain.normalizeId
-    () radical.core isolation query formula
+  let some rows := FieldRootSigns.Table.buildWith sign point SignedRemainderChain.normalizeId
+    () radical.core isolation query formula | throw .query
   let keys := QueryCells.keys point query formula radical.core isolation rows
-  let (entries, index) ← PolynomialSigns.build? bounds keys
+  let some (entries, index) := PolynomialSigns.build? bounds keys | throw .signs
   let cert : Certificate n := ⟨radical, isolation, rows, entries, index⟩
-  if check bounds formula cert then some cert else none
+  if check bounds formula cert then return cert else throw .replay
+
+/-- Optional proposal interface for existing numerical callers. `buildResult`
+retains the typed failure stage needed by the tactic and diagnostics. -/
+def build (bounds : Fin n → Bounds) (formula : QF (n + 1)) (depth : Nat) :
+    Option (Certificate n) := (buildResult bounds formula depth).toOption
 
 end Hex.RCF.RealCoefficients.PolynomialBuild

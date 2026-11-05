@@ -13,10 +13,38 @@ public section
 namespace Hex.RCF.RealCoefficients.PolynomialRadical
 open Hex PolynomialBounds
 
+private def candidate {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
+    (product : DensePoly (Poly n)) (core quotient : Poly (n + 1)) (exponent : Nat) :
+    Option (RadicalCert (Poly n) Ctx) :=
+  match MvPoly.divExact? (Mono.powBySq core (exponent + 1)) quotient with
+  | none => none
+  | some cofactor =>
+    let cert : RadicalCert (Poly n) Ctx := {
+      context
+      core := MvPoly.toUnivariate (Fin.last n) Mono.lex core
+      quotient := MvPoly.toUnivariate (Fin.last n) Mono.lex quotient
+      cofactor := MvPoly.toUnivariate (Fin.last n) Mono.lex cofactor
+      exponent }
+    if cert.check context product then some cert else none
+
+private theorem candidate_checked {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
+    (product : DensePoly (Poly n)) (core quotient : Poly (n + 1)) (exponent : Nat)
+    (cert : RadicalCert (Poly n) Ctx)
+    (produced : candidate context product core quotient exponent = some cert) :
+    cert.check context product = true := by
+  unfold candidate at produced
+  split at produced
+  · contradiction
+  · dsimp only at produced
+    split at produced
+    · cases Option.some.inj produced
+      assumption
+    · contradiction
+
 /-- Propose a root-preserving reduction using the owner's multivariate gcd.
-The complete coefficient content in the quantified mainVar is retained:
-removing its multiplicities would violate the certificate's degree bound.
-Only exact identities accepted by the existing replay checker are returned. -/
+The complete coefficient content in the quantified variable is retained.
+Search from the smallest exponent; squarefree products need only exponent zero.
+Only identities accepted by the existing replay checker are returned. -/
 def build {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
     (product : DensePoly (Poly n)) : Option (RadicalCert (Poly n) Ctx) :=
   if product.isZero then none else
@@ -28,16 +56,7 @@ def build {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
     match MvPoly.divExact? flat core with
     | none => none
     | some quotient =>
-      match MvPoly.divExact? (Mono.powBySq core (product.natDegree + 1)) quotient with
-      | none => none
-      | some cofactor =>
-        let cert : RadicalCert (Poly n) Ctx := {
-          context
-          core := MvPoly.toUnivariate mainVar Mono.lex core
-          quotient := MvPoly.toUnivariate mainVar Mono.lex quotient
-          cofactor := MvPoly.toUnivariate mainVar Mono.lex cofactor
-          exponent := product.natDegree }
-        if cert.check context product then some cert else none
+      (List.range (product.natDegree + 1)).findSome? (candidate context product core quotient)
 
 /-- Native proposal success entails the same literal identities used in replay.
 Frozen proof construction uses the certificate, not this producer theorem. -/
@@ -50,11 +69,7 @@ theorem build_checked {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)
   · dsimp only at produced
     split at produced
     · contradiction
-    · split at produced
-      · contradiction
-      · split at produced
-        · cases Option.some.inj produced
-          assumption
-        · contradiction
+    · obtain ⟨exponent, _, found⟩ := List.exists_of_findSome?_eq_some produced
+      exact candidate_checked context product _ _ exponent cert found
 
 end Hex.RCF.RealCoefficients.PolynomialRadical

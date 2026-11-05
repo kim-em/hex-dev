@@ -383,15 +383,25 @@ private def buildPolynomial (prepared : Prepared)
     let fallback ← mkAppM ``Bounds.singleton #[← ratExpr 0]
     let boundsExpr ← FieldLiteral.finiteExpr (mkConst ``Bounds)
       (prepared.coefficients.map (·.literal)) fallback
-    let matrix ← whnf (← whnf prepared.source.formula).getAppArgs.back!
-    let formulaExpr := matrix.getAppArgs.back!
+    let sourceExpr ← whnf prepared.source.formula
+    unless sourceExpr.isAppOfArity ``Hex.RealFormula.Prenex.quant 3 do
+      throwError "rcf: polynomial source is not a quantified shared formula"
+    let matrix ← whnf sourceExpr.getAppArgs[2]!
+    unless matrix.isAppOfArity ``Hex.RealFormula.Prenex.matrix 2 do
+      throwError "rcf: polynomial source has no shared matrix"
+    let formulaExpr := matrix.getAppArgs[1]!
     let containmentType ← withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit n)) fun i => do
       mkForallFVars #[i] (← mkAppM ``Contains
         #[mkApp boundsExpr i, mkApp prepared.source.valuation i])
     let contained ← FieldLiteral.proveFinCases containmentType (prepared.coefficients.map (·.proof))
     let depth := FieldLiteral.rcf.algebraic.directDepth.get (← getOptions)
-    let some data := PolynomialBuild.build bounds formula depth |
-      throwError "rcf: polynomial root/sign search exhausted supplied bounds or isolation depth"
+    let data ← match PolynomialBuild.buildResult bounds formula depth with
+      | .ok data => pure data
+      | .error .radical => throwError "rcf: proposed polynomial radical failed replay"
+      | .error .query => throwError "rcf: polynomial query production remains unresolved"
+      | .error .isolation => throwError "rcf: polynomial root isolation endpoint or depth search exhausted"
+      | .error .signs => throwError "rcf: polynomial coefficient signs remain unresolved in supplied bounds"
+      | .error .replay => throwError "rcf: polynomial cell certificate failed replay"
     let proof ← PolynomialLiteral.check bounds formula quantifier data boundsExpr
       prepared.source.valuation contained formulaExpr
     return ⟨prepared, proof⟩
@@ -404,9 +414,13 @@ private def buildCore (prepared : Prepared) : MetaM Certificate := do
   let .quant quantifier (.matrix formula) := sourceFormula |
     throwError "rcf: expected one real quantifier over a matrix"
   let degree := formula.degree (Fin.last prepared.source.coefficients.size)
+  let explicitWitness := match prepared.source.original.consumeMData with
+    | .app (.app (.const ``Exists _) _) (.lam _ _ statement _) =>
+        (equalityWitness? statement).isSome
+    | _ => false
   -- Choose before either proof search starts. Existing bound proofs retain
   -- their path; nonlinear existential roots and higher-degree atoms use cells.
-  if (quantifier == .existsReal && 1 < degree) || 2 < degree then
+  if !explicitWitness && ((quantifier == .existsReal && 1 < degree) || 2 < degree) then
     return ← buildPolynomial prepared formula quantifier
   -- Preserve only source variables and the hypotheses used by its checked
   -- alias equivalence. Unrelated caller hypotheses cannot settle the search.

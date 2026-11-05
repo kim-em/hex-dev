@@ -1544,7 +1544,7 @@ lean_lib HexConformance where
       `HexRCF.ProofPaths
     ].map Glob.one
 
-    ++ #[`HexRCF.PolynomialTactic, `HexRCF.PolynomialTacticProofs, `HexRCF.PolynomialRestore, `HexRCF.PolynomialBuildConformance, `HexRCF.PolynomialRadicalConformance, `HexRCF.PolynomialSignsConformance, `HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
+    ++ #[`HexRCF.PolynomialDirect, `HexRCF.PolynomialTactic, `HexRCF.PolynomialTacticProofs, `HexRCF.PolynomialRestore, `HexRCF.PolynomialBuildConformance, `HexRCF.PolynomialRadicalConformance, `HexRCF.PolynomialSignsConformance, `HexRCF.FiniteFieldCells, `HexRCF.FiniteFieldFormula,
       `HexRCF.FiniteFieldSource, `HexRCF.FiniteFieldGuards,
       `HexRCF.FiniteFieldCompatibility, `HexRCF.FiniteFieldProofs,
       `HexRCF.FiniteFieldCompile, `HexRCF.FiniteFieldCompileProofs,

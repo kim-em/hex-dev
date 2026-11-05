@@ -43,11 +43,13 @@ theorem repeated : ∃ x : ℝ, (x ^ 2 - Real.pi) ^ 2 = 0 ∧ 1 < x ∧ x < 2 :=
 theorem interval : ∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.pi := by
   rcf
 
+theorem nonnegative : ∀ x : ℝ, (x ^ 2 - Real.pi) ^ 2 ≥ 0 := by rcf
+
 /-- error: rcf: real-coefficient statement is false -/
 #guard_msgs in
 example : ∀ x : ℝ, (x ^ 2 - Real.pi) ^ 2 < 0 := by rcf
 
-/-- error: rcf: polynomial root/sign search exhausted supplied bounds or isolation depth -/
+/-- error: rcf: polynomial root isolation endpoint or depth search exhausted -/
 #guard_msgs in
 set_option rcf.algebraic.directDepth 0 in
 example : ∃ x : ℝ, x ^ 2 = Real.pi ∧ 1 < x ∧ x < 2 := by rcf
@@ -59,4 +61,5 @@ example : ∃ x : ℝ, x ^ 2 = Real.pi ∧ 0 / (Real.pi - Real.pi) = 0 := by rcf
 #print axioms root
 #print axioms repeated
 #print axioms interval
+#print axioms nonnegative
 end Hex.RCF.PolynomialTactic

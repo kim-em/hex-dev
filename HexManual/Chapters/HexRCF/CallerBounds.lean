@@ -207,6 +207,9 @@ example : ∀ x : ℝ,
 ```
 
 The existential example finds a root; the caller supplies no witness.
+It raises `maxRecDepth` and `maxHeartbeats` as shown in the example;
+the complete polynomial certificate is not claimed to elaborate under Lean's
+default resource settings.
 The tactic checks the complete roots and signs of the equation and both
 inequalities, and obtains one ordinary real point satisfying all three.
 The same path handles repeated roots and literal-dyadic `Ioc` guards; see the
@@ -216,7 +219,12 @@ The computation uses fixed polynomial coordinates and authenticated signs,
 without assuming that registered constants form an executable ordered field.
 False verdicts are diagnostics, and unresolved comparisons or exhausted
 isolation depth stop the attempt. The existing direct containment examples
-retain their proof path. This is bounded certified search; registering a
+retain their proof path. An existential conjunction fixing `x` by an explicit
+closed equality also retains that direct path, even with nonlinear conditions.
+Otherwise nonlinear existentials and atoms of degree above two use complete
+cells; quadratic universals and linear existentials use direct containment.
+Selection occurs before search, and a failure never retries another method.
+This is bounded certified search; registering a
 constant alone promises neither eventual separation nor a total decision procedure.
 
 These additional examples combine supplied bounds with square and cube roots

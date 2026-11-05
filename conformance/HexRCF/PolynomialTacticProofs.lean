@@ -17,9 +17,9 @@ run_meta withoutExporting do
     ``PolynomialBuild.query_eval, ``PolynomialBuild.check_spec, ``PolynomialBuild.check_sound,
     ``PolynomialBounds.closed_native, ``PolynomialBounds.value_neg]
   let roots := #[``Hex.RCF.PolynomialTactic.root, ``Hex.RCF.PolynomialTactic.repeated,
-    ``Hex.RCF.PolynomialTactic.interval]
+    ``Hex.RCF.PolynomialTactic.interval, ``Hex.RCF.PolynomialTactic.nonnegative]
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies (laws ++ roots)
-  for forbidden in #[``PolynomialBuild.build, ``PolynomialRadical.build,
+  for forbidden in #[``PolynomialBuild.build, ``PolynomialBuild.buildResult, ``PolynomialRadical.build,
       ``PolynomialSigns.build?, ``LiteralSign.Index.build, ``FieldRootSigns.Table.buildWith,
       ``FieldIsolate.proposeWith?, ``TarskiCertificate.certify, ``TarskiCertificate.fromChains,
       ``SignedRemainderChain.build, ``Field.value_eq_zero, ``Field.value_inv,
@@ -28,6 +28,9 @@ run_meta withoutExporting do
       throwError "registered-root proof depends on a producer or source field law: {forbidden}"
   let mut bodies := laws
   for root in roots do
+    let actual ← Hex.RCF.ProofEvidence.projectDependencies #[root]
+    unless actual.contains ``PolynomialBuild.check_sound do
+      throwError "actual tactic proof omitted polynomial cell replay: {root}"
     let .thmInfo outer ← getConstInfo root | throwError "expected original tactic theorem"
     let some inner := outer.value.getAppFn.constName? |
       throwError "expected retained ordinary-kernel tactic proof"
@@ -45,6 +48,8 @@ run_meta withoutExporting do
       (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
       declaration none (doCheck := true)
     unless (Kernel.getDiagnostics checked).unfoldCounter.isEmpty do traces := traces + 1
-  unless bodies.size == 13 && traces == bodies.size do
-    throwError "expected thirteen actual registered-root body checks with nonempty traces"
-  logInfo m!"FRESH_POLYNOMIAL_TACTIC: bodies={bodies.size}; traces={traces}; dependencies={dependencies.size}; original automatic pi-root, repeated-root and Ioc goals; no producer, source field law or nonstandard axiom"
+  unless bodies.size == 15 && traces == bodies.size do
+    throwError "expected fifteen actual registered-root body checks with nonempty traces"
+  unless dependencies.contains ``PolynomialBuild.check_sound do
+    throwError "registered root and universal proofs omitted the polynomial cell theorem"
+  logInfo m!"FRESH_POLYNOMIAL_TACTIC: bodies={bodies.size}; traces={traces}; dependencies={dependencies.size}; original automatic pi-root, repeated-root, Ioc and universal goals; no producer, source field law or nonstandard axiom"

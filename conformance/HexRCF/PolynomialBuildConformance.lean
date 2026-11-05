@@ -56,6 +56,9 @@ run_meta withoutExporting do
   let broad := fun _ : Fin 1 => (⟨0, 4, by decide⟩ : Bounds)
   unless (PolynomialBuild.build broad formula 64).isNone do
     throwError "polynomial cell production accepted nonseparating coefficient bounds"
+  match PolynomialBuild.buildResult bounds formula 0 with
+  | .error .isolation => pure ()
+  | _ => throwError "polynomial depth exhaustion lost its typed failure stage"
   Lean.logInfo m!"POLYNOMIAL_BUILD: pi root/inequality conjunction; roots=4; sign entries={cert.entries.size}; existential true/universal false; repeated roots and rows; missing/changed/unresolved evidence rejected"
 
 end Hex.RCF.PolynomialBuildConformance

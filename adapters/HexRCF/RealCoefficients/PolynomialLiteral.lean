@@ -68,13 +68,10 @@ private meta def checkCore (bounds : Fin n → Bounds) (formula : QF (n + 1))
   let literal ← instantiateMVars (← certificateExpr formulaExpr formula cert)
   if literal.hasMVar || literal.hasFVar then
     throwError "rcf: polynomial certificate data is not closed"
-  let frozenName ← mkFreshUserName `__rcfPolynomialData
-  withExporting (isExporting := true) do addDecl (.defnDecl {
-    name := frozenName, levelParams := [], type := ← inferType literal, value := literal
-    hints := .abbrev, safety := .safe })
+  let frozenName := mkPrivateName (← getEnv) (← mkFreshUserName `PolynomialData)
+  let frozen ← mkAuxDefinitionFor frozenName literal (compile := false)
   enableRealizationsForConst frozenName
   setReducibilityStatus frozenName .reducible
-  let frozen := mkConst frozenName
   let test ← mkAppM ``PolynomialBuild.check #[boundsExpr, formulaExpr, frozen]
   let checkedTarget ← mkEq test (mkConst ``Bool.true)
   let frozenId := mkIdent frozenName

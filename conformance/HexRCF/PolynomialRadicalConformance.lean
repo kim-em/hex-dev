@@ -38,6 +38,12 @@ run_meta withoutExporting do
     throwError "polynomial radical failed on parameter content"
   unless cert.core.coeff 1 == content do
     throwError "polynomial radical removed parameter content needed by the degree bound"
+  unless cert.exponent == 0 do
+    throwError "polynomial radical retained an unnecessary power for a squarefree product"
+  let some high := PolynomialRadical.build () (DensePoly.natPow first 4 * (x + 1)) |
+    throwError "polynomial radical failed its upward exponent search"
+  unless high.exponent == 2 do
+    throwError "polynomial radical did not choose the least adequate exponent"
   unless (PolynomialRadical.build () (0 : DensePoly E)).isNone do
     throwError "polynomial radical accepted the zero carrier"
   Lean.logInfo "POLYNOMIAL_RADICAL: repeated/common roots reduced; full parameter content retained; constants accepted; zero, changed context, corrupt cofactor and excess exponent rejected"

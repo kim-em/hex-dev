@@ -20,7 +20,8 @@ meta def build {p : ZPoly} {s : DyadicSquare}
     [ZPoly.CheckedIrreducible p] {n : Nat}
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
-    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+    (allowFalse : Bool := true) :
     MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
   let query := RepresentationSpecialize.polynomial values
   FieldLiteral.produceRefining values formula quantifier extraSignKeys
@@ -28,7 +29,7 @@ meta def build {p : ZPoly} {s : DyadicSquare}
         data.isolation data.rootSigns do
       throwError "rcf: finite real-cell certificate failed replay")
     (fun data => FieldCells.keys query formula data.radical.core data.isolation data.rootSigns)
-    (allowFalse := true)
+    (allowFalse := allowFalse)
 
 /-- Quote frozen finite real-cell evidence without invoking a producer or
 requiring an irreducibility instance. Expected inputs are independent of the
@@ -143,7 +144,7 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
   let saved ← saveState
   let (proof, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
       debug.skipKernelTC.set (Elab.async.set options false) false) do
-    let data ← build values formula quantifier extraSignKeys
+    let data ← build values formula quantifier extraSignKeys (allowFalse := false)
     let input : Replay.Input p s hw hp Unit n := ⟨values,formula,quantifier,[],()⟩
     match quantifier, input.cellValue data with
     | .forallReal, some false =>

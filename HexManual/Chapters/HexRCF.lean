@@ -702,8 +702,9 @@ describe these full-build observations. Successful proposals have checked
 soundness and a proved monic core. Radical proposal progress and interpreted
 squarefreeness are proved at the actual selected field embedding, using
 zero-reflecting coefficient semantics that preserve arithmetic and inversion.
-These are radical laws; bounded isolation can still exhaust. The complete
-library producer retains raw cores and its existing progress laws. Direct
+These are radical laws; bounded isolation can still exhaust.
+`RadicalCert.build` retains raw cores and its existing progress laws;
+the complete grouped `FieldCells.produce` uses checked monic cores. Direct
 `produceWithin` calls also retain their raw default; the tactic passes its
 monic option explicitly. The false mode retains raw cores as a comparison control. This
 normalization does not remove the common-field authentication limitation.

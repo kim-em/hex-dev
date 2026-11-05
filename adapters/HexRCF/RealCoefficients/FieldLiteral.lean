@@ -138,6 +138,8 @@ private def intervalExpr (interval : DyadicInterval) : MetaM Expr := do
   let upper ← dyadicExpr interval.upper
   let orderTy ← mkAppM ``LT.lt #[lower, upper]
   let order ← mkDecideProof orderTy
+  -- An opaque checked proof keeps dependent interval projections stable under
+  -- implicit transparency when the enclosing literal is simplified in replay.
   let order ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.FieldLiteral.intervalExpr orderTy order
   mkAppM ``DyadicInterval.mk #[lower, upper, order]
 
