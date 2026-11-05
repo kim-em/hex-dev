@@ -6,28 +6,39 @@ Authors: Kim Morrison
 module
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FiniteIndex
+public meta import HexRCF.RealCoefficients.ReplayCells
 public meta section
 
 namespace Hex.RCF.RealCoefficients.FiniteLiteral
 open Hex Lean Meta Qq
 
-/-- Quote and check finite real-cell evidence. The native field instance is
-used only to produce the frozen candidate; its proof is never quoted here.
-The expected quantified formula is constructed independently of the candidate.
-The caller authenticates the original source and divisor proofs. -/
-private meta def proveCore {p : ZPoly} {s : DyadicSquare}
+/-- Produce a frozen complete envelope for either verdict. Original divisor
+coordinates can be included among the requested sign keys. False results are
+retained as diagnostic certificates; this operation emits no goal proof. -/
+meta def build {p : ZPoly} {s : DyadicSquare}
     {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
     [ZPoly.CheckedIrreducible p] {n : Nat}
-    (pExpr rootExpr valuesExpr formulaExpr : Expr)
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
-    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) : MetaM Expr := do
+    (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
+    MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
   let query := RepresentationSpecialize.polynomial values
-  let data ← FieldLiteral.produceRefining values formula quantifier extraSignKeys
+  FieldLiteral.produceRefining values formula quantifier extraSignKeys
     (fun data => unless FieldCells.check data.signs () query formula data.radical
         data.isolation data.rootSigns do
       throwError "rcf: finite real-cell certificate failed replay")
     (fun data => FieldCells.keys query formula data.radical.core data.isolation data.rootSigns)
+    (allowFalse := true)
+
+/-- Quote frozen finite real-cell evidence without invoking a producer or
+requiring an irreducibility instance. Expected inputs are independent of the
+candidate. The caller authenticates source identities and original divisors. -/
+private meta def checkCore {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    {n : Nat}
+    (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Expr := do
   let certificate ← FieldLiteral.resultExpr pExpr rootExpr formulaExpr formula data
   let radical ← mkAppM ``FieldBuild.Result.radical #[certificate]
   let isolation ← mkAppM ``FieldBuild.Result.isolation #[certificate]
@@ -103,6 +114,21 @@ private meta def proveCore {p : ZPoly} {s : DyadicSquare}
     | .existsReal => mkAppM ``Exists #[← mkLambdaFVars #[x] body]
   Hex.RCF.checkProof `Hex.RCF.RealCoefficients.FiniteLiteral.prove expected proof
 
+/-- Check supplied frozen data with ordinary kernel checking. This operation
+does not rerun search, needs no common-field irreducibility proof and restores
+all caller state on rejection. Source authentication remains the caller's job. -/
+meta def check {p : ZPoly} {s : DyadicSquare}
+    {hw : atomWitness p s} {hp : (mahlerPrec p : Int) ≤ s.prec}
+    {n : Nat} (pExpr rootExpr valuesExpr formulaExpr : Expr)
+    (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Expr := do
+  let saved ← saveState
+  let (proof, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
+      debug.skipKernelTC.set (Elab.async.set options false) false) do
+    checkCore pExpr rootExpr valuesExpr formulaExpr formula quantifier data)
+    (fun result => unless result.isSome do saved.restore)
+  return proof
+
 /-- Produce and quote finite evidence with ordinary kernel checking enabled.
 Failure restores caller state. The caller separately authenticates the original
 source identities and every original divisor before invoking this fixed-formula
@@ -117,7 +143,16 @@ meta def prove {p : ZPoly} {s : DyadicSquare}
   let saved ← saveState
   let (proof, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
       debug.skipKernelTC.set (Elab.async.set options false) false) do
-    proveCore pExpr rootExpr valuesExpr formulaExpr values formula quantifier extraSignKeys)
+    let data ← build values formula quantifier extraSignKeys
+    let input : Replay.Input p s hw hp Unit n := ⟨values,formula,quantifier,[],()⟩
+    match quantifier, input.cellValue data with
+    | .forallReal, some false =>
+        throwError "rcf: the universal sentence is false on the prepared cells"
+    | .existsReal, some false =>
+        throwError "rcf: the existential sentence is false on the prepared cells"
+    | _, none => throwError "rcf: finite sign table did not decide the sentence"
+    | _, some true => pure ()
+    checkCore pExpr rootExpr valuesExpr formulaExpr formula quantifier data)
     (fun result => unless result.isSome do saved.restore)
   return proof
 

@@ -373,7 +373,8 @@ private meta def checkPreview {p : ZPoly} {s : DyadicSquare}
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
-    (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Unit := do
+    (data : FieldBuild.Result p s hw hp Unit (n + 1))
+    (allowFalse : Bool := false) : MetaM Unit := do
   validate data
   let keys := FieldBuild.signKeys values formula data.radical.core data.isolation
     data.rootSigns extraSignKeys
@@ -389,9 +390,11 @@ private meta def checkPreview {p : ZPoly} {s : DyadicSquare}
       throwError "rcf: fixed-field certificate evidence failed replay"
   match quantifier, preview with
   | .forallReal, some false =>
-      throwError "rcf: the universal sentence is false on the prepared cells"
+      unless allowFalse do
+        throwError "rcf: the universal sentence is false on the prepared cells"
   | .existsReal, some false =>
-      throwError "rcf: the existential sentence is false on the prepared cells"
+      unless allowFalse do
+        throwError "rcf: the existential sentence is false on the prepared cells"
   | _, none => throwError "rcf: finite sign table did not decide the sentence"
   | _, some true => pure ()
 
@@ -404,13 +407,13 @@ private meta def refineCertificate {p : ZPoly} {s : DyadicSquare}
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
-    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) (allowFalse : Bool := false) :
     MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
   let options ← getOptions
   let steps := rcf.algebraic.signRefinements.get options
   if steps = 0 then return data
   unless rcf.algebraic.intervalSigns.get options do return data
-  checkPreview values formula quantifier extraSignKeys validate data
+  checkPreview values formula quantifier extraSignKeys validate data allowFalse
   unless data.checkFinite values formula () extraSignKeys do
     throwError "rcf: original fixed-field certificate evidence failed replay"
   Core.checkInterrupted
@@ -549,9 +552,10 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
   return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier extraSignKeys validate data
 
-/-- Produce and quote a fixed-field certificate within explicit frontend
-search budgets. The complete library producer is separate. Accepted false,
-exhaustion and invalid replay remain terminal; search is absent from proofs.
+/-- Produce a fixed-field certificate within explicit frontend search budgets.
+The complete library producer is separate. False verdicts are terminal unless
+the caller explicitly requests a diagnostic certificate through `allowFalse`;
+exhaustion and invalid replay remain terminal. Search is absent from proofs.
 Cancellation is checked before and after native production. Individual native
 root computations do not check Lean cancellation or elaboration heartbeats. -/
 meta def produceRefining {p : ZPoly} {s : DyadicSquare}
@@ -562,7 +566,8 @@ meta def produceRefining {p : ZPoly} {s : DyadicSquare}
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ())
     (required : FieldBuild.Result p s hw hp Unit (n + 1) →
-      List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := fun _ => []) :
+      List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := fun _ => [])
+    (allowFalse : Bool := false) :
     MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
   if real : s.meetsRealAxis = true then
     let options ← getOptions
@@ -586,13 +591,13 @@ meta def produceRefining {p : ZPoly} {s : DyadicSquare}
           let some signs := FieldBuild.buildTable p s hw hp keys |
             throwError "rcf: additional finite sign production failed"
           pure {data with signs}
-        let data ← refineCertificate values formula quantifier extraSignKeys validate data
+        let data ← refineCertificate values formula quantifier extraSignKeys validate data allowFalse
         unless rcf.algebraic.intervalSigns.get (← getOptions) do
-          checkPreview values formula quantifier extraSignKeys validate data
+          checkPreview values formula quantifier extraSignKeys validate data allowFalse
         let signs ← prepareSigns data.signs
         let data := {data with signs}
         Core.checkInterrupted
-        checkPreview values formula quantifier extraSignKeys validate data
+        checkPreview values formula quantifier extraSignKeys validate data allowFalse
         return data
   else throwError "rcf: selected square does not name a real coefficient field"
 

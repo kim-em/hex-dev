@@ -255,7 +255,7 @@ run_elab do
     throwError "coefficient-size control did not exhaust recognition"
   let beforeBudget ← getMCtx
   let budgetNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
-  let .error (.budget _) ← Coefficients.prepare budgetGoal |
+  let .error (.budget _) ← Coefficients.prepareField budgetGoal |
     throwError "coefficient preparation did not preserve structured recognition exhaustion"
   unless (← getMCtx).mvarCounter == beforeBudget.mvarCounter &&
       (← (← getEnv).getLocalConstantInfos).map (·.name) == budgetNames do
@@ -267,7 +267,7 @@ run_elab do
       throwError "unsupported-sibling control did not reach leaf classification"
     let before ← getMCtx
     let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
-    let .error (.unsupported declined _) ← Coefficients.prepare target |
+    let .error (.unsupported declined _) ← Coefficients.prepareField target |
       throwError "recognition exhaustion preempted an unsupported sibling"
     unless declined == target do
       throwError "unsupported-sibling control did not decline at the environment boundary"
@@ -277,7 +277,7 @@ run_elab do
   for target in #[q(∀ x : ℝ,
       x ^ 2 + Real.sqrt 3 + $large + Real.sqrt (Real.sqrt 2) > 0),
       q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) + $large + Real.sqrt 3 > 0)] do
-    let .error (.budget _) ← Coefficients.prepare target |
+    let .error (.budget _) ← Coefficients.prepareField target |
       throwError "supported nested-root sibling hid rational recognition exhaustion"
   let largeBase : Q(ℝ) := q(1 / (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)))
   let .error (.budget _) ← RationalRoot.parameters?
@@ -297,7 +297,7 @@ run_elab do
         throwError "unsupported root-base control did not reach leaf classification"
       let before ← getMCtx
       let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
-      let .error (.unsupported declined _) ← Coefficients.prepare target |
+      let .error (.unsupported declined _) ← Coefficients.prepareField target |
         throwError "unsupported root-base operand order changed the refusal category"
       unless declined == target do
         throwError "unsupported root-base control did not decline at the environment boundary"
@@ -309,7 +309,7 @@ run_elab do
     let target := q(∀ x : ℝ, x ^ 2 + $root > 0)
     let before ← getMCtx
     let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
-    let .error (.budget _) ← Coefficients.prepare target |
+    let .error (.budget _) ← Coefficients.prepareField target |
       throwError "algebraic root base bypassed rational-subexpression admission"
     unless (← getMCtx).mvarCounter == before.mvarCounter &&
         (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
@@ -328,7 +328,7 @@ run_elab do
     throwError "natural radicand bypassed the shared recognition budget"
   let beforeNatural ← getMCtx
   let naturalNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
-  let .error (.budget _) ← Coefficients.prepare naturalGoal |
+  let .error (.budget _) ← Coefficients.prepareField naturalGoal |
     throwError "natural-radicand preparation bypassed structured recognition exhaustion"
   unless (← getMCtx).mvarCounter == beforeNatural.mvarCounter &&
       (← (← getEnv).getLocalConstantInfos).map (·.name) == naturalNames do
@@ -380,7 +380,7 @@ run_elab do
   let beforeCombined ← getMCtx
   let combinedNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let .error (.budget exhausted) ← withOptions (CommonTactic.rcf.algebraic.commonDegree.set · 2)
-      (Coefficients.prepare combined) |
+      (Coefficients.prepareField combined) |
     throwError "combined generator degree was not bounded"
   unless exhausted.dimension == .exponent && exhausted.limit == 2 &&
       exhausted.consumed == 2 && exhausted.requested == 4 do
@@ -389,7 +389,7 @@ run_elab do
       (← (← getEnv).getLocalConstantInfos).map (·.name) == combinedNames do
     throwError "combined degree exhaustion changed caller state"
   let .ok _ ← withOptions (CommonTactic.rcf.algebraic.commonDegree.set · 2) <|
-      Coefficients.prepare q(∀ x : ℝ,
+      Coefficients.prepareField q(∀ x : ℝ,
         x ^ 2 + Real.sqrt 2 - (4 : ℝ) ^ (1 / 4 : ℝ) = x ^ 2) |
     throwError "repeated selected anchor was charged twice"
   let .ok division ← Reify.prepare q(∀ x : ℝ,
@@ -398,14 +398,14 @@ run_elab do
     throwError "higher-root division reached shared reification with a parameter denominator"
   unless division.coefficients.any (fun e => e.isAppOfArity ``Inv.inv 3) do
     throwError "higher-root divisor was not abstracted as a closed inverse"
-  let .ok prepared ← Coefficients.prepare q(∀ x : ℝ, x ^ 2 + Real.sqrt (1 / 2) > 0) |
+  let .ok prepared ← Coefficients.prepareField q(∀ x : ℝ, x ^ 2 + Real.sqrt (1 / 2) > 0) |
     throwError "rational-root coefficient environment was not prepared"
   let _ ← prepared.proveReplay
-  let .ok falseInput ← Coefficients.prepare
+  let .ok falseInput ← Coefficients.prepareField
       q(∀ x : ℝ, x ^ 2 - Real.sqrt (1 / 2) > 0) |
     throwError "false sentence failed before coefficient preparation"
   refuses falseInput.proveReplay
-  let .ok nested ← Coefficients.prepare
+  let .ok nested ← Coefficients.prepareField
       q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) > 0) |
     throwError "nested algebraic-base root was not prepared"
   let _ ← nested.proveReplay

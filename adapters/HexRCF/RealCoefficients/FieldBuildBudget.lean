@@ -7,6 +7,8 @@ module
 
 public import HexRCF.RealCoefficients.FieldBuild
 public import HexRCF.RealCoefficients.FieldSignProgress
+public import HexRCF.RealCoefficients.FieldCells
+public import HexRCF.RealCoefficients.RepresentationSpecialize
 
 public section
 
@@ -58,8 +60,10 @@ def isolateWithin [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
 /-- Frontend production with explicit finite search resources. The complete
 `produce` API remains separate; the tactic uses this bounded path and reports
 exhaustion without dispatching another handler. The raw default preserves the
-existing direct-call behavior; the tactic explicitly passes its `monicCore`
-option, whose default is true. Neither path enters quotation. -/
+existing direct-call normalization; the tactic explicitly passes its `monicCore`
+option, whose default is true. Bounded and complete cell production use the same
+grouped source polynomials and complete replay operand inventory. Neither path
+enters quotation. -/
 def produceWithin [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     [ZPoly.CheckedIrreducible p] (real : s.meetsRealAxis = true)
@@ -75,16 +79,17 @@ def produceWithin [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     Sturm.queryPrepared prepared.val a.coeffs
   let rep := Field.literalRep p s hw hp
   let hrep := Field.literalRep_mk p s hw hp
-  let product := FieldCarrier.product values formula
+  let query := RepresentationSpecialize.polynomial values
+  let product := RepresentationCarrier.product (formula.polys.map query)
   let proposal := if monicCore then RadicalCert.buildMonic context product
     else RadicalCert.build context product
   let some radical := proposal |
     .error .invalidReplay
   let isolation ← isolateWithin rep hrep sign context radical.core depth doublings
   let some rootSigns := FieldRootSigns.Table.build sign FieldDecision.point
-      context radical.core isolation (FieldSpecialize.literalPolynomial values) formula |
+      context radical.core isolation query formula |
     .error .invalidReplay
-  let keys := signKeys values formula radical.core isolation rootSigns extraSignKeys
+  let keys := FieldCells.keys query formula radical.core isolation rootSigns ++ extraSignKeys
   let some signs := buildTable p s hw hp keys | .error .invalidReplay
   return ⟨radical, isolation, rootSigns, signs⟩
 

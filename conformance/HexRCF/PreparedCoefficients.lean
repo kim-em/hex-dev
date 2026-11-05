@@ -24,7 +24,7 @@ private meta def attempt (action : MetaM α) : MetaM (Option α) :=
 elab "prepared_probe" : tactic => do
   let goal ← Lean.Elab.Tactic.getMainGoal
   let target ← goal.getType
-  let .ok prepared ← Coefficients.prepare target |
+  let .ok prepared ← Coefficients.prepareField target |
     throwError "exact-field preparation did not recognize the source"
   let proof ← prepared.prove
   goal.assign proof
@@ -32,7 +32,7 @@ elab "prepared_probe" : tactic => do
 
 elab "finite_probe" : tactic => do
   let goal ← Lean.Elab.Tactic.getMainGoal
-  let .ok prepared ← Coefficients.prepare (← goal.getType) |
+  let .ok prepared ← Coefficients.prepareField (← goal.getType) |
     throwError "finite replay preparation did not recognize the source"
   let proof ← prepared.proveReplay
   goal.assign proof
@@ -40,7 +40,7 @@ elab "finite_probe" : tactic => do
 
 elab "total_probe" : tactic => do
   let goal ← Lean.Elab.Tactic.getMainGoal
-  let .ok prepared ← Coefficients.prepare (← goal.getType) |
+  let .ok prepared ← Coefficients.prepareField (← goal.getType) |
     throwError "total replay preparation did not recognize the source"
   let proof ← prepared.proveTotalReplay
   goal.assign proof
@@ -116,7 +116,7 @@ theorem domain : ∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2 := by prepar
 
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
-  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "guarded preparation failed"
   unless prepared.divisorProofs.size == 1 do
     throwError "preparation lost an original divisor"
   -- The result type agrees, but the unused argument is ill typed. Public
@@ -160,7 +160,7 @@ run_meta do
   let zeroDivisor : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 0 / (Real.sqrt 2 - Real.sqrt 2) ≥ 0)
   for (target, decline) in [(rational, true), (zeroDivisor, false)] do
     let before := (← getMCtx).mvarCounter
-    let outcome ← attempt (Coefficients.prepare target)
+    let outcome ← attempt (Coefficients.prepareField target)
     if decline then
       match outcome with
       | some (.error (.unsupported _ _)) => pure ()
@@ -172,7 +172,7 @@ run_meta do
 
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 = Real.sqrt 2)
-  let .ok prepared ← Coefficients.prepare target | throwError "false-sentence preparation failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "false-sentence preparation failed"
   let before := (← getMCtx).mvarCounter
   let rejected ← attempt prepared.proveReplay
   unless rejected.isNone do throwError "finite false verdict became a proof"
@@ -183,7 +183,7 @@ run_meta do
 -- synthetic terms are rejected in meta code and never become theorem proofs.
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
-  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "guarded preparation failed"
   let guardType ← inferType prepared.divisorProofs[0]!
   let assigned ← mkFreshExprMVar guardType
   assigned.mvarId!.assign (← mkSorry guardType false)
@@ -193,7 +193,7 @@ run_meta do
 
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
-  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "guarded preparation failed"
   let equality ← inferType prepared.valuationProof
   let fixedType ← mkAppM ``RealFormula.Prenex.toProp
     #[prepared.source.formula, equality.getAppArgs[1]!]
@@ -209,7 +209,7 @@ run_meta do
 
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
-  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "guarded preparation failed"
   let missing := {prepared with
     source.divisors := #[]
     divisorProofs := #[]
@@ -224,7 +224,7 @@ run_meta do
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
   let before := (← getMCtx).mvarCounter
-  let .ok prepared ← Coefficients.prepare target | throwError "guarded preparation failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "guarded preparation failed"
   unless (← getMCtx).mvarCounter == before do
     throwError "successful preparation leaked temporary metavariables"
   let congr ← withLocalDeclD `ρ (← inferType prepared.source.valuation) fun ρ => do
@@ -251,7 +251,7 @@ run_meta do
 -- caller edits the public record. Validate before either producer starts.
 run_meta do
   let target : Q(Prop) := q(∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2)
-  let .ok prepared ← Coefficients.prepare target | throwError "binding fixture failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "binding fixture failed"
   let invalid := [( {prepared with quantifier := .forallReal},
       "rcf: invalid prepared sentence binding"),
     ({prepared with formula := .not prepared.formula},
@@ -276,7 +276,7 @@ run_meta do
 -- equivalence with a proof of a different sentence before a false diagnostic.
 run_meta do
   let target : Q(Prop) := q(∃ x ∈ Set.Ioc (1 : ℝ) 2, x ^ 2 = Real.sqrt 2)
-  let .ok prepared ← Coefficients.prepare target | throwError "source fixture failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "source fixture failed"
   let matrix := mkApp (mkConst ``RealFormula.QF.ff) (mkNatLit (prepared.arity + 1))
   let formula ← mkAppM ``RealFormula.Prenex.matrix #[matrix]
   let sentence ← mkAppM ``RealFormula.Prenex.quant
@@ -298,7 +298,7 @@ run_meta do
 -- Validation-only proof checks leave no unreferenced auxiliary declarations.
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
-  let .ok prepared ← Coefficients.prepare target | throwError "guard fixture failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "guard fixture failed"
   let before := (← getEnv).constants.map₂.toList.length
   prepared.checkDomains
   unless (← getEnv).constants.map₂.toList.length == before do
@@ -314,8 +314,8 @@ run_meta do
 run_meta do
   let first : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 2 + 1) > 0)
   let second : Q(Prop) := q(∀ x : ℝ, x ^ 2 + 1 / (Real.sqrt 3 + 1) > 0)
-  let .ok a ← Coefficients.prepare first | throwError "first type fixture failed"
-  let .ok b ← Coefficients.prepare second | throwError "second type fixture failed"
+  let .ok a ← Coefficients.prepareField first | throwError "first type fixture failed"
+  let .ok b ← Coefficients.prepareField second | throwError "second type fixture failed"
   let cases := [({a with irreducibleExpr := b.irreducibleExpr}, "irreducible"),
     ({a with valuationProof := b.valuationProof}, "valuation"),
     ({a with source.proof := b.source.proof}, "source")]
@@ -350,7 +350,7 @@ run_meta do
 -- Data-level forbidden evidence must be screened before native evaluation.
 run_meta do
   let target : Q(Prop) := q(∀ x : ℝ, x ^ 2 + Real.sqrt 3 > 0)
-  let .ok prepared ← Coefficients.prepare target | throwError "data screen fixture failed"
+  let .ok prepared ← Coefficients.prepareField target | throwError "data screen fixture failed"
   let bad ← mkSorry q(ZPoly) false
   let invalid := {prepared with polynomialExpr := bad}
   let before := (← getMCtx).mvarCounter

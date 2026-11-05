@@ -176,7 +176,7 @@ open Lean Meta Qq in
 run_meta do
   let before := (← getEnv).constants.map₂.toList.length
   let rejected ← try
-    let _ ← Coefficients.prepare q(∀ x : ℝ,
+    let _ ← Coefficients.prepareField q(∀ x : ℝ,
       x^2 + realAlgebraic.toReal + quadraticRoot.toReal > 0)
     pure none
   catch error => pure (some (← error.toMessageData.toString))

@@ -85,7 +85,7 @@ private meta def encloseCore (source : Expr) (request : Rat) : MetaM (Bounds × 
         | .error (.unsupported _ _) =>
             throwError "rcf: algebraic enclosure needs a supported selected-field presentation"
         | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
-      prepared.proveReplay
+      prepared.prove
   let ordered ← mkDecideProof (← mkAppM ``LE.le
     #[← mkAppM ``mkRat #[ln, ld], ← mkAppM ``mkRat #[un, ud]])
   return (bounds, ← mkAppM ``contains_mkRat #[ln, un, ld, ud, ordered, source,
