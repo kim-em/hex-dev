@@ -12,6 +12,7 @@ CHECKS = Family(
              "scripts/bench/test_groebner_capsule.py",
              "scripts/bench/groebner_sparse_report.py",
              "scripts/bench/groebner_buffers_report.py",
+             "scripts/bench/groebner_scatter_report.py",
              "scripts/bench/groebner_sparse_experiments.py",
              "scripts/bench/groebner_parts.py", "scripts/bench/test_groebner_parts.py",
              "scripts/bench/groebner_sparse_basis.py", "scripts/bench/test_groebner_sparse_basis.py",
