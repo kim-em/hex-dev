@@ -912,22 +912,24 @@ LEAN_EXPORT lean_obj_res hex_test_binary_counts(lean_obj_arg world) {
 #include <unistd.h>
 
 /* Put each borrowed array's final byte immediately before a protected page.
-   The private kernel must read exactly four coefficients/indices per packet. */
+   Each private kernel must read exactly its four or eight packet entries. */
 static int delayed_guard_test(void) {
 #if HEX_GROEBNER_AVX2
  if(!hex_avx2_available()) return 1;
  size_t page=(size_t)sysconf(_SC_PAGESIZE);
+ unsigned scatter_cases=0;
  for(unsigned width=1;width<=4;width*=2) for(unsigned stride=1;stride<=6;stride+=5)
-  for(unsigned n=1;n<=10;++n) {
+  for(unsigned prime_case=0;prime_case<(width==4?3u:1u);++prime_case)
+  for(unsigned n=1;n<=18;++n) {
    uint8_t *cm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
    uint8_t *vm=mmap(NULL,page*2,PROT_READ|PROT_WRITE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
    if(cm==MAP_FAILED || vm==MAP_FAILED) return 0;
    if(mprotect(cm+page,page,PROT_NONE)||mprotect(vm+page,page,PROT_NONE)) return 0;
    uint8_t *cols=cm+page-n*4,*vals=vm+page-n*width;
-   matrix_context ctx={0};ctx.columns=64;ctx.width=width;ctx.p=width==1?251:width==2?65521:INT32_MAX;ctx.modulus_squared=ctx.p*ctx.p;
-   ctx.dense=matrix_zeros(64*8);
-   uint64_t expected[64],factor=ctx.p-1;
-   for(unsigned col=0;col<64;++col) {
+   matrix_context ctx={0};ctx.columns=128;ctx.width=width;const uint32_t primes[]={65537,1000003,INT32_MAX};ctx.p=width==1?251:width==2?65521:primes[prime_case];ctx.modulus_squared=ctx.p*ctx.p;
+   ctx.dense=matrix_zeros(128*8);
+   uint64_t expected[128],factor=ctx.p-1;
+   for(unsigned col=0;col<128;++col) {
     expected[col]=width==4?ctx.modulus_squared-ctx.p-col:UINT64_MAX-(UINT64_C(1)<<40)+col;
     delayed_write(&ctx,col,expected[col]);
    }
@@ -939,14 +941,25 @@ static int delayed_guard_test(void) {
      if(width==4 && expected[j*stride]>=ctx.modulus_squared) expected[j*stride]-=ctx.modulus_squared;
     }
    }
-   uint8_t cb[40],vb[40];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
+   uint8_t cb[72],vb[72];memcpy(cb,cols,n*4);memcpy(vb,vals,n*width);
    delayed_pivot pivot={cols,vals,n,(n-1)*stride,0};
-   if(width==4) delayed_update_wide_avx2(&ctx,&pivot,factor);
+   if(width==4) {
+#if HEX_GROEBNER_AVX2 && !defined(HEX_GROEBNER_NO_AVX512)
+    if(delayed_avx512_available()) {
+     delayed_update_wide_avx512(&ctx,&pivot,factor);++scatter_cases;
+    } else
+#endif
+    delayed_update_wide_avx2(&ctx,&pivot,factor);
+   }
    else delayed_update_avx2(&ctx,&pivot,factor);
-   for(unsigned col=0;col<64;++col) if(delayed_read(&ctx,col)!=expected[col]) return 0;
+   for(unsigned col=0;col<128;++col) if(delayed_read(&ctx,col)!=expected[col]) return 0;
    if(memcmp(cb,cols,n*4)||memcmp(vb,vals,n*width)) return 0;
    lean_dec(ctx.dense);munmap(cm,page*2);munmap(vm,page*2);
   }
+ fprintf(stderr,"PASS direct AVX512F guard-page wide-prime cases: %u\\n",scatter_cases);
+#if !defined(HEX_GROEBNER_NO_AVX512)
+ if(delayed_avx512_available() && scatter_cases!=108) return 0;
+#endif
 #endif
  return 1;
 }
