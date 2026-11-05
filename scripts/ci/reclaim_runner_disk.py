@@ -40,7 +40,7 @@ def main() -> None:
                            os.environ.get("RUNNER_OS") == "Linux"):
         parser.error("--apply requires a GitHub-hosted Linux runner")
     cache = Path(os.environ.get("RUNNER_TOOL_CACHE", "/opt/hostedtoolcache"))
-    if not cache.is_absolute() or cache == Path("/"):
+    if not cache.is_absolute() or cache.resolve() == Path("/"):
         parser.error("RUNNER_TOOL_CACHE must name an absolute tool-cache directory")
     active = active_paths()
     for path in sorted(active):

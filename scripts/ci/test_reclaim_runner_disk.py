@@ -68,6 +68,18 @@ class ReclaimRunnerDiskTests(unittest.TestCase):
                 main()
             self.assertEqual(error.exception.code, 2)
 
+    def test_rejects_root_aliases(self):
+        for cache in ["/", "//", "/opt/.."]:
+            with self.subTest(cache=cache):
+                environment = {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted",
+                               "RUNNER_OS": "Linux", "RUNNER_TOOL_CACHE": cache}
+                with patch.dict("os.environ", environment, clear=True), patch("sys.argv", ["cleanup", "--apply"]):
+                    with patch("scripts.ci.reclaim_runner_disk.subprocess.run") as run:
+                        with self.assertRaises(SystemExit) as error:
+                            main()
+                        self.assertEqual(error.exception.code, 2)
+                        run.assert_not_called()
+
     def test_deletes_only_selected_cache_entry(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

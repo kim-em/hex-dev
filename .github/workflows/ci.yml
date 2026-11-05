@@ -215,7 +215,7 @@ jobs:
           # Keep room for the unpacked caches and generated native objects.
           df -h "$GITHUB_WORKSPACE"
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet \
-            /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/share/swift
+            /opt/ghc /usr/local/.ghcup /usr/share/swift
           python3 -m unittest scripts.ci.test_reclaim_runner_disk
           python3 scripts/ci/reclaim_runner_disk.py --apply
           df -h "$GITHUB_WORKSPACE"
