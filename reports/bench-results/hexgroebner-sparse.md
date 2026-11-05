@@ -51,7 +51,7 @@ Experimental capsule `f4-sparse-experiments-e36a6d3dba87.tar.xz` has SHA-256 `5f
 | sparse-structured | 1.5511 |
 | positive-dimensional | 1.2008 |
 
-The complete held-out sweep contains all 27 fixed inputs in three families across all three fields. All 108 processes succeeded, all 54 complete bases agree and there were no timeouts or missing observations. The equal-family process ratio is 1.2622× Hex/msolve; the implementation remains slower overall on this held-out suite. Peak RSS is 1347816/266068 KiB for Hex/msolve. This is a remaining measured gap, not a language/runtime limit.
+The complete held-out sweep contains all 27 fixed inputs in three families across all three fields. All 108 processes succeeded, all 54 complete bases agree and there were no timeouts or missing observations. The equal-family process ratio is 1.2622× Hex/msolve; the implementation remains slower overall on this held-out suite. Peak RSS is 1347816/266068 KiB for Hex/msolve. These measurements do not establish a language/runtime limit.
 
 The comparator is msolve commit `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built with Clang 23.1.3, `-O3 -march=native`, full reduced output (`-g 2`), linear algebra mode 2 and one thread. Both arms use the same GNU time wrapper and adjacent AB/BA scheduling on one automatically leased CPU. Ratios include process startup, parsing and complete output; checking lies outside candidate timing. Field/order/output contracts, comparator engine hashes and recorded compile commands are retained.
 
