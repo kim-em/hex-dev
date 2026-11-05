@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""Run compiled matrix conformance against four native implementations.
+"""Run compiled matrix conformance against six native implementations.
 
 Use HEX_GROEBNER_SANITIZE=1 for ASan/UBSan, and optionally retain the generated
 project with HEX_GROEBNER_NATIVE_LOG_DIR. HEX_GROEBNER_TEST_LOADER and
 HEX_GROEBNER_TEST_LIBRARY_PATH select a matching libc loader on Nix hosts.
+HEX_GROEBNER_MATRIX_PROFILE selects regular, forced or packed; the latter two
+compile the test-only backend controls with dedicated drivers.
+HEX_GROEBNER_MATRIX_VARIANTS restricts the comma-separated implementation list.
 The ELF --wrap bindings include call counters so an unused instrumented object
 cannot produce a false passing sanitizer check.
 """
 from __future__ import annotations
 
 import json
+import hashlib
+import sys
 import os
 from pathlib import Path
 import platform
@@ -42,13 +47,89 @@ def sanitizer_libraries(cc: str) -> list[str]:
     return libraries
 
 
+def profile_main(profile: str) -> str:
+    if profile == "forced":
+        return FORCED_MAIN
+    if profile == "packed":
+        return PACKED_MAIN
+    raise ValueError("regular profile keeps its complete driver")
+
+
+FORCED_MAIN = """import HexGroebner.NativeChecks
+import HexGroebner.SparseBinaryConformance
+@[extern "hex_test_sparse_counts"] opaque sparseCounts : IO (UInt64 × UInt64 × UInt64 × UInt64 × UInt64)
+@[extern "hex_test_sparse_offsets"] opaque sparseOffsets (enabled : Bool) : IO Unit
+
+def main : IO UInt32 := do
+  let before ← sparseCounts
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  for offsets in [false,true] do
+    sparseOffsets offsets
+    match Hex.Groebner.SparseBinaryConformance.checkRandom (seed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+    let smallBefore ← sparseCounts
+    if !Hex.Groebner.SparseBinaryConformance.runtimeChecks (seed+(if offsets then 7 else 0)) true then
+      throw (IO.userError "forced sparse F2 runtime mismatch")
+    if (← sparseCounts).1 < smallBefore.1+18 then
+      throw (IO.userError "forced sparse F2 small-frame hooks unused")
+  sparseOffsets false
+  if !Hex.Groebner.SparseBinaryConformance.shapeChecks ||
+      !Hex.Groebner.SparseBinaryConformance.cardinalityChecks ||
+      !Hex.Groebner.SparseBinaryConformance.malformedChecks then
+    throw (IO.userError "forced sparse F2 shape/cardinality/malformed mismatch")
+  let after ← sparseCounts
+  if after.1 ≤ before.1 || after.2.1 ≤ before.2.1 || after.2.2.1 ≤ before.2.2.1 ||
+      after.2.2.2.1 ≤ before.2.2.2.1 then throw (IO.userError "forced sparse F2 hooks unused")
+  IO.println s!"PASS forced sparse F2 small/large/budget/malformed/offset/ownership: {after}"
+  return 0
+"""
+PACKED_MAIN = """import HexGroebner.NativeChecks
+import HexGroebner.SparseBinaryConformance
+import HexGroebner.EliminationConformance
+@[extern "hex_test_binary_groups"] opaque binaryGroups : IO UInt64
+@[extern "hex_test_sparse_counts"] opaque sparseCounts : IO (UInt64 × UInt64 × UInt64 × UInt64 × UInt64)
+
+def main : IO UInt32 := do
+  let sparseBefore ← sparseCounts
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  match Hex.Groebner.SparseBinaryConformance.checkSelection seed true with
+  | .error message => throw (IO.userError message)
+  | .ok () => pure ()
+  let before ← binaryGroups
+  let some expected := Hex.Groebner.EliminationConformance.binaryGroupBoundary seed true |
+    throw (IO.userError "packed-only boundary mismatch")
+  if (← binaryGroups) != before+expected.toUInt64 then
+    throw (IO.userError "packed-only table count mismatch")
+  if (← sparseCounts).1 != sparseBefore.1 then
+    throw (IO.userError "packed-only control selected sparse")
+  IO.println "PASS packed-only physical/payload boundaries, budgets and ownership"
+  return 0
+"""
+
+
 def run() -> None:
     if platform.system() != "Linux":
         print("compiled matrix variants require ELF --wrap; ordinary Lean and standalone C checks still apply")
         return
+    sys.path.insert(0, str(ROOT))
+    from scripts.bench.groebner_checks import source_identity
+    identity = source_identity()
     started = time.monotonic()
+    profile = os.environ.get("HEX_GROEBNER_MATRIX_PROFILE", "regular")
+    if profile not in {"regular", "forced", "packed"}:
+        raise ValueError("unknown matrix conformance profile")
+    selected = os.environ.get("HEX_GROEBNER_MATRIX_VARIANTS")
+    names = selected.split(",") if selected else list(VARIANTS)
+    if not names or len(names) != len(set(names)) or any(name not in VARIANTS for name in names):
+        raise ValueError("unknown or duplicate matrix variants")
+    variants = {name: VARIANTS[name] for name in names}
+    defines = {"regular": [], "forced": ["-DHEX_GROEBNER_FORCE_SPARSE_BINARY"],
+               "packed": ["-DHEX_GROEBNER_KEEP_PACKED_BINARY"]}[profile]
     retained = os.environ.get("HEX_GROEBNER_NATIVE_LOG_DIR")
     directory = Path(retained).resolve() if retained else Path(tempfile.mkdtemp(prefix="hexgroebner-matrix-"))
+    if directory.exists() and any(directory.iterdir()):
+        raise ValueError("matrix conformance requires an empty retained directory")
     directory.mkdir(parents=True, exist_ok=True)
     cc = os.environ.get("CC", "cc")
     sanitize = os.environ.get("HEX_GROEBNER_SANITIZE", "0") == "1"
@@ -640,6 +721,16 @@ static uint64_t delayed_packet_widths[3]={0};
   ++delayed_overflows; \
  } \
 } while(0)
+static uint64_t sparse_frames=0,sparse_updates=0,sparse_zero_checks=0,sparse_done_checks=0;
+static uint64_t sparse_quantum=UINT64_C(1)<<34,sparse_refused_work=0;
+static int sparse_offset_enabled=0;
+#define HEX_GROEBNER_SPARSE_QUANTUM sparse_quantum
+#define HEX_GROEBNER_SPARSE_FRAME() (++sparse_frames)
+#define HEX_GROEBNER_SPARSE_UPDATE() (++sparse_updates)
+#define HEX_GROEBNER_SPARSE_DEFERRED(work) (sparse_refused_work+=(work))
+#define HEX_GROEBNER_SPARSE_RESET(context) do { matrix_context *ctx=(context); if(sparse_offset_enabled) memset(lean_sarray_cptr(ctx->dense),0,(size_t)ctx->columns*8); else for(uint64_t col=0;col<ctx->columns;++col) assert(delayed_read(ctx,col)==0); ++sparse_zero_checks; } while(0)
+#define HEX_GROEBNER_SPARSE_TARGET(context) do { if(sparse_offset_enabled) { matrix_context *ctx=(context); for(uint64_t col=0;col<ctx->columns;++col) delayed_write(ctx,col,delayed_read(ctx,col)+(UINT64_MAX-UINT64_C(1))); } } while(0)
+#define HEX_GROEBNER_SPARSE_DONE(context) do { matrix_context *ctx=(context); for(uint64_t col=0;col<ctx->columns;++col) assert(sparse_offset_enabled?(delayed_read(ctx,col)&1)==0:delayed_read(ctx,col)==0); ++sparse_done_checks; } while(0)
 static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independent=0;
 static uint64_t binary_frames=0,binary_scans=0,binary_bytes=0;
 static uint64_t binary_groups=0,binary_installed=0,binary_initialized=0;
@@ -753,6 +844,21 @@ LEAN_EXPORT lean_obj_res hex_test_continuation_bounds(lean_obj_arg world) {
 #undef lean_hex_matrix_validate
 #undef lean_hex_matrix_zeros
 #undef lean_hex_groebner_eliminate_matrix
+LEAN_EXPORT lean_obj_res hex_test_sparse_offsets(uint8_t enabled,lean_obj_arg world) {
+ (void)world;sparse_offset_enabled=enabled;return lean_io_result_mk_ok(lean_box(0));
+}
+LEAN_EXPORT lean_obj_res hex_test_sparse_quantum(uint64_t cap,lean_obj_arg world) {
+ (void)world;sparse_quantum=cap;return lean_io_result_mk_ok(lean_box(0));
+}
+LEAN_EXPORT lean_obj_res hex_test_sparse_counts(lean_obj_arg world) {
+ (void)world;lean_object *last=lean_alloc_ctor(0,2,0),*third=lean_alloc_ctor(0,2,0);
+ lean_object *second=lean_alloc_ctor(0,2,0),*first=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(last,0,lean_box_uint64(sparse_done_checks));lean_ctor_set(last,1,lean_box_uint64(sparse_refused_work));
+ lean_ctor_set(third,0,lean_box_uint64(sparse_zero_checks));lean_ctor_set(third,1,last);
+ lean_ctor_set(second,0,lean_box_uint64(sparse_updates));lean_ctor_set(second,1,third);
+ lean_ctor_set(first,0,lean_box_uint64(sparse_frames));lean_ctor_set(first,1,second);
+ return lean_io_result_mk_ok(first);
+}
 static uint64_t primitive_validations=0,primitive_zeros=0;
 static uint64_t primitive_validate_admitted=0,primitive_validate_declined=0;
 static uint64_t primitive_zero_admitted=0,primitive_zero_declined=0;
@@ -1170,7 +1276,8 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
                      "-Wl,--wrap=lean_hex_groebner_search_monomial",
                      "-Wl,--wrap=lean_hex_groebner_compare_monomials", "-Wl,--wrap=lean_hex_groebner_lookup_trie", "-Wl,--wrap=lean_hex_groebner_validate_trie"] + libraries
         targets = []
-        for variant, extra in VARIANTS.items():
+        variant_flags = {}
+        for variant, extra in variants.items():
             module = "Check" + variant
             target = "check" + variant
             targets.append(target)
@@ -1181,6 +1288,10 @@ import HexGroebner.SampledConformance
 import HexGroebner.DenseConformance
 import HexGroebner.DenseMatrixConformance
 import HexGroebner.DelayedConformance
+import HexGroebner.SparseBinaryConformance
+@[extern "hex_test_sparse_counts"] opaque sparseCounts : IO (UInt64 × UInt64 × UInt64 × UInt64 × UInt64)
+@[extern "hex_test_sparse_offsets"] opaque sparseOffsets (enabled : Bool) : IO Unit
+@[extern "hex_test_sparse_quantum"] opaque sparseQuantum (cap : UInt64) : IO Unit
 @[extern "hex_test_delayed_counts"] opaque delayedCounts : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_delayed_quantum"] opaque delayedQuantum (cap : UInt64) : IO Unit
 @[extern "hex_test_delayed_refused"] opaque delayedRefused : IO UInt64
@@ -1356,6 +1467,42 @@ private def checkBinaryBuffers : IO Unit := do
   if !(← delayedGuard) then throw (IO.userError "delayed exact packet/guard-page test failed")
   let vectorsBefore ← delayedVectors
   let widePacketsBefore ← delayedWidthPackets 4
+  let sparseBefore ← sparseCounts
+  let sparseSeed ← Hex.Groebner.NativeChecks.readSeed
+  for offsets in [false,true] do
+    sparseOffsets offsets
+    match Hex.Groebner.SparseBinaryConformance.checkRandom (sparseSeed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+    match Hex.Groebner.SparseBinaryConformance.checkRuntime (sparseSeed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+    match Hex.Groebner.SparseBinaryConformance.checkSelection (sparseSeed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+  sparseOffsets false
+  if !Hex.Groebner.SparseBinaryConformance.shapeChecks ||
+      !Hex.Groebner.SparseBinaryConformance.cardinalityChecks ||
+      !Hex.Groebner.SparseBinaryConformance.malformedChecks then
+    throw (IO.userError "sparse F2 shape/cardinality/malformed boundary differs")
+  let some sparseWork := Hex.Groebner.SparseBinaryConformance.capChecks sparseSeed |
+    throw (IO.userError "sparse F2 ordinary quantum differs")
+  let refusedBefore := (← sparseCounts).2.2.2.2
+  sparseQuantum (sparseWork-1).toUInt64
+  if (Hex.Groebner.SparseBinaryConformance.capChecks (sparseSeed+7) (sparseWork-1)).isNone then
+    throw (IO.userError "sparse F2 bounded refusal/fallback differs")
+  let refusedAfter := (← sparseCounts).2.2.2.2
+  if refusedAfter ≤ refusedBefore || refusedAfter-refusedBefore > 2*(sparseWork-1).toUInt64 then
+    throw (IO.userError "sparse F2 discarded work missing or unbounded")
+  sparseQuantum sparseWork.toUInt64
+  if (Hex.Groebner.SparseBinaryConformance.capChecks (sparseSeed+14) sparseWork).isNone then
+    throw (IO.userError "sparse F2 exact native work boundary differs")
+  sparseQuantum (2^34)
+  let sparseAfter ← sparseCounts
+  if sparseAfter.1 ≤ sparseBefore.1 || sparseAfter.2.1 ≤ sparseBefore.2.1 ||
+      sparseAfter.2.2.1 ≤ sparseBefore.2.2.1 || sparseAfter.2.2.2.1 ≤ sparseBefore.2.2.2.1 then
+    throw (IO.userError "sparse F2 frames/updates/reset/final-state checks unused")
+  IO.println s!"sparse F2 frames/updates/reset/final-state/refused: {sparseAfter}"
   let delayedBefore ← delayedCounts
   let delayedSeed ← Hex.Groebner.NativeChecks.readSeed
   for offsets in [false,true] do
@@ -1822,13 +1969,17 @@ def main : IO Unit := do
     throw (IO.userError "sampled F4 did not exercise instrumented combination/scan/gather")
   IO.println s!"sampled native calls: subtract={afterSubtract-beforeSubtract}, scan={afterScan-beforeScan}, gather={afterGather-beforeGather}"
 '''.replace("VECTOR", "false" if variant.startswith("Scalar") else "true").replace("WIDE", "true" if variant in ("Native", "Remainder") else "false"))
+            if profile != "regular":
+                (directory / (module + ".lean")).write_text(profile_main(profile))
+            extra = extra + defines
+            variant_flags[variant] = flags + extra
             config += f'''\ntarget probe{variant} pkg : FilePath := probeO pkg "{variant}" #{json.dumps(flags + extra)}
 lean_exe {target} where
   root := `{module}
   moreLinkObjs := #[probe{variant}]
   moreLinkArgs := #{json.dumps(link_args)}
 '''
-        usage_inputs = os.environ.get("HEX_GROEBNER_USAGE_INPUT_DIR")
+        usage_inputs = os.environ.get("HEX_GROEBNER_USAGE_INPUT_DIR") if profile == "regular" else None
         if usage_inputs:
             (directory / "Usage.lean").write_text('''import HexGroebner.Driver.Run
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
@@ -1855,13 +2006,28 @@ def main (args : List String) : IO UInt32 := do
   moreLinkObjs := #[probeNative]
   moreLinkArgs := #{json.dumps(link_args)}
 '''
+        (directory / "profile.json").write_text(json.dumps(dict(profile=profile,
+            variants=names,defines=defines,sanitize=sanitize),indent=2)+"\n")
         (directory / "lakefile.lean").write_text(config)
-        print("matrix variants compiler:", subprocess.check_output([cc, "--version"], text=True).splitlines()[0], flush=True)
-        subprocess.run(["lake", "build", *targets, *(["usage"] if usage_inputs else [])], cwd=directory, check=True)
+        compiler_version = subprocess.check_output([cc, "--version"], text=True)
+        print("matrix variants compiler:", compiler_version.splitlines()[0], flush=True)
+        generated = ["lakefile.lean", "probe.c", *("Check"+name+".lean" for name in names)]
+        if usage_inputs: generated.append("Usage.lean")
+        generated_sha256 = {name: hashlib.sha256((directory/name).read_bytes()).hexdigest()
+                            for name in generated}
+        build = subprocess.run(["lake", "build", *targets, *(["usage"] if usage_inputs else [])], cwd=directory)
+        status = dict(profile=profile, variants=names, defines=defines, sanitize=sanitize,
+                      compiler=cc, compiler_version=compiler_version, variant_flags=variant_flags,
+                      generated_sha256=generated_sha256,
+                      build_exit_code=build.returncode, results=[], **identity)
+        status_path = directory / "profile-status.json"
+        status_path.write_text(json.dumps(status, indent=2)+"\n")
+        build.check_returncode()
         env = dict(os.environ, ASAN_OPTIONS=os.environ.get("ASAN_OPTIONS", "detect_leaks=0"),
                    UBSAN_OPTIONS=os.environ.get("UBSAN_OPTIONS", "halt_on_error=1"),
                    LEAN_ABORT_ON_NONLINEAR="1")
         loader = os.environ.get("HEX_GROEBNER_TEST_LOADER")
+        results = []
         for target in targets:
             command = [str(directory / ".lake/build/bin" / target)]
             preload = libraries + ([os.environ["LD_PRELOAD"]] if os.environ.get("LD_PRELOAD") else [])
@@ -1874,7 +2040,12 @@ def main (args : List String) : IO UInt32 := do
             elif preload:
                 env["LD_PRELOAD"] = os.pathsep.join(preload)
             print(target, "ASan/UBSan" if sanitize else "ordinary", flush=True)
-            subprocess.run(command, env=env, check=True)
+            result = subprocess.run(command, env=env)
+            results.append(dict(variant=target.removeprefix("check"),exit_code=result.returncode))
+            assert source_identity() == identity
+            status["results"] = results
+            status_path.write_text(json.dumps(status, indent=2)+"\n")
+            result.check_returncode()
         if usage_inputs:
             output = directory / "usage-results"
             output.mkdir(exist_ok=False)

@@ -6,7 +6,7 @@ from scripts.bench.groebner_trie_report import source,require,mean
 from scripts.oracle.groebner_singular import polynomial,canonical
 
 
-def msolve(capsule,source_label,*,expected_families=None,moduli=None,candidate_key="compute"):
+def msolve(capsule,source_label,*,expected_families=None,moduli=None,candidate_key="compute",basis_check=None):
     if expected_families is not None:
         require(all(isinstance(n,int)and n>0 for n in expected_families.values())and
                 sum(expected_families.values())%2==0,'invalid expected family counts')
@@ -41,9 +41,15 @@ def msolve(capsule,source_label,*,expected_families=None,moduli=None,candidate_k
             require(all(command[command.index(flag)+1]==value for flag,value in [('-g','2'),('-t','1'),('-l','2')]),'msolve command differs')
             text=''.join(line for line in capsule.text(f'{label}/{case}-b{block}-B.basis').splitlines()if not line.startswith('#')).strip()
             require(text.startswith('[')and text.endswith(']:'),'invalid msolve output')
-            body=text[1:-2].strip();basis=sorted(polynomial(p,input_data['variables'],input_data['p'])for p in body.split(','))if body else []
             output=capsule.json(f'{label}/{case}-b{block}-A.stdout')
-            require(output['kind']=='unchecked_candidate'and canonical(output['basis'])==basis,'complete comparator bases differ')
+            require(output['kind']=='unchecked_candidate','comparator candidate kind differs')
+            if basis_check is None:
+                body=text[1:-2].strip()
+                basis=sorted(polynomial(p,input_data['variables'],input_data['p'])for p in body.split(','))if body else []
+                require(canonical(output['basis'])==basis,'complete comparator bases differ')
+            else:
+                require(basis_check(output['basis'],text,input_data['variables'],input_data['p']),
+                        'complete comparator bases differ')
             families.setdefault(a['family'],[]).append(a['wall_nanos']/b['wall_nanos'])
     ratio=mean([mean(v)for v in families.values()])
     coverage=(len(families)==7 and all(len(v)==4 for v in families.values()))if expected_families is None else (

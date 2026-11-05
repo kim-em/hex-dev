@@ -1,4 +1,6 @@
-# Exact delayed elimination over prime fields
+# Prime-field delayed elimination: measured snapshot
+
+This historical campaign describes the frozen implementation identified below, before sparse characteristic-two whole-frame admission. Its complete measurements and verification receipts remain replayable; they do not certify the current implementation or establish its performance.
 
 The measured runtime source is `c4cb8197a53d`. Opt-in `delayedReduction` covers every prime `3 ≤ p < 2^31`; it defaults to false. Small fields retain the UInt64 accumulator bound below `2^50`. Four-byte coefficients use residues modulo `p²`: a cell and product are each below `p²`, their sum is below `2p² < 2^63`, and one exact correction restores the bound while preserving the residue modulo `p`.
 

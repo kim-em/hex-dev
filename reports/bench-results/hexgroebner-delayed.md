@@ -1,6 +1,6 @@
 # Small-prime elimination: measured snapshot
 
-This historical campaign describes an earlier implementation over primes below `2^16`. The current option covers every prime below `2^31`; see [the current prime-field report](hexgroebner-prime.md). Field coverage and controls below describe only the frozen snapshots identified here.
+This historical campaign describes an earlier implementation over primes below `2^16`. The current option covers every prime below `2^31`; see [the prime-field measured snapshot](hexgroebner-prime.md). Field coverage and controls below describe only the frozen snapshots identified here.
 
 The measured production snapshot is `5d76c73aac25`; the audited configuration is `dd9d311285d9` with byte-identical executables. At that snapshot, `delayedReduction` was opt-in and defaulted to false. It applied to primes `3 ≤ p < 2^16`; ordinary F₂ and wider-prime polynomial routes retained their existing arithmetic. The accumulator bound is `(p-1)+columns*(p-1)^2 < 2^50`.
 

@@ -113,7 +113,7 @@ def inconclusive(cap,prefix,manifest,count):
     require(low==1,'inconclusive signal-floor observation differs')
 
 
-def render(path,replay_path):
+def render(path,replay_path,snapshot=False):
     cap=Capsule(path);experimental=Capsule(replay_path)
     manifests={stage:sources(cap,stage)for stage in ['mixed','split','final']}
     final,outputs=systems(cap,'measurements/final-system',manifests['final'])
@@ -209,14 +209,19 @@ def render(path,replay_path):
         lines.insert(-1,'The first 120-process system sweep was inconclusive because the unchanged-path control varied. Its sole unchanged repeat is combined with it here: all 240 samples contribute, with no filtering and no further unchanged system reruns.\n')
     if kernel_sizes==(1024,2048,4096):
         lines.insert(-1,'Two earlier current-source small-kernel campaigns are retained as inconclusive: 11 and 17 completed processes, each stopping at a point below the signal floor. No third small-input rerun was taken. The 1024–4096 suite uses different inputs fixed and fully validated before timing. At all three larger sizes the ordinary arm declines whole-frame admission and uses bounded continuation while the delayed arm admits a whole frame; this comparison measures admission, dispatch, elimination and complete output hashing together. It does not isolate arithmetic or compare two admitted native frames. The retained small-input campaigns do not provide conclusive like-for-like kernel timing evidence. The archive includes the standalone large-input checker source, Lake configuration, pinned manifest, toolchain and complete build/run logs under large-input-check/.')
+    if snapshot:
+        lines[0]='# Prime-field delayed elimination: measured snapshot'
+        lines[2:2]=['This historical campaign describes the frozen implementation identified below, before sparse characteristic-two whole-frame admission. Its complete measurements and verification receipts remain replayable; they do not certify the current implementation or establish its performance.','']
     return '\n'.join(lines),manifest
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ['archive','replay','report']:parser.add_argument('--'+name,type=Path,required=True)
-    parser.add_argument('--check',action='store_true');parser.add_argument('--current',action='store_true')
-    args=parser.parse_args();text,manifest=render(args.archive,args.replay)
+    parser.add_argument('--check',action='store_true')
+    mode=parser.add_mutually_exclusive_group()
+    mode.add_argument('--current',action='store_true');mode.add_argument('--snapshot',action='store_true')
+    args=parser.parse_args();text,manifest=render(args.archive,args.replay,args.snapshot)
     if args.current:
         from scripts.bench.groebner_measure import FAMILY
         from scripts.bench.sweep_freshness import index_listing

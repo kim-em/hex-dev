@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "parts": [
+    {
+      "file": "f4-sparse-heldout-5fd07b982681.tar.xz.part00",
+      "bytes": 67108864,
+      "sha256": "b17a13c2171edcdc582f9a93d29a13a3d7cbd32c13001df799d972afd8e245b9"
+    },
+    {
+      "file": "f4-sparse-heldout-5fd07b982681.tar.xz.part01",
+      "bytes": 67108864,
+      "sha256": "944eabf0a1aacd53732cfacaf1d39644d1ad02e536b3322bd5f326883be9e33c"
+    },
+    {
+      "file": "f4-sparse-heldout-5fd07b982681.tar.xz.part02",
+      "bytes": 35567480,
+      "sha256": "6de524dd5339afc3257475059eaa275d7fc9be63ea533942417a5e0fa889f60c"
+    }
+  ],
+  "bytes": 169785208,
+  "sha256": "bdd2789a17fdda7f84f0c780dc5c5b64bb820dcb40405d632264914d2abdf65b"
+}
