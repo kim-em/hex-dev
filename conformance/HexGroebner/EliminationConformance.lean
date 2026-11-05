@@ -546,13 +546,13 @@ def binaryBounds : Bool := Id.run do
   let limits : MatrixLimits := { binaryPivots := true, rows := 200000 }
   let empty : SparseRow := {}
   for (columns,nr,nt) in [(131072,0,0),(1,131072,0),(1,0,4096),
-      (16385,0,0),(1,16385,0),(1,0,1025)] do
+      (131073,0,0),(1,131073,0),(16385,0,0),(1,16385,0),(1,0,1025)] do
     let rs := Array.replicate nr empty
     let ts := Array.replicate nt empty
     let some expected := Elimination.attemptPortable field limits columns rs ts #[] false | return false
     let some actual := Elimination.attempt field limits columns rs ts #[] false | return false
     if !same actual expected then return false
-  for (columns,nr,nt) in [(131073,0,0),(1,131073,0),(1,0,4097)] do
+  for (columns,nr,nt) in [(2^20+1,0,0),(1,2^20+1,0),(1,0,4097)] do
     if (Elimination.attempt field limits columns (Array.replicate nr empty)
         (Array.replicate nt empty) #[] false).isSome ||
         (Elimination.attemptPortable field limits columns (Array.replicate nr empty)
