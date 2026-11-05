@@ -103,6 +103,9 @@ meta def evidenceLemmas : MetaM (TSyntaxArray ``Parser.Tactic.simpLemma) := do
     ← `(Parser.Tactic.simpLemma| FieldQuery.checkWith),
     ← `(Parser.Tactic.simpLemma| FieldQuery.coveredWith),
     ← `(Parser.Tactic.simpLemma| FieldTransport.leadingWith),
+    ← `(Parser.Tactic.simpLemma| QueryReplay.check),
+    ← `(Parser.Tactic.simpLemma| QueryReplay.covered),
+    ← `(Parser.Tactic.simpLemma| QueryReplay.leading),
     ← `(Parser.Tactic.simpLemma| Field.checkSignTable),
     ← `(Parser.Tactic.simpLemma| LiteralSign.Table.check),
     ← `(Parser.Tactic.simpLemma| LiteralSign.Window.check),
@@ -240,7 +243,7 @@ private def chainExpr {E : Type} [Zero E] [DecidableEq E]
 
 /-- Quote supplied finite query data without invoking its producer. The caller
 must separately check the exact subject and the resulting literal certificate. -/
-private def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
+meta def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : TarskiCertificate E E Unit) : MetaM Expr := do
   let ty ← inferType (← elem (0 : E))
   mkAppM ``TarskiCertificate.mk

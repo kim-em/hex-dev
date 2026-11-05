@@ -56,7 +56,7 @@ theorem FieldTransport.leading_complete (table : LiteralSign.Table E)
     (checked : Field.checkSignTable p s hw hp table = true) (q : DensePoly E)
     (present : (table.lookup? (q.coeff (q.size - 1))).isSome = true) :
     FieldTransport.leadingCheck table q = true := by
-  unfold FieldTransport.leadingCheck FieldTransport.leadingWith
+  unfold FieldTransport.leadingCheck FieldTransport.leadingWith QueryReplay.leading
   split
   · rfl
   · rename_i nonempty
@@ -98,12 +98,12 @@ theorem FieldQuery.complete {Ctx : Type u} [DecidableEq Ctx]
     apply List.all_eq_true.mpr
     intro key member
     apply hits key
-    simp only [FieldQuery.keys, List.mem_append]
+    simp only [FieldQuery.keys, QueryReplay.keys, List.mem_append]
     exact Or.inl (Or.inl (Or.inl member))
   have top : FieldTransport.leadingCheck table head = true := by
     apply FieldTransport.leading_complete table checked
     apply hits (head.coeff (head.size - 1))
-    simp [FieldQuery.keys]
+    simp [FieldQuery.keys, QueryReplay.keys]
   have squarefree : cert.squarefree.chain.all (FieldTransport.leadingCheck table) = true := by
     apply Array.all_eq_true_iff_forall_mem.mpr
     intro q member
@@ -112,7 +112,7 @@ theorem FieldQuery.complete {Ctx : Type u} [DecidableEq Ctx]
     have present : q.coeff (q.size - 1) ∈
         cert.squarefree.chain.toList.map (fun q => q.coeff (q.size - 1)) :=
       List.mem_map.mpr ⟨q, by simpa using member, rfl⟩
-    simp only [FieldQuery.keys, List.mem_append]
+    simp only [FieldQuery.keys, QueryReplay.keys, List.mem_append]
     exact Or.inl (Or.inr present)
   have remainders : cert.remainders.chain.all (FieldTransport.leadingCheck table) = true := by
     apply Array.all_eq_true_iff_forall_mem.mpr
@@ -122,19 +122,15 @@ theorem FieldQuery.complete {Ctx : Type u} [DecidableEq Ctx]
     have present : q.coeff (q.size - 1) ∈
         cert.remainders.chain.toList.map (fun q => q.coeff (q.size - 1)) :=
       List.mem_map.mpr ⟨q, by simpa using member, rfl⟩
-    simp only [FieldQuery.keys, List.mem_append]
+    simp only [FieldQuery.keys, QueryReplay.keys, List.mem_append]
     exact Or.inr present
   have same := SignInputs.certificate_check_congr (FieldQuery.cached table)
     (fun x : E => (SignType.sign (Field.value (Field.literalRep p s hw hp) x) : Int))
     context head test a b value cert (fun key member =>
       (FieldQuery.cached_eq table _ operands key member _).trans
         (Field.checkSignTable_spec p s hw hp table checked key))
-  change FieldQuery.covered table _ && FieldTransport.leadingCheck table head &&
-    cert.squarefree.chain.all (FieldTransport.leadingCheck table) &&
-    cert.remainders.chain.all (FieldTransport.leadingCheck table) &&
-    Sturm.check (FieldQuery.cached table) context head test a b value cert = true
-  simp only [operands, top, squarefree, remainders, Bool.true_and]
-  exact same.trans accepted
+  simp only [FieldQuery.check, FieldQuery.checkWith, QueryReplay.check, Bool.and_eq_true]
+  exact ⟨⟨⟨⟨operands, top⟩, squarefree⟩, remainders⟩, same.trans accepted⟩
 
 /-- Complete native isolation evidence passes the finite isolation checker
 after its complete query inventory has been recorded. -/
