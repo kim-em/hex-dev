@@ -78,7 +78,7 @@ setup_benchmark sparseBinary n => 131073+n*n
     maxSecondsPerCall := 32.0
   }
 
--- Identical field, matrices, allowances, expected output and work model.
+-- Same O(C+n²) workspace, sparse updates and output handling as sparseBinary.
 setup_benchmark sparseBinaryReference n => 131073+n*n
   with prep := prepareSparseBinary
   where {
