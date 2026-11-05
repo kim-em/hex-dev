@@ -35,6 +35,13 @@ def verification(cap,manifest):
     for kind in ['forced','packed']:
         for compiler in ['clang','gcc']:
             status=cap.json(f'checks/{kind}/{compiler}/{kind}-status.json')
+            if 'def profile_main(' in cap.text('checks/sources/scripts/ci/check_groebner_matrix.py'):
+                profile=cap.json(f'checks/{kind}/{compiler}/profile-status.json')
+                define='-DHEX_GROEBNER_FORCE_SPARSE_BINARY' if kind=='forced' else '-DHEX_GROEBNER_KEEP_PACKED_BINARY'
+                require(profile['profile']==kind and profile['defines']==[define] and
+                        profile['variants']==variants and profile['sanitize'] is True and
+                        profile['build_exit_code']==0 and profile['results']==status['results'],
+                        'committed profile receipt differs')
             require(status['build_exit_code']==0 and
                     [row['variant']for row in status['results']]==variants and
                     all(row['exit_code']==0 for row in status['results']),kind+' profile failed')
@@ -148,19 +155,20 @@ def render(cap):
         require(len(values)==2,'targeted case coverage differs')
         lines.append(f"| {name} | {mean(values):.4f} | "+', '.join(f'{v:.4f}'for v in values)+' |')
     lines+=['','The host is AMD EPYC 9455. Native production code uses Clang 21.1.8 and Lean-generated C uses SDK Clang 23.1.0 with Lean 4.35.0-rc3. Source blobs, complete outputs, build inputs, executable/compiler hashes, CPU assignment, host activity, all observations and failures are retained. Limits are 300 seconds, 8 GiB address space and 256 MiB per output file, with the fixed corpus’s large explicit parent allowances. The data do not establish timing or admission under library default budgets.','',
-        'Verification records all nine project gates and 36 strict Clang/GCC ASan/UBSan configurations: regular dispatch, forced sparse small/large frames and packed-only admission controls. Tests compare all rows, labels and eight counters, independent remainders, exact work/byte/input/output boundaries, malformed buffers, duplicate heads, shared inputs, near-UInt64 parity offsets and zero-accumulator reuse. Kernel replay and axiom audits remain separate from timed candidate production.','',
+        'Verification records all nine project gates and 36 strict Clang/GCC ASan/UBSan configurations: regular dispatch, forced sparse small/large frames and packed-only admission controls. Tests compare all rows, labels and eight counters, independent remainders, exact work/byte/input/output boundaries, malformed buffers, duplicate heads, shared inputs, near-UInt64 parity offsets, seeded frames with dozens of reducers and targets, and zero-accumulator reuse. Kernel replay and axiom audits remain separate from timed candidate production.','',
         'Certificate generation, independent native certification, kernel checking and full checked calls are excluded from these candidate timings. Finite-extension adapters, deterministic producer correctness/termination, full balanced and held-out comparator acceptance, equal-thread parallel comparisons and the overall-fastest gap remain open under issue #10987. Scientific claims use manual shared-host observations, never CI timings.','',
-        f'Raw capsule `{cap.path.name}` has SHA-256 `{cap.sha256}`. Its per-payload hashes, exact runtime/check-source manifests, all 64 full-output comparisons and actual gate receipts are replayed by this generator. `--current` additionally requires the checkout’s runtime and verification sources to match the recorded snapshot.','']
+        f'Raw capsule `{cap.path.name}` has SHA-256 `{cap.sha256}`. Its per-payload hashes, exact runtime/check-source manifests, all 64 full-output comparisons and actual gate receipts are replayed by this generator. `--current` additionally requires the checkout’s runtime and verification sources to match the recorded snapshot. CI uses `--current-runtime` to bind runtime sources while replaying the recorded verification snapshot; updated gate receipts are assembled after those gates finish.','']
     return '\n'.join(lines),candidate,listing,[case for case in fixed if case['split']=='heldout']
 
 
 def comparator(cap,manifest,expected):
     from scripts.bench.groebner_comparator_report import msolve
+    from scripts.bench.groebner_sparse_basis import same_basis
     candidate=source(cap,'candidate')
     require(candidate==manifest,'held-out production executable/source differs')
     result,meta=msolve(cap,'candidate',expected_families={
         'dense-quadratic':18,'sparse-structured':18,'positive-dimensional':18},
-        moduli={2,32003,2147483647})
+        moduli={2,32003,2147483647},basis_check=same_basis)
     require(meta['requested_scheduling']=={'A':'degree','B':None}and
             meta['requested_binary_pivots']=={'A':'true','B':None}and
             meta['requested_dense_pivots']=={'A':'false','B':None}and
@@ -182,7 +190,10 @@ def main():
     parser.add_argument('--archive',type=Path,required=True);parser.add_argument('--report',type=Path,required=True)
     parser.add_argument('--experiments',type=Path,required=True)
     parser.add_argument('--heldout',type=Path,required=True)
-    parser.add_argument('--check',action='store_true');parser.add_argument('--current',action='store_true')
+    parser.add_argument('--check',action='store_true')
+    current=parser.add_mutually_exclusive_group()
+    current.add_argument('--current',action='store_true')
+    current.add_argument('--current-runtime',action='store_true')
     args=parser.parse_args();production=Capsule(args.archive)
     text,manifest,checks,expected=render(production)
     del production
@@ -210,13 +221,13 @@ def main():
         (f'Parts index `{args.heldout.name}` has SHA-256 `{held.index_sha256}`. 'if hasattr(held,'index_sha256')else f'Archive file: `{args.heldout.name}`. ')+
         'All complete bases, source/executable/compiler bindings, fixed inputs, samples, memory observations and family ratios are replayed independently. Full primary balanced acceptance and parallel comparisons remain outstanding.','']
     text+='\n'.join(lines)
-    if args.current:
+    if args.current or args.current_runtime:
         from scripts.bench.groebner_measure import FAMILY
         from scripts.bench.groebner_checks import CHECKS,source_identity
         from scripts.bench.sweep_freshness import index_listing
         source_identity()
         require(index_listing(FAMILY)==manifest['source_manifest'],'current runtime differs')
-        require(index_listing(CHECKS)==checks,'current verification sources differ')
+        if args.current:require(index_listing(CHECKS)==checks,'current verification sources differ')
     if args.check:require(args.report.read_text()==text,'report differs from evidence')
     else:args.report.write_text(text)
     print('PASS sparse F2 source/verification/output evidence replay')

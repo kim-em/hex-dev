@@ -173,6 +173,58 @@ def capChecks (nonce : Nat) (cap : Nat := 2^34) : Option Nat := do
   if !same completed reference then failure
   return reference.stats.work
 
+@[noinline] private def randomRows (columns nonce : Nat) :
+    Option (Array SparseRow × Array SparseRow) := Id.run do
+  let mut state := nonce % 2^32
+  let mut reducers := #[]
+  let mut targets := #[]
+  for target in [false,true] do
+    let count := if target then 32 else 24
+    for i in [:count] do
+      state := (1664525*state+1013904223) % 2^32
+      let head := if !target || i%3 == 0 then columns-512+4*(i%24)
+        else columns-320+2*(i%8)
+      let mut support := #[head]
+      for _ in [:7] do
+        state := (1664525*state+1013904223) % 2^32
+        let column := columns-192+state%192
+        if !support.contains column then support := support.push column
+      let some row := SparseRow.ofEntries field columns
+          ((support.qsort (· < ·)).map fun j => (j,(1:UInt64))) | return none
+      if target then targets := targets.push (if i%11 == 0 then {} else row)
+      else reducers := reducers.push row
+  targets := targets.set! 29 targets[1]!
+  return some (reducers,targets)
+
+/-- Seeded short supports exercise dozens of known reducers and target pivots,
+including reused target heads, independent remainders and aliased target rows. -/
+def checkRandom (nonce : Nat) : Except String Unit := do
+  if USize.size != 2^64 then return ()
+  for trial in [:4] do
+    let columns := 131073+trial*64
+    let seed := nonce+trial*97
+    let some (er,et) := randomRows columns seed | throw "random reference rows"
+    let some (ar,nativeTargets) := randomRows columns (seed+2^32) | throw "random native rows"
+    let sugars := (Array.range 56).map fun i => 2^40+i+seed%31
+    if !Elimination.fitsSparse field limits columns er et sugars then
+      throw "random sparse admission missing"
+    for independent in [false,true] do
+      let some reference := Elimination.attemptSparsePortable field limits columns er et sugars independent
+        | throw "random sparse portable declined"
+      let actual := Elimination.attempt field limits columns ar nativeTargets sugars independent
+      if !sameAttempt actual (some reference) then
+        throw s!"random sparse result differs trial={trial} independent={independent}"
+      if !sameRows ar er || !sameRows nativeTargets et then throw "random sparse inputs mutated"
+      if trial == 0 then
+        let bytes := reference.stats.packedBytes+Elimination.delayedBytes field columns 24 32
+        let tight : MatrixLimits := { limits with work := reference.stats.work,packedBytes := bytes }
+        for budget in ([tight,{ tight with work := reference.stats.work-1 },
+            { tight with packedBytes := bytes-1 }] : List MatrixLimits) do
+          if !sameAttempt (Elimination.attempt field budget columns ar nativeTargets sugars independent)
+              (Elimination.attemptSparsePortable field budget columns er et sugars independent) then
+            throw "random sparse exact budget differs"
+  return ()
+
 /-- Definite packed payload refusals select one sparse attempt. The packed-only
 native profile retains the original refusal as an independent control. -/
 def checkSelection (nonce : Nat) (packedOnly : Bool := false) : Except String Unit := do

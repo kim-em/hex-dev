@@ -366,7 +366,7 @@ run_tuple() {
       echo "FAIL: $lib :: fixed Groebner corpus validation failed"
       return 1
     fi
-    if ! python3 -m unittest scripts.bench.test_groebner_parts; then
+    if ! python3 -m unittest scripts.bench.test_groebner_parts scripts.bench.test_groebner_sparse_basis; then
       echo "FAIL: $lib :: scientific capsule parts validation failed"
       return 1
     fi
@@ -374,7 +374,7 @@ run_tuple() {
         --archive reports/bench-results/raw/f4-sparse-production-5fd07b982681.tar.xz \
         --experiments reports/bench-results/raw/f4-sparse-experiments-e36a6d3dba87.tar.xz \
         --heldout reports/bench-results/raw/f4-sparse-heldout-5fd07b982681.parts.json \
-        --report reports/bench-results/hexgroebner-sparse.md --check; then
+        --report reports/bench-results/hexgroebner-sparse.md --check --current-runtime; then
       echo "FAIL: $lib :: sparse F2 measured-snapshot evidence replay failed"
       return 1
     fi

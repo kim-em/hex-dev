@@ -39,3 +39,10 @@ fi
 "$row_probe_dir/trie"
 
 python3 scripts/ci/check_groebner_matrix.py
+if [ "${HEX_GROEBNER_MATRIX_PROFILE:-regular}" = regular ]; then
+  for matrix_profile in forced packed; do
+    HEX_GROEBNER_NATIVE_LOG_DIR= \
+      HEX_GROEBNER_MATRIX_PROFILE="$matrix_profile" HEX_GROEBNER_MATRIX_VARIANTS=Native \
+      python3 scripts/ci/check_groebner_matrix.py
+  done
+fi

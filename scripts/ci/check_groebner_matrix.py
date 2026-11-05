@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Run compiled matrix conformance against four native implementations.
+"""Run compiled matrix conformance against six native implementations.
 
 Use HEX_GROEBNER_SANITIZE=1 for ASan/UBSan, and optionally retain the generated
 project with HEX_GROEBNER_NATIVE_LOG_DIR. HEX_GROEBNER_TEST_LOADER and
 HEX_GROEBNER_TEST_LIBRARY_PATH select a matching libc loader on Nix hosts.
+HEX_GROEBNER_MATRIX_PROFILE selects regular, forced or packed; the latter two
+compile the test-only backend controls with dedicated drivers.
+HEX_GROEBNER_MATRIX_VARIANTS restricts the comma-separated implementation list.
 The ELF --wrap bindings include call counters so an unused instrumented object
 cannot produce a false passing sanitizer check.
 """
@@ -42,11 +45,79 @@ def sanitizer_libraries(cc: str) -> list[str]:
     return libraries
 
 
+def profile_main(profile: str) -> str:
+    if profile == "forced":
+        return FORCED_MAIN
+    if profile == "packed":
+        return PACKED_MAIN
+    raise ValueError("regular profile keeps its complete driver")
+
+
+FORCED_MAIN = """import HexGroebner.NativeChecks
+import HexGroebner.SparseBinaryConformance
+@[extern "hex_test_sparse_counts"] opaque sparseCounts : IO (UInt64 × UInt64 × UInt64 × UInt64 × UInt64)
+@[extern "hex_test_sparse_offsets"] opaque sparseOffsets (enabled : Bool) : IO Unit
+
+def main : IO UInt32 := do
+  let before ← sparseCounts
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  for offsets in [false,true] do
+    sparseOffsets offsets
+    match Hex.Groebner.SparseBinaryConformance.checkRandom (seed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
+    if !Hex.Groebner.SparseBinaryConformance.runtimeChecks (seed+(if offsets then 7 else 0)) true then
+      throw (IO.userError "forced sparse F2 runtime mismatch")
+  sparseOffsets false
+  if !Hex.Groebner.SparseBinaryConformance.shapeChecks ||
+      !Hex.Groebner.SparseBinaryConformance.cardinalityChecks ||
+      !Hex.Groebner.SparseBinaryConformance.malformedChecks then
+    throw (IO.userError "forced sparse F2 shape/cardinality/malformed mismatch")
+  let after ← sparseCounts
+  if after.1 ≤ before.1 || after.2.1 ≤ before.2.1 || after.2.2.1 ≤ before.2.2.1 ||
+      after.2.2.2.1 ≤ before.2.2.2.1 then throw (IO.userError "forced sparse F2 hooks unused")
+  IO.println s!"PASS forced sparse F2 small/large/budget/malformed/offset/ownership: {after}"
+  return 0
+"""
+PACKED_MAIN = """import HexGroebner.NativeChecks
+import HexGroebner.SparseBinaryConformance
+import HexGroebner.EliminationConformance
+@[extern "hex_test_binary_groups"] opaque binaryGroups : IO UInt64
+@[extern "hex_test_sparse_counts"] opaque sparseCounts : IO (UInt64 × UInt64 × UInt64 × UInt64 × UInt64)
+
+def main : IO UInt32 := do
+  let sparseBefore ← sparseCounts
+  let seed ← Hex.Groebner.NativeChecks.readSeed
+  match Hex.Groebner.SparseBinaryConformance.checkSelection seed true with
+  | .error message => throw (IO.userError message)
+  | .ok () => pure ()
+  let before ← binaryGroups
+  let some expected := Hex.Groebner.EliminationConformance.binaryGroupBoundary seed true |
+    throw (IO.userError "packed-only boundary mismatch")
+  if (← binaryGroups) != before+expected.toUInt64 then
+    throw (IO.userError "packed-only table count mismatch")
+  if (← sparseCounts).1 != sparseBefore.1 then
+    throw (IO.userError "packed-only control selected sparse")
+  IO.println "PASS packed-only physical/payload boundaries, budgets and ownership"
+  return 0
+"""
+
+
 def run() -> None:
     if platform.system() != "Linux":
         print("compiled matrix variants require ELF --wrap; ordinary Lean and standalone C checks still apply")
         return
     started = time.monotonic()
+    profile = os.environ.get("HEX_GROEBNER_MATRIX_PROFILE", "regular")
+    if profile not in {"regular", "forced", "packed"}:
+        raise ValueError("unknown matrix conformance profile")
+    selected = os.environ.get("HEX_GROEBNER_MATRIX_VARIANTS")
+    names = selected.split(",") if selected else list(VARIANTS)
+    if not names or len(names) != len(set(names)) or any(name not in VARIANTS for name in names):
+        raise ValueError("unknown or duplicate matrix variants")
+    variants = {name: VARIANTS[name] for name in names}
+    defines = {"regular": [], "forced": ["-DHEX_GROEBNER_FORCE_SPARSE_BINARY"],
+               "packed": ["-DHEX_GROEBNER_KEEP_PACKED_BINARY"]}[profile]
     retained = os.environ.get("HEX_GROEBNER_NATIVE_LOG_DIR")
     directory = Path(retained).resolve() if retained else Path(tempfile.mkdtemp(prefix="hexgroebner-matrix-"))
     directory.mkdir(parents=True, exist_ok=True)
@@ -1195,7 +1266,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
                      "-Wl,--wrap=lean_hex_groebner_search_monomial",
                      "-Wl,--wrap=lean_hex_groebner_compare_monomials", "-Wl,--wrap=lean_hex_groebner_lookup_trie", "-Wl,--wrap=lean_hex_groebner_validate_trie"] + libraries
         targets = []
-        for variant, extra in VARIANTS.items():
+        for variant, extra in variants.items():
             module = "Check" + variant
             target = "check" + variant
             targets.append(target)
@@ -1389,6 +1460,9 @@ private def checkBinaryBuffers : IO Unit := do
   let sparseSeed ← Hex.Groebner.NativeChecks.readSeed
   for offsets in [false,true] do
     sparseOffsets offsets
+    match Hex.Groebner.SparseBinaryConformance.checkRandom (sparseSeed+(if offsets then 7 else 0)) with
+    | .error message => throw (IO.userError message)
+    | .ok () => pure ()
     match Hex.Groebner.SparseBinaryConformance.checkRuntime (sparseSeed+(if offsets then 7 else 0)) with
     | .error message => throw (IO.userError message)
     | .ok () => pure ()
@@ -1884,13 +1958,16 @@ def main : IO Unit := do
     throw (IO.userError "sampled F4 did not exercise instrumented combination/scan/gather")
   IO.println s!"sampled native calls: subtract={afterSubtract-beforeSubtract}, scan={afterScan-beforeScan}, gather={afterGather-beforeGather}"
 '''.replace("VECTOR", "false" if variant.startswith("Scalar") else "true").replace("WIDE", "true" if variant in ("Native", "Remainder") else "false"))
+            if profile != "regular":
+                (directory / (module + ".lean")).write_text(profile_main(profile))
+            extra = extra + defines
             config += f'''\ntarget probe{variant} pkg : FilePath := probeO pkg "{variant}" #{json.dumps(flags + extra)}
 lean_exe {target} where
   root := `{module}
   moreLinkObjs := #[probe{variant}]
   moreLinkArgs := #{json.dumps(link_args)}
 '''
-        usage_inputs = os.environ.get("HEX_GROEBNER_USAGE_INPUT_DIR")
+        usage_inputs = os.environ.get("HEX_GROEBNER_USAGE_INPUT_DIR") if profile == "regular" else None
         if usage_inputs:
             (directory / "Usage.lean").write_text('''import HexGroebner.Driver.Run
 @[extern "hex_test_dense_counts"] opaque denseCounts : IO (UInt64 × UInt64 × UInt64)
@@ -1917,13 +1994,21 @@ def main (args : List String) : IO UInt32 := do
   moreLinkObjs := #[probeNative]
   moreLinkArgs := #{json.dumps(link_args)}
 '''
+        (directory / "profile.json").write_text(json.dumps(dict(profile=profile,
+            variants=names,defines=defines,sanitize=sanitize),indent=2)+"\n")
         (directory / "lakefile.lean").write_text(config)
         print("matrix variants compiler:", subprocess.check_output([cc, "--version"], text=True).splitlines()[0], flush=True)
-        subprocess.run(["lake", "build", *targets, *(["usage"] if usage_inputs else [])], cwd=directory, check=True)
+        build = subprocess.run(["lake", "build", *targets, *(["usage"] if usage_inputs else [])], cwd=directory)
+        status = dict(profile=profile, variants=names, defines=defines, sanitize=sanitize,
+                      compiler=cc, build_exit_code=build.returncode, results=[])
+        status_path = directory / "profile-status.json"
+        status_path.write_text(json.dumps(status, indent=2)+"\n")
+        build.check_returncode()
         env = dict(os.environ, ASAN_OPTIONS=os.environ.get("ASAN_OPTIONS", "detect_leaks=0"),
                    UBSAN_OPTIONS=os.environ.get("UBSAN_OPTIONS", "halt_on_error=1"),
                    LEAN_ABORT_ON_NONLINEAR="1")
         loader = os.environ.get("HEX_GROEBNER_TEST_LOADER")
+        results = []
         for target in targets:
             command = [str(directory / ".lake/build/bin" / target)]
             preload = libraries + ([os.environ["LD_PRELOAD"]] if os.environ.get("LD_PRELOAD") else [])
@@ -1936,7 +2021,11 @@ def main (args : List String) : IO UInt32 := do
             elif preload:
                 env["LD_PRELOAD"] = os.pathsep.join(preload)
             print(target, "ASan/UBSan" if sanitize else "ordinary", flush=True)
-            subprocess.run(command, env=env, check=True)
+            result = subprocess.run(command, env=env)
+            results.append(dict(variant=target.removeprefix("check"),exit_code=result.returncode))
+            status["results"] = results
+            status_path.write_text(json.dumps(status, indent=2)+"\n")
+            result.check_returncode()
         if usage_inputs:
             output = directory / "usage-results"
             output.mkdir(exist_ok=False)

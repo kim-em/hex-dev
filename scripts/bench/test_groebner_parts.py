@@ -49,5 +49,18 @@ class PartsTests(unittest.TestCase):
             path.write_text(json.dumps(index))
             with self.assertRaisesRegex(ValueError,'basename'):load_capsule(path)
 
+    def test_malformed_index(self):
+        with tempfile.TemporaryDirectory()as directory:
+            path,index,_=self.fixture(Path(directory))
+            for value in [[],{},dict(index,sha256=None),dict(index,parts=[{}])]:
+                path.write_text(json.dumps(value))
+                with self.assertRaises(ValueError):load_capsule(path)
+
+    def test_oversize_part(self):
+        with tempfile.TemporaryDirectory()as directory:
+            path,index,_=self.fixture(Path(directory));index['parts'][0]['bytes']=96*1024**2
+            path.write_text(json.dumps(index))
+            with self.assertRaisesRegex(ValueError,'part size'):load_capsule(path)
+
 
 if __name__=='__main__':unittest.main()
