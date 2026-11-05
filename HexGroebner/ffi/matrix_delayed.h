@@ -151,6 +151,11 @@ static lean_object *delayed_gather(matrix_context *c,uint64_t first,uint64_t las
    under test-only even accumulator offsets; normalization precedes each test. */
 static int sparse_scan(matrix_context *c,uint64_t first,uint64_t *last,
         uint64_t *leading,uint64_t *sugar) {
+    /* These private buffers are stable throughout scanning. The accumulator
+       is fresh and disjoint from slots, descriptors and every borrowed pivot. */
+    uint8_t *restrict data=lean_sarray_cptr(c->dense);
+    const uint8_t *slots=lean_sarray_cptr(c->slots);
+    const uint8_t *metadata=lean_sarray_cptr(c->delayed_meta);
     uint64_t charged=first;
     for(uint64_t col=first;col<c->columns && col<=*last;++col) {
         if(col>=charged) {
@@ -158,22 +163,23 @@ static int sparse_scan(matrix_context *c,uint64_t first,uint64_t *last,
             if(!matrix_work(c,stop-col)) return 0;
             charged=stop;
         }
-        uint64_t a=delayed_read(c,col)&UINT64_C(1);
-        delayed_write(c,col,a);
+        uint64_t a;memcpy(&a,data+(size_t)col*8,8);a&=UINT64_C(1);
+        memcpy(data+(size_t)col*8,&a,8);
         if(!a) continue;
-        uint64_t slot=matrix_read(lean_sarray_cptr(c->slots)+(size_t)col*4,4);
+        uint64_t slot=matrix_read(slots+(size_t)col*4,4);
         if(!slot) {if(!*leading) *leading=col+1;continue;}
         delayed_pivot pivot;
-        memcpy(&pivot,lean_sarray_cptr(c->delayed_meta)+(size_t)(slot-1)*sizeof(pivot),sizeof(pivot));
+        memcpy(&pivot,metadata+(size_t)(slot-1)*sizeof(pivot),sizeof(pivot));
         if(pivot.end>*last) *last=pivot.end;
         if(pivot.sugar>*sugar) *sugar=pivot.sugar;
         if(!matrix_work(c,pivot.size)) return 0;
         HEX_GROEBNER_SPARSE_UPDATE();
         for(uint64_t j=1;j<pivot.size;++j) {
             uint64_t k=matrix_read(pivot.columns+(size_t)j*4,4);
-            delayed_write(c,k,delayed_read(c,k)^UINT64_C(1));
+            uint64_t value;memcpy(&value,data+(size_t)k*8,8);value^=UINT64_C(1);
+            memcpy(data+(size_t)k*8,&value,8);
         }
-        delayed_write(c,col,0);
+        uint64_t zero=0;memcpy(data+(size_t)col*8,&zero,8);
         ++c->stats[6];
     }
     return 1;
