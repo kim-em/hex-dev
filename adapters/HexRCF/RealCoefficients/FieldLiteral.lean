@@ -134,6 +134,7 @@ private def intervalExpr (interval : DyadicInterval) : MetaM Expr := do
   let upper ← dyadicExpr interval.upper
   let orderTy ← mkAppM ``LT.lt #[lower, upper]
   let order ← mkDecideProof orderTy
+  let order ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.FieldLiteral.intervalExpr orderTy order
   mkAppM ``DyadicInterval.mk #[lower, upper, order]
 
 private def denseExpr {E : Type} [Zero E] [DecidableEq E]
@@ -257,7 +258,7 @@ meta def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
       mkIntLit cert.value]
 
 /-- Quote the proposed intervals and their stored root-count certificates. -/
-private def isolationExpr {E : Type} [Zero E] [DecidableEq E]
+meta def isolationExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : IsolationReplay E Unit) : MetaM Expr := do
   let intervals ← cert.isolations.intervals.toList.mapM intervalExpr
   let isolation ← mkAppM ``IsolationCert.mk
