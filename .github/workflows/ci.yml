@@ -457,7 +457,10 @@ jobs:
           HEX_LIBRARY_FILTER: ${{ steps.classify.outputs.library_filter }}
         run: |
           python3 scripts/rcf/selected_literals.py --check
-          lake build \
+          free -h
+          df -h "$GITHUB_WORKSPACE"
+          # Keep the largest ordinary-kernel proof checks from overlapping.
+          LEAN_NUM_THREADS=1 RAYON_NUM_THREADS=1 lake build \
             HexConformance HexMvFactorizationTests NautyFFI/nautyffi_tests hextruncatedseries_emit_fixtures \
             hexmvpoly_emit_fixtures hexrealformula_emit_fixtures hexsparsepoly_emit_fixtures \
             hexmodular_emit_fixtures hexpolyzgcd_emit_fixtures \
