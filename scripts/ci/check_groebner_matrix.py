@@ -13,6 +13,8 @@ cannot produce a false passing sanitizer check.
 from __future__ import annotations
 
 import json
+import hashlib
+import sys
 import os
 from pathlib import Path
 import platform
@@ -66,8 +68,11 @@ def main : IO UInt32 := do
     match Hex.Groebner.SparseBinaryConformance.checkRandom (seed+(if offsets then 7 else 0)) with
     | .error message => throw (IO.userError message)
     | .ok () => pure ()
+    let smallBefore ← sparseCounts
     if !Hex.Groebner.SparseBinaryConformance.runtimeChecks (seed+(if offsets then 7 else 0)) true then
       throw (IO.userError "forced sparse F2 runtime mismatch")
+    if (← sparseCounts).1 < smallBefore.1+18 then
+      throw (IO.userError "forced sparse F2 small-frame hooks unused")
   sparseOffsets false
   if !Hex.Groebner.SparseBinaryConformance.shapeChecks ||
       !Hex.Groebner.SparseBinaryConformance.cardinalityChecks ||
@@ -107,6 +112,9 @@ def run() -> None:
     if platform.system() != "Linux":
         print("compiled matrix variants require ELF --wrap; ordinary Lean and standalone C checks still apply")
         return
+    sys.path.insert(0, str(ROOT))
+    from scripts.bench.groebner_checks import source_identity
+    identity = source_identity()
     started = time.monotonic()
     profile = os.environ.get("HEX_GROEBNER_MATRIX_PROFILE", "regular")
     if profile not in {"regular", "forced", "packed"}:
@@ -1266,6 +1274,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
                      "-Wl,--wrap=lean_hex_groebner_search_monomial",
                      "-Wl,--wrap=lean_hex_groebner_compare_monomials", "-Wl,--wrap=lean_hex_groebner_lookup_trie", "-Wl,--wrap=lean_hex_groebner_validate_trie"] + libraries
         targets = []
+        variant_flags = {}
         for variant, extra in variants.items():
             module = "Check" + variant
             target = "check" + variant
@@ -1961,6 +1970,7 @@ def main : IO Unit := do
             if profile != "regular":
                 (directory / (module + ".lean")).write_text(profile_main(profile))
             extra = extra + defines
+            variant_flags[variant] = flags + extra
             config += f'''\ntarget probe{variant} pkg : FilePath := probeO pkg "{variant}" #{json.dumps(flags + extra)}
 lean_exe {target} where
   root := `{module}
@@ -1997,10 +2007,17 @@ def main (args : List String) : IO UInt32 := do
         (directory / "profile.json").write_text(json.dumps(dict(profile=profile,
             variants=names,defines=defines,sanitize=sanitize),indent=2)+"\n")
         (directory / "lakefile.lean").write_text(config)
-        print("matrix variants compiler:", subprocess.check_output([cc, "--version"], text=True).splitlines()[0], flush=True)
+        compiler_version = subprocess.check_output([cc, "--version"], text=True)
+        print("matrix variants compiler:", compiler_version.splitlines()[0], flush=True)
+        generated = ["lakefile.lean", "probe.c", *("Check"+name+".lean" for name in names)]
+        if usage_inputs: generated.append("Usage.lean")
+        generated_sha256 = {name: hashlib.sha256((directory/name).read_bytes()).hexdigest()
+                            for name in generated}
         build = subprocess.run(["lake", "build", *targets, *(["usage"] if usage_inputs else [])], cwd=directory)
         status = dict(profile=profile, variants=names, defines=defines, sanitize=sanitize,
-                      compiler=cc, build_exit_code=build.returncode, results=[])
+                      compiler=cc, compiler_version=compiler_version, variant_flags=variant_flags,
+                      generated_sha256=generated_sha256,
+                      build_exit_code=build.returncode, results=[], **identity)
         status_path = directory / "profile-status.json"
         status_path.write_text(json.dumps(status, indent=2)+"\n")
         build.check_returncode()
@@ -2023,6 +2040,7 @@ def main (args : List String) : IO UInt32 := do
             print(target, "ASan/UBSan" if sanitize else "ordinary", flush=True)
             result = subprocess.run(command, env=env)
             results.append(dict(variant=target.removeprefix("check"),exit_code=result.returncode))
+            assert source_identity() == identity
             status["results"] = results
             status_path.write_text(json.dumps(status, indent=2)+"\n")
             result.check_returncode()

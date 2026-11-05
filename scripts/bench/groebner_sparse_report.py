@@ -22,6 +22,38 @@ def mean(values):
     return math.exp(sum(math.log(value)for value in values)/len(values))
 
 
+def profile_receipt(cap,kind,compiler,variants,status):
+    profile=cap.json(f'checks/{kind}/{compiler}/profile-status.json')
+    defines={'regular':[], 'forced':['-DHEX_GROEBNER_FORCE_SPARSE_BINARY'],
+             'packed':['-DHEX_GROEBNER_KEEP_PACKED_BINARY']}[kind]
+    require(profile['profile']==kind and profile['defines']==defines and
+            profile['variants']==variants and profile['sanitize'] is True and
+            profile['build_exit_code']==0 and
+            profile['results']==[dict(variant=v,exit_code=0)for v in variants],
+            'committed profile receipt differs')
+    for key in ['source_commit','source_manifest_sha256','checks_manifest_sha256']:
+        require(profile[key]==status[key], 'profile source binding differs')
+    require(profile['compiler']==status['compiler'] and profile['compiler_version'].strip(),
+            'profile compiler binding missing')
+    base=['-O3','-g','-Wall','-Wextra','-Werror','-fPIC','-DLEAN_EXPORTING',
+          '-DHEX_GROEBNER_ENABLE_AVX512','-fsanitize=address,undefined',
+          '-fno-sanitize-recover=undefined','-fno-omit-frame-pointer']
+    extras=[[],['-DHEX_GROEBNER_NO_AVX512'],
+            ['-DHEX_GROEBNER_NO_AVX512','-DHEX_GROEBNER_NO_UINT128'],
+            ['-DHEX_GROEBNER_NO_AVX2'],['-DHEX_GROEBNER_NO_UINT128'],
+            ['-DHEX_GROEBNER_NO_AVX2','-DHEX_GROEBNER_NO_UINT128']]
+    require(profile['variant_flags']=={name:base+extra+defines
+            for name,extra in zip(variants,extras)}, 'profile variant flags differ')
+    generated=profile['generated_sha256']
+    expected={'lakefile.lean','probe.c',*('Check'+v+'.lean'for v in variants)}
+    if kind=='regular':expected.add('Usage.lean')
+    require(set(generated)==expected,
+            'profile generated inputs missing')
+    for name,digest in generated.items():
+        require(hashlib.sha256(cap.read(f'checks/{kind}/{compiler}/'+name)).hexdigest()==digest,
+                'profile generated input digest differs')
+
+
 def verification(cap,manifest):
     full=cap.json('checks/full/status.json')
     native=cap.json('checks/native/status.json')
@@ -32,16 +64,14 @@ def verification(cap,manifest):
     checks=hashlib.sha256(listing.encode()).hexdigest()
     runtime=hashlib.sha256(manifest['source_manifest'].encode()).hexdigest()
     identity=full[0]['source_commit'];rows=full+native
+    modern='def profile_main(' in cap.text('checks/sources/scripts/ci/check_groebner_matrix.py')
+    if modern:
+        for status in native:profile_receipt(cap,'regular',status['name'],variants,status)
     for kind in ['forced','packed']:
         for compiler in ['clang','gcc']:
             status=cap.json(f'checks/{kind}/{compiler}/{kind}-status.json')
-            if 'def profile_main(' in cap.text('checks/sources/scripts/ci/check_groebner_matrix.py'):
-                profile=cap.json(f'checks/{kind}/{compiler}/profile-status.json')
-                define='-DHEX_GROEBNER_FORCE_SPARSE_BINARY' if kind=='forced' else '-DHEX_GROEBNER_KEEP_PACKED_BINARY'
-                require(profile['profile']==kind and profile['defines']==[define] and
-                        profile['variants']==variants and profile['sanitize'] is True and
-                        profile['build_exit_code']==0 and profile['results']==status['results'],
-                        'committed profile receipt differs')
+            if modern:
+                profile_receipt(cap,kind,compiler,variants,status)
             require(status['build_exit_code']==0 and
                     [row['variant']for row in status['results']]==variants and
                     all(row['exit_code']==0 for row in status['results']),kind+' profile failed')
@@ -155,9 +185,12 @@ def render(cap):
         require(len(values)==2,'targeted case coverage differs')
         lines.append(f"| {name} | {mean(values):.4f} | "+', '.join(f'{v:.4f}'for v in values)+' |')
     lines+=['','The host is AMD EPYC 9455. Native production code uses Clang 21.1.8 and Lean-generated C uses SDK Clang 23.1.0 with Lean 4.35.0-rc3. Source blobs, complete outputs, build inputs, executable/compiler hashes, CPU assignment, host activity, all observations and failures are retained. Limits are 300 seconds, 8 GiB address space and 256 MiB per output file, with the fixed corpus’s large explicit parent allowances. The data do not establish timing or admission under library default budgets.','',
-        'Verification records all nine project gates and 36 strict Clang/GCC ASan/UBSan configurations: regular dispatch, forced sparse small/large frames and packed-only admission controls. Tests compare all rows, labels and eight counters, independent remainders, exact work/byte/input/output boundaries, malformed buffers, duplicate heads, shared inputs, near-UInt64 parity offsets, seeded frames with dozens of reducers and targets, and zero-accumulator reuse. Kernel replay and axiom audits remain separate from timed candidate production.','',
+        'Verification records all nine project gates and 36 strict Clang/GCC ASan/UBSan configurations: regular dispatch, forced sparse small/large frames and packed-only admission controls. Tests compare all rows, labels and eight counters, independent remainders, exact work/byte/input/output boundaries, malformed buffers, duplicate heads, shared inputs, near-UInt64 parity offsets and zero-accumulator reuse. Kernel replay and axiom audits remain separate from timed candidate production.','',
         'Certificate generation, independent native certification, kernel checking and full checked calls are excluded from these candidate timings. Finite-extension adapters, deterministic producer correctness/termination, full balanced and held-out comparator acceptance, equal-thread parallel comparisons and the overall-fastest gap remain open under issue #10987. Scientific claims use manual shared-host observations, never CI timings.','',
         f'Raw capsule `{cap.path.name}` has SHA-256 `{cap.sha256}`. Its per-payload hashes, exact runtime/check-source manifests, all 64 full-output comparisons and actual gate receipts are replayed by this generator. `--current` additionally requires the checkout’s runtime and verification sources to match the recorded snapshot. CI uses `--current-runtime` to bind runtime sources while replaying the recorded verification snapshot; updated gate receipts are assembled after those gates finish.','']
+    if 'def checkRandom' in cap.text('checks/sources/conformance/HexGroebner/SparseBinaryConformance.lean'):
+        lines.insert(-1, 'Seeded sparse frames exercise dozens of reducers and targets, reducer chains, reused target pivots and independent remainders. The committed profile generator records its source identity, compiler version, exact variant flags and hashes of every generated driver and build input.')
+        lines.insert(-1, '')
     return '\n'.join(lines),candidate,listing,[case for case in fixed if case['split']=='heldout']
 
 

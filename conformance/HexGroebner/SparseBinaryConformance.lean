@@ -185,9 +185,10 @@ def capChecks (nonce : Nat) (cap : Nat := 2^34) : Option Nat := do
       let head := if !target || i%3 == 0 then columns-512+4*(i%24)
         else columns-320+2*(i%8)
       let mut support := #[head]
+      if !target && i+1 < 24 then support := support.push (head+4)
       for _ in [:7] do
         state := (1664525*state+1013904223) % 2^32
-        let column := columns-192+state%192
+        let column := head+1+state%(columns-head-1)
         if !support.contains column then support := support.push column
       let some row := SparseRow.ofEntries field columns
           ((support.qsort (· < ·)).map fun j => (j,(1:UInt64))) | return none
@@ -211,6 +212,7 @@ def checkRandom (nonce : Nat) : Except String Unit := do
     for independent in [false,true] do
       let some reference := Elimination.attemptSparsePortable field limits columns er et sugars independent
         | throw "random sparse portable declined"
+      if reference.stats.reductions ≤ 32 then throw "random reducer chains unused"
       let actual := Elimination.attempt field limits columns ar nativeTargets sugars independent
       if !sameAttempt actual (some reference) then
         throw s!"random sparse result differs trial={trial} independent={independent}"
