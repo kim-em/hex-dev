@@ -9,6 +9,7 @@ import HexGroebner.Bench.Cauchy
 import HexGroebner.Bench.Bulk
 import HexGroebner.Bench.Products
 import HexGroebner.Bench.Primitives
+import HexGroebner.Bench.SparseBinary
 import HexGroebner.Bench.Continuation
 import HexGroebner.Bench.Columns
 import HexGroebner.Bench.Support

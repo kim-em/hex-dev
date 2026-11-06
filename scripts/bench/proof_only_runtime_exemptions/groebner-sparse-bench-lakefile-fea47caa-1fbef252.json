@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "1fbef2521c139867cced94d2492ee8a911c5f13e",
+  "reason": "Extends the exact previously admitted theory-companion rename transition from fea47caa0a9c4cdc271c9e126cc12cf4020b2994 to b43efd7ef2a80360e6be033d026e05df2276a45b. Comparing factorization_blocks at that admitted endpoint and this endpoint finds exactly one changed declaration: HexReleaseTests adds HexRCF.HandlerTests.Admission. That test is outside hexbz_factor_service and its runtime import closure. Other intervening changes register independent Groebner targets and optional HexRCF targets; this PR adds only HexGroebner.Bench.SparseBinary to HexGroebnerBenchSupport. None changes the package options, factorization executable, runtime libraries, native archives or local build helpers used by the measured factorization service. The factor-relevant library declaration order is unchanged."
+}
