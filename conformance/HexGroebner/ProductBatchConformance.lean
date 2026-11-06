@@ -91,6 +91,23 @@ def malformedChecks (seed : Nat) : Bool := Id.run do
     let .ok _ := next.result | return false
     table := next.table
   let support := Packed.push .u32 {} 0
+  -- Raw metadata need not describe a lawful arena. The native provider must
+  -- nevertheless match its total packed reference, including workspace bytes.
+  for bits in [0,1,63,64] do
+    let metadata := Native.write table.metadata 8 0 18446744073709551615
+    let metadata := Native.write metadata 8 8 18446744073709551615
+    let metadata := Native.write metadata 8 16 12345678901234567890
+    let input := { table with metadata, hashBits := bits }
+    for allowance in [0,1,7,4096,1000000] do
+      if !check input support 1 0 1 100 1000000 (input.work+allowance) true then return false
+      let actual := input.attempt .product 0 1 100 1000000 (input.work+allowance) true
+      let expected := input.attemptPortable .product 0 1 100 1000000 (input.work+allowance) true
+      match actual,expected with
+      | .accepted a,.accepted b =>
+        if !same ⟨a.result.map (fun id => Packed.push .u32 {} id.toUInt64),a.table⟩
+            ⟨b.result.map (fun id => Packed.push .u32 {} id.toUInt64),b.table⟩ then return false
+      | .deferred a,.deferred b => if !same ⟨.ok {},a⟩ ⟨.ok {},b⟩ then return false
+      | _,_ => return false
   for input in [table,{ table with arity := 2^90 },{ table with count := 2^90 },
       { table with work := 2^90 },{ table with hashBits := 2^90 },
       { table with exponents := table.exponents.push 0 },

@@ -288,6 +288,18 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
   let some prepared := Native.Monomial.prepare code table.width.bytes.toUInt8 table.arity.toUInt64
       table.count.toUInt64 a.toUInt64 b.toUInt64 table.exponents workspace
     | return ⟨.error ⟨.exponent, work⟩, table⟩
+  -- Product metadata combines the two immutable cached rows. For reduced
+  -- hash widths, retain the full prepared hash so workspace bytes still agree.
+  -- The table contract requires API-produced degree/mask/hash metadata.
+  let prepared := if operation == .product then Id.run do
+    let degree := metaWord table.metadata (3*a) + metaWord table.metadata (3*b)
+    let mask := table.mask a ||| table.mask b
+    let prepared := Native.write prepared 8 (table.arity*4) degree.toNat
+    let prepared := Native.write prepared 8 (table.arity*4+8) mask.toNat
+    return if table.hashBits == 64 then
+      Native.write prepared 8 (table.arity*4+16) (table.hashAt a+table.hashAt b).toNat
+    else prepared
+  else prepared
   -- Match the portable call's state when entering its intern operation.
   let table := { table with work }
   work := work + table.arity
