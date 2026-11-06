@@ -385,6 +385,13 @@ run_tuple() {
       echo "FAIL: $lib :: sparse buffer evidence replay failed"
       return 1
     fi
+    if ! python3 scripts/bench/groebner_scatter_report.py \
+        --archive reports/bench-results/raw/f4-wide-production-8b78fab53166.parts.json \
+        --heldout reports/bench-results/raw/f4-wide-heldout-8b78fab53166.parts.json \
+        --report reports/bench-results/hexgroebner-wide-prime.md --check; then
+      echo "FAIL: $lib :: wide-prime measured-snapshot evidence replay failed"
+      return 1
+    fi
     if ! python3 scripts/bench/groebner_prime_report.py \
         --archive reports/bench-results/raw/f4-prime-current-c4cb8197a53d.tar.xz \
         --replay reports/bench-results/raw/f4-delayed-m31-replay-fa4f77c3cf24.tar.xz \

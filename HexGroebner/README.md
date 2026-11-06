@@ -262,7 +262,14 @@ Each leading column is visited once, so each accumulator cell receives at most
 keep each cell below `p^2`; a product and cell sum is below `2*p^2 < 2^63`,
 and one exact correction preserves its residue modulo `p`. Residues are taken before zero tests,
 inversion and normalization. AVX2 processes exact four-lane products and sums,
-with guarded contiguous loads/stores or gathers; other hosts use scalar updates.
+with guarded contiguous loads/stores or gathers. Four-byte coefficients also
+use eight-lane AVX-512F updates when CPU support and OS register state permit;
+consecutive columns use vector loads/stores and other columns use gather/scatter.
+Rows with fewer than eight updates retain AVX2, and other hosts use scalar updates.
+This delayed-reduction dispatch is enabled independently of the opt-in sixteen-lane
+ordinary sparse scan described below. Measurements on the AMD EPYC 9455 support
+this choice; performance on other AVX-512 microarchitectures remains unmeasured.
+Native builds defining `HEX_GROEBNER_NO_AVX512` retain AVX2 without this path.
 All outputs, labels and logical counters agree with the reference route.
 The separate dimension ceilings are 131072 columns, 131072 known reducers and
 4096 targets, subject to a joint `2^38` conservative shape bound and `2^34`

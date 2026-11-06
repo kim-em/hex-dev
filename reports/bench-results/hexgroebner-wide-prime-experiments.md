@@ -1,5 +1,9 @@
 # Wide-prime preliminary experiments
 
+This is a narrative account of the retained preliminary data; its numerical
+summaries are not generated or replayed by the report checker. The selected
+implementation's separate report is replayed against its raw evidence.
+
 The gather-only eight-lane implementation is retained as an unselected experiment. Reimer-8 over 𝔽₂₁₄₇₄₈₃₆₄₇ improved in both adjacent comparison orders (candidate ratios 0.7766 and 0.8868), but contiguous wide-prime kernels regressed by 8–9%. The selected implementation adds contiguous loads/stores and preserves AVX2 for short rows; its evidence is in [the wide-prime report](hexgroebner-wide-prime.md). Ratios from these stages are not multiplied.
 
 The preliminary archive retains all 128 system processes and 64 complete-output/counter comparisons, all 24 matched kernel observations and flags, the four targeted Reimer processes, source/compiler identities, boundary-test records and the unsuccessful held-out campaign.

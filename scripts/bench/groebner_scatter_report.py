@@ -96,6 +96,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ['archive','heldout','report']:parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--check',action='store_true');parser.add_argument('--current',action='store_true')
+    parser.add_argument('--validation',type=Path,help='new verification of the identical measured runtime')
     args=parser.parse_args();cap=load_capsule(args.archive)
     candidate=source(cap,'candidate');baseline=source(cap,'baseline')
     checks=verification(cap,candidate);fixed=fixed_inputs(cap);functional(cap,candidate,baseline)
@@ -123,6 +124,18 @@ def main():
     lines+=['',f"The 27 held-out inputs have 108 successful processes and 54 equal complete bases. The family-balanced Hex/msolve process ratio is {result['family_balanced_geomean']:.4f}×; peak RSS is {result['peak_rss_kib']['A']}/{result['peak_rss_kib']['B']} KiB.",'',
         'The comparator is msolve 3672113ee2c696a2ac9c637636e0f7214f500ba1, Clang 23.1.3, -O3 -march=native, full reduced output, linear algebra mode 2 and one thread. Candidate production excludes certificate generation, independent native certification and kernel checking. Full balanced solved coverage, equal-thread parallel comparisons, finite extensions, producer correctness/termination and fastest-open-source acceptance remain required by issue #10987. These data establish no language/runtime limitation. Scientific claims never rely on CI timing.','',f'Held-out stream SHA-256: `{held.sha256}`.','']
     text+='\n'.join(lines)
+    if args.validation:
+        validated=load_capsule(args.validation)
+        bound=source(validated,'candidate')
+        require(all(bound[key]==candidate[key] for key in [
+            'source_manifest','binary_sha256','compilers','native_options','compiler_inputs']),
+            'validation changes the measured producer or compiler inputs')
+        checks=verification(validated,bound)
+        for compiler in ['clang','gcc']:
+            require(validated.text('checks/regular/'+compiler+'.log').count(
+                'PASS direct AVX512F guard-page wide-prime cases: 108')>=2,
+                'current protected-boundary tests missing')
+        print('PASS current validation capsule SHA-256 '+validated.sha256)
     if args.current:
         from scripts.bench.groebner_checks import CHECKS,source_identity
         from scripts.bench.groebner_measure import FAMILY

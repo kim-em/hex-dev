@@ -930,14 +930,22 @@ static int delayed_guard_test(void) {
    ctx.dense=matrix_zeros(128*8);
    uint64_t expected[128],factor=ctx.p-1;
    for(unsigned col=0;col<128;++col) {
-    expected[col]=width==4?ctx.modulus_squared-ctx.p-col:UINT64_MAX-(UINT64_C(1)<<40)+col;
+    expected[col]=width==4?0:UINT64_MAX-(UINT64_C(1)<<40)+col;
     delayed_write(&ctx,col,expected[col]);
    }
    for(unsigned j=0;j<n;++j) {
     matrix_write(cols+j*4,4,j*stride);
     matrix_write(vals+j*width,width,ctx.p-1-j);
     if(j) {
-     expected[j*stride]+=factor*(ctx.p-1-j);
+     /* Every full packet mixes no correction, correction, and the exact
+        p^2 boundary. Select by entry, so strided packets mix lanes too. */
+     uint64_t product=factor*(ctx.p-1-j);
+     if(width==4) {
+      expected[j*stride]=j%3==0?ctx.modulus_squared-ctx.p-j:
+          j%3==1?j:ctx.modulus_squared-product;
+      delayed_write(&ctx,j*stride,expected[j*stride]);
+     }
+     expected[j*stride]+=product;
      if(width==4 && expected[j*stride]>=ctx.modulus_squared) expected[j*stride]-=ctx.modulus_squared;
     }
    }
