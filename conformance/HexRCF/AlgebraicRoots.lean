@@ -147,7 +147,7 @@ run_elab do
   let calls ← IO.mkRef 0
   let prepareBase target := do
     calls.modify (· + 1)
-    Coefficients.prepare target
+    Coefficients.prepareField target
   let limit := CommonTactic.rcf.algebraic.commonDegree.get (← getOptions)
   let .ok _ ← (AlgebraicRoot.identify q(Real.sqrt (3 + Real.sqrt 2))
       q(3 + Real.sqrt 2) 2 prepareBase limit (some cache)).run |
@@ -224,7 +224,7 @@ run_elab do
   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let .error (.budget exhausted) ←
       withOptions (CommonTactic.rcf.algebraic.commonDegree.set · 2) <|
-        Coefficients.prepare q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) > 0) |
+        Coefficients.prepareField q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) > 0) |
     throwError "nested root did not exhaust its degree admission"
   unless exhausted.dimension == .exponent && exhausted.limit == 2 &&
       exhausted.consumed == 2 && exhausted.requested == 4 do
@@ -233,11 +233,11 @@ run_elab do
       (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "nested root degree exhaustion changed caller state"
   let .ok repeated ← withOptions (CommonTactic.rcf.algebraic.commonDegree.set · 4) <|
-      Coefficients.prepare q(∀ x : ℝ,
+      Coefficients.prepareField q(∀ x : ℝ,
         x ^ 2 + Real.sqrt (Real.sqrt 2) - (2 : ℝ) ^ (1 / 4 : ℝ) = x ^ 2) |
     throwError "rational and algebraic aliases charged the same selected anchor twice"
   let _ ← repeated.proveReplay
-  let .ok guarded ← Coefficients.prepare q(∀ x : ℝ,
+  let .ok guarded ← Coefficients.prepareField q(∀ x : ℝ,
       x ^ 2 + Real.sqrt (1 / (4 + Real.sqrt 2)) > 0) |
     throwError "guarded root source failed preparation"
   let mut found := false
@@ -265,7 +265,7 @@ run_elab do
     let before ← getMCtx
     let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
     let outcome ← tryCatchRuntimeEx
-      (Except.ok <$> Coefficients.prepare target) fun error => do
+      (Except.ok <$> Coefficients.prepareField target) fun error => do
         if error.isRuntime || error.isInterrupt then throw error
         pure (.error (← error.toMessageData.toString))
     if zeroTargets.contains target then
@@ -321,11 +321,11 @@ run_elab do
 
 run_elab do
   let .ok selected ← (AlgebraicRoot.identify q(Real.sqrt (3 + Real.sqrt 2))
-      q(3 + Real.sqrt 2) 2 Coefficients.prepare
+      q(3 + Real.sqrt 2) 2 Coefficients.prepareField
       (CommonTactic.rcf.algebraic.commonDegree.get (← getOptions))).run |
     throwError "correct root source failed authentication"
   let .ok conjugate ← (AlgebraicRoot.identify q(Real.sqrt (3 - Real.sqrt 2))
-      q(3 - Real.sqrt 2) 2 Coefficients.prepare
+      q(3 - Real.sqrt 2) 2 Coefficients.prepareField
       (CommonTactic.rcf.algebraic.commonDegree.get (← getOptions))).run |
     throwError "positive conjugate fixture failed authentication"
   let p := selected.value.toAlgebraic.p
@@ -348,7 +348,7 @@ run_elab do
 
 run_elab do
   let target := q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 2) < 0)
-  let prepared ← match ← Coefficients.prepare target with
+  let prepared ← match ← Coefficients.prepareField target with
     | .ok prepared => pure prepared
     | .error error => throwError "false fixture failed preparation: {error.toMessageData}"
   letI : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked

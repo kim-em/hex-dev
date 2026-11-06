@@ -5,16 +5,13 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.RepresentationSpecialize
+public import HexRCF.RealCoefficients.CellCheck
 public import HexRealClosureTheory.TransportPower
 
 public section
 namespace Hex.RCF.RealCoefficients.RepresentationCarrier
 open Hex Hex.RealFormula HexPolyTheory.Interpret
 variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Mul E]
-
-/-- Product before squarefree preparation; zero atoms are omitted. -/
-@[expose] def product (ps : List (DensePoly E)) : DensePoly E :=
-  (ps.filter (fun p => !p.isZero)).foldr (· * ·) 1
 
 /-- Omitting structurally zero factors preserves root coverage even when the
 interpretation is noninjective. A retained factor that maps to zero makes

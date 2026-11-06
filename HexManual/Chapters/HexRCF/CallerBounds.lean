@@ -117,27 +117,31 @@ search. This fixed bound makes no such claim. Finite proofs from containment
 need neither hypothesis.
 
 For the named constants below, the caller uses existing Mathlib theorems
-to supply `π ∈ [3, 63/20]` and `exp 1 ∈ [5/2, 11/4]`. These bounds suffice
-for the displayed finite proofs, including the original nonzero divisor
-`4 − π`. The imports are `Mathlib.Analysis.Real.Pi.Bounds` and
+to supply a fixed twenty-decimal interval for `π` and
+`exp 1 ∈ [5/2, 11/4]`. A coarse interval `π ∈ [3, 63/20]` already suffices
+for the first square inequality and the original divisor `4 − π`.
+The more precise interval also settles the comparisons needed to find and
+check roots. The imports are `Mathlib.Analysis.Real.Pi.Bounds` and
 `Mathlib.Analysis.Complex.ExponentialBounds`. These constant callbacks do
 not certify arbitrary requested widths or a convergent search.
 
 ```lean
-private def callerPiBounds (_ : Rat) : Bounds :=
-  ⟨3, mkRat 63 20, by norm_num⟩
+@[expose] private def callerPiBounds (_ : Rat) : Bounds :=
+  ⟨mkRat 314159265358979323846 100000000000000000000,
+    mkRat 314159265358979323847 100000000000000000000, by decide⟩
 private def callerExpBounds (_ : Rat) : Bounds :=
   ⟨mkRat 5 2, mkRat 11 4, by norm_num⟩
 
-@[rcf_constant] private def callerPi :
+@[expose, rcf_constant] private def callerPi :
     Registration Real.pi where
   version := 1
   approximation := callerPiBounds
   containment δ _ := by
-    norm_num [Contains, callerPiBounds]
-    constructor
-    · exact Real.pi_gt_three.le
-    · linarith [Real.pi_lt_d2]
+    have lower := Real.pi_gt_d20.le
+    have upper := Real.pi_lt_d20.le
+    norm_num at lower upper
+    norm_num [Contains, callerPiBounds, mkRat]
+    exact ⟨lower, upper⟩
 
 @[rcf_constant] private def callerExp :
     Registration (Real.exp 1) where
@@ -155,6 +159,11 @@ example : ∃ x : ℝ,
     x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
 example : ∀ x : ℝ,
     x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 8000000 in
+example : ∃ x : ℝ,
+    x ^ 2 = Real.pi ∧ 1 < x ∧ x < 2 := by rcf
 
 section
 set_option maxRecDepth 16384
@@ -196,6 +205,30 @@ end
 example : ∀ x : ℝ,
     x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
 ```
+
+The existential example finds a root; the caller supplies no witness.
+It raises `maxRecDepth` and `maxHeartbeats` as shown in the example;
+the complete polynomial certificate is not claimed to elaborate under Lean's
+default resource settings.
+The tactic checks the complete roots and signs of the equation and both
+inequalities, and obtains one ordinary real point satisfying all three.
+The same path handles repeated roots and literal-dyadic `Ioc` guards; see the
+[automatic root regressions](../../../conformance/HexRCF/PolynomialTactic.lean)
+and their [fresh ordinary-import audit](../../../conformance/HexRCF/PolynomialTacticProofs.lean).
+The computation uses fixed polynomial coordinates and authenticated signs,
+without assuming that registered constants form an executable ordered field.
+False verdicts are diagnostics, and unresolved comparisons or exhausted
+isolation depth stop the attempt. The existing direct containment examples
+retain their proof path. An existential conjunction fixing `x` by an explicit
+closed equality also retains that direct path, even with nonlinear conditions.
+Quadratic existential inequalities and equations already identical at the
+designated registered witness also retain direct containment. A nonlinear
+equation requiring a different witness selects complete cells, as do atoms
+of degree above two without an explicit equality witness. Quadratic universal
+and linear existential goals use direct containment.
+Selection occurs before search, and a failure never retries another method.
+This is bounded certified search; registering a
+constant alone promises neither eventual separation nor a total decision procedure.
 
 These additional examples combine supplied bounds with square and cube roots
 of algebraic bases. The real-power example takes the positive cube root of

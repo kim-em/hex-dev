@@ -1005,6 +1005,16 @@ literals in ordinary kernel equality proofs. Inside a registered expression,
 source divisors must be closed reals or rationals; binder-dependent and
 other-carrier divisions are outside this frontend's supported syntax.
 
+Within the supplied frontend, method selection precedes proof search. Explicit
+closed equality witnesses retain direct containment. Quadratic existential
+goals also retain their designated registered witness when their variable
+equalities are definitionally identities at that witness; inequalities alone
+do not force root isolation. A nontrivial nonlinear equation selects complete
+cells, as do atoms of degree above two without an explicit equality witness.
+Quadratic universal and linear existential goals retain direct containment.
+Recognition strips expression metadata consistently. Neither method retries
+the other after a false verdict, replay failure or execution exhaustion.
+
 Every inverse/division retains the original nonzero-divisor obligations,
 including divisions inside coefficients and divisions erased by cancellation
 or multiplication by zero. The extension requires ordinary-kernel proofs of
@@ -1518,7 +1528,14 @@ their own certificates. The ordinary tactic goals in
 [`FiniteNestedSources.lean`](../../conformance/HexRCF/FiniteNestedSources.lean)
 exercise combined degree-eight and nested degree-sixteen presentations.
 
-The explicit legacy `Coefficients.prepare`/`Environment` interface still
+`Coefficients.prepare` returns authenticated finite source coordinates.
+Their `build` method produces a frozen certificate for either verdict; `check`
+revalidates the source and all original guards before checking that certificate
+and composing a proof of the original goal. A false certificate remains
+diagnostic. `Replay.checkCells` exposes the corresponding finite Boolean check
+and its soundness/domain theorems without common-field irreducibility.
+
+The explicit legacy `Coefficients.prepareField`/`Environment` interface still
 requires common-polynomial irreducibility. It first reuses a matching
 `ZPoly.CheckedIrreducible` instance for the exact quoted `DensePoly.ofCoeffs`
 literal, checking its runtime binding, type, axiom dependencies and
@@ -1532,10 +1549,29 @@ checks both automatic finite success and the separate legacy contract. The
 source-pinned construction-cost experiment concerns that legacy certificate
 interface, not the automatic finite tactic.
 
-Finite accepted proofs do not yet establish the full completeness contract.
-Public preparation/build/replay alignment and proofs that valid algebraic
-production terminates and its certificates are accepted remain obligations
-of the [owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358).
+`FieldCells.produce` constructs complete finite evidence directly for the
+grouped source polynomials. `Replay.buildCellsTotal_spec` proves that each
+valid prepared exact-field input produces a certificate accepted by
+`checkCells` with the correct true or false verdict. Original divisor validity
+is an input condition; coverage, degree preservation, recorded signs, ordinary
+real cells and certificate acceptance are proved conclusions. Native production
+uses the checked field and its existing child laws; finite acceptance does not.
+The explicit `Coordinates.buildTotal` and `proveTotal` methods connect complete
+production to the authenticated original target through the same frozen check.
+Bounded production uses these same grouped polynomials and complete operand
+inventory; `FieldSpecialize.grouped_eq` proves exact agreement with the existing
+native field compiler. `Field.common_real` and `Field.common_eval` prove that
+common-field construction retains real generators and the original coefficient
+values. Frozen source proofs do not invoke that construction.
+`CommonPresentation.build_complete` derives source-presentation acceptance from
+actual source equations and strict selected-root margins, using the existing
+sign-table builder. Complete source construction must still supply these
+premises and the printable selected-root header.
+
+This prepared-input result does not establish the full completeness contract.
+Complete authenticated source construction and progress along all required
+bounded resource schedules remain obligations of the
+[owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358).
 Execution limits do not weaken those mathematical obligations. The finite
 path does not require a new general common-polynomial irreducibility
 quotation API before supported automatic algebraic goals can be proved.

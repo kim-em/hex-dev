@@ -8,6 +8,7 @@ module
 public meta import HexRCF.Tactic
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.AlgebraicBounds
+public meta import HexRCF.RealCoefficients.PolynomialLiteral
 public import HexRCF.RealCoefficients.Registration
 public meta import Mathlib.Tactic.Linarith
 public meta import Mathlib.Tactic.NormNum.RealSqrt
@@ -295,14 +296,33 @@ private partial def equalityWitness? (expression : Expr) : Option Expr := do
       return value
   none
 
+private def existentialBody? (expression : Expr) : Option Expr := do
+  let expression := expression.consumeMData
+  unless expression.isAppOfArity ``Exists 2 do none
+  let .lam _ _ body _ := expression.getAppArgs[1]!.consumeMData | none
+  return body
+
+/-- Recognize an equation requiring root construction before either solver
+runs. Definitional identities at the designated witness retain direct bounds.
+This is syntax/identity recognition, not a failed proof search. -/
+private partial def needsRoot (statement witness : Expr) : MetaM Bool := do
+  let statement := statement.consumeMData
+  if statement.isAppOfArity ``And 2 || statement.isAppOfArity ``Or 2 ||
+      statement.isAppOfArity ``Iff 2 then
+    return (← needsRoot statement.getAppArgs[0]! witness) ||
+      (← needsRoot statement.getAppArgs[1]! witness)
+  if statement.isAppOfArity ``Not 1 then return ← needsRoot statement.appArg! witness
+  unless statement.isAppOfArity ``Eq 3 && statement.hasLooseBVars do return false
+  let arguments := statement.getAppArgs
+  return !(← withNewMCtxDepth <| withTransparency .reducible <|
+    isDefEq (arguments[1]!.instantiate1 witness) (arguments[2]!.instantiate1 witness))
+
 -- The supported source has exactly one quantifier. Universal goals never
 -- need a witness, and explicit equality witnesses need no default enclosure.
 private def witnessSource? (source : Reify.Source) (entries : Array (Name × Expr)) :
     MetaM (Option Expr) := do
-  let original := source.original.consumeMData
-  unless original.isAppOfArity ``Exists 2 do return none
-  if let .lam _ _ statement _ := original.getAppArgs[1]!.consumeMData then
-    if (equalityWitness? statement).isSome then return none
+  let some statement := existentialBody? source.original | return none
+  if (equalityWitness? statement).isSome then return none
   Reify.firstNamed? (entries.map Prod.snd) source.coefficients
 
 /-- Freeze supplied bounds and discharge every source guard before proof search.
@@ -371,10 +391,58 @@ private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
     unless rest.isEmpty do throwError "rcf: supplied bounds did not establish the goal"
   return ← instantiateMVars goal
 
-/-- Propose an ordinary proof from frozen containment facts. Nonlinear proof
-search is bounded by Lean's execution limits and may fail without a verdict.
-It neither calls root search nor assumes an ordered field of registered values. -/
+/-- Assemble complete real-cell evidence after source, provider and original
+divisor preparation. A frozen replay proof supplies the shared source formula. -/
+private def buildPolynomial (prepared : Prepared)
+    (formula : Hex.RealFormula.QF (prepared.source.coefficients.size + 1))
+    (quantifier : Hex.RealFormula.Quantifier) : MetaM Certificate := do
+  let n := prepared.source.coefficients.size
+  if size : prepared.coefficients.size = n then
+    let bounds : Fin n → Bounds := fun i => prepared.coefficients[i.val]'(by omega) |>.bounds
+    let fallback ← mkAppM ``Bounds.singleton #[← ratExpr 0]
+    let boundsExpr ← FieldLiteral.finiteExpr (mkConst ``Bounds)
+      (prepared.coefficients.map (·.literal)) fallback
+    let sourceExpr ← whnf prepared.source.formula
+    unless sourceExpr.isAppOfArity ``Hex.RealFormula.Prenex.quant 3 do
+      throwError "rcf: polynomial source is not a quantified shared formula"
+    let matrix ← whnf sourceExpr.getAppArgs[2]!
+    unless matrix.isAppOfArity ``Hex.RealFormula.Prenex.matrix 2 do
+      throwError "rcf: polynomial source has no shared matrix"
+    let formulaExpr := matrix.getAppArgs[1]!
+    let containmentType ← withLocalDeclD `i (mkApp (mkConst ``Fin) (mkNatLit n)) fun i => do
+      mkForallFVars #[i] (← mkAppM ``Contains
+        #[mkApp boundsExpr i, mkApp prepared.source.valuation i])
+    let contained ← FieldLiteral.proveFinCases containmentType (prepared.coefficients.map (·.proof))
+    let depth := FieldLiteral.rcf.algebraic.directDepth.get (← getOptions)
+    let data ← match PolynomialBuild.buildResult bounds formula depth with
+      | .ok data => pure data
+      | .error .radical => throwError "rcf: proposed polynomial radical failed replay"
+      | .error .query => throwError "rcf: polynomial query production remains unresolved"
+      | .error .isolation => throwError "rcf: polynomial root isolation endpoint or depth search exhausted"
+      | .error .signs => throwError "rcf: polynomial coefficient signs remain unresolved in supplied bounds"
+      | .error .replay => throwError "rcf: polynomial cell certificate failed replay"
+    let proof ← PolynomialLiteral.check bounds formula quantifier data boundsExpr
+      prepared.source.valuation contained formulaExpr
+    return ⟨prepared, proof⟩
+  else throwError "rcf: prepared coefficient count differs from the source"
+
+/-- Select proof construction before search. The direct containment path uses
+ordinary nonlinear arithmetic; the cell path checks a complete finite proposal. -/
 private def buildCore (prepared : Prepared) : MetaM Certificate := do
+  let sourceFormula ← FieldRuntime.evalFormula prepared.source.coefficients.size prepared.source.formula
+  let .quant quantifier (.matrix formula) := sourceFormula |
+    throwError "rcf: expected one real quantifier over a matrix"
+  let degree := formula.degree (Fin.last prepared.source.coefficients.size)
+  let statement := existentialBody? prepared.source.original
+  let explicitWitness := (statement.bind equalityWitness?).isSome
+  let rootEquation ← match statement, prepared.witness with
+    | some body, some witness => needsRoot body witness.source
+    | some _, none => pure (!explicitWitness)
+    | _, _ => pure false
+  -- Choose before either proof search starts. Retain quadratic default-witness
+  -- bounds, including identities such as x² = c² at x = c.
+  if !explicitWitness && ((quantifier == .existsReal && 1 < degree && rootEquation) || 2 < degree) then
+    return ← buildPolynomial prepared formula quantifier
   -- Preserve only source variables and the hypotheses used by its checked
   -- alias equivalence. Unrelated caller hypotheses cannot settle the search.
   let roots := #[prepared.source.original, prepared.source.proof,

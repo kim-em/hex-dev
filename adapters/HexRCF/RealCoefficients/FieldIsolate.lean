@@ -16,7 +16,7 @@ no semantic proof obligation. -/
 namespace Hex.RCF.RealCoefficients.FieldIsolate
 
 variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
-  [Mul E] [NatCast E] [Neg E] [Inv E]
+  [Mul E] [NatCast E]
 
 private def count? (sign : E → Int) (point : Dyadic → E)
     (head : DensePoly E) (total : TarskiCertificate E E Unit)
@@ -103,22 +103,40 @@ private def separate? (sign : E → Int) (point : Dyadic → E)
       let tail ← separate? sign point head total fuel (right' :: rest)
       some (left' :: tail)
 
+/-- Continue bounded bisection from a proposed total root-count query.
+The caller checks the resulting isolation and every required sign separately. -/
+def fromQuery? (sign : E → Int) (point : Dyadic → E)
+    (head : DensePoly E) (total : TarskiCertificate E E Unit)
+    (depth : Nat := 128) : Option IsolationCert :=
+  if total.value < 0 then none
+  else if total.value == 0 then some ⟨#[]⟩
+  else do
+    let (lower, upper) ← bracket? sign point head total 32 0
+    let intervals ← visit? sign point head total depth lower upper total.value
+    let intervals ← separate? sign point head total intervals.length intervals
+    some ⟨intervals.toArray⟩
+
+/-- Fraction-free root-interval proposals over ordinary coefficient-ring
+arithmetic. The normalizer is explicit; no inverse operation is required.
+Missing or unresolved signs must be rejected by the enclosing finite replay. -/
+def proposeWith? [Neg E] (sign : E → Int) (point : Dyadic → E)
+    (normalize : DensePoly E → E × DensePoly E)
+    (head : DensePoly E) (depth : Nat := 128) : Option IsolationCert :=
+  match TarskiCertificate.certify sign (EndpointSigns.ofSign sign) normalize
+      () head (1 : DensePoly E) .negInf .posInf with
+  | none => none
+  | some total => fromQuery? sign point head total depth
+
 /-- A bounded bisection search over exact root counts. `depth` bounds nested
 bisection; the default preserves the existing 128-level attempt. Failure
 returns no proposal. Every returned interval is still checked by replay. -/
-def propose? (sign : E → Int) (point : Dyadic → E)
+def propose? [Neg E] [Inv E] (sign : E → Int) (point : Dyadic → E)
     (head : DensePoly E) (depth : Nat := 128) : Option IsolationCert :=
   match Sturm.prepare sign head .negInf .posInf with
   | none => none
   | some domain =>
       let total : TarskiCertificate E E Unit :=
         Sturm.certifyPrepared () domain (1 : DensePoly E)
-      if total.value < 0 then none
-      else if total.value == 0 then some ⟨#[]⟩
-      else do
-        let (lower, upper) ← bracket? sign point head total 32 0
-        let intervals ← visit? sign point head total depth lower upper total.value
-        let intervals ← separate? sign point head total intervals.length intervals
-        some ⟨intervals.toArray⟩
+      fromQuery? sign point head total depth
 
 end Hex.RCF.RealCoefficients.FieldIsolate

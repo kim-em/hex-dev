@@ -7,6 +7,7 @@ module
 
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Replay
+public meta import HexRCF.RealCoefficients.FieldCellProgress
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FiniteLiteral
 public meta import HexRCF.RealCoefficients.FieldCompile
@@ -235,6 +236,77 @@ meta def prove (prepared : Coordinates) : MetaM Expr := restoreOnFailure do
     prepared.valuesExpr prepared.formulaExpr prepared.values prepared.formula
     prepared.quantifier
   prepared.compose fixed
+
+/-- The exact sentence, ordered coefficient coordinates and original divisors
+expected by frozen replay. Source expressions are authenticated separately. -/
+meta def input (prepared : Coordinates) : Replay.Input prepared.polynomial prepared.square
+    prepared.witness prepared.precision Unit prepared.arity := {
+  values := prepared.values
+  formula := prepared.formula
+  quantifier := prepared.quantifier
+  divisors := prepared.divisors
+  context := () }
+
+/-- Check a supplied finite certificate against independently authenticated
+source coordinates. Check every original divisor before replay, even for an
+empty domain or constant formula. No root or sign production is performed. -/
+meta def check (prepared : Coordinates)
+    (certificate : Replay.Certificate prepared.polynomial prepared.square prepared.witness
+      prepared.precision Unit prepared.arity) : MetaM Expr := restoreOnFailure do
+  prepared.checkDomains
+  match Replay.checkCells prepared.input certificate with
+  | .error error => throwError "rcf: prepared finite replay failed: {repr error}"
+  | .ok false =>
+    match prepared.quantifier with
+    | .forallReal => throwError "rcf: the universal sentence is false on the prepared cells"
+    | .existsReal => throwError "rcf: the existential sentence is false on the prepared cells"
+  | .ok true => pure ()
+  let fixed ← FiniteLiteral.check prepared.polynomialExpr prepared.rootExpr
+    prepared.valuesExpr prepared.formulaExpr prepared.formula prepared.quantifier certificate.data
+  prepared.compose fixed
+
+/-- Authenticate the source and all original guards, then produce a frozen
+certificate bound to their exact order and sentence. Both verdicts are valid
+outputs; checking a false certificate never produces a proof of the goal. -/
+meta def build (prepared : Coordinates) : MetaM
+    (Replay.Certificate prepared.polynomial prepared.square prepared.witness
+      prepared.precision Unit prepared.arity) := restoreOnFailure do
+  prepared.checkDomains
+  let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked
+  let data ← FiniteLiteral.build prepared.values prepared.formula
+    prepared.quantifier prepared.divisors
+  let certificate : Replay.Certificate prepared.polynomial prepared.square prepared.witness
+      prepared.precision Unit prepared.arity := ⟨prepared.input, data⟩
+  match Replay.checkCells prepared.input certificate with
+  | .error error => throwError "rcf: prepared finite construction failed replay: {repr error}"
+  | .ok _ => return certificate
+
+/-- Run the complete algebraic producer explicitly. Unlike `build`, this
+entry point has no finite root-refinement budget. Interruption is polled before
+and after native production; the same frozen checker validates either verdict. -/
+meta def buildTotal (prepared : Coordinates) : MetaM
+    (Replay.Certificate prepared.polynomial prepared.square prepared.witness
+      prepared.precision Unit prepared.arity) := restoreOnFailure do
+  prepared.checkDomains
+  let _ : ZPoly.CheckedIrreducible prepared.polynomial := prepared.checked
+  if real : prepared.square.meetsRealAxis = true then
+    let options ← getOptions
+    let depth := FieldLiteral.rcf.algebraic.directDepth.get options
+    Core.checkInterrupted
+    let result := Replay.buildCellsTotal prepared.input real depth
+    Core.checkInterrupted
+    let certificate ← match result with
+      | .error error => throwError "rcf: complete algebraic construction failed: {repr error}"
+      | .ok certificate => pure certificate
+    match Replay.checkCells prepared.input certificate with
+    | .error error => throwError "rcf: complete algebraic construction failed replay: {repr error}"
+    | .ok _ => return certificate
+  else throwError "rcf: prepared coefficient field has no checked real embedding"
+
+/-- Quote the same frozen ordinary-kernel proof after explicit complete
+algebraic production. False remains a diagnostic from `check`. -/
+meta def proveTotal (prepared : Coordinates) : MetaM Expr := restoreOnFailure do
+  prepared.check (← prepared.buildTotal)
 
 end Coordinates
 
