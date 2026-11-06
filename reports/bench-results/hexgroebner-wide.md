@@ -1,50 +1,41 @@
-# Larger packed F₂ matrix frames
+# Eight-lane wide-prime delayed updates
 
-The optional packed F₂ route has separate ceilings of 131072 columns, 131072 known reducers and 4096 targets, subject to joint work and byte bounds. The previous limits were 16384/16384/1024. Its conservative logical-work limit is 2³⁸ and its packing/scalar/word-visit limit is 2³⁴, previously 2³² and 2²⁸. Complete private bit rows, metadata, projected targets and the reusable sixteen-row table must fit the parent packed-byte allowance. Every accepted result has the exact portable rows, sugars and counters; unsupported or refused frames retain the reference continuation.
+Frozen source `8b78fab53166` is compared directly with `45745225e6b0`. Four-byte coefficient updates use eight exact AVX-512F lanes only after CPU/OS capability checks and when a complete packet exists. Consecutive columns use unaligned vector loads/stores; other columns use gathers/scatters. AVX2 and portable fallbacks remain available. Each lane stays below p² after one correction because its sum is below 2p² < 2⁶³. Admission limits, row order, sugar labels and logical counters are preserved.
 
-Leading-column validation has a fixed 16384-byte bitmap and initializes only `ceil(columns/8)` bytes. The field and monomial-order contracts are unchanged. These are ordinary F₂ polynomial rings, including squares; no Boolean quotient relations are added.
+All 128 system processes and 64 adjacent AB/BA pairs have identical complete outputs and counters. The fixed selection covers the first primary size of ten families in all three fields, plus Eco-14/Eco-15 over F₂.
 
-Baseline `804f6c96d43a`; candidate `b135e329b277`. Only the matching Lean admission guards and native matrix source change in the runtime manifest. Native compiler `clang version 21.1.8`, generated-C compiler `clang version 23.1.0` (SDK), compiler options, inputs and controls match.
+| Field | Candidate B/A | Process B/A | Candidate pair range | Peak RSS A/B, KiB |
+|---|---:|---:|---:|---:|
+| 2 | 1.0492 | 1.1759 | 0.5905–9.0519 | 34944/34812 |
+| 32003 | 1.0546 | 1.0213 | 0.8387–4.3431 | 522628/526268 |
+| 2147483647 | 0.9455 | 0.9670 | 0.3223–1.2498 | 600768/591784 |
 
-## Matched observations
+These are descriptive point estimates on the shared AMD EPYC 9455 host. Unchanged F₂ and smaller-prime controls, every completed observation, outlier and failure are retained. No control-adjusted or multiplied-stage improvement is inferred. Runs use one leased CPU, one thread, degree scheduling, batch size 1024, binary pivots and delayed reduction enabled, and dense pivots disabled. Limits are 300 seconds, 8 GiB address space and 256 MiB output per process, with the fixed corpus’s explicit parent allowances. Native code uses Clang 21.1.8 and generated C uses SDK Clang 23.1.0 with Lean 4.35.0-rc3.
 
-Each campaign leases one CPU, uses one algorithm thread and runs adjacent AB then BA pairs. All use degree scheduling, grevlex, batch size 1024, complete reduced output and explicit binary-pivot controls. Binary pivots are enabled in both F₂ arms; the historical `f2-false` cohort label does not describe that policy. The library defaults this option to `false`, so default users see no change. Every completed sample, outlier, failure and RSS observation is retained. No unchanged repeat is included. These comparisons measure candidate production through final interreduction and output. Parsing, launch and initialization are included in process time; certificate generation, independent native verification and kernel checking are separate.
+All nine project checks and 36 strict Clang/GCC sanitizer configurations are source-bound. Protected-page tests call the actual eight-lane kernel on three wide primes, contiguous/strided columns and packet/tail lengths. Both complete 1,134-case drivers, independent oracles, downstream replay and axiom audits remain distinct from candidate timings. The collector journals exact samples and publishes atomic checkpoints before its final analysis.
 
-| Cohort | CPU | Process B/A | Family balanced B/A | Candidate B/A | Pair min / median / max | Peak RSS A / B (KiB) |
-|---|---:|---:|---:|---:|---|---|
-| f2-false | 76 | 0.983905 | 0.981831 | 0.955104 | 0.779258 / 0.990959 / 1.175736 | 88060 / 88636 |
-| prime-control | 94 | 0.995656 | 0.995656 | 1.004910 | 0.848194 / 1.000224 / 1.176898 | 73720 / 74296 |
-| hard-cyclic9-f2 | 11 | 0.704035 | 0.704035 | 0.703610 | 0.676299 / 0.704603 / 0.732908 | 461416 / 912532 |
 
-All 100 processes complete, with 50 equal complete-basis pairs and identical logical statistics. Cyclic-9 over F₂ has process B/A 0.704035, a 29.6% reduction on these two pairs. Peak RSS rises from 461416 to 912532 KiB (1.98×). Additional private packing is a plausible source of the higher memory usage, rather than a measured attribution. The moderate F₂ and prime-control observations do not establish a broad speedup.
+| Kernel | n | B/A pair ratios | Flagged samples |
+|---|---:|---|---:|
+| bulkDelayedWord | 128 | 0.9871, 0.9699 | 0/4 |
+| bulkDelayedWord | 256 | 0.9684, 0.9721 | 0/4 |
+| bulkDelayedWord | 512 | 0.9706, 0.9775 | 0/4 |
+| bulkDelayedShort | 128 | 1.0252, 0.9920 | 0/4 |
+| bulkDelayedShort | 256 | 0.9789, 1.0018 | 0/4 |
+| bulkDelayedShort | 512 | 1.0017, 0.9913 | 1/4 |
 
-| Development family | F₂ process B/A | Prime-control process B/A |
-|---|---:|---:|
-| cyclic | 0.999212 | 1.008199 |
-| kat | 0.979576 | 0.989224 |
-| eco | 0.998779 | 0.998447 |
-| noon | 0.943518 | 0.999710 |
-| reimer | 0.983242 | 0.995807 |
-| minrank | 0.976445 | 0.981473 |
-| dense-quadratic | 0.982764 | 0.996946 |
-| mq | 0.992246 | not in prime suite |
+Kernel comparisons use existing input schedules, one leased CPU, four-second batches, a 32-second batch cap and the unchanged ten-times-spawn signal floor. Complete output/counter hashes agree. Flagged observations are retained and do not support a speed claim. These matched samples do not establish empirical complexity acceptance.
 
-The Cyclic-9 focus addresses a public hard case with matrices beyond the former native geometry and motivated the cap selection. It is an in-sample case also present in the primary fixed corpus. It is reported separately from the development suites. These observations are not a completed fixed-corpus evaluation, a held-out result or an external-comparator leadership claim. Ratios from different implementation stages are not multiplied.
+Production stream SHA-256: `c39f8c84005e3165494e8d93be75171a672dc47ec739c3828fc052103e1edbb4`.
 
-The moderate cohorts use a 16 GiB packed-payload allowance. The focused Cyclic-9 run uses 2⁵⁰ bytes, under the common 8 GiB process address-space limit. These are benchmark limits, rather than the library default of 256 MiB; large frames may decline and continue portably at that default. The two focused pairs do not establish default-budget performance.
+| Held-out family | Hex/msolve process ratio |
+|---|---:|
+| dense-quadratic | 1.1590 |
+| sparse-structured | 0.9335 |
+| positive-dimensional | 1.1091 |
 
-## Correctness and replay
+The 27 held-out inputs have 108 successful processes and 54 equal complete bases. The family-balanced Hex/msolve process ratio is 1.0627×; peak RSS is 1340044/266108 KiB.
 
-All twelve Clang/GCC ASan/UBSan variants and all nine project gates pass, including the executable/theory build, 567 independent SymPy and 567 Singular reduced-basis comparisons, both 1134-case driver checks, native/portable comparisons, downstream kernel replay, axiom audits, benchmark verification, DAG, phase and release-manifest checks.
+The comparator is msolve 3672113ee2c696a2ac9c637636e0f7214f500ba1, Clang 23.1.3, -O3 -march=native, full reduced output, linear algebra mode 2 and one thread. Candidate production excludes certificate generation, independent native certification and kernel checking. Full balanced solved coverage, equal-thread parallel comparisons, finite extensions, producer correctness/termination and fastest-open-source acceptance remain required by issue #10987. These data establish no language/runtime limitation. Scientific claims never rely on CI timing.
 
-Conformance exercises each maximum dimension and its next value, nonempty rows at columns 65536 and 131072, shared targets, independent targets, malformed rows, large sugar labels and parent budget refusals. The logical-bound example attains 2³⁸; one extra entry exceeds it by 4098. Physical-bound examples have 2³⁴−2 and 2³⁴+1 visits. Both sides of the former physical boundary remain accepted. The portable models are also evaluated during the Lean build. No new axiom or `native_decide` is introduced.
-
-Raw capsule `f4-wide-binary-b135e329b277.tar.xz`: SHA-256 `b4e7d02be620aa7f3baf946cf04e7d4a9cdb62723636f19e7881c35710303f22`. Source and check manifests, compiler inputs, collector programs, full logs, outputs and raw samples have individual SHA-256 bindings.
-
-```bash
-python3 scripts/bench/groebner_wide_report.py \
-  --archive reports/bench-results/raw/f4-wide-binary-b135e329b277.tar.xz \
-  --report reports/bench-results/hexgroebner-wide.md --check
-```
-
-Add `--current` when replaying against the measured runtime/check source snapshot. [Issue #10987](https://github.com/kim-em/hex-dev/issues/10987) remains open.
+Held-out stream SHA-256: `e40e66f6d68296509c929d58c5af52bf674535ca4912f06a4baf94d9bea0823f`.

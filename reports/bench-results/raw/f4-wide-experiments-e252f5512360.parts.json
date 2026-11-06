@@ -1,0 +1,37 @@
+{
+  "format": 1,
+  "bytes": 359441176,
+  "sha256": "f4a12f72a606765c2361138080d4a69be8ee5018cfd134e9a965b845f378386f",
+  "parts": [
+    {
+      "file": "f4-wide-experiments-e252f5512360.tar.xz.part00",
+      "bytes": 67108864,
+      "sha256": "047841525e8dd9c4228cb399cdd4cd8151d27c70a4ec63ce01217a6e8cc60ca5"
+    },
+    {
+      "file": "f4-wide-experiments-e252f5512360.tar.xz.part01",
+      "bytes": 67108864,
+      "sha256": "79f553dbca2d5fcc38e83d12a4e1cabb8267145befc1173e90b5553d712259ef"
+    },
+    {
+      "file": "f4-wide-experiments-e252f5512360.tar.xz.part02",
+      "bytes": 67108864,
+      "sha256": "c044c5e9e7d2408b8a2e5589f07706071ca4af4d2ee69513a292490a4efc9952"
+    },
+    {
+      "file": "f4-wide-experiments-e252f5512360.tar.xz.part03",
+      "bytes": 67108864,
+      "sha256": "de261aafd4f83d8eaec95abcbf55141b39b64555a29a0ab1af04907132b07ce8"
+    },
+    {
+      "file": "f4-wide-experiments-e252f5512360.tar.xz.part04",
+      "bytes": 67108864,
+      "sha256": "af227ef3a10b574d73af426f574049cc7bda8f4fe60118474d4bf3fd12a72669"
+    },
+    {
+      "file": "f4-wide-experiments-e252f5512360.tar.xz.part05",
+      "bytes": 23896856,
+      "sha256": "e58cc62944991b37d690eb38041c9435aeb0ea65b4a276751d57ffbf6fec68d9"
+    }
+  ]
+}

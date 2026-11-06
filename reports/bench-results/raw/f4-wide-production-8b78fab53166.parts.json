@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "bytes": 105146400,
+  "sha256": "c39f8c84005e3165494e8d93be75171a672dc47ec739c3828fc052103e1edbb4",
+  "parts": [
+    {
+      "file": "f4-wide-production-8b78fab53166.tar.xz.part00",
+      "bytes": 67108864,
+      "sha256": "df8d6104230831880ba4136f2ca3f24240f6b2e57c7ea709aa0f974f2c43ef8d"
+    },
+    {
+      "file": "f4-wide-production-8b78fab53166.tar.xz.part01",
+      "bytes": 38037536,
+      "sha256": "ffb871fc669adacc2e3de1553e542f8ac6e0cc71c73a5dfe5ae9412abafe8be0"
+    }
+  ]
+}
