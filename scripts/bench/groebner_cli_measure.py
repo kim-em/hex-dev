@@ -29,6 +29,30 @@ def read_rss(path):
     return int(lines[-1]) if lines and lines[-1].isascii() and lines[-1].isdigit() else None
 
 
+def atomic_json(path, value):
+    """Keep the preceding complete checkpoint if publication runs out of space."""
+    pending = path.with_name(path.name + ".pending")
+    try:
+        with pending.open("w") as stream:
+            json.dump(value, stream, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(pending, path)
+    finally:
+        pending.unlink(missing_ok=True)
+
+
+def checkpoint_sample(directory, metadata, record):
+    """Journal exact completed timings before publishing their updated context."""
+    metadata["samples"].append(record)
+    with (directory / "samples.jsonl").open("a") as stream:
+        stream.write(json.dumps(record) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    atomic_json(directory / "metadata.json", metadata)
+
+
 def main():
     if not __debug__:
         raise RuntimeError("measurement validation requires Python without -O")
@@ -353,7 +377,10 @@ def main():
         output_bytes = plan["protocol"].get("output_bytes_per_file", 64 * 1024**2)
         resource.setrlimit(resource.RLIMIT_FSIZE, (output_bytes,) * 2)
 
+    finished_schedule = False
+    m["campaign_status"] = "running"
     try:
+        atomic_json(out / "metadata.json", m)
         for block, order in enumerate(["AB", "BA"]):
             for case_index, case in enumerate(plan["cases"]):
                 bases = {}
@@ -540,7 +567,7 @@ def main():
                             record["error"] = str(error)
                             bases.pop(arm, None)
                             results.pop(arm, None)
-                    m["samples"].append(record)
+                    checkpoint_sample(out, m, record)
                     pair_records.append(record)
                     print(prefix, record["status"], round(elapsed / 1e6, 2), flush=True)
                 equal = len(bases) == 2 and bases["A"] == bases["B"]
@@ -552,6 +579,8 @@ def main():
                         equal = equal and results["A"] == results["B"]
                 for sample in pair_records:
                     sample["complete_basis_equal"] = equal
+                atomic_json(out / "metadata.json", m)
+        finished_schedule = True
     finally:
         m["binary_sha256_after"] = {
             arm: sha(binary) for arm, binary in binaries.items()
@@ -580,8 +609,11 @@ def main():
                 and m["msolve_engine_sha256_after"] == m["msolve_engine_sha256"]
             )
         m["load_end"] = os.getloadavg()
-        (out / "metadata.json").write_text(json.dumps(m, indent=2) + "\n")
-        lease.close()
+        m["campaign_status"] = "completed" if finished_schedule else "interrupted"
+        try:
+            atomic_json(out / "metadata.json", m)
+        finally:
+            lease.close()
     ratios = []
     families = {}
     for case in plan["cases"]:
@@ -642,7 +674,7 @@ def main():
             for arm in ["A", "B"]
         },
     }
-    (out / "analysis.json").write_text(json.dumps(summary, indent=2) + "\n")
+    atomic_json(out / "analysis.json", summary)
     print(json.dumps(summary, indent=2))
 
     if (
