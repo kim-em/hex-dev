@@ -2,6 +2,7 @@
    Released under Apache 2.0 license as described in the file LICENSE.
    Authors: Kim Morrison */
 
+#include "monomial_hash.h"
 #ifndef HEX_GROEBNER_NO_LEAN
 #include <lean/lean.h>
 #endif
@@ -92,7 +93,7 @@ static inline int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
 }
 
 /* Monomial preparation uses one reusable, owned buffer. The trailing metadata
-   is degree:u64, support-mask:u64, FNV-hash:u64, maximum-coordinate:u32. */
+   is degree:u64, support-mask:u64, additive-hash:u64, maximum-coordinate:u32. */
 static inline int monomial_shape(unsigned operation, unsigned width, uint64_t arity,
         uint64_t count, uint64_t left, uint64_t right, size_t source_bytes,
         size_t workspace_bytes) {
@@ -108,7 +109,7 @@ static inline int prepare_monomial(unsigned operation, unsigned width, uint64_t 
         size_t source_bytes, uint8_t *workspace, size_t workspace_bytes) {
     if (!monomial_shape(operation, width, arity, count, left, right,
                         source_bytes, workspace_bytes)) return 0;
-    uint64_t degree = 0, mask = 0, hash = UINT64_C(14695981039346656037), largest = 0;
+    uint64_t degree = 0, mask = 0, hash = 0, largest = 0;
     for (size_t i = 0; i < (size_t)arity; ++i) {
         uint64_t x = read_le(source + ((size_t)left * (size_t)arity + i) * width, width);
         uint64_t y = read_le(source + ((size_t)right * (size_t)arity + i) * width, width);
@@ -117,7 +118,7 @@ static inline int prepare_monomial(unsigned operation, unsigned width, uint64_t 
         write_le(workspace + 4 * i, 4, z);
         degree += z;
         if (z) mask |= UINT64_C(1) << (i % 64);
-        hash = (hash ^ z) * UINT64_C(1099511628211);
+        hash += z * monomial_weight(i);
         if (z > largest) largest = z;
     }
     size_t offset = (size_t)arity * 4;

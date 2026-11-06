@@ -210,7 +210,7 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
   let mut width := table.width
   let mut degree : Nat := 0
   let mut mask : UInt64 := 0
-  let mut hash : UInt64 := 14695981039346656037
+  let mut hash : UInt64 := 0
   for i in [:values.size] do
     let x := values[i]!
     -- `> 0xffffffff` avoids per-visit Nat-literal parsing (lean4#16007).
@@ -219,7 +219,7 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
     else if x > 255 && width == .u8 then width := .u16
     degree := degree + x.toNat
     if x != 0 then mask := mask ||| ((1 : UInt64) <<< (i % 64).toUInt64)
-    hash := (hash ^^^ x) * 1099511628211
+    hash := hash + x * Native.Monomial.hashWeight i
   if degree ≥ 2 ^ 64 then return ⟨.error ⟨.degree, work⟩, table⟩
   if table.hashBits < 64 then hash := hash &&& (((1 : UInt64) <<< table.hashBits.toUInt64) - 1)
   let mut link := table.index.head hash

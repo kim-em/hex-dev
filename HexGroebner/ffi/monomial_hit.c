@@ -274,7 +274,7 @@ typedef struct {
     unsigned inserted,changed;
 } product_plan;
 
-/* Independent rows keep the serial FNV accumulators in parallel. All input
+/* Independent rows keep their additive hash accumulators in parallel. All input
    identifiers belong to the initial arena. Only private planning bytes change.
    The full preparation reservation is charged before the coordinate traversal. */
 _Static_assert(sizeof(product_plan)+4*64*sizeof(uint64_t)+64*sizeof(const uint8_t *)<32768,
@@ -289,20 +289,20 @@ static int products_prepare(unsigned width,uint64_t arity,uint64_t count,uint64_
         if(id>=count) return 0;
         left[t]=source+(size_t)id*(size_t)arity*width;
         degree[t]=0;mask[t]=0;largest[t]=0;
-        hash[t]=UINT64_C(14695981039346656037);
+        hash[t]=0;
     }
     const uint8_t *right_row=source+(size_t)right*(size_t)arity*width;
     unsigned overflow=0;
     for(size_t i=0;i<(size_t)arity;++i) {
         size_t offset=i*width;
         uint64_t y=read_le(right_row+offset,width);
-        uint64_t bit=UINT64_C(1)<<(i%64);
+        uint64_t bit=UINT64_C(1)<<(i%64),weight=monomial_weight(i);
         for(size_t t=0;t<terms;++t) {
             uint64_t x=read_le(left[t]+offset,width),z=x+y;
             overflow|=z>UINT32_MAX;
             write_le(prepared+t*stride+4*i,4,z);
             degree[t]+=z;mask[t]|=z?bit:0;
-            hash[t]=(hash[t]^z)*UINT64_C(1099511628211);
+            hash[t]+=z*weight;
             if(z>largest[t]) largest[t]=z;
         }
     }
