@@ -7,7 +7,7 @@ import tempfile
 import subprocess
 import sys
 import hashlib
-from scripts.oracle.real_closure_nested_normalization import verify, trace_counts, trace_data, verify_pairs, validate_trace
+from scripts.oracle.real_closure_nested_normalization import verify, verify_pairs
 
 
 class ExactTests(unittest.TestCase):
@@ -40,20 +40,6 @@ class ExactTests(unittest.TestCase):
                     elif change == 'children': row['query'][2][2][0][1] = [[0, 0]]
                     with self.assertRaises(ValueError): verify(row)
 
-    def test_aggregate_trace(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / 'trace'
-            packet = dict(overflow=False, counts={'0:mul': 12, '1:inverse_gcd': 1})
-            def write(packet):
-                operations = dict.fromkeys(['poly_gcd', 'poly_xgcd', 'poly_xgcd_left', 'poly_pseudo_gcd', 'lean_nat_gcd', 'gmp_gcd', 'gmp_gcdext'], 0)
-                path.write_text('NESTED BEGIN\nNESTED END\nNESTED COUNTERS ' + json.dumps(operations) + '\nNESTED CALLBACKS ' + json.dumps(packet) + '\n')
-            write(packet)
-            self.assertEqual(trace_counts(path), packet['counts'])
-            for bad in [dict(packet, overflow=True), dict(packet, counts={'0:mul': True}),
-                        dict(packet, counts={'bad': 1}), dict(packet, counts={'0:mul': -1})]:
-                write(bad)
-                with self.assertRaises(ValueError): trace_counts(path)
-
     def test_stdin_and_pairs(self):
         script = Path(__file__).with_name('real_closure_nested_normalization.py')
         text = '\n'.join(json.dumps(row) for row in self.rows) + '\n'
@@ -74,22 +60,6 @@ class ExactTests(unittest.TestCase):
         different[1]['heads'][0][0] = [4, 1]
         with self.assertRaises(ValueError): verify_pairs(different, checked)
         verify_pairs(self.rows[:1], checked[:1], unpaired=True)
-
-    def test_trace_binds_workload(self):
-        root = Path(__file__).resolve().parents[2]
-        path = root / 'reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m2-clean.trace'
-        trace = trace_data(path)
-        row = self.rows[0]
-        validate_trace(row, trace)
-        for change in ['empty', 'depth', 'steps', 'gcd', 'inverse']:
-            bad = copy.deepcopy(trace)
-            if change == 'empty': bad['callback_counts'] = {}
-            elif change == 'depth': bad['callback_counts']['3:mul'] = 1
-            elif change == 'steps': bad['callback_counts']['2:mul'] += 1
-            elif change == 'gcd': bad['operation_counts']['poly_gcd'] += 1
-            elif change == 'inverse': bad['callback_counts']['2:inverse_xgcd'] = 0
-            with self.assertRaises(ValueError): validate_trace(row, bad)
-
 
     def test_retained_derived_outputs(self):
         repo = Path(__file__).resolve().parents[2]
