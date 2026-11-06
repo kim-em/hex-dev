@@ -81,7 +81,7 @@ theorem gather_literal :
   | inl h => simp only [USize.size, h]; decide +kernel
   | inr h => simp only [USize.size, h]; decide +kernel
 
-/-- info: 'Hex.Groebner.GatherConformance.gather_literal' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.Groebner.GatherConformance.gather_literal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms gather_literal
 

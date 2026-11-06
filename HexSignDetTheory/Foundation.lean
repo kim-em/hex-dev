@@ -133,7 +133,7 @@ theorem System.foundation_counts {r arity : Nat} (s : System r)
     simpa [hm, moments, Int.cast_list_sum, List.map_map, Function.comp_def] using
       congrFun hsolveRat i
   have h := Function.eq_occCount (fun i : Fin xs.length => xs[i])
-    (fun j : Fin r => s.columns[j]) hinj hc
+    (fun j : Fin r => s.columns[j]) hc
     (fun i : Fin r => fun word => (entry s.rows[i] word : Rat))
     a (by rw [← hmatrix]; exact hleft)
     (fun i => ((s.counts[i] : Int) : Rat))

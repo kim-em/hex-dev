@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.Algebraic
+public import HexRealClosureTheory.ExceptDecidableEq
 public import HexSignDetTheory.QueryHandle
 public import HexPolyTheory.Interpret
 public import HexPolyTheory.Pseudo

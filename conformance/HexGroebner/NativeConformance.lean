@@ -203,7 +203,7 @@ theorem monomial_example : (Native.Monomial.prepare 1 1 2 2 0 1
         Native.read b 8 16, Native.read b 8 24, Native.read b 4 32]) =
     some [6, 8, 14, 3, 588762121494699011, 8] := by decide
 
-/-- info: 'Hex.Groebner.NativeConformance.monomial_example' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.Groebner.NativeConformance.monomial_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms monomial_example
 
 end Hex.Groebner.NativeConformance

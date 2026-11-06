@@ -767,7 +767,8 @@ theorem monomial_pow (k : Nat) (c : K) (e : Nat) :
       rw [pow_succ, ih, monomial_mul_monomial,
         show k + k * e = k * (e + 1) from by
           rw [Nat.mul_succ, Nat.add_comm],
-        show c * c ^ e = c ^ (e + 1) from by grind]
+        show c * c ^ e = c ^ (e + 1) from by
+          rw [Lean.Grind.Semiring.pow_succ, Lean.Grind.CommSemiring.mul_comm]]
 
 /-- Constants scale monomials by scaling their coefficient. -/
 theorem C_mul_monomial (c : K) (m : Nat) (d : K) :
