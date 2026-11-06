@@ -45,6 +45,38 @@ theorem node_fields (value : ValueCodec E) (context : ValueCodec Ctx) (data : No
   rw [Codec.node_eq]
   rfl
 
+/-- Moment fields can be rewritten without knowing the array length or entries. -/
+theorem moments_encode (value : ValueCodec E) (context : ValueCodec Ctx)
+    (moments : Array (TarskiCertificate E E Ctx)) :
+    Codec.array (Codec.tarski value context) moments = Codec.array (fun c =>
+      Codec.Json.arr #[context.encode c.context, Codec.poly value c.head,
+        Codec.poly value c.queryPoly, Codec.endpoint value c.lower, Codec.endpoint value c.upper,
+        Codec.chain value c.squarefree, Codec.chain value c.remainders,
+        Codec.Json.of c.lowerSigns, Codec.Json.of c.upperSigns,
+        Codec.Json.of c.lowerVariations, Codec.Json.of c.upperVariations,
+        Codec.Json.of c.value]) moments := by
+  fail_if_success rfl
+  rw [Codec.tarski_fn]
+
+/-- Optional reductions and their nested step lists rewrite at arbitrary lengths. -/
+theorem reductions_encode (value : ValueCodec E) (reductions : Array (Option (Reduction E))) :
+    Codec.array (Codec.option (Codec.reduction value)) reductions =
+      Codec.array (Codec.option (fun r => Codec.Json.arr #[
+        Codec.list (fun s => Codec.Json.arr #[Codec.Json.of s.index, Codec.poly value s.next,
+          Codec.Json.arr #[value.encode s.witness.leftScale, Codec.poly value s.witness.quotient,
+            value.encode s.witness.rightScale]]) r.steps,
+        Codec.poly value r.result])) reductions := by
+  rw [Codec.reduction_fn, Codec.reductionStep_fn, Codec.remainder_fn]
+
+/-- Terminal and preparation payloads rewrite without deciding either option. -/
+theorem optional_encode (value : ValueCodec E) (terminal : Option (E × DensePoly E))
+    (preparation : Option (QueryReduction E)) :
+    (Codec.option (Codec.terminal value) terminal,
+      Codec.option (Codec.preparation value) preparation) =
+    (Codec.option (fun t => Codec.Json.arr #[value.encode t.1, Codec.poly value t.2]) terminal,
+      Codec.option (fun r => Codec.list (Codec.reductionStep value) r.steps) preparation) := by
+  rw [Codec.terminal_fn, Codec.preparation_fn]
+
 /-- info: 'Hex.SignDet.Codec.graph_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Codec.graph_eq
@@ -178,6 +210,52 @@ def nestedNode : Codec.Json := .arr #[natural 0, one,
 def wrap (entry : Codec.Json) : Codec.Json :=
   .arr #[natural 1, natural 0, .arr #[.arr #[entry, empty]]]
 
+/-- Literal nested witness records; their zero scales do not assert arithmetic validity. -/
+def rawRemainder : RemainderStep Rat := ⟨0, DensePoly.C 0, 0⟩
+
+/-- A present terminal and a nonempty step array exercise both nested encodings. -/
+def rawChain : SignedRemainderChain Rat :=
+  ⟨#[DensePoly.C 1], #[0], rawRemainder, #[rawRemainder], some (0, DensePoly.C 0)⟩
+
+/-- A size-one node with all nested evidence present, matching the existing reader fixture. -/
+def rawNested : Node Rat Nat where
+  context := 0
+  head := DensePoly.C 1
+  lower := .negInf
+  upper := .posInf
+  queries := [DensePoly.C 0]
+  size := 1
+  system := {
+    rows := #v[[0]]
+    columns := #v[[0]]
+    counts := #v[0]
+    values := #v[0]
+    inverse := Matrix.ofRows #v[#v[0]]
+    denominator := 0 }
+  moments := #v[⟨0, DensePoly.C 1, DensePoly.C 0, .negInf, .posInf, rawChain, rawChain,
+    #[0], #[0], 0, 0, 0⟩]
+  reductions := #v[some ⟨[⟨0, DensePoly.C 0, rawRemainder⟩], DensePoly.C 0⟩]
+  preparation := some ⟨[⟨0, DensePoly.C 0, rawRemainder⟩]⟩
+  basis := { rank := 0, rows := #v[], cols := #v[], denom := 0, adj := Matrix.ofRows #v[] }
+
+/-- Public equations bind the complete nested numerical packet, without decoder success
+or arithmetic acceptance as a premise. The encoder bodies remain hidden. -/
+theorem graph_nested_literal : Codec.graph ValueCodec.rat ValueCodec.nat
+    (⟨#[⟨rawNested, none⟩], 0⟩ : Dag Rat Nat) = wrap nestedNode := by
+  rw [Codec.graph_eq, Codec.entry_fn]
+  simp only [Codec.array, Array.map_singleton, Codec.option_none]
+  rw [Codec.node_eq]
+  simp only [rawNested, Codec.system_eq, Codec.basis_eq, Codec.encodeMatrix_eq,
+    Matrix.rows_ofRows, Codec.option_some,
+    Codec.Json.of_array, Codec.array, Codec.list, Array.map_singleton, Array.map_empty,
+    Codec.tarski_eq, Codec.chain_eq, Codec.remainder_eq, Codec.terminal_eq,
+    Codec.reduction_eq, Codec.reductionStep_eq, Codec.preparation_eq, rawChain, rawRemainder]
+  simp only [wrap, nestedNode, moment, chain, steps, remainder, zero, one, empty, natural,
+    Codec.poly, Codec.endpoint, ValueCodec.rat, ValueCodec.nat, DensePoly.toArray,
+    DensePoly.coeffs_C_of_ne_zero (show (1 : Rat) ≠ 0 by decide),
+    DensePoly.coeffs_C_zero, Codec.Json.of_list, Codec.array, Array.map_singleton,
+    Array.map_empty, Rat.zero_num, Rat.zero_den, Rat.one_num, Rat.one_den] <;> rfl
+
 /-- Kernel reduction traverses every nested evidence reader on public imports. -/
 theorem graph_nested : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
     (DensePoly.ofList ([1] : List Rat)) .negInf .posInf (wrap nestedNode)).toOption.isSome = true := by
@@ -227,6 +305,74 @@ theorem graph_wrong_endpoints :
     (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
       (DensePoly.ofList ([1] : List Rat)) .negInf (.finite 0) (wrap nestedNode)).toOption.isNone = true := by
   decide +kernel
+
+/-- info: 'Hex.SignDet.Codec.remainder_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.remainder_eq
+
+/-- info: 'Hex.SignDet.Codec.terminal_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.terminal_eq
+
+/-- info: 'Hex.SignDet.Codec.chain_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.chain_eq
+
+/-- info: 'Hex.SignDet.Codec.tarski_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.tarski_eq
+
+/-- info: 'Hex.SignDet.Codec.reductionStep_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.reductionStep_eq
+
+/-- info: 'Hex.SignDet.Codec.reduction_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.reduction_eq
+
+/-- info: 'Hex.SignDet.Codec.preparation_eq' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.preparation_eq
+
+/-- info: 'Hex.SignDet.Codec.remainder_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.remainder_fn
+
+/-- info: 'Hex.SignDet.Codec.tarski_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.tarski_fn
+
+/-- info: 'Hex.SignDet.Codec.reductionStep_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.reductionStep_fn
+
+/-- info: 'Hex.SignDet.Codec.reduction_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.reduction_fn
+
+/-- info: 'Hex.SignDet.PublicCodec.moments_encode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms moments_encode
+
+/-- info: 'Hex.SignDet.PublicCodec.reductions_encode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms reductions_encode
+
+/-- info: 'Hex.SignDet.Codec.terminal_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.terminal_fn
+
+/-- info: 'Hex.SignDet.Codec.preparation_fn' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Codec.preparation_fn
+
+/-- info: 'Hex.SignDet.PublicCodec.optional_encode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms optional_encode
+
+/-- info: 'Hex.SignDet.PublicCodec.graph_nested_literal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms graph_nested_literal
 
 /-- info: 'Hex.SignDet.PublicCodec.graph_empty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

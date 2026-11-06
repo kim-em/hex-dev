@@ -2,10 +2,11 @@
 
 `Codec.readGraph` and its supporting structured readers expose their definitions
 through ordinary public imports for kernel reduction on concrete inputs.
-These bodies are kernel-facing APIs: runtime optimizations should use a proved
+Reader bodies and the exposed encoders `array`, `list`, `poly`, `endpoint` and
+`descriptor` are kernel-facing APIs: runtime optimizations should use a proved
 `@[csimp]` implementation twin while preserving the reference definitions.
-Encoders with public literal-shape equations must preserve those statements;
-runtime changes can use a proved `@[csimp]` implementation twin.
+The record encoders described by public field equations keep their bodies hidden;
+those equation statements must remain provable by an optimized implementation.
 Reading constructs raw graph data; successful decoding still needs independent
 replay before it supplies mathematical evidence. The
 [public-reader audit](../../reports/sign-det-public-codec.md) records the scope
@@ -117,14 +118,25 @@ order; matrices are arrays of rows.
 ordinary `import HexSignDet.Codec`. The function equation `entry_fn` rewrites
 the encoder beneath array maps. `option_none` and `option_some` identify absent
 and present payloads; `system_eq`, `basis_eq` and `encodeMatrix_eq` give the
-stored system, basis and matrix fields. The ordinary-import `PublicCodec`
-consumer composes them to identify a one-entry numerical graph with a size-zero
-node and no moments, reductions or preparation. The nested `tarski`, `chain`,
-`remainder`, `terminal`, `reductionStep`, `reduction` and `preparation` encoders
-remain opaque; these equations do not complete numerical cubic-packet binding.
-These equations
-describe stored data, including malformed witnesses; decoding success, context
-agreement and arithmetic validity remain separate requirements.
+stored system, basis and matrix fields. The nested equations `tarski_eq`,
+`chain_eq`, `remainder_eq`, `terminal_eq`, `reductionStep_eq`, `reduction_eq`
+and `preparation_eq` expose every stored certificate field while keeping the
+encoder bodies hidden across imports.
+The function forms `tarski_fn`, `remainder_fn`, `reductionStep_fn`,
+`reduction_fn`, `terminal_fn` and `preparation_fn` rewrite partially applied
+encoders beneath arrays, lists and optional payloads without requiring concrete
+entries, lengths or option constructors.
+
+The ordinary-import `PublicCodec` consumer composes these equations to identify
+both a size-zero graph and a size-one numerical graph with nonempty moment and
+remainder-chain data, a present terminal, reduction and preparation. The second
+proof identifies the complete packet used by the existing nested reader test.
+These equations describe arbitrary stored records, including malformed witnesses;
+decoding success, context agreement and arithmetic validity remain separate
+requirements. A custom coefficient/context codec still needs its own literal
+encoding laws. `ValueCodec.Lawful` proves decoding an encoding returns the
+original value; it does not assert that every accepted input is that value's
+canonical encoding.
 
 | Record | Fields in order |
 | --- | --- |
