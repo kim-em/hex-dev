@@ -29,10 +29,9 @@ def require(condition, message):
         raise SystemExit("error: " + message)
 
 
-def extract(index_path):
+def extract(index_path, target):
     index = json.loads(index_path.read_text())
     require(index.get("format") == 1, "unsupported parts index")
-    target = Path(tempfile.mkdtemp(prefix="f4-additive-"))
     joined, total = target / "joined.tar.xz", hashlib.sha256()
     with joined.open("wb") as out:
         for part in index["parts"]:
@@ -104,8 +103,9 @@ def main():
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    root = extract(args.archive)
-    text = render([(label, campaign(root / name)[1]) for label, name in CAMPAIGNS])
+    with tempfile.TemporaryDirectory(prefix="f4-additive-") as scratch:
+        root = extract(args.archive, Path(scratch))
+        text = render([(label, campaign(root / name)[1]) for label, name in CAMPAIGNS])
     if args.check:
         require(args.report.read_text() == text, "report differs; regenerate it")
     else:
