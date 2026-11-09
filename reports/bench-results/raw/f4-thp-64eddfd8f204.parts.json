@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "bytes": 224667272,
+  "sha256": "e5304be0ce35f44bd353fa1e5b544ed870c3ff513b77a137aa76f3289d11d567",
+  "parts": [
+    {
+      "file": "f4-thp-64eddfd8f204.tar.xz.part00",
+      "bytes": 67108864,
+      "sha256": "60e86156382b273515a53354260ca6c0401cf13cd4be17611d99c7698b73c7d0"
+    },
+    {
+      "file": "f4-thp-64eddfd8f204.tar.xz.part01",
+      "bytes": 67108864,
+      "sha256": "f63caba8daad9700d248faba2c16c3bfde07e6ca066e856d0f180518c3b2014b"
+    },
+    {
+      "file": "f4-thp-64eddfd8f204.tar.xz.part02",
+      "bytes": 67108864,
+      "sha256": "b5efed59f5dafff0fae27ba3904600883d9f5b7add00f35fa14cae23f55d7470"
+    },
+    {
+      "file": "f4-thp-64eddfd8f204.tar.xz.part03",
+      "bytes": 23340680,
+      "sha256": "09de89db0e1405aac2ffe82b0ed17e25c64f42b03e20e69dac6eca599aba08bf"
+    }
+  ]
+}
