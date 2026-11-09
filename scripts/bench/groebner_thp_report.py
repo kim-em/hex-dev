@@ -11,6 +11,7 @@ import collections
 import json
 import math
 import statistics
+import tempfile
 from pathlib import Path
 
 
@@ -143,14 +144,12 @@ def render(ab, primary, heldout):
     return "\n".join(lines)
 
 
-def extract(index_path):
-    """Join the recorded parts, check every digest and unpack to a private directory."""
+def extract(index_path, target):
+    """Join the recorded parts, check every digest and unpack into `target`."""
     import hashlib
     import tarfile
-    import tempfile
     index = json.loads(index_path.read_text())
     require(index.get("format") == 1, "unsupported parts index")
-    target = Path(tempfile.mkdtemp(prefix="f4-thp-"))
     joined = target / "joined.tar.xz"
     total = hashlib.sha256()
     with joined.open("wb") as out:
@@ -181,11 +180,16 @@ def main():
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    if args.archive:
-        root = extract(args.archive)
-        args.ab, args.heldout = root / "thp-first32", root / "thp-heldout-msolve"
-        if (root / "thp-full-primary-msolve").is_dir():
-            args.primary = root / "thp-full-primary-msolve"
+    with tempfile.TemporaryDirectory(prefix="f4-thp-") as scratch:
+        if args.archive:
+            root = extract(args.archive, Path(scratch))
+            args.ab, args.heldout = root / "thp-first32", root / "thp-heldout-msolve"
+            if (root / "thp-full-primary-msolve").is_dir():
+                args.primary = root / "thp-full-primary-msolve"
+        report(args)
+
+
+def report(args):
     require(args.ab is not None, "supply --archive or --ab")
     ab = ab_section(args.ab)
     primary = msolve_section(args.primary) if args.primary else (None, None, None)
