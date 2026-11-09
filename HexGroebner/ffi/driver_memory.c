@@ -11,8 +11,9 @@
    gives ordinary 4 KiB faults, the same treatment glibc-malloc comparators
    receive under the `madvise` policy.
 
-   The constructor runs before Lean module initialization, so no runtime
-   allocation precedes it. `HEX_GROEBNER_THP=1` keeps the inherited policy for
+   The constructor runs before `main` and Lean module initialization. The
+   kernel consults the flag at each page fault, so it also covers memory
+   reserved earlier by shared-library initializers. `HEX_GROEBNER_THP=1` keeps the inherited policy for
    comparisons. Library code never changes process state; only the driver
    executables link this object. Other platforms are unaffected. */
 #if defined(__linux__)
@@ -22,7 +23,7 @@
 __attribute__((constructor)) static void hex_groebner_driver_memory(void) {
     const char *keep = getenv("HEX_GROEBNER_THP");
     if (keep && keep[0] == '1' && keep[1] == 0) return;
-    (void)prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
+    (void)prctl(PR_SET_THP_DISABLE, 1L, 0L, 0L, 0L);
 }
 #endif
 

@@ -83,18 +83,21 @@ def msolve_section(directory):
                 per_case.setdefault(case, []).append(ratio)
             elif pair[1]["status"] == "ok" and pair[0]["status"] != "ok":
                 losses.append((case, block, pair[0]["status"]))
+    require(families, "no jointly solved pairs in " + str(directory))
     family_ratio = {f: gm(v) for f, v in families.items()}
     balanced = gm(family_ratio.values())
     lines = ["| Family | Jointly solved pairs | Hex solved | msolve solved | Hex/msolve process |",
              "|---|---:|---:|---:|---:|"]
-    for f in sorted(family_ratio):
+    for f in sorted(solved):
+        ratio = f"{family_ratio[f]:.4f}" if f in family_ratio else "none jointly solved"
         lines.append(f"| {f} | {len(families[f])} | {solved[f]['A']}/{solved[f]['n']} | "
-                     f"{solved[f]['B']}/{solved[f]['n']} | {family_ratio[f]:.4f} |")
+                     f"{solved[f]['B']}/{solved[f]['n']} | {ratio} |")
     ratios = [r for v in families.values() for r in v]
     rss = (max((s["peak_rss_kib"] or 0) for s in samples if s["arm"] == "A"),
            max((s["peak_rss_kib"] or 0) for s in samples if s["arm"] == "B"))
     status = collections.Counter((s["arm"], s["status"]) for s in samples)
-    summary = dict(balanced=balanced, pairs=len(ratios), median=statistics.median(ratios),
+    summary = dict(balanced=balanced, comparator=meta["msolve_build"]["commit"],
+                   scored=len(family_ratio), families=len(solved), pairs=len(ratios), median=statistics.median(ratios),
                    minimum=min(ratios), maximum=max(ratios), losses=losses, rss=rss, status=status,
                    processes=len(samples), per_case={c: gm(v) for c, v in per_case.items()})
     return meta, summary, "\n".join(lines)
@@ -121,14 +124,17 @@ def render(ab, primary, heldout):
         complete = meta.get("campaign_status", "running")
         lines += [f"## msolve, {label}", "",
                   f"{s['processes']} retained processes ({complete}); {s['pairs']} jointly solved adjacent pairs, "
-                  f"all with equal complete reduced bases. The equal-family Hex/msolve process ratio is "
-                  f"**{s['balanced']:.4f}** (median pair {s['median']:.4f}, range {s['minimum']:.4f}–{s['maximum']:.4f}). "
+                  f"all with equal complete reduced bases. The equal-family Hex/msolve process ratio over "
+                  f"{s['scored']} of {s['families']} families is **{s['balanced']:.4f}** (median pair {s['median']:.4f}, range {s['minimum']:.4f}–{s['maximum']:.4f}). "
                   f"Peak RSS Hex/msolve is {s['rss'][0]}/{s['rss'][1]} KiB.", "", table, ""]
         if s["losses"]:
             lines += ["Pairs solved by msolve but not Hex: " + ", ".join(f"{c} (block {b}, {st})" for c, b, st in s["losses"]) + ".", ""]
         else:
             lines += ["No input solved by msolve went unsolved by Hex within the same limits.", ""]
-    lines += ["The comparator is msolve `3672113ee2c696a2ac9c637636e0f7214f500ba1` (full reduced output, "
+    comparators = {s["comparator"] for meta, s, _ in (primary, heldout) if meta is not None}
+    require(len(comparators) <= 1, "campaigns used different msolve builds")
+    comparator = comparators.pop() if comparators else "not measured"
+    lines += [f"The comparator is msolve `{comparator}` (full reduced output, "
               "`-g 2 -t 1 -l 2`). Process time includes startup, parsing and complete output. Candidate "
               "production excludes certificate generation, independent certification and kernel checking. "
               "These are observations on the shared AMD EPYC 9455 host; all completed samples are retained "

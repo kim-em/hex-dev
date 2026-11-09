@@ -15,7 +15,7 @@ All 64 completed pairs have identical complete outputs and logical counters.
 
 ## msolve, held-out corpus
 
-108 retained processes (completed); 54 jointly solved adjacent pairs, all with equal complete reduced bases. The equal-family Hex/msolve process ratio is **1.0837** (median pair 1.0023, range 0.7402–2.7897). Peak RSS Hex/msolve is 1392300/266040 KiB.
+108 retained processes (completed); 54 jointly solved adjacent pairs, all with equal complete reduced bases. The equal-family Hex/msolve process ratio over 3 of 3 families is **1.0837** (median pair 1.0023, range 0.7402–2.7897). Peak RSS Hex/msolve is 1392300/266040 KiB.
 
 | Family | Jointly solved pairs | Hex solved | msolve solved | Hex/msolve process |
 |---|---:|---:|---:|---:|
@@ -25,4 +25,4 @@ All 64 completed pairs have identical complete outputs and logical counters.
 
 No input solved by msolve went unsolved by Hex within the same limits.
 
-The comparator is msolve `3672113ee2c696a2ac9c637636e0f7214f500ba1` (full reduced output, `-g 2 -t 1 -l 2`). Process time includes startup, parsing and complete output. Candidate production excludes certificate generation, independent certification and kernel checking. These are observations on the shared AMD EPYC 9455 host; all completed samples are retained and no control-adjusted improvement is claimed. The fastest-open-source milestone remains open under issue #10987.
+The comparator is msolve `708dc64eb311fbf647ebc5a75ed53802e0143d96` (full reduced output, `-g 2 -t 1 -l 2`). Process time includes startup, parsing and complete output. Candidate production excludes certificate generation, independent certification and kernel checking. These are observations on the shared AMD EPYC 9455 host; all completed samples are retained and no control-adjusted improvement is claimed. The fastest-open-source milestone remains open under issue #10987.
