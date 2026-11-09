@@ -2003,6 +2003,12 @@ target hexgroebnerInitialize pkg : FilePath := do
     buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "initialization_fallback.o") source
       #[] #["-O2", "-fPIC"]
 
+-- Process memory policy for the standalone F4 drivers (see the source comment).
+target hexgroebnerDriverMemory pkg : FilePath := do
+  let source ← inputTextFile (pkg.dir / "HexGroebner" / "ffi" / "driver_memory.c")
+  buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "driver_memory.o") source
+    #[] #["-O2", "-fPIC"]
+
 lean_lib HexGroebnerDriverSupport where
   srcDir := "bench"
   globs := #[.one `HexGroebner.Driver.Input, .one `HexGroebner.Driver.Run,
@@ -2011,21 +2017,23 @@ lean_lib HexGroebnerDriverSupport where
 lean_exe hexgroebner_compute where
   srcDir := "bench"
   root := `HexGroebner.Driver
-  moreLinkObjs := #[hexgroebnerInitialize]
+  moreLinkObjs := #[hexgroebnerInitialize, hexgroebnerDriverMemory]
 
 lean_exe hexgroebner_sample where
   srcDir := "bench"
   root := `HexGroebner.Sample
-  moreLinkObjs := #[hexgroebnerInitialize]
+  moreLinkObjs := #[hexgroebnerInitialize, hexgroebnerDriverMemory]
 
 -- Independent full-initialization entry point for conformance and comparisons.
 lean_exe hexgroebner_compute_full where
   srcDir := "bench"
   root := `HexGroebner.Driver.Full
+  moreLinkObjs := #[hexgroebnerDriverMemory]
 
 lean_exe hexgroebner_sample_full where
   srcDir := "bench"
   root := `HexGroebner.Driver.SampledFull
+  moreLinkObjs := #[hexgroebnerDriverMemory]
 
 lean_exe hexgroebner_sampling_checks where
   srcDir := "conformance"
