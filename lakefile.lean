@@ -95,7 +95,8 @@ target hexgroebnerRowsO pkg : FilePath := do
   let oFile := pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "row_update.o"
   let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "row_update.c"
   let trie ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "trie_lookup.h"
-  let inputs := source.zipWith (fun source _ => source) trie
+  let hash ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "monomial_hash.h"
+  let inputs := (source.zipWith (fun source _ => source) trie).zipWith (fun source _ => source) hash
   buildO oFile inputs #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-fPIC", "-DLEAN_EXPORTING"] (compiler := groebnerCompiler)
     (extraDepTrace := do addLeanTrace; addPureTrace groebnerCompiler.toString "compiler"; pure BuildTrace.nil)
@@ -105,8 +106,10 @@ target hexgroebnerMonomialO pkg : FilePath := do
   let source ← inputTextFile (directory / "monomial_hit.c")
   let row ← inputTextFile (directory / "row_update.c")
   let trie ← inputTextFile (directory / "trie_lookup.h")
+  let hash ← inputTextFile (directory / "monomial_hash.h")
   let inputs := (source.zipWith (fun source _ => source) row).zipWith
     (fun source _ => source) trie
+  let inputs := inputs.zipWith (fun source _ => source) hash
   buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "monomial_hit.o") inputs
     #["-I", (← getLeanIncludeDir).toString]
     #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]

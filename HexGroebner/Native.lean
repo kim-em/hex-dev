@@ -151,6 +151,14 @@ def products (width : UInt8) (arity count multiplier start terms : UInt64)
     (arena base result : @& ByteArray) : Bool :=
   productsPortable width arity count multiplier start terms arena base result
 
+/-- A deterministic coordinate weight for additive monomial hashes. Hashes
+only select collision chains; every successful lookup checks all exponents. -/
+@[inline] def hashWeight (index : Nat) : UInt64 :=
+  let z := 0x243f6a8885a308d3 + (index.toUInt64+1)*0x9e3779b97f4a7c15
+  let z := (z ^^^ (z >>> 30))*0xbf58476d1ce4e5b9
+  let z := (z ^^^ (z >>> 27))*0x94d049bb133111eb
+  z ^^^ (z >>> 31)
+
 /-- Fill a validated workspace with u32 coordinates and degree/mask/hash/max.
 The remaining coordinate count bounds recursion and each compiled native call. -/
 @[expose] def fill (operation width arity left right index : Nat) (source : @& ByteArray)
@@ -169,13 +177,13 @@ The remaining coordinate count bounds recursion and each compiled native call. -
     let workspace := write workspace 4 (index * 4) z.toNat
     let mask := if z == 0 then mask else mask ||| ((1 : UInt64) <<< (index % 64).toUInt64)
     fill operation width arity left right (index + 1) source (degree + z) mask
-      ((hash ^^^ z) * 1099511628211) (max largest z) remaining workspace
+      (hash + z * hashWeight index) (max largest z) remaining workspace
 
 /-- Packed monomial operation: 0 = LCM, 1 = product, 2 = exact quotient.
 Borrow `source`, consume `workspace`. Source stores exactly `count * arity`
 little-endian exponents of width 1/2/4. Arity lies in `[1,4096]`; both identifiers
 are below count. Workspace has `4*arity+28` bytes. Success writes u32 coordinates,
-then u64 degree, support mask and FNV hash, then u32 maximum coordinate.
+then u64 degree, support mask and additive hash, then u32 maximum coordinate.
 Overflow or inexact quotient, invalid geometry or opcode returns none.
 The degree fits u64 because the admitted coordinate count is bounded.
 Failure consumes the workspace and returns no partial buffer; a caller may
@@ -187,7 +195,7 @@ recreate it within its existing workspace reservation. -/
   if operation.toNat > 2 || (w != 1 && w != 2 && w != 4) || n == 0 || n > 4096 ||
       left ≥ count || right ≥ count || source.size != count.toNat * n * w ||
       workspace.size != n * 4 + 28 then none else
-    fill operation.toNat w n left.toNat right.toNat 0 source 0 0 14695981039346656037 0 n workspace
+    fill operation.toNat w n left.toNat right.toNat 0 source 0 0 0 0 n workspace
 
 /-- Bounded native implementation of `preparePortable`. Mutates only uniquely
 owned workspace storage, preserving original borrowed bytes even under aliasing.

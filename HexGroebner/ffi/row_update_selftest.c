@@ -90,7 +90,7 @@ static void check_monomials(void) {
             }
             for (unsigned operation = 0; operation < 3; ++operation) {
                 int valid = 1, equal_left = 1, equal_right = 1;
-                uint64_t degree = 0, mask = 0, hash = UINT64_C(14695981039346656037), largest = 0;
+                uint64_t degree = 0, mask = 0, hash = 0, largest = 0;
                 int actual = prepare_monomial(operation, width, n, 2, 0, 1,
                     source, bytes, output, output_bytes);
                 for (size_t i = 0; i < n; ++i) {
@@ -101,7 +101,7 @@ static void check_monomials(void) {
                     if (actual && read_le(output + i * 4, 4) != z) fail("monomial coordinate");
                     equal_left &= z == x; equal_right &= z == y;
                     degree += z; if (z) mask |= UINT64_C(1) << (i % 64);
-                    hash = (hash ^ z) * UINT64_C(1099511628211);
+                    hash += z * monomial_weight(i);
                     if (z > largest) largest = z;
                 }
                 if (actual != valid) fail("monomial overflow or quotient rejection");

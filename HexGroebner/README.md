@@ -67,7 +67,7 @@ nonlinearity diagnostics. The private exponent plan uses the conservative
 4096-coordinate scratch bound; successful insertion bytes are at most 5460,
 since `terms*(3*arity+1) ≤ 4096` and each coordinate uses at most four bytes.
 The complete private plan remains below 32 KiB. Independent product rows are
-prepared together, interleaving their exact FNV hash accumulators. The planner
+prepared together, accumulating exact coordinate-weighted hashes. The planner
 reserves all coordinate work before traversal and retains each prepared row in
 private scratch until collision lookup and insertion planning finish. Source row
 pointers are computed once after identifier validation; the coordinate loop

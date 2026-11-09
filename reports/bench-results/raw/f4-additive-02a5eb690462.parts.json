@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "bytes": 77554312,
+  "sha256": "0e816e67d95bebe85e636d132610bb25485956396333e071f1d7c0ba9fd8a03c",
+  "parts": [
+    {
+      "file": "f4-additive-02a5eb690462.tar.xz.part00",
+      "bytes": 67108864,
+      "sha256": "c68f29aea555bfe62fa96217f52f4042798044297307244ad05ed4c95e5532ae"
+    },
+    {
+      "file": "f4-additive-02a5eb690462.tar.xz.part01",
+      "bytes": 10445448,
+      "sha256": "2a03499e2384f812fcfee7099543d64650450590daa4a9f14e0cf738e6b7c00e"
+    }
+  ]
+}

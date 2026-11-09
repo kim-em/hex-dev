@@ -58,6 +58,9 @@ static lean_obj_res hit_exclusive_alias(lean_obj_arg bytes,int alias) {
     if(linear) lean_sarray_mark_linear_core(bytes);
     return bytes;
 }
+static inline uint64_t hit_read64(const uint8_t *p) {
+    return read_le(p,4)|(read_le(p+4,4)<<32);
+}
 static void hit_write64(uint8_t *p,uint64_t value) {
     write_le(p,4,value);write_le(p+4,4,value>>32);
 }
@@ -92,6 +95,12 @@ static lean_obj_res hit_compute(lean_obj_arg table,uint8_t operation,
     uint8_t prepared[2047*4+28];
     if(!prepare_monomial(operation,width,arity,count,left,right,
         lean_sarray_cptr(exponents),lean_sarray_size(exponents),prepared,size)) goto fallback;
+    if(operation==1) {
+        const uint8_t *meta=lean_sarray_cptr(metadata),*ma=meta+left*24,*mb=meta+right*24;
+        hit_write64(prepared+arity*4,hit_read64(ma)+hit_read64(mb));
+        hit_write64(prepared+arity*4+8,hit_read64(ma+8)|hit_read64(mb+8));
+        if(bits==64) hit_write64(prepared+arity*4+16,hit_read64(ma+16)+hit_read64(mb+16));
+    }
     work+=arity;
     uint64_t hash=read_le(prepared+arity*4+16,4) |
         (read_le(prepared+arity*4+20,4)<<32);
@@ -274,35 +283,47 @@ typedef struct {
     unsigned inserted,changed;
 } product_plan;
 
-/* Independent rows keep the serial FNV accumulators in parallel. All input
+/* Product degrees add, masks unite, and full-width additive hashes add.
+   Reduced-width hash tests retain their full prepared workspace hash. All input
    identifiers belong to the initial arena. Only private planning bytes change.
    The full preparation reservation is charged before the coordinate traversal. */
 _Static_assert(sizeof(product_plan)+4*64*sizeof(uint64_t)+64*sizeof(const uint8_t *)<32768,
     "product planning scratch must remain below 32 KiB");
+/* The private preparation buffer is disjoint from every borrowed arena.
+   Native little-endian stores preserve the packed UInt32 interchange bytes. */
+static inline void products_write32(uint8_t *p,uint64_t value) {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    uint32_t word=(uint32_t)value;memcpy(p,&word,sizeof(word));
+#else
+    write_le(p,4,value);
+#endif
+}
 static int products_prepare(unsigned width,uint64_t arity,uint64_t count,uint64_t right,
-        const uint8_t *source,const uint8_t *support,size_t start,size_t terms,
-        uint8_t *prepared,size_t stride) {
+        const uint8_t *source,const uint8_t *metadata,uint64_t bits,
+        const uint8_t *support,size_t start,size_t terms,
+        uint8_t *restrict prepared,size_t stride) {
     const uint8_t *left[64];
     uint64_t degree[64],mask[64],hash[64],largest[64];
     for(size_t t=0;t<terms;++t) {
         uint64_t id=read_le(support+(start+t)*4,4);
         if(id>=count) return 0;
         left[t]=source+(size_t)id*(size_t)arity*width;
-        degree[t]=0;mask[t]=0;largest[t]=0;
-        hash[t]=UINT64_C(14695981039346656037);
+        const uint8_t *ma=metadata+(size_t)id*24,*mb=metadata+(size_t)right*24;
+        degree[t]=hit_read64(ma)+hit_read64(mb);
+        mask[t]=hit_read64(ma+8)|hit_read64(mb+8);largest[t]=0;
+        hash[t]=bits==64?hit_read64(ma+16)+hit_read64(mb+16):0;
     }
     const uint8_t *right_row=source+(size_t)right*(size_t)arity*width;
     unsigned overflow=0;
     for(size_t i=0;i<(size_t)arity;++i) {
         size_t offset=i*width;
         uint64_t y=read_le(right_row+offset,width);
-        uint64_t bit=UINT64_C(1)<<(i%64);
+        uint64_t weight=bits<64?monomial_weight(i):0;
         for(size_t t=0;t<terms;++t) {
             uint64_t x=read_le(left[t]+offset,width),z=x+y;
             overflow|=z>UINT32_MAX;
-            write_le(prepared+t*stride+4*i,4,z);
-            degree[t]+=z;mask[t]|=z?bit:0;
-            hash[t]=(hash[t]^z)*UINT64_C(1099511628211);
+            products_write32(prepared+t*stride+4*i,z);
+            if(bits<64) hash[t]+=z*weight;
             if(z>largest[t]) largest[t]=z;
         }
     }
@@ -362,7 +383,7 @@ static lean_object *products_hits(lean_obj_arg table,b_lean_obj_arg support,
     if(terms>sizeof(plan.prepared)/size || preparation>allowed-work || preparation>4096) return NULL;
     *visited_work=preparation;
     if(!products_prepare(width,arity,count,right,lean_sarray_cptr(exponents),
-        lean_sarray_cptr(support),start,terms,plan.prepared,size)) return NULL;
+        lean_sarray_cptr(metadata),bits,lean_sarray_cptr(support),start,terms,plan.prepared,size)) return NULL;
     work+=preparation;
     for(size_t term=0;term<terms;++term) {
         const uint8_t *prepared=plan.prepared+term*size;

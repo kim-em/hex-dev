@@ -210,7 +210,7 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
   let mut width := table.width
   let mut degree : Nat := 0
   let mut mask : UInt64 := 0
-  let mut hash : UInt64 := 14695981039346656037
+  let mut hash : UInt64 := 0
   for i in [:values.size] do
     let x := values[i]!
     -- `> 0xffffffff` avoids per-visit Nat-literal parsing (lean4#16007).
@@ -219,7 +219,7 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
     else if x > 255 && width == .u8 then width := .u16
     degree := degree + x.toNat
     if x != 0 then mask := mask ||| ((1 : UInt64) <<< (i % 64).toUInt64)
-    hash := (hash ^^^ x) * 1099511628211
+    hash := hash + x * Native.Monomial.hashWeight i
   if degree ≥ 2 ^ 64 then return ⟨.error ⟨.degree, work⟩, table⟩
   if table.hashBits < 64 then hash := hash &&& (((1 : UInt64) <<< table.hashBits.toUInt64) - 1)
   let mut link := table.index.head hash
@@ -288,6 +288,18 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
   let some prepared := Native.Monomial.prepare code table.width.bytes.toUInt8 table.arity.toUInt64
       table.count.toUInt64 a.toUInt64 b.toUInt64 table.exponents workspace
     | return ⟨.error ⟨.exponent, work⟩, table⟩
+  -- Product metadata combines the two immutable cached rows. For reduced
+  -- hash widths, retain the full prepared hash so workspace bytes still agree.
+  -- The table contract requires API-produced degree/mask/hash metadata.
+  let prepared := if operation == .product then Id.run do
+    let degree := metaWord table.metadata (3*a) + metaWord table.metadata (3*b)
+    let mask := table.mask a ||| table.mask b
+    let prepared := Native.write prepared 8 (table.arity*4) degree.toNat
+    let prepared := Native.write prepared 8 (table.arity*4+8) mask.toNat
+    return if table.hashBits == 64 then
+      Native.write prepared 8 (table.arity*4+16) (table.hashAt a+table.hashAt b).toNat
+    else prepared
+  else prepared
   -- Match the portable call's state when entering its intern operation.
   let table := { table with work }
   work := work + table.arity
