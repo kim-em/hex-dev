@@ -158,9 +158,58 @@ private def decode (context : Context) (limits : Limits) (columns : Array Nat)
     p.scale context limits factor
   return ⟨p,sugar⟩
 
+private def matrixLimits (limits : Limits) (entries inputBytes : Nat) : Computation MatrixLimits := do
+  let s ← get
+  let remainingBytes := limits.packedBytes - s.statistics.allocatedBytes - s.table.bytes
+  return {
+    columns := limits.monomials, rows := limits.matrixRows - s.statistics.matrixRows
+    inputEntries := entries
+    outputEntries := limits.matrixEntries - s.statistics.matrixEntries - entries
+    packedBytes := remainingBytes + inputBytes
+    work := limits.work - s.statistics.work
+    densePivots := limits.densePivots, binaryPivots := limits.binaryPivots, delayedReduction := limits.delayedReduction }
+
+private def matrixOutcome {α : Type} : Except MatrixError α → Computation α
+  | .ok e => pure e
+  | .error (.exhausted r) => match r with
+    | .work => throw (.exhausted .work)
+    | .packedBytes => throw (.exhausted .packedBytes)
+    | .inputEntries | .outputEntries => throw (.exhausted .matrixEntries)
+    | .columns => throw (.exhausted .monomials)
+    | .rows => throw (.exhausted .matrixRows)
+    -- Provenance is disabled here, so this is an internal invariant failure.
+    -- A traced F4 route must supply its own resumable provenance allowance.
+    | .traceNodes => throw (.matrix (.exhausted .traceNodes))
+  | .error e => throw (.matrix e)
+
+/-- Back-substitute among the new monic pivots, so they are in reduced echelon form
+among themselves. The pivots, in ascending leading column, re-enter elimination as
+targets in descending leading column. Each is then fully reduced by the already
+reduced pivots to its right; none can cancel another's leading entry, so leading
+columns, monic scalars and pivot order are unchanged. New pivots are already
+reduced by every known pivot, so no known reducer is supplied. -/
+private def interreduce (context : Context) (limits : Limits) (columns : Nat)
+    (rows : Array (SparseRow × UInt64 × Nat)) : Computation (Array (SparseRow × UInt64 × Nat)) := do
+  spend limits rows.size
+  let targets := rows.reverse
+  let entries := targets.foldl (fun n (row, _, _) => n + row.size) 0
+  let inputBytes := targets.foldl (fun n (row, _, _) => n + row.columns.size + row.coefficients.size) 0
+  let s ← get
+  if s.statistics.matrixRows + targets.size > limits.matrixRows then throw (.exhausted .matrixRows)
+  if s.statistics.matrixEntries + entries > limits.matrixEntries then
+    throw (.exhausted .matrixEntries)
+  let outcome := eliminateWith context.field (← matrixLimits limits entries inputBytes) columns
+    #[] (targets.map (·.1)) false (targets.map (·.2.2)) limits.nativeRows
+  set { s with statistics := (s.statistics.recordMatrix outcome.stats
+    (inputBytes := inputBytes) (rows := targets.size) (targets := targets.size)) }
+  let echelon ← matrixOutcome outcome.result
+  if echelon.rows.size != rows.size then throw (.matrix .dimensions)
+  return (rows.zip echelon.rows).map fun ((_, multiplier, _), r) => (r.row, multiplier, r.sugar)
+
 /-- Run the matrix kernel within the remaining parent allowances. Its validated
 input payload is already live, so only workspace and output payload are newly
-charged to the cumulative allocation counter. -/
+charged to the cumulative allocation counter. Joint monic elimination then
+interreduces the new pivots. -/
 private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
     (monic independent : Bool) :
     Computation (Array BasisElement) := do
@@ -168,18 +217,9 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
   let reducers := input.reducers
   let targets := input.targets
   let sugars := input.sugars
-  let entries := input.entries
-  let inputBytes := input.inputBytes
   let rows := reducers.size+targets.size
   let s ← get
-  let remainingBytes := limits.packedBytes - s.statistics.allocatedBytes - s.table.bytes
-  let matrixLimits : MatrixLimits := {
-    columns := limits.monomials, rows := limits.matrixRows - s.statistics.matrixRows
-    inputEntries := entries
-    outputEntries := limits.matrixEntries - s.statistics.matrixEntries - entries
-    packedBytes := remainingBytes + inputBytes
-    work := limits.work - s.statistics.work
-    densePivots := limits.densePivots, binaryPivots := limits.binaryPivots, delayedReduction := limits.delayedReduction }
+  let matrixLimits ← matrixLimits limits input.entries input.inputBytes
   let (result, stats) := if independent then
     let outcome := reduceRowsWith context.field matrixLimits matrix.columns.size reducers targets false sugars limits.nativeRows
     (outcome.result.map (fun e => e.rows.map fun r => (r.row, (1 : UInt64), r.sugar)), outcome.stats)
@@ -188,19 +228,10 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     (outcome.result.map (fun e => e.rows.filterMap fun r =>
       if r.fromTarget then some (r.row, r.multiplier, r.sugar) else none), outcome.stats)
   set { s with statistics := (s.statistics.recordMatrix stats
-    (inputBytes := inputBytes) (rows := rows) (targets := targets.size)) }
-  let rows ← match result with
-    | .ok e => pure e
-    | .error (.exhausted r) => match r with
-      | .work => throw (.exhausted .work)
-      | .packedBytes => throw (.exhausted .packedBytes)
-      | .inputEntries | .outputEntries => throw (.exhausted .matrixEntries)
-      | .columns => throw (.exhausted .monomials)
-      | .rows => throw (.exhausted .matrixRows)
-      -- Provenance is disabled here, so this is an internal invariant failure.
-      -- A traced F4 route must supply its own resumable provenance allowance.
-      | .traceNodes => throw (.matrix (.exhausted .traceNodes))
-    | .error e => throw (.matrix e)
+    (inputBytes := input.inputBytes) (rows := rows) (targets := targets.size)) }
+  let rows ← matrixOutcome result
+  let rows ← if independent || !monic || rows.size < 2 then pure rows else
+    interreduce context limits matrix.columns.size rows
   let mut output := #[]
   for (row,multiplier,sugar) in rows do
     output := output.push (← decode context limits matrix.columns row multiplier sugar monic)
