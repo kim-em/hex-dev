@@ -163,7 +163,7 @@ open Lean Meta in
 local elab "legacy_field_proof" : tactic => do
   let goal ← Lean.Elab.Tactic.getMainGoal
   let target ← goal.getType
-  let .ok prepared ← Coefficients.prepare target |
+  let .ok prepared ← Coefficients.prepareField target |
     throwError "legacy field preparation declined the supplied cost fixture"
   let proof ← prepared.prove
   goal.assign (← Hex.RCF.checkProof `suppliedCost target proof)

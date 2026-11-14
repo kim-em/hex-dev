@@ -46,7 +46,7 @@ run_meta do
 set_option maxHeartbeats 8000000 in
 run_meta do
   let target := (← getConstInfo ``positive).type
-  let .ok prepared ← Coefficients.prepare target |
+  let .ok prepared ← Coefficients.prepareField target |
     throwError "explicit legacy preparation declined its supplied instance"
   let proof ← prepared.prove
   addDecl (.thmDecl {

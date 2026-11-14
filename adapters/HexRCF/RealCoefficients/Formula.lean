@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.SignMatrix
+public import HexRCF.RealCoefficients.CellCheck
 public import HexRCF.RealFormula
 
 public section
@@ -16,25 +17,9 @@ namespace Hex.RealFormula.QF
 
 open Hex.RCF
 
-/-- Every Boolean branch is evaluated, including one whose other branch has
-already decided the truth value. Thus a missing sign always fails closed. -/
-@[expose] def evalSigns (signOf : Hex.RealFormula.Poly n → Option Sign) : Hex.RealFormula.QF n → Option Bool
-  | .atom a => do
-      let sign ← signOf a.p
-      pure ((Hex.RCF.RealFormula.toCmp a.cmp).evalSign sign)
-  | .tt => some true
-  | .ff => some false
-  | .not p => do
-      let value ← evalSigns signOf p
-      pure (!value)
-  | .and p q => do
-      let left ← evalSigns signOf p
-      let right ← evalSigns signOf q
-      pure (left && right)
-  | .or p q => do
-      let left ← evalSigns signOf p
-      let right ← evalSigns signOf q
-      pure (left || right)
+@[simp] private theorem evalSign_eq (cmp : Hex.RealFormula.Cmp) (sign : Sign) :
+    cmp.evalRat (sign.toInt : Rat) = (Hex.RCF.RealFormula.toCmp cmp).evalSign sign := by
+  cases cmp <;> cases sign <;> decide
 
 /-- Finite agreement on every original atom preserves strict Boolean evaluation. -/
 theorem evalSigns_congr {formula : Hex.RealFormula.QF n}

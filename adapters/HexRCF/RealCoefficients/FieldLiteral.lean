@@ -89,7 +89,8 @@ private def optionLit (ty : Expr) : Option Expr → Expr
   | none => mkApp (mkConst ``Option.none [Level.zero]) ty
   | some value => mkApp2 (mkConst ``Option.some [Level.zero]) ty value
 
-private def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr := do
+/-- Quote a literal vector and its exact constructor length. -/
+meta def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr := do
   let data := arrayLit ty xs.toArray.toList
   let proof ← mkAppM ``Eq.refl #[mkNatLit n]
   mkAppM ``Vector.mk #[data, proof]
@@ -98,11 +99,17 @@ private def vectorLit (ty : Expr) {n : Nat} (xs : Vector Expr n) : MetaM Expr :=
 Each caller supplies its own envelope and verdict equations. -/
 meta def evidenceLemmas : MetaM (TSyntaxArray ``Parser.Tactic.simpLemma) := do
   return #[← `(Parser.Tactic.simpLemma| FieldCells.checkWith),
+    ← `(Parser.Tactic.simpLemma| QueryCells.check),
+    ← `(Parser.Tactic.simpLemma| QueryCells.checkRows),
+    ← `(Parser.Tactic.simpLemma| IsolationTransport.check),
     ← `(Parser.Tactic.simpLemma| FieldIsolation.checkWith),
     ← `(Parser.Tactic.simpLemma| FieldRootSigns.Table.checkTransportWith),
     ← `(Parser.Tactic.simpLemma| FieldQuery.checkWith),
     ← `(Parser.Tactic.simpLemma| FieldQuery.coveredWith),
     ← `(Parser.Tactic.simpLemma| FieldTransport.leadingWith),
+    ← `(Parser.Tactic.simpLemma| QueryReplay.check),
+    ← `(Parser.Tactic.simpLemma| QueryReplay.covered),
+    ← `(Parser.Tactic.simpLemma| QueryReplay.leading),
     ← `(Parser.Tactic.simpLemma| Field.checkSignTable),
     ← `(Parser.Tactic.simpLemma| LiteralSign.Table.check),
     ← `(Parser.Tactic.simpLemma| LiteralSign.Window.check),
@@ -131,6 +138,9 @@ private def intervalExpr (interval : DyadicInterval) : MetaM Expr := do
   let upper ← dyadicExpr interval.upper
   let orderTy ← mkAppM ``LT.lt #[lower, upper]
   let order ← mkDecideProof orderTy
+  -- An opaque checked proof keeps dependent interval projections stable under
+  -- implicit transparency when the enclosing literal is simplified in replay.
+  let order ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.FieldLiteral.intervalExpr orderTy order
   mkAppM ``DyadicInterval.mk #[lower, upper, order]
 
 private def denseExpr {E : Type} [Zero E] [DecidableEq E]
@@ -240,7 +250,7 @@ private def chainExpr {E : Type} [Zero E] [DecidableEq E]
 
 /-- Quote supplied finite query data without invoking its producer. The caller
 must separately check the exact subject and the resulting literal certificate. -/
-private def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
+meta def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : TarskiCertificate E E Unit) : MetaM Expr := do
   let ty ← inferType (← elem (0 : E))
   mkAppM ``TarskiCertificate.mk
@@ -254,7 +264,7 @@ private def tarskiExpr {E : Type} [Zero E] [DecidableEq E]
       mkIntLit cert.value]
 
 /-- Quote the proposed intervals and their stored root-count certificates. -/
-private def isolationExpr {E : Type} [Zero E] [DecidableEq E]
+meta def isolationExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : IsolationReplay E Unit) : MetaM Expr := do
   let intervals ← cert.isolations.intervals.toList.mapM intervalExpr
   let isolation ← mkAppM ``IsolationCert.mk
@@ -265,7 +275,8 @@ private def isolationExpr {E : Type} [Zero E] [DecidableEq E]
   mkAppM ``IsolationReplay.mk
     #[isolation, total, ← vectorLit queryTy counts]
 
-private def radicalExpr {E : Type} [Zero E] [DecidableEq E]
+/-- Quote the supplied root-preserving identities without invoking their producer. -/
+meta def radicalExpr {E : Type} [Zero E] [DecidableEq E]
     (elem : E → MetaM Expr) (cert : RadicalCert E Unit) : MetaM Expr := do
   mkAppM ``RadicalCert.mk
     #[mkConst ``Unit.unit, ← denseExpr elem cert.core,
@@ -324,19 +335,17 @@ private def atomAtExpr (formulaExpr : Expr) (n index : Nat) : MetaM Expr := do
   let fallback := mkApp2 (mkConst ``Zero.zero [Level.zero]) atomTy zeroInst
   mkAppM ``List.getD #[polys, mkNatLit index, fallback]
 
-private def rootSignsExpr {p : ZPoly} {root : SimpleRoot p} {n roots : Nat}
-    (pExpr rootExpr formulaExpr : Expr) (polys : List (RealFormula.Poly n))
-    (table : FieldRootSigns.Table (PolyQuot p root) Unit n roots) : MetaM Expr := do
+/-- Quote every retained atom row in its original source order. -/
+meta def rowsExpr {E : Type} [Zero E] [DecidableEq E] {n roots : Nat}
+    (elem : E → MetaM Expr) (formulaExpr : Expr) (polys : List (RealFormula.Poly n))
+    (table : FieldRootSigns.Table E Unit n roots) : MetaM Expr := do
   unless table.entries.length = polys.length do
     throwError "rcf: root-sign row count differs from the source formula"
-  let ty ← inferType (← fieldExpr pExpr rootExpr (0 : PolyQuot p root))
-  let zeroClass ← synthInstance (mkApp (mkConst ``Zero [Level.zero]) ty)
-  let eqClass := mkApp2 (mkConst ``PolyQuot.instDecidableEq) pExpr rootExpr
-  let queryTy := mkAppN (mkConst ``TarskiCertificate
-    [Level.zero, Level.zero, Level.zero])
-    #[ty, ty, mkConst ``Unit, zeroClass, eqClass]
-  let entryTy := mkAppN (mkConst ``FieldRootSigns.Entry [Level.zero, Level.zero])
-    #[ty, mkConst ``Unit, mkNatLit n, mkNatLit roots, zeroClass, eqClass]
+  let ty ← inferType (← elem (0 : E))
+  let queryTy ← mkAppOptM ``TarskiCertificate
+    #[some ty, some ty, some (mkConst ``Unit), none, none]
+  let entryTy ← mkAppOptM ``FieldRootSigns.Entry
+    #[some ty, some (mkConst ``Unit), some (mkNatLit n), some (mkNatLit roots), none, none]
   let mut rows := []
   let mut index := 0
   for row in table.entries do
@@ -345,11 +354,17 @@ private def rootSignsExpr {p : ZPoly} {root : SimpleRoot p} {n roots : Nat}
     unless row.atom = expected do
       throwError "rcf: root-sign atom order differs from the source formula"
     let atom ← atomAtExpr formulaExpr n index
-    let certs ← row.evidence.mapM (tarskiExpr (fieldExpr pExpr rootExpr))
+    let certs ← row.evidence.mapM (tarskiExpr elem)
     let evidence ← vectorLit queryTy certs
     rows := (← mkAppM ``FieldRootSigns.Entry.mk #[atom, evidence]) :: rows
     index := index + 1
   mkAppM ``FieldRootSigns.Table.mk #[listLit entryTy rows.reverse]
+
+
+private def rootSignsExpr {p : ZPoly} {root : SimpleRoot p} {n roots : Nat}
+    (pExpr rootExpr formulaExpr : Expr) (polys : List (RealFormula.Poly n))
+    (table : FieldRootSigns.Table (PolyQuot p root) Unit n roots) : MetaM Expr :=
+  rowsExpr (fieldExpr pExpr rootExpr) formulaExpr polys table
 
 /-- Embed all four parts of a successful fixed-field result without importing
 the producer into the proof term. The checker independently validates every
@@ -373,7 +388,8 @@ private meta def checkPreview {p : ZPoly} {s : DyadicSquare}
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
-    (data : FieldBuild.Result p s hw hp Unit (n + 1)) : MetaM Unit := do
+    (data : FieldBuild.Result p s hw hp Unit (n + 1))
+    (allowFalse : Bool := false) : MetaM Unit := do
   validate data
   let keys := FieldBuild.signKeys values formula data.radical.core data.isolation
     data.rootSigns extraSignKeys
@@ -389,9 +405,11 @@ private meta def checkPreview {p : ZPoly} {s : DyadicSquare}
       throwError "rcf: fixed-field certificate evidence failed replay"
   match quantifier, preview with
   | .forallReal, some false =>
-      throwError "rcf: the universal sentence is false on the prepared cells"
+      unless allowFalse do
+        throwError "rcf: the universal sentence is false on the prepared cells"
   | .existsReal, some false =>
-      throwError "rcf: the existential sentence is false on the prepared cells"
+      unless allowFalse do
+        throwError "rcf: the existential sentence is false on the prepared cells"
   | _, none => throwError "rcf: finite sign table did not decide the sentence"
   | _, some true => pure ()
 
@@ -404,13 +422,13 @@ private meta def refineCertificate {p : ZPoly} {s : DyadicSquare}
     (formula : RealFormula.QF (n + 1)) (quantifier : RealFormula.Quantifier)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit)
-    (data : FieldBuild.Result p s hw hp Unit (n + 1)) :
+    (data : FieldBuild.Result p s hw hp Unit (n + 1)) (allowFalse : Bool := false) :
     MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
   let options ← getOptions
   let steps := rcf.algebraic.signRefinements.get options
   if steps = 0 then return data
   unless rcf.algebraic.intervalSigns.get options do return data
-  checkPreview values formula quantifier extraSignKeys validate data
+  checkPreview values formula quantifier extraSignKeys validate data allowFalse
   unless data.checkFinite values formula () extraSignKeys do
     throwError "rcf: original fixed-field certificate evidence failed replay"
   Core.checkInterrupted
@@ -549,9 +567,10 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
   return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
     quantifier extraSignKeys validate data
 
-/-- Produce and quote a fixed-field certificate within explicit frontend
-search budgets. The complete library producer is separate. Accepted false,
-exhaustion and invalid replay remain terminal; search is absent from proofs.
+/-- Produce a fixed-field certificate within explicit frontend search budgets.
+The complete library producer is separate. False verdicts are terminal unless
+the caller explicitly requests a diagnostic certificate through `allowFalse`;
+exhaustion and invalid replay remain terminal. Search is absent from proofs.
 Cancellation is checked before and after native production. Individual native
 root computations do not check Lean cancellation or elaboration heartbeats. -/
 meta def produceRefining {p : ZPoly} {s : DyadicSquare}
@@ -562,7 +581,8 @@ meta def produceRefining {p : ZPoly} {s : DyadicSquare}
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ())
     (required : FieldBuild.Result p s hw hp Unit (n + 1) →
-      List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := fun _ => []) :
+      List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := fun _ => [])
+    (allowFalse : Bool := false) :
     MetaM (FieldBuild.Result p s hw hp Unit (n + 1)) := do
   if real : s.meetsRealAxis = true then
     let options ← getOptions
@@ -586,13 +606,13 @@ meta def produceRefining {p : ZPoly} {s : DyadicSquare}
           let some signs := FieldBuild.buildTable p s hw hp keys |
             throwError "rcf: additional finite sign production failed"
           pure {data with signs}
-        let data ← refineCertificate values formula quantifier extraSignKeys validate data
+        let data ← refineCertificate values formula quantifier extraSignKeys validate data allowFalse
         unless rcf.algebraic.intervalSigns.get (← getOptions) do
-          checkPreview values formula quantifier extraSignKeys validate data
+          checkPreview values formula quantifier extraSignKeys validate data allowFalse
         let signs ← prepareSigns data.signs
         let data := {data with signs}
         Core.checkInterrupted
-        checkPreview values formula quantifier extraSignKeys validate data
+        checkPreview values formula quantifier extraSignKeys validate data allowFalse
         return data
   else throwError "rcf: selected square does not name a real coefficient field"
 

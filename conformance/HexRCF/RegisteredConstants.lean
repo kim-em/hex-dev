@@ -86,7 +86,7 @@ theorem aliasedWitness (a : ℝ) (identity : a = supplied) :
     ∃ x : ℝ, x < supplied + 1 ∧ x = a ∧ x^2 < 5 := by rcf
 
 run_meta do
-  let original : Q(Prop) := q(∃ x : ℝ, x < supplied + 1 ∧ x = supplied)
+  let original : Q(Prop) := q(∃ x : ℝ, x < supplied + 1 ∧ x = supplied ∧ x ^ 2 < 5)
   let arguments := original.getAppArgs
   let target := mkAppN original.getAppFn
     (arguments.set! 1 (.mdata {} arguments[1]!))
@@ -107,6 +107,8 @@ run_meta do
     let dependencies ← Hex.RCF.ProofEvidence.projectDependencies #[name]
     unless dependencies.contains ``suppliedRegistration do
       throwError "registered witness bypassed the caller's containment evidence"
+    if dependencies.contains ``PolynomialBuild.check_sound then
+      throwError "registered witness unexpectedly entered polynomial root search"
   for (suffix, target) in #[
       (`metadataOuterWitness, Expr.mdata {} original),
       (`metadataBodyWitness, mkAppN original.getAppFn (arguments.set! 1

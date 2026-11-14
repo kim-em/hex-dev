@@ -8,6 +8,7 @@ module
 public import HexSturmTheory.Soundness
 public import HexRealRootsTheory.RealClosed
 public import HexRCF.RealCoefficients.IntervalSign
+public import HexRCF.RealCoefficients.SignData
 
 public section
 
@@ -71,14 +72,6 @@ theorem checked_one (p q : DensePoly Rat) (lower upper : Rat)
     (.finite (lower : ℝ)) (.finite (upper : ℝ)) at querySpec
   rw [Tarski.rootSum_singleton _ _ _ _ r hr, ← hxr] at querySpec
   exact querySpec
-
-/-- A literal sign for one value of a fixed real number field. Coordinates
-come from the key. Absent query evidence selects exact interval evaluation;
-present query evidence must pass its own binding and replay checks. -/
-structure Entry (D : Type u) where
-  key : D
-  value : Int
-  evidence : Option (TarskiCertificate Rat Rat Unit)
 
 namespace Entry
 

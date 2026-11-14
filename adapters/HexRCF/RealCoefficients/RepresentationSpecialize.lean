@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealFormulaTheory.Semantics
+public import HexRCF.RealCoefficients.CellCheck
 public import HexPolyTheory.Interpret
 public import HexRealClosureTheory.TransportRing
 
@@ -16,28 +17,6 @@ open Hex Hex.RealFormula
 attribute [local instance 2500] Semiring.toGrindSemiring
 
 variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Mul E] [Neg E] [NatCast E]
-
-/-- Integer coefficients use only the representation's actual casts and negation. -/
-@[expose] def scalar : Int → E
-  | .ofNat n => (n : E)
-  | .negSucc n => -((n + 1 : Nat) : E)
-
-/-- Evaluate only the coefficient coordinates with their actual arithmetic. -/
-@[expose] def coefficient (values : Fin n → E) (m : Mono (n + 1)) (c : Int) : E :=
-  let product := (List.finRange n).foldl (fun acc i =>
-    if m[i.castSucc] = 0 then acc else acc * Mono.powBySq (values i) m[i.castSucc]) 1
-  if c = 1 then product else scalar c * product
-
-/-- Group terms by their bound-variable exponent through dense coefficient addition.
-Coefficient powers and products are evaluated in `E`, without polynomial products
-or a ring or field instance on stored expressions. -/
-@[expose] def polynomial (values : Fin n → E) (q : RealFormula.Poly (n + 1)) : DensePoly E :=
-  q.termsList.foldl (fun acc term =>
-    acc + DensePoly.monomial term.1[Fin.last n] (coefficient values term.1 term.2)) 0
-
-/-- Retain every original atom, including zero, repeated and domain-guard atoms. -/
-@[expose] def prepare (values : Fin n → E) (formula : RealFormula.QF (n + 1)) :
-    List (DensePoly E) := formula.polys.map (polynomial values)
 
 /-- Append the bound variable in the model field to the fixed coefficient coordinates. -/
 @[expose] def valuation {K : Type v} (values : Fin n → K) (x : K) (i : Fin (n + 1)) : K :=

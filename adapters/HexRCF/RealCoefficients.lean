@@ -24,6 +24,7 @@ public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.Field
+public import HexRCF.RealCoefficients.CommonSource
 public import HexRCF.RealCoefficients.CommonPresentation
 public import HexRCF.RealCoefficients.SourceIdentity
 public meta import HexRCF.RealCoefficients.SourceIdentityQuote
@@ -112,6 +113,11 @@ public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather
 public import HexRCF.RealCoefficients.InverseReplay
 public import HexRCF.RealCoefficients.SignInputs
+public import HexRCF.RealCoefficients.QueryReplay
+public import HexRCF.RealCoefficients.IsolationTransport
+public import HexRCF.RealCoefficients.PolynomialBoundsSoundness
+public import HexRCF.RealCoefficients.PolynomialSignsSoundness
+public import HexRCF.RealCoefficients.PolynomialSoundness
 public import HexRCF.RealCoefficients.FieldCarrier
 public import HexRCF.RealCoefficients.Carrier
 public import HexRCF.RealCoefficients.IsolationBuild
@@ -136,6 +142,8 @@ public import HexRCF.RealCoefficients.FieldBuildBudget
 public import HexRCF.RealCoefficients.FiniteSigns
 public import HexRCF.RealCoefficients.FiniteReplay
 public import HexRCF.RealCoefficients.Replay
+public import HexRCF.RealCoefficients.ReplayCells
+public import HexRCF.RealCoefficients.FieldCellProgress
 public import HexRCF.RealCoefficients.FieldRefinement
 public meta import HexRCF.RealCoefficients.FieldLiteral
 public meta import HexRCF.RealCoefficients.FieldCompile

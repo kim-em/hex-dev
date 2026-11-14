@@ -108,7 +108,7 @@ run_meta do
       let candidate ← mkFreshExprMVar (← mkEq checkExpr q(true))
       let lemmas ← FieldLiteral.evidenceLemmas
       let remaining ← Elab.runTactic' candidate.mvarId! (← `(tactic|
-        (simp only [FieldCells.check,FieldIsolation.check,FieldQuery.check,FieldQuery.covered,
+        (simp only [FieldCells.check,FieldCells.checkWith,QueryCells.check,QueryCells.checkRows,IsolationTransport.check,FieldIsolation.check,FieldQuery.check,FieldQuery.covered,
           FieldRootSigns.Table.checkTransport,FieldRootSigns.Table.checkRows,FieldRootSigns.Table.checkWith,
           FieldTransport.leadingCheck,$lemmas,*,Bool.and_eq_true];
          repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel))))

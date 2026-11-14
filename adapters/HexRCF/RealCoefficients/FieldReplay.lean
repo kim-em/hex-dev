@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldRootSigns
+public import HexRCF.RealCoefficients.FieldDecision
 
 public section
 

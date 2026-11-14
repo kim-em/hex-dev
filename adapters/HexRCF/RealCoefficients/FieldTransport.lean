@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.FieldSpecialize
+public import HexRCF.RealCoefficients.QueryReplay
 public import HexRealClosureTheory.TransportClosedQuery
 public import HexRealRootsTheory.Separation
 public section
@@ -75,10 +76,7 @@ theorem point (table : LiteralSign.Table E)
 
 /-- Require a recorded nonzero sign for each nonempty polynomial's top coefficient. -/
 @[expose] def leadingWith (lookup : E → Option Int) (q : DensePoly E) : Bool :=
-  if q.size = 0 then true
-  else match lookup (q.coeff (q.size - 1)) with
-    | none => false
-    | some observed => observed != 0
+  QueryReplay.leading lookup q
 
 @[expose] def leadingCheck (table : LiteralSign.Table E) (q : DensePoly E) : Bool :=
   leadingWith table.lookup? q
@@ -87,19 +85,9 @@ theorem leading (table : LiteralSign.Table E)
     (checked : Field.checkSignTable p s hw hp table = true) (q : DensePoly E)
     (accepted : leadingCheck table q = true) :
     Transport.Leading (Field.value (Field.literalRep p s hw hp)) q := by
-  intro positive zero
-  unfold leadingCheck leadingWith at accepted
-  split at accepted
-  · omega
-  · rename_i nonempty
-    cases hit : table.lookup? (q.coeff (q.size - 1)) with
-    | none => simp only [hit, Bool.false_eq_true] at accepted
-    | some observed =>
-      have sign := Field.checkSignTable_lookup p s hw hp table checked
-        (q.coeff (q.size - 1)) observed hit
-      rw [zero] at sign
-      have observedZero : observed = 0 := by simpa using sign
-      simp [hit, observedZero] at accepted
+  exact QueryReplay.leading_spec table.lookup? (Field.value (Field.literalRep p s hw hp))
+    (fun x value found => Field.checkSignTable_lookup p s hw hp table checked x value found)
+    q accepted
 
 theorem query {C : Type u} [DecidableEq C]
     (table : LiteralSign.Table E)
@@ -120,32 +108,14 @@ theorem query {C : Type u} [DecidableEq C]
       value (Transport.query (Field.value (Field.literalRep p s hw hp)) id cert) = true := by
   let read : E → ℝ := Field.value (Field.literalRep p s hw hp)
   let sign := table.sign read
-  let target := fun x : ℝ => (SignType.sign x : Int)
-  have signs (x : E) : target (read x) = sign x :=
+  have signs (x : E) : (SignType.sign (read x) : Int) = sign x :=
     (Field.checkSignTable_spec p s hw hp table checked x).symm
-  have domain (chain : SignedRemainderChain E) : Transport.ChainDomain (fun _ : E => True) chain := by
-    constructor <;> intros <;> trivial
-  have chainSigns (chain : SignedRemainderChain E) :
-      Transport.ChainSigns read sign target chain := by
-    constructor <;> intros <;> exact signs _
-  have endpointSigns (r : DensePoly E) (e : Endpoint E) :
-      Transport.EndpointAgreement read sign target r e := by
-    cases e <;> exact signs _
-  have endpointDomain (e : Endpoint E) : Transport.EndpointDomain (fun _ : E => True) e := by
-    cases e <;> trivial
-  have data := Transport.QueryData.of_closed read (fun _ => True)
-    (closed (Field.literalRep p s hw hp) (Field.literalRep_mk p s hw hp) real)
-    sign target head test a b cert
-    (fun _ _ => trivial) (fun _ _ => trivial) (domain _) (domain _)
+  exact QueryReplay.transport read
+    (closed (Field.literalRep p s hw hp) (Field.literalRep_mk p s hw hp) real) sign signs
+    context head test a b value cert
     (leading table checked head headChecked)
     (fun r member => leading table checked r (squarefree r member))
     (fun r member => leading table checked r (remainders r member))
-    (chainSigns _) (chainSigns _) (endpointDomain a) (endpointDomain b)
-    (fun _ _ _ _ => signs _) (endpointSigns head a) (endpointSigns head b)
-    (fun r _ => endpointSigns r a) (fun r _ => endpointSigns r b)
-  exact Transport.query_check read
-    (Field.value_zero _ (Field.literalRep_mk p s hw hp) real)
-    (Field.value_one _ (Field.literalRep_mk p s hw hp) real)
-    id sign target context head test a b value cert data accepted
+    accepted
 
 end Hex.RCF.RealCoefficients.FieldTransport

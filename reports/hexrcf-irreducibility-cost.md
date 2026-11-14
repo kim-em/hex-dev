@@ -3,7 +3,7 @@
 The measurements below belong to the pinned whole-field proof route. The
 current automatic common-field handler uses finite replay independently of a
 new common-field irreducibility instance. The current construction-cost probes
-explicitly call `Coefficients.prepare` and `Environment.prove`; no timing at
+explicitly call `Coefficients.prepareField` and `Environment.prove`; no timing at
 that later source is inferred from these historical samples.
 
 This fixed experiment answers the question of where to construct the supplied

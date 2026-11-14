@@ -333,7 +333,7 @@ open Hex Hex.RCF.RealCoefficients
 
 private meta def checkRootProof (name : Lean.Name) : Lean.MetaM Unit := do
   for marker in [``CommonPresentation.checkEntry_sound_of_selected,
-      ``CommonPresentation.checkRoot_sound, ``Replay.check_sound] do
+      ``CommonPresentation.checkRoot_sound, ``FieldCells.forall_formula] do
     unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf marker) do
       throwError "mixed algebraic-base proof omitted ordinary replay {marker}"
   for forbidden in [``rootInterval, ``RealAlgebraicNumber.approxBall, ``Replay.build,
@@ -379,7 +379,7 @@ run_meta do
   Hex.RCF.checkAxioms `Hex.RCF.MixedConstants.pi_inverse_root
     (Lean.mkConst `Hex.RCF.MixedConstants.pi_inverse_root)
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_other_radical
-      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.Replay.check_sound) do
+      (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.FieldCells.forall_formula) do
     throwError "mixed sqrt3 proof did not use prepared finite replay"
   for (name, marker) in [(`Hex.RCF.MixedConstants.pi_radical, ``SquareTwo.valuation),
       (`Hex.RCF.MixedConstants.pi_positive_divisor, ``SquareTwo.valuation),
@@ -394,7 +394,7 @@ run_meta do
     if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf ``Replay.check_sound) then
       throwError "mixed exact frontend unexpectedly used prepared replay"
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.exp_normalized
-      (fun e => e.isConstOf ``Replay.check_sound) do
+      (fun e => e.isConstOf ``FieldCells.forall_formula) do
     throwError "normalized leaf did not use prepared replay"
 
 /-- info: 'Hex.RCF.MixedConstants.pi_radical' depends on axioms: [propext, Classical.choice, Quot.sound] -/

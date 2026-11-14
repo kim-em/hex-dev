@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "5ac6cbc3352fdb5a288d69a336f0245589d69bce",
+  "reason": "This exact endpoint renews the previously approved baseline-to-f1117c9ca553db82ee65e1d16c6f314401655dc3 transition from lakefile-rcf-admission-fea47caa-f1117c9c.json. The factorization_blocks extracted by scripts/bench/check_factor_sweep_freshness.py are byte-identical between that approved endpoint and this blob, and between main blob 61500c1cb5ecf1086791d7a2f13560502d49919d and this blob. The issue-10358 delta adds optional RCF adapter and conformance module globs, including the coarse-bound direct-path regression, without changing the measured factor service declarations, its imported libraries, package options, dependency pins, compiler flags, native archive/link inputs, or factorization runtime code. The inherited main changes add unrelated Groebner targets/conformance and header-trace dependencies; they do not alter the extracted factorization build configuration. An explicit current endpoint lets a fresh CI checkout validate the approved runtime-neutral transition without depending on historical feature-branch blob reachability. No performance sample, measurement input, runtime source or freshness rule is changed."
+}

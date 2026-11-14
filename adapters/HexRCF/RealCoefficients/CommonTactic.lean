@@ -998,19 +998,23 @@ end Hex.RCF.RealCoefficients.CommonTactic
 namespace Hex.RCF.RealCoefficients.Coefficients
 open Lean Meta
 
-/-- Recognize and authenticate the exact algebraic fragment of a one-variable
-source goal, in its original coefficient order, before goal certificate search.
-Purely rational goals use the base solver; caller-registered bounds use the
-finite-certificate frontend. A structured decline or exception restores the
-metavariable and environment state. No failure starts a different solver. -/
-meta def prepare (target : Expr) :
+/-- Explicit legacy preparation with a quoted common-field irreducibility
+certificate. Its editable Environment retains independent validation. -/
+meta def prepareField (target : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error Environment) :=
   CommonTactic.prepare target
 
-/-- Authenticate the same source fragment without quoting a new common-field
-irreducibility certificate. All original guards remain required. -/
-meta def prepareCoordinates (target : Expr) :
+/-- Authenticate the exact algebraic fragment in source coefficient order,
+before root/cell production, without quoting common-field irreducibility.
+Every original divisor remains required. Rational-only sources use the base
+solver; registered constants use their finite-certificate frontend. A decline
+or exception restores caller state and never starts a different solver. -/
+meta def prepare (target : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error Coordinates) :=
   CommonTactic.prepareCoordinates target
+
+/-- Compatibility spelling for authenticated finite source preparation. -/
+meta def prepareCoordinates (target : Expr) :
+    MetaM (Except Hex.RealFormula.Reify.Error Coordinates) := prepare target
 
 end Hex.RCF.RealCoefficients.Coefficients
