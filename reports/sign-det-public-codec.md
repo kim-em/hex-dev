@@ -1,4 +1,4 @@
-# Public graph-reader reduction
+# Public graph encoding equations and reader reduction
 
 `Hex.SignDet.Codec.readGraph` and the existing readers it calls expose their
 definitions across ordinary module imports. A consumer can reduce a concrete
@@ -51,16 +51,39 @@ node record shapes without exposing the encoder bodies. The `entry_fn` equation
 rewrites the encoder as a function, including inside `Codec.array` maps.
 `option_none` and `option_some` retain both optional payload shapes;
 `system_eq`, `basis_eq` and `encodeMatrix_eq` identify the stored integer fields.
-These are equations for arbitrary raw records, without structural or arithmetic
-acceptance premises. The `tarski`, `chain`, `remainder`, `terminal`,
-`reductionStep`, `reduction` and `preparation` encoders remain opaque.
+`tarski_eq`, `chain_eq`, `remainder_eq`, `terminal_eq`, `reductionStep_eq`,
+`reduction_eq` and `preparation_eq` identify all nested witness fields. These
+are equations for arbitrary raw records, without structural or arithmetic
+acceptance premises. The reference encoder bodies remain hidden across imports;
+consumers use the public equations rather than private imports. Function forms
+`tarski_fn`, `remainder_fn`, `reductionStep_fn`, `reduction_fn`, `terminal_fn`
+and `preparation_fn` also rewrite partially applied encoders beneath arbitrary
+arrays, lists and optional payloads. The `moments_encode`, `reductions_encode`
+and `optional_encode` public-import consumers check this without fixing lengths,
+entries or option constructors. `moments_encode` additionally requires that
+reflexivity alone cannot open the hidden Tarski encoder.
 
 The ordinary-import `PublicCodec` consumer composes these equations to identify
-a one-entry numerical graph with a size-zero node and no moments, reductions
-or preparation, alongside the general header, entry and
-eleven-field node checks. This does not assert that the encoded witnesses pass
-replay. Exact axiom guards check the permitted logical closure; the equation
-proofs themselves follow their reference encoders by reflexivity.
+both a size-zero graph and a size-one numerical graph with all nested evidence
+present. `graph_nested_literal` binds the raw records to the exact JSON packet
+already exercised by `graph_nested`, including both chains, their initial and
+nonempty subsequent remainder witnesses, a present terminal, optional reduction,
+query preparation and a 1×1 system. The deliberately zero scales and system
+denominator are literal data, not a claim of arithmetic acceptance. Its basis
+has rank zero; the existing conformance retains positive-rank coverage.
+
+The nested equation and general array/option-consumer guards require exactly
+`propext`; the composed numerical graph proof requires exactly `propext`,
+`Classical.choice` and `Quot.sound`. The reference equations are proved by
+reflexivity, and no global simplification attributes or executable bodies change.
+
+This removes the nested structured-encoder equation gap. It does not identify
+an arbitrary numerical tower frame: the actual coefficient/context codecs and
+stored history still need their own exact bindings. `ValueCodec.Lawful` states
+only `decode (encode value) = .ok value`; it supplies no converse identifying
+an arbitrary accepted literal with an encoding. Arithmetic replay, strict
+rejection of missing reached records and general joint ordinary-real export
+remain separate owner obligations.
 
 ## Verification
 
@@ -77,8 +100,9 @@ conformance coverage rather than a new kernel-reduction claim here.
 
 [`PublicGraphCodec.lean`](../conformance/HexRCF/PublicGraphCodec.lean) imports
 only the optional public umbrella and checks the reported empty-input reduction
-and a complete nonempty node directly. Every named proof has a CI-built axiom guard allowing exactly the three
-standard axioms `propext`, `Classical.choice` and `Quot.sound`. There is no private
+and a complete nonempty node directly. Every named proof has a CI-built exact axiom guard within the standard
+allowlist `propext`, `Classical.choice` and `Quot.sound`; some encoding
+equations use only `propext` or no axioms. There is no private
 import, admission, `native_decide` or external runtime oracle in these proofs.
 
 Both modules extend the existing conformance library. Reproduce from the root:
