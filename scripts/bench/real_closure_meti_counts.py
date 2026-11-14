@@ -31,7 +31,7 @@ SOURCES = [
     'scripts/bench/real_closure_meti_counts.py',
     'scripts/bench/meti_counts.py',
     'scripts/bench/build_meti_counts.py',
-    'scripts/bench/build_nested_normalization_counts.py',
+    'scripts/bench/lake_recipe.py',
     'scripts/bench/ffi/meti_counts.c',
     'scripts/bench/cpu_lease.py',
     'scripts/bench/real_closure_metitarski_scaling.py',
