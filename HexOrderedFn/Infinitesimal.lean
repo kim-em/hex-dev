@@ -34,19 +34,8 @@ namespace Infinitesimal
 variable {K : Type u}
 
 /-- Scan from degree zero, returning the array size when all coefficients vanish. -/
-noncomputable def lowestIndex [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
+def lowestIndex [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
   p.coeffs.findIdx (fun c => c != 0)
-
-/-- The native scan recognizes a shared zero immediately, falling back to
-coefficient equality when the two objects have different addresses. -/
-def lowestIndexImpl [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
-  p.coeffs.findIdx (fun c =>
-    !withPtrEq c 0 (fun _ => c == 0) (by intro h; simp [h]))
-
-/-- Sharing changes only the scan's implementation, for arbitrary coefficients. -/
-@[csimp] theorem lowestIndex_eq_impl : @lowestIndex = @lowestIndexImpl := by
-  funext K _ _ p
-  simp only [lowestIndex, lowestIndexImpl, withPtrEq, bne_eq]
 
 /-- The first nonzero coefficient, or zero for the zero polynomial. -/
 def lowestCoeff [Zero K] [DecidableEq K] (p : DensePoly K) : K :=

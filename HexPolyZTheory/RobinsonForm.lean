@@ -406,8 +406,8 @@ theorem mahlerMeasure_le_circleAverage_norm (p : ℂ[X]) :
     refine Finite.of_finite_image (f := circleMap 0 1) (p.roots.finite_toSet.subset ?_) ?_
     · rintro z ⟨θ, ⟨_, heval⟩, rfl⟩
       exact (mem_roots hp).mpr heval
-    · apply InjOn.mono fun _ h => h.1
-      exact injOn_circleMap_of_abs_sub_le one_ne_zero (by simp [abs_of_pos Real.pi_pos])
+    · exact (injOn_circleMap_of_abs_sub_le one_ne_zero
+        (by simp [abs_of_pos Real.pi_pos])).mono fun _ h => h.1
   have hlog_ae : ∀ᵐ (θ : ℝ) ∂volume.restrict (uIoc 0 (2 * Real.pi)),
       Real.exp (Real.log ‖p.eval (circleMap 0 1 θ)‖) =
         ‖p.eval (circleMap 0 1 θ)‖ := by

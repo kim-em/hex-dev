@@ -13,7 +13,6 @@ namespace Hex.RealClosure.Tower
 
 private def replayDecEq {E : Type} [Zero E] [DecidableEq E]
     (left right : SignDet.Replay E Signature) : Decidable (left = right) :=
-  withPtrEqDecEq left right fun _ =>
     match left, right with
     | .leaf a, .leaf b => decidable_of_iff (a = b) (by simp)
     | .leaf _, .split _ _ _ => isFalse (by intro h; cases h)
@@ -82,8 +81,7 @@ def Chain.same? {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
           | none => none
           | some ⟨same⟩ => by
             cases same
-            letI := withPtrEqDecEq descriptor selected
-              (fun _ => descriptorDecEq descriptor selected)
+            letI := descriptorDecEq descriptor selected
             exact if descriptors : descriptor = selected then
               some ⟨by
                 cases descriptors
@@ -112,10 +110,9 @@ theorem Context.same?_self (context : Context registry) :
   cases context with
   | pack chain => exact chain.same?_self
 
-/-- Native context equality has a sound pointer shortcut; otherwise every
-actual predecessor, descriptor and replay is compared. -/
+/-- Native context equality compares every actual predecessor, descriptor and
+replay. -/
 instance : DecidableEq (Context registry) := fun left right =>
-  withPtrEqDecEq left right fun _ =>
     match checked : left.same? right with
     | some ⟨same⟩ => isTrue same
     | none => isFalse (by

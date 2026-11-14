@@ -116,7 +116,7 @@ Unlisted foreign helpers are rejected even when they hide a producer outside
 its usual namespace. Constructors, projections and proofs are handled separately. -/
 private meta def dataPrimitives : Array Lean.Name := #[
     ``Field.toGrindField, ``Rat.instField,
-    ``instDecidableEqRat, ``Hex.RationalFn.instZero,
+    ``instDecidableEqRat, ``instOrdInt, ``Int.instLEInt, ``Hex.RationalFn.instZero,
     ``Hex.RationalFn.instDecidableEq, ``instOfNatNat,
     ``instHSub, ``Hex.DensePoly.instSub,
     ``Hex.RationalFn.instSub, ``Hex.DensePoly.ofList,
