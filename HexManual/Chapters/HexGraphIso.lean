@@ -184,11 +184,10 @@ tag := "hex-graph-iso-automorphisms"
 The canonical search discovers automorphisms as it goes: whenever a leaf
 of the search tree carries the same refinement codes as an earlier one,
 the permutation carrying the earlier labelling onto it is a candidate
-automorphism, and the search prunes with the ones that check out. Those
-generators are an output in their own right.
-{name Hex.GraphIso.autos}`autos` returns them, in the order the traversal
-discovered them, together with the vertex orbits, the number of orbits
-and the order of the group. The uncoloured mirror is
+automorphism, and the search prunes with the ones that check out.
+{name Hex.GraphIso.autos}`autos` returns the generators selected by
+nauty's emission rule, in the order reported by the traversal. It also
+returns the vertex orbits, orbit count and group order. The uncoloured mirror is
 {name Hex.Graph.autos}`Graph.autos`.
 
 {docstring Hex.GraphIso.autos}

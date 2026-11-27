@@ -76,9 +76,9 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   `Graph.isIso` and the rest. `Graph.singleColor` is the one-cell view
   they read, and `Graph.isomorphic_singleColor_iff` the equivalence
   they are transported along.
-- `autos` reports the automorphism generators the pinned traversal
-  discovers, in discovery order, with the vertex orbits, the orbit
-  count and the group order; `Graph.autos` is the uncoloured mirror.
+- `autos` returns the pinned traversal's generators in emission order,
+  with vertex orbits, orbit count and group order. `Graph.autos` is the
+  uncoloured mirror.
   Every returned generator is proved to be an automorphism
   (`autos_isIso`), and the list generates the full group (`autos_complete`).
   Equality of orbit representatives is equivalent to sharing a full-group

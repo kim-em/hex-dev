@@ -16,26 +16,21 @@ public section
 /-!
 Automorphism generators, vertex orbits and the group order.
 
-The nauty traversal discovers automorphisms as it runs: each one is a
-`workperm` recorded at a code-1 or code-2 leaf, in discovery order, and
-the search prunes with the same permutations. `Aut.trace` is that list,
-transcribed. The list is deterministic. It can include code-2 entries
-whose orbit join changes nothing, which nauty suppresses. Conformance
-checks nauty's list as an ordered subsequence, with entry-by-entry
-agreement when the lengths match.
+`Aut.trace` records every admitted code-1 and code-2 automorphism in
+discovery order. `Aut.emitted` records the generator callbacks in order:
+every code-1 automorphism and each code-2 automorphism that merges
+orbits. Conformance compares the emitted list entry by entry.
 
-No permutation from the search is trusted as given. Each raw array
-passes through `autom?`, which rebuilds it as a `Perm n` and runs the
-same `checkIso` the isomorphism operations use, so `autos_isIso` reads
-the membership guarantee off the check rather than off the search. The
-search is the producer and `checkIso` is the only trusted step.
+The dense API passes each emitted array through `autom?`, which
+rebuilds it as a `Perm n` and runs `checkIso`. `autos_isIso` states the
+membership guarantee. `AutComplete` proves that the returned list
+generates the full group.
 
-The orbit array replays nauty's `orbjoin` over the checked generators,
-which is what the search itself does with them, so it is the array
-nauty reports. `sameOrbit_of_orbits_eq` is its guarantee: vertices
-sharing an orbit representative really are carried onto each other by
-an automorphism. `AutComplete` proves the converse and proves that the
-returned list generates the full group.
+The dense API builds its orbit array by applying `orbjoin` to those
+checked generators. Each vertex is assigned the least representative of
+its orbit. `AutComplete` proves that two vertices share a representative
+exactly when an automorphism carries one to the other. Conformance also
+compares this array against nauty's search output.
 
 `Aut.order` is the orbit-stabilizer chain: individualize a vertex of
 a non-singleton orbit, recurse on the stabilizer (the search on the
@@ -43,8 +38,8 @@ individualized colouring computes it, since a vertex alone in its
 cell is fixed by every colour-preserving automorphism), and multiply
 the orbit lengths. Generation completeness makes every level's orbit
 partition exact. The theory companion proves that this product is the
-cardinality of the full group. Conformance also compares it against
-nauty's `grpsize`.
+cardinality of the full group. Conformance compares it with the exact
+product of nauty's level indices.
 -/
 
 namespace Hex.GraphIso
@@ -295,12 +290,10 @@ end Aut
 
 /-! # The automorphism surface -/
 
-/-- The automorphism data of a coloured graph: the generators the
-pinned traversal discovers, in discovery order, with the vertex
-orbits, the orbit count and the orbit-stabilizer product nauty derives
-from them. -/
+/-- The reported generators of a coloured graph, with its vertex orbits,
+orbit count and exact automorphism-group order. -/
 structure AutResult (n : Nat) where
-  /-- The generators, in the traversal's discovery order. -/
+  /-- The generators in the traversal's emission order. -/
   gens : List (Perm n)
   /-- The orbit representative of each vertex. -/
   orbits : Array Nat

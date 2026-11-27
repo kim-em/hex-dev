@@ -268,7 +268,8 @@ factors come from separate runs on the individualized colourings.
 The four fields are also available on their own, in the `Aut`
 namespace: `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order`,
 with `Aut.emitted` the raw reported list and `Aut.trace` the full
-discovery trace. `Aut.gens_isIso` proves that each member of `Aut.gens`
+discovery trace. `Aut.raw_eq_emitted` identifies the arrays behind the
+public generators with the reported list. `Aut.gens_isIso` proves that each member of `Aut.gens`
 is an automorphism.
 A caller who wants only the generators takes `Aut.gens`, which runs one
 traversal; `autos` computes `order` as well, and that runs one further
@@ -943,7 +944,7 @@ read labels and canonical forms from the public operations.
 automorphism and campaign corpora, plus the 120-vertex pruning regression.
 `scripts/oracle/graphiso_trace.py` compares those records with the committed
 `conformance-fixtures/HexGraphIso/trace.jsonl.gz`. It checks labels, canonical
-rows, all seven statistics, generators in discovery order, path codes, final
+rows, all seven statistics, the automorphism discovery trace, path codes, final
 orbits and normal root exit. Missing, duplicate, additional and changed cases
 fail with the case and differing field. The metadata records the source
 commit, case counts, corpus digest and trace digest.
@@ -2076,7 +2077,7 @@ realizers, including order zero. `Prune` transports the workspace along the
 current path and justifies native long-filter removals and whole-cell
 representatives by checked automorphism carriers. The completed production
 maximum induction integrates the canonical-reference guide, receiver validity
-and local filter coverage. Full generation from the emitted trace is also proved.
+and local filter coverage. The emitted list is proved to generate the full group.
 Both comparison machines and incumbent growth are established through actual
 nonlocal returns.
 Sparse contracts discharge its local obligations for the sparse graph
@@ -2158,16 +2159,16 @@ actual node calls, including reference completion above the uniform boundary.
 `GeneratedVisit` and `GeneratedTail` prove generated coverage through actual
 child returns and orbit skips. `GeneratedHead` constructs the guiding child's
 reference and base premises; `GeneratedComplete` proves the full first-path
-stabilizer induction. `GeneratedRoot.runColored_generates` proves that the
-actual emitted trace generates every native colour-preserving automorphism,
-including at order zero. `generated_iff` combines this with soundness to
-identify the generated subgroup exactly. `OrbitReplay` identifies the actual
-pointer array and count with the emitted join sequence. `OrbitExact` proves
+stabilizer induction. `GeneratedRoot.emissions_generate` proves that the
+reported generators generate every native colour-preserving automorphism,
+including at order zero. `Sparse.Aut.generated_iff` combines this with
+soundness. `OrbitReplay` identifies the executed pointer array and count
+with the join sequence over the discovery trace. `OrbitExact` proves
 least representatives, the full orbit biconditional and the exact root count.
 Coloured `Sparse.autos`, bare `SparseGraph.autos`, and the `Sparse.Aut` projections
 expose these single-traversal results with generation and orbit correctness
 theorems. `OrbitClosure` proves that every intermediate orbit array is closed
-under its current emitted generators; later joins preserve earlier
+under the automorphisms discovered so far. Later joins preserve earlier
 connections. `OrbitMark` identifies the literal counter test with membership
 in the true point-stabilizer orbit. `StabilizerTail` and `StabilizerHead`
 prove that each executed first-path index is the exact stabilizer orbit

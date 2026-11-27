@@ -370,6 +370,15 @@ private def autosWellFormed {n k : Nat} (G : Colored n k) : Bool :=
   return exit == .unwind 1 false && st.emitted == #[#[1, 0, 2]] &&
     st.numgenerators == 1 && st.numorbits == 2
 
+-- A changed orbit still emits when the coset representative is unchanged.
+#guard Id.run do
+  let st := Nauty.initial 3 #[0, 1, 2] [2]
+  let st := { st with
+    workperm := #[1, 0, 2], cosetindex := 0, gcaFirst := 1, gcaCanon := 2 }
+  let (exit, st) := Nauty.leafExit .autoCanon 3 st
+  return exit == .unwind 2 true && st.emitted == #[#[1, 0, 2]] &&
+    st.numgenerators == 1 && st.numorbits == 2
+
 -- Exhausted recursion must remain distinguishable from a completed sweep.
 #guard (Nauty.node true { g := Nauty.rowsOf p3 } 5 100 0 1 1
   (Nauty.initial 3 #[0, 1, 2] [2])).1 == .fuel

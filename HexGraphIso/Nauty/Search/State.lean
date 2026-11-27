@@ -419,7 +419,8 @@ are read off the final state directly. -/
 structure TraceRun (n : Nat) where
   result : RunResult n
   autos : Array (Array Nat)
-  emitted : Array (Array Nat)
+  /-- Permutations corresponding to nauty’s generator callbacks. -/
+  emitted : Array (Array Nat) := #[]
   /-- The best leaf's refinement codes at levels `1 .. canonlevel`,
   without the sentinel. -/
   bestCodes : List Nat

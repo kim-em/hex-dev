@@ -21,7 +21,7 @@ private def graph (j : Json) : Except String (Σ n, Hex.SparseGraph n) := do
   let some g := Hex.SparseGraph.ofEdges? n edges | throw "invalid sparse edges"
   return ⟨n, g⟩
 
-def evaluate (j : Json) : Except String Json := do
+def evaluate (j : Json) (expectedDiscoveries : Option Nat := none) : Except String Json := do
   let mode := (j.getObjValAs? String "mode").toOption.getD "search"
   if mode == "sort" then
     return toJson (Sparse.Sort.indirect
@@ -54,6 +54,9 @@ def evaluate (j : Json) : Except String Json := do
   let (lab, ends) := Sparse.initialPartition n k colors
   let (exit, state) := Sparse.runState raw lab ends
   if let .fuel := exit then throw "sparse search exhausted its structural bound"
+  if let some expected := expectedDiscoveries then
+    unless state.genTrace.size == expected do
+      throw s!"expected {expected} automorphism discoveries, got {state.genTrace.size}"
   let r := Sparse.finish raw state
   let some label := Label.ofArray? n r.canonlab | throw "invalid canonical label"
   let canonical := g.relabel label.perm
