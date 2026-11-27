@@ -53,19 +53,30 @@ theorem SweepInput.generated_tail {G : GraphIso.Sparse.Colored n k}
     Generation.Realizes G gs
       (Generic.sweep l.first (.ofGraph G.graph) (n + 2) tcLevel fuel cfuel l.node.level
         c.numcells c.tc tv1 cursor cell index st).2.2.genTrace.toList →
-    ∀ v, Aut.Orbit G.toDense base guide v → Nauty.Generation.Carries G.toDense gs base guide v := by
+    (∀ v, Aut.Orbit G.toDense base guide v → Nauty.Generation.Carries G.toDense gs base guide v) ∧
+      ∀ gamma ∈ (Generic.sweep l.first (.ofGraph G.graph) (n + 2) tcLevel fuel cfuel l.node.level
+        c.numcells c.tc tv1 cursor cell index st).2.2.genTrace,
+        ∀ b ∈ base, gamma[b.val]! = b.val := by
   intro c R hmove hfixFrame hnext hcanon hcover hfirst htrace
   induction cfuel generalizing bs cursor previous cell index st with
   | zero =>
     cases cursor with
-    | none => exact hcover.finish hnext
+    | none =>
+      have hn : 0 < n := by have := h.frame.positive; have := h.frame.depth; omega
+      have hframe := (h.self hf).freeze h.effect h.selected.ready h.codes.ready hn h.frame.positive
+      refine ⟨hcover.finish hnext, fun gamma hgamma => hfixFrame gamma ?_⟩
+      exact hframe.trace gamma (by simpa only [Generic.sweep] using hgamma)
     | some tv =>
       have := hcursor tv rfl
       have := VSet.mem_lt (h.member tv rfl)
       omega
   | succ cfuel ih =>
     cases cursor with
-    | none => exact hcover.finish hnext
+    | none =>
+      have hn : 0 < n := by have := h.frame.positive; have := h.frame.depth; omega
+      have hframe := (h.self hf).freeze h.effect h.selected.ready h.codes.ready hn h.frame.positive
+      refine ⟨hcover.finish hnext, fun gamma hgamma => hfixFrame gamma ?_⟩
+      exact hframe.trace gamma (by simpa only [Generic.sweep] using hgamma)
     | some tv =>
       have hn : 0 < n := by have := h.frame.positive; have := h.frame.depth; omega
       let g := Graph.ofGraph G.graph
@@ -149,6 +160,7 @@ theorem SweepInput.generated_tail {G : GraphIso.Sparse.Colored n k}
           change back.firstlab = st.firstlab at hh
           rw [hh]
           exact hfirst
+        rw [hstep]
         exact ih (index := nextIndex) hs (Generic.CursorFuel.next (hcursor tv rfl)) hpast'
           (hm.congr hreference) heqBack hsameBack rfl hcanonBack hadv hfirstBack htrace
       · have hskip : (!l.first || st.orbits[tv]! == tv) = false := Bool.eq_false_iff.mpr hg
@@ -174,6 +186,7 @@ theorem SweepInput.generated_tail {G : GraphIso.Sparse.Colored n k}
         have hadv := hcover.orbitSkip (tv := v) hnext (h.orbits h.codes.trace) hstTrace
           (fun gamma hg => hfixFrame gamma (hframe.trace gamma (Array.mem_toList_iff.mp hg)))
           (by simpa only [hf, Bool.not_true, Bool.false_or, beq_eq_false_iff_ne] using hskip)
+        rw [hstep]
         exact ih (index := nextIndex) (h.skipped hskip) (Generic.CursorFuel.next (hcursor tv rfl)) hpast'
           hm heq hsame rfl (hcanon.advance (nextElem_after hnext)) hadv hfirst htrace
 

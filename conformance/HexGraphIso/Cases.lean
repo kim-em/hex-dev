@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import Hex.Conformance.Emit
 import HexGraphIso
+import Lean.Data.Json
 
 /-!
 The `HexGraphIso` conformance corpus and the searches a record is read
@@ -156,6 +157,15 @@ def emitAutos (runner : Runner) (case : Case) : IO Unit := do
     (aut.orbits.toList.map Int.ofNat)
     aut.numOrbits
     aut.order
+
+/-- This case reaches canonical-leaf automorphisms that leave the orbit
+partition unchanged in both nauty engines. -/
+def pruneRegression : IO Case := do
+  let text ← IO.FS.readFile "conformance-fixtures/HexGraphIso/prune.json"
+  IO.ofExcept do
+    let j ← Lean.Json.parse text
+    return ⟨"mixed-cfi-120", ← j.getObjValAs? Nat "n", ← j.getObjValAs? Nat "k",
+      ← j.getObjValAs? (Array Nat) "colors", ← j.getObjValAs? (List (Nat × Nat)) "edges"⟩
 
 /-- All base-`k` colour vectors of length `n`, vertex `0` most
 significant, in ascending numeral order. -/

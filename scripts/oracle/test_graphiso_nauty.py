@@ -105,12 +105,14 @@ class NautyTest(unittest.TestCase):
                                       text=True, capture_output=True, timeout=20)
                 self.assertNotEqual(proc.returncode, 0)
 
-    def test_extra_trace_entry_must_be_automorphism(self):
+    def test_generator_list_rejects_extra_and_reordered_automorphisms(self):
         answer, _ = self.run_graph(4, [[0, 3], [1, 2]])
         record = self.matching_record()
-        # C's emissions remain an ordered subsequence. Permutation validity
-        # alone would allow this non-automorphism to pass.
-        record["gens"].append([1, 0, 2, 3])
+        record["gens"].append([0, 1, 2, 3])
+        with self.assertRaises(OracleMismatch):
+            _check_autos(record, answer)
+        record = self.matching_record()
+        record["gens"].reverse()
         with self.assertRaises(OracleMismatch):
             _check_autos(record, answer)
 

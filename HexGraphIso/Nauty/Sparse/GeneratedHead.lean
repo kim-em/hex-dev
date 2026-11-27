@@ -51,7 +51,9 @@ theorem FirstInput.orbit {G : GraphIso.Sparse.Colored n k}
       (Generic.node true (.ofGraph G.graph) (n + 2) tcLevel (fuel + 1)
         f.level f.numcells f.entry).2.genTrace.toList) :
     let guide : Fin n := ⟨tv, VSet.mem_lt (VSet.nextElem_mem htv)⟩
-    ∀ v, Aut.Orbit G.toDense base guide v → Nauty.Generation.Carries G.toDense gs base guide v := by
+    (∀ v, Aut.Orbit G.toDense base guide v → Nauty.Generation.Carries G.toDense gs base guide v) ∧
+      ∀ gamma ∈ (Generic.node true (.ofGraph G.graph) (n + 2) tcLevel (fuel + 1)
+        f.level f.numcells f.entry).2.genTrace, ∀ b ∈ base, gamma[b.val]! = b.val := by
   intro guide
   let g := Graph.ofGraph G.graph
   let r := Generic.prepareFirst g tcLevel f.level f.numcells f.entry
@@ -153,20 +155,19 @@ theorem FirstInput.orbit {G : GraphIso.Sparse.Colored n k}
     change back.firstlab = raw.2.firstlab at hh
     rw [hh]
     exact (child_first_store hp.ready hn h.entry.frame.positive true hp.target (VSet.nextElem_mem htv) path).2.2
-  have htraceTail : Generation.Realizes G gs
-      (Generic.sweep true g (n + 2) tcLevel fuel n f.level c.numcells p.tc tv
-        (p.cell.nextElem (some tv)) p.cell (if back.orbits[tv]! == tv then 1 else 0) back).2.2.genTrace.toList := by
-    rw [← hsuffix]
-    apply htrace.mono
-    intro gamma hg
-    exact Array.mem_toList_iff.mpr (f.first_contains (by change r.1 ≠ n; change r.1 < n at hi; omega)
-      htv (Array.mem_toList_iff.mp hg))
+  have htraceEq := congrArg Emission.Log.trace
+    (f.first_log (fuel := fuel) (by change r.1 ≠ n; change r.1 < n at hi; omega) htv)
+  dsimp only [Emission.log] at htraceEq
+  change _ = (Generic.sweep true g (n + 2) tcLevel fuel (n + 1)
+    f.level c.numcells p.tc tv (some tv) p.cell 0 p.state).2.2.genTrace at htraceEq
+  rw [hsuffix] at htraceEq
+  rw [htraceEq] at htrace ⊢
   apply hs.generated_tail (cfuel := n) (tv1 := tv)
     (index := if back.orbits[tv]! == tv then 1 else 0) rfl hf (fun _ _ => by omega) (by
     intro _ v hv
     have hh := (VSet.nextElem_eq_some_iff.mp hv).2.1
     change tv + 1 ≤ v at hh
     omega) (hm.congr hreference) heq hfloor hboundary hmove hfixFrame rfl hcanon hcover hfirst
-  exact htraceTail
+  exact htrace
 
 end Hex.GraphIso.Nauty.Sparse.Max

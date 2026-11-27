@@ -37,10 +37,12 @@ import all HexGraphIso.Nauty.Generation.Frame
 import all HexGraphIso.Nauty.Generation.RefPath
 import all HexGraphIso.Nauty.Search.Search
 import all HexGraphIso.Nauty.Search.State
+import all HexGraphIso.Nauty.Policy.Preserve
 import all HexGraphIso.Nauty.Search.Generic
 
 public import HexGraphIso.Nauty.Policy.Generated.Head
 public import HexGraphIso.Nauty.Policy.Generated.Terminal
+public import HexGraphIso.Nauty.Policy.Generated.Emission
 
 public section
 
@@ -167,12 +169,121 @@ theorem firstPath_generates {G : Colored n k} {tcLevel fuel level numcells last 
       dsimp only [restored, left, afterChildFirst] at hout ⊢
       simpa using hout
     have hdeep := ih (fun q hq => hn q (by omega)) hc hbaseChild htraceChild
-    obtain ⟨v, hv, hcover⟩ := firstPath_cover hp hn hi hbase htrace hopen
+    obtain ⟨v, hv, hcover, _⟩ := firstPath_cover hp hn hi hbase htrace hopen
     have hv' : v = guide := Fin.ext (by simpa only [htv, Option.getD_some] using hv)
     subst v
     intro p hiso hfix
     apply Perm.Generated.of_stabilizer hdeep _ hiso hfix
     intro q hq hqfix
     exact hcover (q.get guide) ⟨q, hq, hqfix, rfl⟩
+
+set_option maxHeartbeats 1000000 in
+/-- The generator emissions of the completed first path realize its discovery trace. -/
+theorem firstPath_realizes {G : Colored n k} {tcLevel fuel level numcells last : Nat}
+    {st leaf : Search n}
+    (hp : Generic.FirstPath { g := rowsOf G } tcLevel fuel level numcells st last leaf)
+    (hn : ∀ q, q < fuel → (contract G tcLevel).nodeValid q
+      (Generic.nodeCall { g := rowsOf G } (n + 2) tcLevel q))
+    {cs bs fs : List Nat} {parents : Parents n}
+    (hi : NodeInput G { g := rowsOf G } tcLevel fuel true ⟨level, numcells, cs, st⟩ bs fs parents)
+    {base : List (Fin n)} {full gs : List (Perm n)}
+    (hbase : ∀ b : Fin n, st.fixedpts.mem b.val = true ↔ b ∈ base)
+    (htrace : Generation.Realizes G full
+      (Nauty.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2.genTrace.toList)
+    (hemit : Generation.Realizes G gs
+      (Nauty.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2.emitted.toList)
+    (hin : Emission.Realization G gs (Emission.log st)) :
+    Emission.Realization G gs
+      (Emission.log (Nauty.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2) := by
+  induction hp generalizing cs bs fs parents base with
+  | leaf fuel level numcells st hdisc =>
+    rw [Emission.terminal_log { g := rowsOf G } (n + 2) tcLevel fuel level numcells st hdisc]
+    exact hin
+  | @step fuel level numcells last st leaf tv hopen htv horbit tail ih =>
+    let ctx : Ctx n := { g := rowsOf G }
+    let r := Generic.prepareFirst ctx tcLevel level numcells st
+    let l : Loop n := ⟨⟨level, numcells, cs, st⟩, true⟩
+    let ready := cheapCheck true level r.2.2.2.2
+    let ch := child true level r.2.1.toNat tv ready
+    let raw := Nauty.node true ctx (n + 2) tcLevel fuel (level + 1) (r.1 + 1) ch
+    let left := { afterChildFirst level tv raw.2 with fixedpts := raw.2.fixedpts.erase tv }
+    let restored := Nauty.recover (n + 2) level left
+    let parent : Parent n := ⟨l, ready, tv, bs, fs⟩
+    have hp : Generic.FirstPath ctx tcLevel (fuel + 1) level numcells st last leaf :=
+      .step hopen htv horbit tail
+    have htv' : r.2.2.1.nextElem none = some tv := htv
+    have hs : SweepInput G ctx tcLevel fuel (n + 1) true level r.1 r.2.1.toNat tv
+        (some tv) r.2.2.1 0 ready l bs fs parents := by
+      have hh := hi.first_input (size_rowsOf G) (rowsOf_symm G) (rowsOf_loopless G) hopen
+      change SweepInput G ctx tcLevel fuel (n + 1) true level r.1 r.2.1.toNat
+        ((r.2.2.1.nextElem none).getD 0) (r.2.2.1.nextElem none) r.2.2.1 0 ready l bs fs parents at hh
+      simpa only [htv', Option.getD_some] using hh
+    have hc : NodeInput G ctx tcLevel fuel true
+        ⟨level + 1, r.1 + 1, l.codes ctx, ch⟩ bs fs (parents.push parent) := by
+      have hh := hs.push (size_rowsOf G) (rowsOf_symm G) (rowsOf_loopless G)
+      simpa only [Parent.child, parent, l, ch, Loop.prepare, r, ctx, Generic.prepareFirst,
+        policy, Generic.Policy.visit, Generic.Policy.recordFirst, Generic.Policy.chooseTarget,
+        Bool.true_and, beq_self_eq_true, ↓reduceIte] using hh
+    have hret : raw.1 = .unwind level false := by
+      simpa only [raw, ch, ready, r, ctx, policy, Generic.Policy.child, Generic.Policy.cheapCheck, Nat.add_sub_cancel] using firstPath_returns tail (fun f hf => hn f (by omega)) hc
+    have hcall : Nauty.node (true && tv == tv) ctx (n + 2) tcLevel fuel
+        (level + 1) (r.1 + 1) (child true level r.2.1.toNat tv ready) =
+          (.unwind level false, raw.2) := by
+      simp only [Bool.true_and, beq_self_eq_true]
+      exact Prod.ext hret rfl
+    have hv : (!true || ready.orbits[tv]! == tv) = true := by
+      change ready.orbits[tv]! = tv at horbit
+      simp only [Bool.not_true, Bool.false_or, beq_iff_eq]
+      exact horbit
+    let guide : Fin n := ⟨tv, VSet.mem_lt (VSet.nextElem_mem htv')⟩
+    have hbaseChild : ∀ b : Fin n, ch.fixedpts.mem b.val = true ↔ b ∈ guide :: base := by
+      intro b
+      change (ready.fixedpts.insert guide.val).mem b.val = true ↔ b ∈ guide :: base
+      rw [VSet.mem_insert, first_fixed]
+      simp only [Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, List.mem_cons]
+      rw [hbase]
+      constructor
+      · rintro (hb | ⟨he, _⟩)
+        · exact Or.inr hb
+        · exact Or.inl (Fin.ext he.symm)
+      · rintro (rfl | hb)
+        · exact Or.inr ⟨rfl, guide.isLt⟩
+        · exact Or.inl hb
+
+    let final := (Nauty.node true ctx (n + 2) tcLevel (fuel + 1) level numcells st).2
+    let index := if restored.orbits[tv]! == tv then 0 + 1 else 0
+    have hstep := (hs.receive_call (hn fuel (Nat.lt_succ_self _)) hv hcall
+      (Generic.sweepCall ctx (n + 2) tcLevel fuel n)).1
+    unfold Generic.nodeCall Generic.sweepCall at hstep
+    have hfinal := Emission.first_log ctx (n + 2) tcLevel fuel level numcells tv st hopen htv
+    dsimp only at hfinal
+    rw [sweep_eq_generic, Generic.sweep, hstep] at hfinal
+    simp only [← sweep_eq_generic, Bool.true_and, beq_self_eq_true, Bool.not_true,
+      Bool.false_and, Bool.false_eq_true, ↓reduceIte] at hfinal
+    let swept := (Nauty.sweep true ctx (n + 2) tcLevel fuel n level r.1 r.2.1.toNat tv
+      (r.2.2.1.nextElem (some tv)) r.2.2.1 index restored).2.2
+    have heq : Emission.log final = Emission.log swept := hfinal
+    have hrestore : Emission.log restored = Emission.log raw.2 :=
+      Emission.recover_log (n + 2) level left
+    have hext : Emission.Extends (Emission.log raw.2) (Emission.log final) := by
+      rw [heq, ← hrestore]
+      exact Emission.sweep_extends true ctx (n + 2) tcLevel fuel n level r.1 r.2.1.toNat tv
+        (r.2.2.1.nextElem (some tv)) r.2.2.1 index restored
+    have hstart : Emission.log ch = Emission.log st :=
+      (Emission.child_log true level r.2.1.toNat tv ready).trans
+        ((Emission.cheap_log true level r.2.2.2.2).trans (Emission.prepare_log ctx tcLevel level numcells st))
+    have hreal := ih (fun q hq => hn q (by omega)) hc hbaseChild
+      (htrace.mono hext.trace) (hemit.mono hext.emitted) (hstart.symm ▸ hin)
+    have hstab := firstPath_generates tail (fun q hq => hn q (by omega)) hc hbaseChild hreal.trace
+    obtain ⟨_, _, _, hfix⟩ := firstPath_cover hp hn hi hbase htrace hopen
+    let P := Emission.Within G gs final.genTrace.toList final.emitted.toList
+    have hlocal := Emission.within_leaf (κ := Array (VSet n)) htrace (fun γ hγ => hfix γ (Array.mem_toList_iff.mp hγ)) hemit hstab
+    have hback : P (Emission.log restored) := fun _ _ => hrestore.symm ▸ hreal
+    have hdone : P (Emission.log swept) := by
+      dsimp only [swept]
+      rw [sweep_eq_generic]
+      exact Generic.sweep_sound (Emission.preserve ctx (n + 2) tcLevel P hlocal).sound
+        true fuel n level r.1 r.2.1.toNat tv (r.2.2.1.nextElem (some tv)) r.2.2.1 index restored hback
+    exact (heq.symm ▸ hdone : P (Emission.log final)) (fun _ h => h) (fun _ h => h)
 
 end Hex.GraphIso.Nauty.Max

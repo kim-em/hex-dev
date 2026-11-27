@@ -638,19 +638,21 @@ surface and the theorems it carries.
 
 ## The automorphism output
 
-Each reported permutation is pushed onto the search state's generator
-trace at the moment the leaf classifies, so the trace is the discovery
-order of the traversal.
-{name Hex.GraphIso.Aut.trace}`Aut.trace` reads it off,
-{name Hex.GraphIso.autom?}`autom?` rebuilds each entry as a permutation
-of the vertices and accepts it only when it passes the isomorphism
-check, and {name Hex.GraphIso.autos}`autos` packages the checked list
-with the orbit array, the orbit count and the group order. The orbit
-array is built with the search's own
-{name Hex.GraphIso.Nauty.orbjoin}`orbjoin`, so it is the array the
-program reports rather than a recomputation.
+The search saves every admitted automorphism in its discovery trace.
+{name Hex.GraphIso.Aut.trace}`Aut.trace` exposes that trace.
+{name Hex.GraphIso.Aut.emitted}`Aut.emitted` gives the arrays corresponding
+to nauty's generator callbacks in emission order. That list contains every
+code-1 automorphism and each code-2 automorphism that merges orbits.
+{name Hex.GraphIso.autom?}`autom?` checks each emitted array, and
+{name Hex.GraphIso.autos}`autos` packages the resulting generators with
+the orbit array, orbit count and group order. The dense API builds its
+orbit array by applying {name Hex.GraphIso.Nauty.orbjoin}`orbjoin` to the
+checked generators. The array assigns each vertex the least representative
+of its full automorphism orbit.
 
 {docstring Hex.GraphIso.Aut.trace}
+
+{docstring Hex.GraphIso.Aut.emitted}
 
 {docstring Hex.GraphIso.autom?}
 
@@ -893,10 +895,10 @@ search's literal output array.
 
 {docstring Hex.GraphIso.Sparse.canon_eq_specCanon}
 
-The full generator trace generates every colour-preserving
-automorphism. It is distinct from the bounded workspace used to prune
-the search: overwriting a pruning entry does not discard a returned
-generator. The orbit array gives the exact orbits of the full group.
+The emitted generators generate every colour-preserving automorphism.
+The search records them in emission order and maintains a bounded
+workspace for pruning. The orbit array gives the exact orbits of the
+full group.
 The product of indices along the first search path is its exact order,
 with no additional searches on individualized graphs.
 

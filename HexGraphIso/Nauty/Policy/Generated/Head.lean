@@ -6,6 +6,8 @@ Authors: Kim Morrison
 
 module
 
+public import HexGraphIso.Nauty.Policy.Emission
+
 public import HexGraphIso.Nauty.Policy.Generated.Tail
 public import HexGraphIso.Nauty.Policy.First.Complete
 import all HexGraphIso.Nauty.Policy.Generated.Tail
@@ -63,7 +65,9 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
     (hopen : (Generic.prepareFirst { g := rowsOf G } tcLevel level numcells st).1 ≠ n) :
     ∃ guide : Fin n,
       guide.val = (((Generic.prepareFirst { g := rowsOf G } tcLevel level numcells st).2.2.1.nextElem none).getD 0) ∧
-      ∀ v, Aut.Orbit G base guide v → Generation.Carries G gs base guide v := by
+      (∀ v, Aut.Orbit G base guide v → Generation.Carries G gs base guide v) ∧
+      ∀ γ ∈ (Nauty.node true { g := rowsOf G } (n + 2) tcLevel fuel level numcells st).2.genTrace,
+        ∀ b ∈ base, γ[b.val]! = b.val := by
   cases hp with
   | leaf fuel level numcells st hdisc => exact (hopen hdisc).elim
   | @step fuel level numcells last st leaf tv hopen htv horbit tail =>
@@ -246,30 +250,20 @@ theorem firstPath_cover {G : Colored n k} {tcLevel fuel level numcells last : Na
       exact hh)) htv'
     rw [hcall] at hcanon
     simp only [Bool.true_and, beq_self_eq_true, ↓reduceIte] at hcanon
-    have htraceLoop : Generation.Realizes G gs (Nauty.sweep true ctx (n + 2) tcLevel fuel (n + 1)
-        level r.1 r.2.1.toNat tv (some tv) r.2.2.1 0 ready).2.2.genTrace.toList := by
-      apply htrace.mono
-      intro γ hγ
-      rw [node_first]
-      simp only [beq_eq_false_iff_ne.mpr hopen, Bool.false_eq_true, ↓reduceIte, htv, Option.getD_some]
-      generalize hx : Nauty.sweep true ctx (n + 2) tcLevel fuel (n + 1)
-        level r.1 r.2.1.toNat tv (some tv) r.2.2.1 0 ready = result at hγ ⊢
-      obtain ⟨exit, index, result⟩ := result
-      cases exit <;> dsimp only
-      · unfold afterSweep
-        split <;> exact hγ
-      · exact hγ
-      · exact hγ
+    have htraceEq := congrArg Emission.Log.trace
+      (Emission.first_log ctx (n + 2) tcLevel fuel level numcells tv st hopen htv)
+    dsimp only [Emission.log] at htraceEq
     have hstep := (hs.receive_call (hn fuel (Nat.lt_succ_self _)) hv hcall
       (Generic.sweepCall ctx (n + 2) tcLevel fuel n)).1
     unfold Generic.nodeCall Generic.sweepCall at hstep
-    rw [sweep_eq_generic, Generic.sweep, hstep] at htraceLoop
+    rw [sweep_eq_generic, Generic.sweep, hstep] at htraceEq
     simp only [← sweep_eq_generic, Bool.true_and, beq_self_eq_true, Bool.not_true,
-      Bool.false_and, Bool.false_eq_true, ↓reduceIte] at htraceLoop
+      Bool.false_and, Bool.false_eq_true, ↓reduceIte] at htraceEq
+    rw [htraceEq] at htrace ⊢
     apply hs'.generated_tail (fun q hq => hn q (by omega)) hpast hit
       hfields.2.1.symm hfields.2.2.symm (show R.numcells = r.1 from rfl)
       hleaf hm' hg heq (by omega) hsame hmove hfixFrame rfl hcanon hcover hpos
-    dsimp only [restored, left, afterChildFirst] at htraceLoop ⊢
-    exact htraceLoop
+    dsimp only [restored, left, afterChildFirst] at htrace ⊢
+    exact htrace
 
 end Hex.GraphIso.Nauty.Max

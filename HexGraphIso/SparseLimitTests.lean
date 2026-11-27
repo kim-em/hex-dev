@@ -15,12 +15,13 @@ meta import HexGraphIso.Sparse.TacticSupport
 open Hex Hex.GraphIso
 open Nauty.Sparse
 
--- Compare canonical rows, literal labels and codes, generator emissions,
+-- Compare canonical rows, labels, codes, discoveries and generator emissions,
 -- exact group data and all seven nauty diagnostic counters.
 private def sameResult (a b : State n) : Bool :=
   a.canonlab == b.canonlab && a.canoncode == b.canoncode &&
   a.canong.offsets == b.canong.offsets && a.canong.neighbors == b.canong.neighbors &&
-  a.genTrace == b.genTrace && a.orbits == b.orbits && a.order == b.order &&
+  a.genTrace == b.genTrace && a.emitted == b.emitted &&
+  a.orbits == b.orbits && a.order == b.order &&
   a.numnodes == b.numnodes && a.numorbits == b.numorbits &&
   a.numgenerators == b.numgenerators && a.numbadleaves == b.numbadleaves &&
   a.maxlevel == b.maxlevel && a.tctotal == b.tctotal && a.canupdates == b.canupdates

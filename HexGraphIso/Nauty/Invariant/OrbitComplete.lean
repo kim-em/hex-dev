@@ -427,6 +427,91 @@ theorem count_orbjoin {o map : Array Nat} (hd : Descending o n)
   change ((List.range n).foldl compress (joined, 0)).2 = _
   rw [hc, Nat.zero_add, hpred]
 
+private theorem join_le {o map : Array Nat} (hd : Descending o n)
+    {i : Nat} (hi : i < n) (hm : map[i]! < n) (v : Nat) :
+    (join map n o i)[v]! ≤ o[v]! := by
+  let a := chaseList o (List.range n) o[i]!
+  let b := chaseList o (List.range n) o[map[i]!]!
+  have hi' : o[i]! < n := Nat.lt_of_le_of_lt (hd.2 i hi) hi
+  have hm' : o[map[i]!]! < n := Nat.lt_of_le_of_lt (hd.2 _ hm) hm
+  have set_le {p q : Nat} (hq : q < n) (hr : o[q]! = q) (hp : p < q) :
+      (o.set! q p)[v]! ≤ o[v]! := by
+    by_cases he : q = v
+    · subst v
+      rw [Array.getElem!_set!_self _ _ _ (by simpa only [hd.1] using hq), hr]
+      omega
+    · rw [Array.getElem!_set!_ne _ _ _ _ he]
+      exact Nat.le_refl _
+  unfold join
+  split
+  · change (if a < b then o.set! b a else if a > b then o.set! a b else o)[v]! ≤ o[v]!
+    split
+    · exact set_le (chase_lt hd _ hm') (chase_root hd _ _ hm' (by simpa using hm')) (by assumption)
+    · split
+      · exact set_le (chase_lt hd _ hi') (chase_root hd _ _ hi' (by simpa using hi')) (by assumption)
+      · exact Nat.le_refl _
+  · exact Nat.le_refl _
+
+private theorem joins_le {map : Array Nat} (hm : ∀ i, i < n → map[i]! < n)
+    (l : List Nat) (hl : ∀ i ∈ l, i < n) (o : Array Nat) (hd : Descending o n) (v : Nat) :
+    (l.foldl (join map n) o)[v]! ≤ o[v]! := by
+  induction l generalizing o with
+  | nil => exact Nat.le_refl _
+  | cons i l ih =>
+    have hi := hl i List.mem_cons_self
+    rw [List.foldl_cons]
+    exact Nat.le_trans (ih (fun j hj => hl j (List.mem_cons_of_mem _ hj)) _ (join_desc hd hi (hm i hi)))
+      (join_le hd hi (hm i hi) v)
+
+/-- An orbit join that leaves the orbit count unchanged also leaves the
+already compressed representatives unchanged. -/
+theorem orbjoin_eq_of_count {o map : Array Nat} (hd : Descending o n) (hf : Flat o n)
+    (hm : ∀ i, i < n → map[i]! < n)
+    (hc : (orbjoin o map n).2 = (List.range n).countP (fun i => o[i]! == i)) :
+    (orbjoin o map n).1 = o := by
+  let out := (orbjoin o map n).1
+  have hout : Descending out n := hd.orbjoin hm
+  have hfixed (v : Nat) (hv : v < n) (h : out[v]! = v) : o[v]! = v := by
+    let joined := (List.range n).foldl (join map n) o
+    have hj : Descending joined n := joins_desc hm (List.range n) (fun _ => List.mem_range.mp) o hd
+    have hjv : joined[v]! = v := by
+      apply (compressions_fixed (List.range n) (fun _ => List.mem_range.mp) joined 0 hj v).mp
+      simpa only [out, orbjoin_eq, joined] using h
+    have hle := joins_le hm (List.range n) (fun _ => List.mem_range.mp) o hd v
+    change joined[v]! ≤ o[v]! at hle
+    rw [hjv] at hle
+    exact Nat.le_antisymm (hd.2 v hv) hle
+  have hsub : List.Sublist ((List.range n).filter (fun i => out[i]! == i))
+      ((List.range n).filter (fun i => o[i]! == i)) := by
+    have he : ((List.range n).filter (fun i => o[i]! == i)).filter (fun i => out[i]! == i) =
+        (List.range n).filter (fun i => out[i]! == i) := by
+      rw [List.filter_filter]
+      apply List.filter_congr
+      intro v hv
+      by_cases hr : out[v]! = v
+      · simp only [hr, hfixed v (List.mem_range.mp hv) hr, beq_self_eq_true, Bool.and_self]
+      · simp [hr]
+    rw [← he]
+    exact List.filter_sublist
+  have hroots := hsub.eq_of_length (by
+    simp only [← List.countP_eq_length_filter]
+    rw [← count_orbjoin hd hm, hc])
+  have hstable := (stable_orbjoin hd hm (f := fun v => out[v]!) (flat_orbjoin hd hm)).1
+  change out = o
+  apply Array.ext
+  · exact hout.1.trans hd.1.symm
+  · intro v hv houtv
+    have hvn : v < n := by simpa only [hout.1] using hv
+    have hp : o[v]! < n := Nat.lt_of_le_of_lt (hd.2 v hvn) hvn
+    have hmem : o[v]! ∈ (List.range n).filter (fun i => o[i]! == i) := by
+      simp only [List.mem_filter, List.mem_range, beq_iff_eq]
+      exact ⟨hp, hf v hvn⟩
+    rw [← hroots] at hmem
+    have hroot : out[o[v]!]! = o[v]! := by
+      simpa only [List.mem_filter, List.mem_range, beq_iff_eq] using (List.mem_filter.mp hmem).2
+    rw [← getElem!_pos out v hv, ← getElem!_pos o v houtv]
+    exact (hstable v hvn).symm.trans hroot
+
 end Orbit
 
 end Hex.GraphIso.Nauty

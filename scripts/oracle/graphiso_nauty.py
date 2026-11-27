@@ -19,17 +19,11 @@ stream for canonical forms needs no knowledge of the second kind, and
 the canonical checks above run on them too. The shim
 collects nauty's own generator list through ``options.userautomproc``,
 so the comparison is against the traversal's emissions rather than a
-recomputation. nauty emits a generator at every code-1 leaf and at
-every code-2 leaf that grows the orbit partition; the Lean trace
-records both kinds unconditionally, so nauty's list must appear in the
-Lean list as an ordered subsequence, of exactly ``numGenerators``
-entries; when the two lists are the same length, which is every case on
-the current corpus, they must agree entry by entry. The recorded list
-itself is pinned by the committed fixture, so a change in the traversal
-shows up as a fixture diff even where the subsequence relation would
-tolerate it. The orbit array, the orbit count and the group order are
-compared exactly; group order is the integer product of the level
-indices collected through ``userlevelproc``, without floating-point rounding.
+recomputation. Both engines emit a generator at every code-1 leaf and
+at every code-2 leaf that merges orbits. The lists must agree entry by
+entry, in emission order. The orbit array, orbit count and group order
+are compared exactly. The oracle multiplies the level indices collected
+through ``userlevelproc`` using integer arithmetic.
 ``graphisosparse`` and ``graphisosparseautos`` records use native edge input
 and compare ``canonEdges`` instead of a dense upper triangle.
 
@@ -162,11 +156,6 @@ def _parse(line: str) -> dict:
     return answer
 
 
-def _is_subsequence(small: list, big: list) -> bool:
-    it = iter(big)
-    return all(any(x == y for y in it) for x in small)
-
-
 def _check_autos(record: dict, answer: dict) -> None:
     case = record["case"]
     if answer["orbits"] != record["orbits"]:
@@ -188,23 +177,9 @@ def _check_autos(record: dict, answer: dict) -> None:
             f"{case}: numGenerators {record['numGenerators']} != nauty "
             f"{len(answer['gens'])}"
         )
-    if len(record["gens"]) == len(answer["gens"]):
-        # the usual case: nothing was suppressed, so the lists must agree
-        # entry by entry rather than only up to a subsequence
-        if record["gens"] != answer["gens"]:
-            raise OracleMismatch(
-                f"{case}: generators {record['gens']} != nauty "
-                f"{answer['gens']}"
-            )
-    elif len(record["gens"]) < len(answer["gens"]):
+    if record["gens"] != answer["gens"]:
         raise OracleMismatch(
-            f"{case}: recorded {len(record['gens'])} generators, fewer than "
-            f"the {len(answer['gens'])} nauty emitted"
-        )
-    elif not _is_subsequence(answer["gens"], record["gens"]):
-        raise OracleMismatch(
-            f"{case}: nauty generators {answer['gens']} are not a "
-            f"subsequence of the recorded trace {record['gens']}"
+            f"{case}: generators {record['gens']} != nauty {answer['gens']}"
         )
     edges = {tuple(sorted(edge)) for edge in record["edges"]}
     colors = record["colors"]

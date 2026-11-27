@@ -24,7 +24,7 @@ variable {n k : Nat}
 /-- The discovered generators generate every automorphism of the graph. -/
 theorem Aut.complete (G : Colored n k) {p : Perm n} (hp : IsIso G G p) :
     Perm.Generated (Aut.gens G) p := by
-  simpa [Aut.gens, Aut.checked, Aut.trace, List.map_filterMap, Option.map_map,
+  simpa [Aut.gens, Aut.checked, Aut.emitted, List.map_filterMap, Option.map_map,
     Function.comp_def, Nauty.runColoredTraced, Nauty.runTraced]
     using Nauty.generators_complete hp
 

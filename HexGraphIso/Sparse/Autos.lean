@@ -7,7 +7,8 @@ module
 
 public import HexGraphIso.Nauty.Sparse.OrbitExact
 public import HexGraphIso.Autos
-import all HexGraphIso.Nauty.Sparse.GenerationTrace
+import all HexGraphIso.Nauty.Sparse.GeneratedRoot
+import all HexGraphIso.Generated
 import all HexGraphIso.Nauty.Sparse.Search
 import all HexGraphIso.Nauty.Search.State
 
@@ -23,8 +24,8 @@ def SameOrbit (G : Colored n k) (u v : Fin n) : Prop :=
 
 namespace Aut
 
-/-- Decode the complete emitted trace of one native sparse traversal. -/
-@[expose] def gens (G : Colored n k) : List (Perm n) := (Nauty.Sparse.runColored G).generators
+/-- Decode the generators reported by one native sparse traversal. -/
+@[expose] def gens (G : Colored n k) : List (Perm n) := (Nauty.Sparse.runColored G).emittedGenerators
 
 /-- The least representatives stored by the native traversal. -/
 @[expose] def orbits (G : Colored n k) : Array Nat := (Nauty.Sparse.runColored G).orbits
@@ -37,13 +38,25 @@ This projection performs one traversal and no individualized reruns. -/
 @[expose] def order (G : Colored n k) : Nat := (Nauty.Sparse.runColored G).order
 
 theorem gens_isIso {G : Colored n k} {p : Perm n} (hp : p ∈ gens G) : IsIso G G p :=
-  (Nauty.Sparse.runColored_trace G).generator hp
+  Nauty.Sparse.emitted_isIso hp
+
+/-- The public list has the length counted by the native search. -/
+theorem length_gens (G : Colored n k) :
+    (gens G).length = (Nauty.Sparse.runColored G).numgenerators := by
+  have h := congrArg List.length (Nauty.Sparse.emittedGenerators_raw G)
+  simp only [List.length_map, Array.length_toList] at h
+  exact h.trans (Nauty.Sparse.runColored_emissions_valid G).size
 
 theorem complete (G : Colored n k) {p : Perm n} (hp : IsIso G G p) :
-    Perm.Generated (gens G) p := Nauty.Sparse.runColored_generates G hp
+    Perm.Generated (gens G) p := Nauty.Sparse.emissions_generate G hp
 
 theorem generated_iff (G : Colored n k) (p : Perm n) :
-    Perm.Generated (gens G) p ↔ IsIso G G p := Nauty.Sparse.generated_iff G p
+    Perm.Generated (gens G) p ↔ IsIso G G p := by
+  constructor
+  · intro h
+    apply (isIso_toDense G G p).mp
+    exact h.isIso (fun q hq => (isIso_toDense G G q).mpr (gens_isIso hq))
+  · exact complete G
 
 theorem size_orbits (G : Colored n k) : (orbits G).size = n := (Nauty.Sparse.runColored_orbits G).1
 
@@ -72,7 +85,7 @@ end Aut
 first-path index product, extracted together from one sparse traversal. -/
 @[expose] def autos (G : Colored n k) : GraphIso.AutResult n :=
   let st := Nauty.Sparse.runColored G
-  { gens := st.generators, orbits := st.orbits, numOrbits := st.numorbits, order := st.order }
+  { gens := st.emittedGenerators, orbits := st.orbits, numOrbits := st.numorbits, order := st.order }
 
 theorem gens_autos (G : Colored n k) : (autos G).gens = Aut.gens G := rfl
 theorem orbits_autos (G : Colored n k) : (autos G).orbits = Aut.orbits G := rfl

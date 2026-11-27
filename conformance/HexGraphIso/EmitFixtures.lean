@@ -37,3 +37,4 @@ def main (args : List String) : IO Unit := do
   let runner ← Hex.GraphIsoCases.runnerOfArgs args
   Hex.GraphIsoCases.eachFixture (Hex.GraphIsoCases.emit runner)
   Hex.GraphIsoCases.eachAutos (Hex.GraphIsoCases.emitAutos runner)
+  Hex.GraphIsoCases.emitAutos runner (← Hex.GraphIsoCases.pruneRegression)

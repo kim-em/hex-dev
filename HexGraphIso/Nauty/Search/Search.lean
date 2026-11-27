@@ -105,14 +105,14 @@ any of the seven returned statistics.
 | 974-980 | max level; code 0 returns current level | `leafExit` | `.done` continues internal node |
 | 981-985 | code 1 workspace overwrite, `fmperm` | `admit`, `pushAuto` | overwrite last pair at 500, append full trace |
 | 986-987 | write automorphism | none | pinned-out options: no printing |
-| 988-989 | join orbits, increment generators | `admit`, `leafExit .autoFirst` | always count code 1 |
-| 990-992 | user automorphism callback, Schreier | none | pinned-out options: no callback or Schreier machinery |
+| 988-989 | join orbits, increment generators | `admit`, `leafExit .autoFirst` | code 1 always counts and emits |
+| 990-992 | user automorphism callback, Schreier | `emitted` | record the callback permutation in order |
 | 993-994 | return first GCA | `leafExit .autoFirst` | no short prune |
 | 995-1000 | code 2 pair, save orbit count, join | `admit`, `leafExit .autoCanon` | pair and trace even without orbit change |
 | 1001-1005 | unchanged orbit count, return canonical GCA | `leafExit .autoCanon` | no generator increment or coset test; short iff GCAs differ |
 | 1006-1007 | write automorphism | none | pinned-out options: no printing |
-| 1008 | increment generators | `leafExit .autoCanon` | orbit count changed |
-| 1009-1011 | callback and Schreier | none | pinned-out options: no callback or Schreier machinery |
+| 1008 | increment generators | `leafExit .autoCanon` | an orbit merge counts and emits |
+| 1009-1011 | callback and Schreier | `emitted` | record the callback permutation in order |
 | 1012-1013 | coset representative smaller: return first GCA | `leafExit .autoCanon` | no short prune |
 | 1014-1016 | return canonical GCA, short iff GCAs differ | `leafExit .autoCanon` | payload fixed with target |
 | 1017-1024 | install better leaf and `sr` | `install` | increment updates, reset comparison, sentinel |
@@ -245,6 +245,7 @@ def finish (ctx : Ctx n) (st : Search n) : TraceRun n :=
       tctotal := st.tctotal
       canupdates := st.canupdates }
     autos := st.genTrace
+    emitted := st.emitted
     bestCodes := if n == 0 then [] else
       (List.range' 1 st.canonlevel).map fun i => st.canoncode[i]! }
 

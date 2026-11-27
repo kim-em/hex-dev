@@ -21,15 +21,15 @@ namespace Hex.GraphIso.Nauty.Sparse
 theorem orbits_flat (G : GraphIso.Sparse.Colored n k) : Orbit.Flat (runColored G).orbits n :=
   (runColored_orbitReplay G).flat (runColored_trace G)
 
-/-- The final native representatives identify both ends of every emitted
-generator edge, including admissions that did not reduce the orbit count. -/
+/-- The final native representatives identify both ends of every discovery
+edge, including admissions that did not reduce the orbit count. -/
 theorem orbits_trace (G : GraphIso.Sparse.Colored n k) {gamma : Array Nat}
     (hg : gamma ∈ (runColored G).genTrace) {i : Nat} (hi : i < n) :
     (runColored G).orbits[gamma[i]!]! = (runColored G).orbits[i]! :=
   (runColored_orbitReplay G).trace (runColored_trace G) hg hi
 
 /-- The actual representatives are invariant under every word in the
-actual emitted generator list. -/
+decoded discovery list. -/
 theorem orbits_generated {G : GraphIso.Sparse.Colored n k} {p : Perm n}
     (hp : Perm.Generated (runColored G).generators p) (v : Fin n) :
     (runColored G).orbits[(p.get v).val]! = (runColored G).orbits[v.val]! :=

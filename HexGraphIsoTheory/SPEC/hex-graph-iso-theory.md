@@ -152,7 +152,7 @@ The library also proves:
   enumerations.
 
 The automorphism surface crosses the same encoding. `autos` decodes the
-generators the pinned search discovers into a list of `Colored.Iso G G`
+generators the pinned search emits into a list of `Colored.Iso G G`
 values, one per generator, each an automorphism by the Mathlib-free
 `Hex.GraphIso.autos_isIso` composed with the decoder; `sameOrbit_of_autos`
 turns two vertices sharing an orbit representative into a
@@ -815,26 +815,25 @@ are derived from the first descent and preserved through complete off-path
 calls. These facts combine with the histories through preparation, admission,
 child entry and recovery. The mutual recursion and first-path induction prove
 the unconditional root trace guarantee, including order zero and final row
-installation. `generator_iso` identifies every literal emitted array with the
+installation. `generator_iso` identifies every array in the discovery trace with the
 exact forward map of a native colour-preserving automorphism. Every final
 orbit pointer descends and is connected by a word in that trace; `orbit_iso`
 realizes its image by a native coloured automorphism. Pointer soundness supplies
 one direction of the exact orbit correspondence proved below.
 `GenerationFrame` proves target-cell preservation by true point
 stabilizers and triviality at actual first discrete visits. Complete calls
-retain every emitted array, and the decoded full trace realizes each array
+retain every discovered automorphism, and the decoded trace realizes each array
 and supplies generated carriers for orbit pointers fixing the active base.
 Native first-code and all-same lower bounds, exact all-same preservation,
 and unconsumed leaf-return provenance and bounds are proved. Matching
 stored-target descents below a cheap ancestor have the exact saved codes;
 equal native leaf graphs force actual first-reference admission with an
-emitted label carrier. The complete executed cheap-reference descent and its
+recorded label carrier. The complete executed cheap-reference descent and its
 carrier are proved, including cached child visits after sibling recovery.
 Every later first-path child returns locally, its full sibling sweep
 finishes, and every actual first-path call returns normally to its parent.
-Generated sibling coverage and the full first-path generation induction are
-proved for the native emitted trace, including the initialized root at order
-zero. Native fixed-singleton
+Generated sibling coverage and the first-path induction prove that the
+emitted generators generate the full native group, including at order zero. Native fixed-singleton
 preservation and full node/sweep fixed-point restoration are proved, including truncation
 and nonlocal returns; the completed root retains no temporary fixed vertices.
 Cached refinement preserves cell stabilizers, and native path invariants are

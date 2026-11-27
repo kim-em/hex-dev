@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.AutGroup
+import HexGraphIso.AutComplete
+import HexGraphIso.Nauty.Policy.Generated.Root
 public import HexGraphIso.Autom
 public import HexGraphIso.Nauty.Policy.Result
 public import HexGraphIso.Nauty.Invariant.Carrier
@@ -41,8 +43,8 @@ theorem trace_admitted (G : Colored n k) :
   exact admit_root (Nauty.runColoredTraced_checked G hm)
     (Nauty.runColoredTraced_stab G hm)
 
-/-- The public filter retains the whole trace, in its original order. -/
-theorem raw_eq_trace (G : Colored n k) : raw G = trace G := by
+/-- Every emission passes the public filter, which preserves their order. -/
+theorem raw_eq_emitted (G : Colored n k) : raw G = emitted G := by
   have h : ∀ xs : List (Array Nat), (∀ γ ∈ xs, ∃ p, autom? G γ = some p) →
       (xs.filterMap fun γ => (autom? G γ).map fun p => (γ, p)).map Prod.fst = xs := by
     intro xs hx
@@ -53,17 +55,23 @@ theorem raw_eq_trace (G : Colored n k) : raw G = trace G := by
         simp only [List.filterMap_cons, hp, Option.map_some, List.map_cons]
         congr 1
         exact ih (fun δ hδ => hx δ (by simp [hδ]))
-  exact h (trace G) (trace_admitted G)
+  exact h (emitted G) (fun _ hγ => emitted_admitted G hγ)
 
-/-- A checked automorphism recorded in the raw trace belongs to the public
-generator list. This also admits code-two generators that leave the orbit
-partition unchanged. -/
+/-- The public list has the length counted by the search. -/
+theorem length_gens (G : Colored n k) : (gens G).length = (runColored G).numgenerators := by
+  have h := congrArg List.length (raw_eq_emitted G)
+  simp only [raw, List.length_map] at h
+  have hv := (Emission.run_valid n (rowsOf G) (initialPartition G).1 (initialPartition G).2).size
+  rw [gens, List.length_map, h]
+  exact Array.length_toList.trans hv
+
+/-- A checked emission belongs to the public generator list. -/
 theorem mem_gens {G : Colored n k} {γ : Array Nat} {p : Perm n}
-    (htrace : γ ∈ trace G) (hcheck : autom? G γ = some p) : p ∈ gens G := by
+    (hemit : γ ∈ emitted G) (hcheck : autom? G γ = some p) : p ∈ gens G := by
   apply List.mem_map.mpr
   refine ⟨(γ, p), ?_, rfl⟩
   apply List.mem_filterMap.mpr
-  exact ⟨γ, htrace, by simp [hcheck]⟩
+  exact ⟨γ, hemit, by simp [hcheck]⟩
 
 /-- A recorded leaf carrier supplies a generated permutation with the
 same pointwise action on the entire reference labelling. -/
@@ -75,9 +83,9 @@ theorem generated_carrier {G : Colored n k} {ctx : Ctx n}
     ∃ p, Perm.Generated (gens G) p ∧
       ∀ i, (hi : i < n) → (p.get ⟨ref[i]!, href i (by omega)⟩).val = cur[i]! := by
   obtain ⟨γ, hmem, _, hmap⟩ := h
-  have hraw : γ ∈ raw G := by rw [raw_eq_trace]; exact hstore γ hmem
-  obtain ⟨p, hp, hval⟩ := raw_mem hraw
-  exact ⟨p, .mem hp, fun i hi => (hval ⟨ref[i]!, href i (by omega)⟩).trans (hmap i hi)⟩
+  obtain ⟨p, hp⟩ := trace_admitted G γ (hstore γ hmem)
+  exact ⟨p, Aut.complete G (autom?_isIso hp), fun i hi =>
+    (autom?_val_get hp ⟨ref[i]!, href i (by omega)⟩).trans (hmap i hi)⟩
 
 /-- Agreement on a reference permutation labelling identifies the whole
 permutation. No orbit-count inference is needed for this final step. -/

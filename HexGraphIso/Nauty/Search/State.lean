@@ -31,7 +31,7 @@ abbrev Leaf := Generic.Leaf
 /-- Search state: what nauty keeps in file-scope variables for the
 duration of one `nauty()` call on `n` vertices. Every field is named
 for the nauty global or `statsblk` member it mirrors, except `wsCap`,
-`genTrace`, and `workperm`.
+`genTrace`, `emitted`, and `workperm`.
 
 `lab` and `ptn` are the partition nest: position `i` ends a cell at
 level `l` exactly when `ptn[i] ≤ l`. `active` holds the positions of
@@ -112,6 +112,8 @@ structure SearchState (n : Nat) (κ : Type) where
   in discovery order, for the certificate producer, alongside the
   bounded `(fix, mcr)` pairs of `autos`. `run` discards it. -/
   genTrace : Array (Array Nat) := #[]
+  /-- Permutations reported by nauty's generator callback, in discovery order. -/
+  emitted : Array (Array Nat) := #[]
   /-- Scratch permutation, allocated at initialization and filled by leaf comparisons. -/
   workperm : Array Nat
 deriving Inhabited
@@ -292,14 +294,14 @@ def leafExit (leaf : Leaf) (level : Nat) (st : SearchState n κ) : Exit × Searc
   | .internal => return (.done, st)
   | .autoFirst =>
     st := admit st
-    st := { st with numgenerators := st.numgenerators + 1 }
+    st := { st with numgenerators := st.numgenerators + 1, emitted := st.emitted.push st.workperm }
     return (.unwind st.gcaFirst false, st)
   | .autoCanon =>
     let save := st.numorbits
     st := admit st
     if st.numorbits == save then
       return (.unwind st.gcaCanon (st.gcaCanon != st.gcaFirst), st)
-    st := { st with numgenerators := st.numgenerators + 1 }
+    st := { st with numgenerators := st.numgenerators + 1, emitted := st.emitted.push st.workperm }
     if st.orbits[st.cosetindex]! < st.cosetindex then
       return (.unwind st.gcaFirst false, st)
     return (.unwind st.gcaCanon (st.gcaCanon != st.gcaFirst), st)
@@ -417,6 +419,8 @@ are read off the final state directly. -/
 structure TraceRun (n : Nat) where
   result : RunResult n
   autos : Array (Array Nat)
+  /-- Permutations corresponding to nauty’s generator callbacks. -/
+  emitted : Array (Array Nat) := #[]
   /-- The best leaf's refinement codes at levels `1 .. canonlevel`,
   without the sentinel. -/
   bestCodes : List Nat
