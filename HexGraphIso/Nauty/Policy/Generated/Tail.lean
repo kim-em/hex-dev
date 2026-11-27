@@ -74,18 +74,27 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
     (htrace : Generation.Realizes G gs
       (Nauty.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
         level numcells tc tv1 cursor cell index st).2.2.genTrace.toList) :
-    ∀ v, Aut.Orbit G base guide v → Generation.Carries G gs base guide v := by
+    (∀ v, Aut.Orbit G base guide v → Generation.Carries G gs base guide v) ∧
+      ∀ γ ∈ (Nauty.sweep true { g := rowsOf G } (n + 2) tcLevel fuel cfuel
+        level numcells tc tv1 cursor cell index st).2.2.genTrace,
+        ∀ b ∈ base, γ[b.val]! = b.val := by
   induction cfuel generalizing cursor cell index st bs fs previous with
   | zero =>
     cases cursor with
-    | none => exact hcover.finish hnext
+    | none =>
+      refine ⟨hcover.finish hnext, fun γ hγ => hfixFrame γ ?_⟩
+      rw [hlab, hptn]
+      exact h.generators rfl γ (by simpa only [Nauty.sweep] using hγ)
     | some tv =>
       have hh := h.cursor_fuel tv rfl
       have ht := VSet.mem_lt (h.cursor_mem tv rfl)
       omega
   | succ cfuel ih =>
     cases cursor with
-    | none => exact hcover.finish hnext
+    | none =>
+      refine ⟨hcover.finish hnext, fun γ hγ => hfixFrame γ ?_⟩
+      rw [hlab, hptn]
+      exact h.generators rfl γ (by simpa only [Nauty.sweep] using hγ)
     | some tv =>
       let ctx : Ctx n := { g := rowsOf G }
       have htv := hpast rfl tv rfl
@@ -219,6 +228,7 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
           have hh := congrArg (fun r => r.2.2) hr
           change ready.firstlab = st.firstlab at hh
           rw [hh]; exact hfirst
+        rw [hsweep]
         exact ih hs (hnextPast cell) (matches_reference hm hr) hg' heq' hsame'
           rfl hcanon' hadv hfirst' htrace
       · have hskip : (!true || st.orbits[tv]! == tv) = false := Bool.eq_false_iff.mpr hv
@@ -240,6 +250,7 @@ theorem SweepInput.generated_tail {G : Colored n k} {tcLevel fuel cfuel boundary
         have hadv := hcover.orbitSkip (tv := v) hnext (h.skip_phase hskip).2.1.stored.orbits
           hsttrace (fun γ hγ => hfixFrame γ (by rw [hlab, hptn]; exact h.generators rfl γ (by simpa using hγ)))
           (by simpa only [Bool.not_true, Bool.false_or, beq_eq_false_iff_ne] using hskip)
+        rw [he]
         exact ih hs (hnextPast cell) hm hg heq hsame rfl
           (hcanon.advance (nextElem_after hnext)) hadv hfirst htrace
 

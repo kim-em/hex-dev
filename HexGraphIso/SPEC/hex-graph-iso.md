@@ -38,7 +38,7 @@ The first release includes:
 - a Boolean isomorphism decision and one isomorphism when one exists;
 - a checked explicit isomorphism;
 - positive and negative certificate checking;
-- the automorphism generators the pinned traversal discovers, with the
+- the automorphism generators the pinned traversal reports, with the
   vertex orbits, the orbit count and the group order;
 - the Mathlib-free `graph_iso` tactic for closed executable graphs;
 - exact compatibility with the pinned dense nauty configuration below.
@@ -232,9 +232,9 @@ operation budget.
 
 ## Automorphism generators
 
-The search discovers automorphisms as it runs: the generator trace
-drives its own automorphism pruning and is recorded unconditionally.
-That list is a supported output.
+The search records every admitted automorphism in its discovery trace and
+stores its fixed points and cycle minima in the bounded pruning workspace.
+It also records the generators reported by nauty's emission rules.
 
 ```lean
 structure AutResult (n : Nat) where
@@ -246,16 +246,18 @@ structure AutResult (n : Nat) where
 def autos (G : Colored n k) : AutResult n
 ```
 
-`gens` is the traversal's own generator list in discovery order: the
-`workperm` the pinned search records at each code-1 and code-2 leaf,
-rebuilt as a `Perm n` and kept only after `checkIso` accepts it.
-The list is deterministic and conformance-pinnable. It may contain a
-code-2 automorphism whose orbit join changes nothing, which nauty omits
-from its emitted list; completeness applies to the recorded list.
-`orbits` is the vertex-orbit array `orbjoin` builds from
-those generators, which is the array nauty reports; every entry is the
-representative of its orbit, and `numOrbits` counts the
-representatives. `order` is computed by the orbit-stabilizer
+`gens` is the traversal's generator list in emission order. It includes
+every code-1 automorphism and each code-2 automorphism whose orbit join
+reduces the number of orbits. The dense API decodes the emitted arrays
+as permutations and checks that they preserve the coloured graph.
+Every emission passes that check and the list generates the full group.
+The proof uses the completed first child at each node on the first path
+to supply the point stabilizer. When a code-2 join leaves the orbit count
+unchanged, earlier discoveries supply a word with the same action on
+the guiding vertex. The stabilizer supplies the remaining factor.
+`orbits` is the vertex-orbit array `orbjoin` builds from the emitted
+generators. Every entry is the least vertex of its orbit, and `numOrbits`
+counts those representatives. `order` is computed by the orbit-stabilizer
 chain: individualize a vertex of a non-singleton orbit, whose
 stabilizer is the colour-preserving automorphism group of the
 individualized colouring, recurse on that, and multiply the orbit
@@ -265,8 +267,9 @@ factors come from separate runs on the individualized colourings.
 
 The four fields are also available on their own, in the `Aut`
 namespace: `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order`,
-with `Aut.trace` the unchecked recorded list they start from, and
-`Aut.gens_isIso` the membership theorem stated directly on `Aut.gens`.
+with `Aut.emitted` the raw reported list and `Aut.trace` the full
+discovery trace. `Aut.gens_isIso` proves that each member of `Aut.gens`
+is an automorphism.
 A caller who wants only the generators takes `Aut.gens`, which runs one
 traversal; `autos` computes `order` as well, and that runs one further
 traversal per base point. The Mathlib wrappers take the projection they
@@ -900,32 +903,20 @@ A second record kind, `graphisoautos`, pins the automorphism surface. It
 carries every field of a `graphiso` record, so a consumer reading the
 whole stream for canonical forms needs no knowledge of the second kind
 and the canonical comparisons above run on it too, and it adds the
-recorded generator list,
-the generator count the search reports, the orbit array, the
-orbit count and the group order. The shim collects nauty's own generators
-through `options.userautomproc`, so the comparison is against the
-traversal's emissions rather than a recomputation, and it also reports
-nauty's `orbits`, `stats.numorbits` and `stats.grpsize`. The oracle
-compares:
+emitted generator list, the generator count the search reports, the
+orbit array, the orbit count and the group order. The shim collects
+nauty's emitted permutations through `options.userautomproc` and the
+group indices through `options.userlevelproc`. The oracle compares:
 
 - the orbit array, entry by entry;
 - the orbit count;
-- the group order, as `grpsize1 * 10 ^ grpsize2`;
-- the generator count, against the number of generators nauty emitted;
-- nauty's generator list, which must appear in the recorded list as an
-  ordered subsequence, and must agree with it entry by entry whenever
-  the two have the same length.
+- the group order, as the exact integer product of the level indices;
+- the generator count;
+- the generator list, entry by entry in emission order.
 
-The subsequence relation rather than equality is what the two emission
-rules permit. nauty emits a generator at every code-1 leaf and at every
-code-2 leaf that grows the orbit partition, while the recorded trace
-takes both kinds unconditionally, so the trace can carry an
-orbit-redundant code-2 automorphism nauty discards. Both lists come from
-one traversal, so nauty's is always the subsequence of the trace at the
-emitting events, and the generator count pins how many those are. The
-recorded list itself is pinned by the committed fixture, so a change in
-the traversal is a fixture diff even where the subsequence relation
-alone would tolerate it.
+Both fixture streams include the 120-vertex `mixed-cfi-120` graph. Its
+traversals discover 17 dense and 19 sparse automorphisms, of which 11
+and 12, respectively, are emitted.
 
 The driver must not canonicalize Hex's answer before comparing it with nauty.
 Doing so would test only isomorphism of the outputs and could conceal a wrong
@@ -2107,15 +2098,15 @@ proved production maximum, independently of certificate replay.
 
 The sparse public automorphism order uses the existing exact product in the
 search state. Its proof identifies each first-path sweep index with the orbit
-size for the corresponding point stabilizer. The full generator trace, rather
-than the bounded pruning workspace, generates the full automorphism group.
-Sparse order does not repeat the search on additional individualized graphs.
+size for the corresponding point stabilizer. Sparse order requires one
+search. The native emitted list generates the full automorphism group.
 `GenerationFrame` proves native target-cell preservation by true point
 stabilizers and triviality at actual first discrete visits. `TraceContains`
-proves that both kinds of complete native calls retain every emitted array.
-`GenerationTrace` decodes the unbounded trace as forward permutations,
-establishes their soundness and realization of each emitted array, and
-supplies generated orbit-pointer carriers fixing the active base.
+proves that both kinds of complete native calls retain every discovered
+array. `GenerationTrace` decodes the discovery trace as forward
+permutations and supplies generated orbit-pointer carriers fixing the
+active base. `FirstInput.realizes` proves that the emissions generate the
+same group as that trace.
 `FirstBounds`, `EarlyReturn` and `FirstSweep` prove the native first-code
 and all-same bounds, unconsumed leaf-return provenance and lower bounds,
 and exact all-same preservation through later siblings. `CodePrefix`
@@ -2304,10 +2295,8 @@ has no C runtime dependency, new axiom, or `native_decide` path.
 
 The sparse oracle independently rebuilds original inputs, and compares
 canonical adjacency, colours, labels, all seven search statistics, generator
-emissions, and exact orbits. Full recorded generator traces retain the dense
-API's emission/subsequence convention. Exact group order is the product of
-nauty's level indices, calculated using integer arithmetic; rounded
-`statsblk` group-size fields are not the exact oracle.
+emissions in order, and exact orbits. The group-order oracle multiplies
+nauty's level indices using exact integer arithmetic.
 
 Separate sparse fixtures mirror all labelled uncoloured graphs through five
 vertices, all graph/ordered-surjective-partition pairs through four vertices,

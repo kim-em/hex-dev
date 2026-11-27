@@ -72,7 +72,7 @@ def evaluate (j : Json) : Except String Json := do
     ("edges", toJson (g.edges.map fun (a, b) => (a.val, b.val))),
     ("canonLab", toJson r.canonlab),
     ("canonEdges", toJson canonEdges), ("cellSizes", toJson sizes),
-    ("numnodes", toJson r.numnodes), ("gens", toJson r.genTrace),
+    ("numnodes", toJson r.numnodes), ("gens", toJson r.emitted),
     ("numGenerators", toJson r.numgenerators), ("orbits", toJson r.orbits),
     ("numOrbits", toJson r.numorbits), ("order", toJson r.order),
     ("stats", Json.mkObj [("numnodes", toJson r.numnodes),

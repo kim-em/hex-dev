@@ -18,13 +18,13 @@ public section
 
 namespace Hex.GraphIso.Nauty.Sparse
 
-/-- Decode the complete emitted native trace as forward permutations.
+/-- Decode the native discovery trace as forward permutations.
 Sound reached traces lose no entry; decoding retains order and duplicates
 and does not repeat any graph search or adjacency test. -/
 @[expose] def State.generators (st : State n) : List (Perm n) :=
   st.genTrace.toList.filterMap (Perm.ofNatArray? n)
 
-/-- Every decoded permutation is exactly its emitted array and preserves
+/-- Every decoded permutation is exactly its discovery array and preserves
 the native graph and ordered colours. -/
 theorem TraceOk.generator {G : GraphIso.Sparse.Colored n k} {st : State n}
     (h : TraceOk G st) {p : Perm n} (hp : p ∈ st.generators) : GraphIso.Sparse.IsIso G G p := by
@@ -42,7 +42,7 @@ abbrev Realizes (G : GraphIso.Sparse.Colored n k) (gs : List (Perm n)) (store : 
   Nauty.Generation.Realizes G.toDense gs store
 
 /-- A sound native trace realizes its own complete decoded generator
-list. Every emitted array parses successfully, including order zero. -/
+list. Every recorded array parses successfully, including order zero. -/
 theorem realized {G : GraphIso.Sparse.Colored n k} {st : State n} (h : TraceOk G st) :
     Realizes G st.generators st.genTrace.toList := by
   intro gamma hm
@@ -63,8 +63,8 @@ theorem pointer {G : GraphIso.Sparse.Colored n k} {st : State n} {gs : List (Per
     (h ht) hr (fun gamma hm => hfix gamma (Array.mem_toList_iff.mp hm))
   exact ⟨u, hu, hle, p, hp, (GraphIso.Sparse.isIso_toDense G G p).mp hi, hf, he⟩
 
-/-- The public production trace is represented without losing an
-emitted generator; this supplies the containing group for the first-path
+/-- The discovery trace is represented without losing a
+recorded automorphism; this supplies the containing group for the first-path
 generation induction. Completeness of that group is a separate theorem. -/
 theorem root (G : GraphIso.Sparse.Colored n k) :
     Realizes G (runColored G).generators (runColored G).genTrace.toList :=

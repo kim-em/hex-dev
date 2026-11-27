@@ -245,6 +245,7 @@ def finish (ctx : Ctx n) (st : Search n) : TraceRun n :=
       tctotal := st.tctotal
       canupdates := st.canupdates }
     autos := st.genTrace
+    emitted := st.emitted
     bestCodes := if n == 0 then [] else
       (List.range' 1 st.canonlevel).map fun i => st.canoncode[i]! }
 

@@ -353,7 +353,13 @@ private def autosWellFormed {n k : Nat} (G : Colored n k) : Bool :=
   let st := { st with workperm := #[0, 1, 2], gcaFirst := 1, gcaCanon := 2 }
   let (exit, st) := Nauty.leafExit .autoCanon 3 st
   return exit == .unwind 2 true && st.genTrace == #[#[0, 1, 2]] &&
-    st.autos.size == 1 && st.numgenerators == 0 && st.numorbits == 3
+    st.autos.size == 1 && st.emitted.isEmpty && st.numgenerators == 0 && st.numorbits == 3
+
+-- Code 1 emits even when the orbit count is unchanged.
+#guard Id.run do
+  let st := Nauty.initial 3 #[0, 1, 2] [2]
+  let (_, st) := Nauty.leafExit .autoFirst 3 { st with workperm := #[0, 1, 2] }
+  return st.emitted == #[#[0, 1, 2]] && st.numgenerators == 1 && st.numorbits == 3
 
 -- A changed orbit with a smaller coset representative returns without short prune.
 #guard Id.run do
@@ -361,7 +367,8 @@ private def autosWellFormed {n k : Nat} (G : Colored n k) : Bool :=
   let st := { st with
     workperm := #[1, 0, 2], cosetindex := 1, gcaFirst := 1, gcaCanon := 2 }
   let (exit, st) := Nauty.leafExit .autoCanon 3 st
-  return exit == .unwind 1 false && st.numgenerators == 1 && st.numorbits == 2
+  return exit == .unwind 1 false && st.emitted == #[#[1, 0, 2]] &&
+    st.numgenerators == 1 && st.numorbits == 2
 
 -- Exhausted recursion must remain distinguishable from a completed sweep.
 #guard (Nauty.node true { g := Nauty.rowsOf p3 } 5 100 0 1 1
@@ -394,6 +401,10 @@ end Hex.GraphIso.Conformance
 /-- info: 'Hex.GraphIso.Nauty.generators_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Nauty.generators_complete
+
+/-- info: 'Hex.GraphIso.Sparse.autos_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Sparse.autos_complete
 
 /-- info: 'Hex.GraphIso.Nauty.Max.firstPath_generates' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

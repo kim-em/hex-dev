@@ -37,16 +37,10 @@ private def emitTrace (corpus : String) (c : Case) : IO Unit := do
       ("colors", toJson c.colors), ("edges", toJson c.edges)]),
     ("output", output)]).compress
 
-private def parseInput (text : String) : Except String Case := do
-  let j ← Json.parse text
-  return ⟨"mixed-cfi-120", ← j.getObjValAs? Nat "n", ← j.getObjValAs? Nat "k",
-    ← j.getObjValAs? (Array Nat) "colors", ← j.getObjValAs? (List (Nat × Nat)) "edges"⟩
-
 def main (args : List String) : IO Unit := do
   unless args.isEmpty do
     throw (IO.userError "trace: no arguments expected")
   eachFixture (emitTrace "fixtures")
   eachAutos (emitTrace "autos")
   eachCampaign (emitTrace "campaign")
-  let c ← IO.ofExcept (parseInput (← IO.FS.readFile "conformance-fixtures/HexGraphIso/prune.json"))
-  emitTrace "regression" c
+  emitTrace "regression" (← pruneRegression)

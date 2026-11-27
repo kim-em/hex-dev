@@ -16,6 +16,9 @@ private def emit (c : Case) : IO Unit := do
 
 def main (args : List String) : IO Unit := do
   match args with
-  | [] => eachFixture emit; eachAutos emit
+  | [] =>
+    eachFixture emit
+    eachAutos emit
+    emit (← pruneRegression)
   | ["campaign"] => eachCampaign emit
   | _ => throw (IO.userError "usage: hexgraphiso_emit_sparse [campaign]")

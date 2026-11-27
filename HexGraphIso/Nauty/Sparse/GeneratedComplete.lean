@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.Nauty.Sparse.GeneratedHead
+public import HexGraphIso.Nauty.Policy.Generated.Emission
 import all HexGraphIso.Nauty.Sparse.MaxFirstContext
 import all HexGraphIso.Nauty.Sparse.MaxFirstEntry
 import all HexGraphIso.Nauty.Sparse.MaxFirstResume
@@ -18,6 +19,8 @@ import all HexGraphIso.Nauty.Sparse.Search
 import all HexGraphIso.Nauty.Policy.Generated.Trace
 import all HexGraphIso.Generated
 import all HexGraphIso.Nauty.Search.State
+import all HexGraphIso.Nauty.Policy.Preserve
+import all HexGraphIso.Nauty.Search.Generic
 
 public section
 
@@ -100,12 +103,122 @@ theorem FirstInput.generates {G : GraphIso.Sparse.Colored n k} {tcLevel fuel las
           (if back.orbits[tv]! == tv then 1 else 0) _ p.cell back hb)
       have hdeep := ih (level := ch.level) (numcells := ch.numcells) (codes := ch.codes) (st := ch.entry)
         hch path (by change n + 1 ≤ level + 1 + fuel; omega) hbaseChild htraceChild
-      have hcover := h.orbit hi htv horbit path hbudget hbase htrace
+      have hcover := (h.orbit hi htv horbit path hbudget hbase htrace).1
       intro q hq hfix
       apply Perm.Generated.of_stabilizer (G := G.toDense)
         (fun p hp => hdeep p ((GraphIso.Sparse.isIso_toDense G G p).mp hp)) _
         ((GraphIso.Sparse.isIso_toDense G G q).mpr hq) hfix
       intro p hp hpfix
       exact hcover (p.get guide) ⟨p, hp, hpfix, rfl⟩
+
+/-- The sparse generator emissions of a completed first path realize its discovery trace. -/
+theorem FirstInput.realizes {G : GraphIso.Sparse.Colored n k} {tcLevel fuel last : Nat}
+    {f : Frame n} {leaf : State n} {parents : Parents n}
+    {base : List (Fin n)} {full gs : List (Perm n)}
+    (h : FirstInput G tcLevel f parents)
+    (path : Generic.FirstPath (.ofGraph G.graph) tcLevel fuel f.level f.numcells f.entry last leaf)
+    (hf : n + 1 ≤ f.level + fuel)
+    (hbase : ∀ b : Fin n, f.entry.fixedpts.mem b.val = true ↔ b ∈ base)
+    (htrace : Generation.Realizes G full
+      (Generic.node true (.ofGraph G.graph) (n + 2) tcLevel fuel f.level f.numcells f.entry).2.genTrace.toList)
+    (hemit : Generation.Realizes G gs
+      (Generic.node true (.ofGraph G.graph) (n + 2) tcLevel fuel f.level f.numcells f.entry).2.emitted.toList)
+    (hin : Emission.Realization G.toDense gs (Emission.log f.entry)) :
+    Emission.Realization G.toDense gs
+      (Emission.log (Generic.node true (.ofGraph G.graph) (n + 2) tcLevel fuel f.level f.numcells f.entry).2) := by
+  obtain ⟨level, numcells, codes, st⟩ := f
+  induction fuel generalizing level numcells codes st last leaf parents base with
+  | zero => cases path
+  | succ fuel ih =>
+    let f : Frame n := ⟨level, numcells, codes, st⟩
+    cases path with
+    | @leaf _ _ _ _ hd =>
+      have hprep := prepare_emission (.ofGraph G.graph) tcLevel level numcells st
+      unfold Generic.prepareFirst at hd hprep
+      dsimp only at hd
+      rw [Generic.node]
+      unfold Generic.nodeStep
+      dsimp only [policy, Generic.Policy.visit, Generic.Policy.recordFirst,
+        Generic.Policy.chooseTarget, Generic.Policy.firstterminal] at hd hprep ⊢
+      simp only [ite_true, hd, beq_self_eq_true, Id.run_pure]
+      rw [hd] at hprep
+      change Emission.Realization G.toDense gs (Emission.log
+        (chooseTarget true (.ofGraph G.graph) tcLevel level n
+          (recordFirst level (visit (.ofGraph G.graph) level numcells st).2.1
+            (visit (.ofGraph G.graph) level numcells st).2.2)).2.2.2)
+      rwa [hprep]
+    | @step _ _ _ _ _ _ tv hopen htv horbit path =>
+      let g := Graph.ofGraph G.graph
+      let r := Generic.prepareFirst g tcLevel level numcells st
+      let l : Loop n := ⟨f, true⟩
+      let c := l.cell G.graph tcLevel
+      let p := f.firstParent G.graph tcLevel [] tv
+      let ch := p.child G.graph tcLevel
+      let raw := Generic.node true g (n + 2) tcLevel fuel ch.level ch.numcells ch.entry
+      let left := (policy (n := n)).leaveChild tv (afterChildFirst level tv raw.2)
+      let back := p.firstBack G.graph tcLevel fuel
+      let guide : Fin n := ⟨tv, VSet.mem_lt (VSet.nextElem_mem htv)⟩
+      have hn : 0 < n := by have := h.entry.frame.positive; have := h.entry.frame.depth; omega
+      have hi : (visit g level numcells st).1 < n := by
+        have hr := h.entry.frame.node.visit_ready hn h.entry.frame.positive
+        have hc : (visit g level numcells st).1 = bcount (visit g level numcells st).2.2.ptn level n := hr.ok.count
+        have hb := bcount_le (visit g level numcells st).2.2.ptn level n
+        change (visit g level numcells st).1 ≠ n at hopen
+        omega
+      have hbudget : n ≤ level + fuel := by change n + 1 ≤ level + (fuel + 1) at hf; omega
+      have hch : FirstInput G tcLevel ch (parents.push p) := h.child hi htv
+      have hfixed : p.state.fixedpts = st.fixedpts := by
+        change (cheapCheck true level r.2.2.2.2).fixedpts = st.fixedpts
+        rw [cheap_fixed]
+        exact target_fixed true g tcLevel level r.1
+          (recordFirst level (f.code G.graph) (visit g level numcells st).2.2)
+      have hbaseChild : ∀ b : Fin n, ch.entry.fixedpts.mem b.val = true ↔ b ∈ guide :: base := by
+        intro b
+        change (p.state.fixedpts.insert guide.val).mem b.val = true ↔ b ∈ guide :: base
+        rw [VSet.mem_insert, hfixed]
+        simp only [Bool.or_eq_true, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq, List.mem_cons]
+        rw [hbase]
+        constructor
+        · rintro (hb | ⟨he, _⟩)
+          · exact Or.inr hb
+          · exact Or.inl (Fin.ext he.symm)
+        · rintro (rfl | hb)
+          · exact Or.inr ⟨rfl, guide.isLt⟩
+          · exact Or.inl hb
+      obtain ⟨_, _, _, _, _, hsuffix⟩ := h.suffix hi htv horbit path hbudget
+
+      let final := (Generic.node true g (n + 2) tcLevel (fuel + 1) level numcells st).2
+      let index := if back.orbits[tv]! == tv then 1 else 0
+      let swept := (Generic.sweep true g (n + 2) tcLevel fuel n level c.numcells p.tc tv
+        (p.cell.nextElem (some tv)) p.cell index back).2.2
+      have heq : Emission.log final = Emission.log swept := by
+        have he := f.first_log (fuel := fuel) hopen htv
+        change Emission.log final = Emission.log
+          (Generic.sweep true g (n + 2) tcLevel fuel (n + 1) level c.numcells p.tc tv
+            (some tv) p.cell 0 p.state).2.2 at he
+        rw [hsuffix] at he
+        exact he
+      have hback : Emission.log back = Emission.log raw.2 :=
+        Emission.recover_log (n + 2) level left
+      have hext : Emission.Extends (Emission.log raw.2) (Emission.log final) := by
+        rw [heq, ← hback]
+        exact sweep_extends true g (n + 2) tcLevel fuel n level c.numcells p.tc tv
+          (p.cell.nextElem (some tv)) p.cell index back
+      have hstart : Emission.log ch.entry = Emission.log st :=
+        (Emission.child_log true level p.tc tv p.state).trans
+          ((Emission.cheap_log true level r.2.2.2.2).trans (prepare_emission g tcLevel level numcells st))
+      have hreal := ih (level := ch.level) (numcells := ch.numcells) (codes := ch.codes) (st := ch.entry)
+        hch path (by change n + 1 ≤ level + 1 + fuel; omega) hbaseChild
+        (htrace.mono hext.trace) (hemit.mono hext.emitted) (hstart.symm ▸ hin)
+      have hstab := hch.generates path (by change n + 1 ≤ level + 1 + fuel; omega) hbaseChild hreal.trace
+      have hfix := (h.orbit hi htv horbit path hbudget hbase htrace).2
+      let P := Emission.Within G.toDense gs final.genTrace.toList final.emitted.toList
+      have hlocal := Emission.within_leaf (κ := Storage n) htrace (fun γ hγ => hfix γ (Array.mem_toList_iff.mp hγ))
+        hemit (fun q hq => hstab q ((GraphIso.Sparse.isIso_toDense G G q).mp hq))
+      have hready : P (Emission.log back) := fun _ _ => hback.symm ▸ hreal
+      have hdone : P (Emission.log swept) :=
+        Generic.sweep_sound (emission_preserve g (n + 2) tcLevel P hlocal).sound
+          true fuel n level c.numcells p.tc tv (p.cell.nextElem (some tv)) p.cell index back hready
+      exact (heq.symm ▸ hdone : P (Emission.log final)) (fun _ h => h) (fun _ h => h)
 
 end Hex.GraphIso.Nauty.Sparse.Max

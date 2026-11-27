@@ -88,23 +88,21 @@ end SameOrbit
 
 namespace Aut
 
-/-- The raw generator arrays the pinned traversal records, in
-discovery order. -/
+/-- The raw automorphisms discovered by the traversal, including
+those retained only for pruning. -/
 @[expose] def trace (G : Colored n k) : List (Array Nat) :=
   (Nauty.runColoredTraced G).autos.toList
 
-/-- The recorded automorphisms that pass the check, each paired with
-the raw array it came from. One traversal, consulted once: the two
-projections below are the generator list and the arrays nauty's orbit
-bookkeeping is stated on. -/
-@[expose] def checked (G : Colored n k) : List (Array Nat × Perm n) :=
-  (trace G).filterMap fun γ => (autom? G γ).map fun p => (γ, p)
+/-- Raw generator emissions in the order reported by the traversal. -/
+@[expose] def emitted (G : Colored n k) : List (Array Nat) :=
+  (Nauty.runColoredTraced G).emitted.toList
 
-/-- The generators: the recorded traversal automorphisms that pass the
-check, in discovery order. `Aut.trace_admitted` in `HexGraphIso.AutTrace`
-proves that every recorded entry passes. Completeness uses the whole
-trace, including redundant code-2 entries; removing them would need a
-further generation proof. -/
+/-- The emitted automorphisms paired with their checked permutations. -/
+@[expose] def checked (G : Colored n k) : List (Array Nat × Perm n) :=
+  (emitted G).filterMap fun γ => (autom? G γ).map fun p => (γ, p)
+
+/-- The traversal's generators, in emission order. A canonical-leaf
+automorphism is emitted only when it merges vertex orbits. -/
 @[expose] def gens (G : Colored n k) : List (Perm n) :=
   (checked G).map (·.2)
 
